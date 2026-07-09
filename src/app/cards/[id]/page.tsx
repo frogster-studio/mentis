@@ -8,6 +8,7 @@ import {
   parseListParams,
   type RawListSearchParams,
 } from "@/lib/cards/list-params";
+import { cardImagePublicUrl } from "@/lib/images/storage";
 import { createServiceClient } from "@/lib/supabase";
 
 import { EditCardSheet } from "./edit-card-sheet";
@@ -37,15 +38,22 @@ export default async function CardPage({
     notFound();
   }
 
-  const card = await getCard(createServiceClient(), id);
+  const client = createServiceClient();
+  const card = await getCard(client, id);
   if (!card) {
     notFound();
   }
 
+  // The public URL is built here because SUPABASE_URL is server-only.
+  const firstImage = card.images[0];
+  const imageUrl = firstImage
+    ? cardImagePublicUrl(client, firstImage.path)
+    : null;
+
   return (
     <>
       <CardLibrary activeCardId={card.id} listParams={listParams} />
-      <EditCardSheet card={card} />
+      <EditCardSheet card={card} imageUrl={imageUrl} />
     </>
   );
 }

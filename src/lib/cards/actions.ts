@@ -1,10 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/auth/session";
+import { requireSession } from "@/lib/auth/require-session";
 import {
   deleteCard as deleteCardRow,
   getCard,
@@ -61,18 +60,14 @@ function payloadFromFormData(
   return { body: String(formData.get("body") ?? "") };
 }
 
-// Server actions are reachable by direct POST, so the route guard in the
-// proxy is not enough on its own.
-async function requireSession(): Promise<void> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
-  const session = verifySessionToken(token, {
-    secret: process.env.SESSION_SECRET ?? "",
-    now: Date.now(),
-  });
-  if (!session) {
-    redirect("/login");
-  }
+// The browser uploads the processed webp itself (ADR 0001) and hands the
+// action only the resulting storage path via the imagePath field.
+function imagesFromFormData(
+  formData: FormData,
+): { path: string; order: number }[] | undefined {
+  const imagePath = formData.get("imagePath");
+  if (typeof imagePath !== "string" || imagePath === "") return undefined;
+  return [{ path: imagePath, order: 0 }];
 }
 
 export async function createCard(
@@ -86,6 +81,7 @@ export async function createCard(
     type,
     title: String(formData.get("title") ?? ""),
     tags: formData.getAll("tags").map(String),
+    images: imagesFromFormData(formData) ?? [],
     payload: payloadFromFormData(type, formData),
   });
   if (!parsed.success) {
@@ -127,8 +123,8 @@ export async function updateCard(
   const id = String(formData.get("id") ?? "");
   const client = createServiceClient();
 
-  // Images have no form fields yet; carry the stored value through so this
-  // action keeps working untouched when later slices add them.
+  // A fresh upload replaces the Image slot; without one the stored Images
+  // carry through untouched.
   let existing: Awaited<ReturnType<typeof getCard>>;
   try {
     existing = await getCard(client, id);
@@ -145,7 +141,7 @@ export async function updateCard(
     title: String(formData.get("title") ?? ""),
     status: formData.get("status") === "published" ? "published" : "draft",
     tags: formData.getAll("tags").map(String),
-    images: existing.images,
+    images: imagesFromFormData(formData) ?? existing.images,
     payload: payloadFromFormData(type, formData),
   });
   if (!parsed.success) {
