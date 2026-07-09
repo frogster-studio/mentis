@@ -85,6 +85,7 @@ export async function createCard(
   const parsed = cardSchema.safeParse({
     type,
     title: String(formData.get("title") ?? ""),
+    tags: formData.getAll("tags").map(String),
     payload: payloadFromFormData(type, formData),
   });
   if (!parsed.success) {
@@ -126,8 +127,8 @@ export async function updateCard(
   const id = String(formData.get("id") ?? "");
   const client = createServiceClient();
 
-  // Tags and Images have no form fields yet; carry the stored values through
-  // so this action keeps working untouched when later slices add them.
+  // Images have no form fields yet; carry the stored value through so this
+  // action keeps working untouched when later slices add them.
   let existing: Awaited<ReturnType<typeof getCard>>;
   try {
     existing = await getCard(client, id);
@@ -143,7 +144,7 @@ export async function updateCard(
     type,
     title: String(formData.get("title") ?? ""),
     status: formData.get("status") === "published" ? "published" : "draft",
-    tags: existing.tags,
+    tags: formData.getAll("tags").map(String),
     images: existing.images,
     payload: payloadFromFormData(type, formData),
   });

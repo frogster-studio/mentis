@@ -18,10 +18,15 @@ const cardIdSchema = z.uuid();
 
 export default async function CardPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ tag?: string }>;
 }) {
   const { id } = await params;
+  // The row link carries the list's query params along, so the list behind
+  // the sidebar keeps its filtered view.
+  const { tag } = await searchParams;
   // Postgres rejects a malformed uuid with an error; treat it as a Card
   // that doesn't exist instead.
   if (!cardIdSchema.safeParse(id).success) {
@@ -35,7 +40,7 @@ export default async function CardPage({
 
   return (
     <>
-      <CardLibrary activeCardId={card.id} />
+      <CardLibrary activeCardId={card.id} filterTag={tag} />
       <EditCardSheet card={card} />
     </>
   );

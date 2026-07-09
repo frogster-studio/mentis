@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { startTransition, useActionState } from "react";
 
 import { CardTypeFields } from "@/app/cards/card-type-fields";
+import { TagsField } from "@/app/cards/tags-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -109,6 +110,7 @@ function CreateCardForm({ type }: { type: CardType }) {
         ) : null}
       </div>
       <CardTypeFields card={{ type }} />
+      <TagsField />
       {state?.errors.form ? (
         <p role="alert" className="text-destructive text-sm">
           {state.errors.form}

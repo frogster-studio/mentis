@@ -1,4 +1,4 @@
-import { LogOut, Plus } from "lucide-react";
+import { LogOut, Plus, X } from "lucide-react";
 import Link from "next/link";
 
 import { CardRowLink } from "@/app/card-row-link";
@@ -18,6 +18,7 @@ import {
   CARD_STATUS_LABELS,
   CARD_TYPE_LABELS,
   type Card,
+  normalizeTag,
 } from "@/lib/cards/schema";
 import { createServiceClient } from "@/lib/supabase";
 
@@ -27,8 +28,15 @@ const updatedAtFormatter = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Europe/Paris",
 });
 
-export async function CardLibrary({ activeCardId }: { activeCardId?: string }) {
-  const cards = await listCards(createServiceClient());
+export async function CardLibrary({
+  activeCardId,
+  filterTag,
+}: {
+  activeCardId?: string;
+  filterTag?: string;
+}) {
+  const activeTag = normalizeTag(filterTag ?? "");
+  const cards = await listCards(createServiceClient(), { tag: activeTag });
 
   return (
     <>
@@ -53,11 +61,28 @@ export async function CardLibrary({ activeCardId }: { activeCardId?: string }) {
         <h1 className="font-semibold text-2xl text-foreground tracking-tight">
           Cards
         </h1>
+        {activeTag !== "" ? (
+          <div className="flex items-center gap-2 text-muted-foreground text-sm">
+            <span>Filtered by Tag</span>
+            <Badge variant="secondary">{activeTag}</Badge>
+            <Button
+              asChild
+              variant="ghost"
+              size="icon-xs"
+              aria-label="Clear Tag filter"
+            >
+              <Link href="/">
+                <X />
+              </Link>
+            </Button>
+          </div>
+        ) : null}
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Title</TableHead>
               <TableHead>Card Type</TableHead>
+              <TableHead>Tags</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Updated</TableHead>
             </TableRow>
@@ -65,8 +90,10 @@ export async function CardLibrary({ activeCardId }: { activeCardId?: string }) {
           <TableBody>
             {cards.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-muted-foreground">
-                  No Cards yet. Use “New Card” to write the first one.
+                <TableCell colSpan={5} className="text-muted-foreground">
+                  {activeTag !== ""
+                    ? "No Cards carry this Tag."
+                    : "No Cards yet. Use “New Card” to write the first one."}
                 </TableCell>
               </TableRow>
             ) : (
@@ -92,6 +119,22 @@ function CardRow({ card, active }: { card: Card; active: boolean }) {
         <CardRowLink cardId={card.id}>{card.title}</CardRowLink>
       </TableCell>
       <TableCell>{CARD_TYPE_LABELS[card.type]}</TableCell>
+      <TableCell>
+        <div className="flex flex-wrap gap-1">
+          {card.tags.map((tag) => (
+            // z-10 lifts the chip above the row-covering link overlay so it
+            // stays clickable.
+            <Badge
+              key={tag}
+              asChild
+              variant="outline"
+              className="relative z-10"
+            >
+              <Link href={`/?tag=${encodeURIComponent(tag)}`}>{tag}</Link>
+            </Badge>
+          ))}
+        </div>
+      </TableCell>
       <TableCell>
         <Badge variant={card.status === "published" ? "default" : "secondary"}>
           {CARD_STATUS_LABELS[card.status]}

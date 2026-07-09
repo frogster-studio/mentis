@@ -78,6 +78,21 @@ describe("cardSchema", () => {
   });
 });
 
+describe("cardSchema — Tags", () => {
+  it("normalizes Tags: trims, lowercases, and drops blanks and duplicates", () => {
+    const result = cardSchema.parse({
+      ...validAnecdote,
+      tags: [" Histoire ", "histoire", "GÉO", "   "],
+    });
+    expect(result.tags).toEqual(["histoire", "géo"]);
+  });
+
+  it("accepts a Card with zero Tags", () => {
+    const result = cardSchema.parse({ ...validAnecdote, tags: [] });
+    expect(result.tags).toEqual([]);
+  });
+});
+
 const validQuiz = {
   type: "quiz",
   title: "La prise de la Bastille",

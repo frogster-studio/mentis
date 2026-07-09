@@ -11,8 +11,9 @@ import {
 import { cardSchema } from "@/lib/cards/schema";
 
 // In-memory double of the slice of the Supabase client the data layer uses:
-// insert().select().single(), select().order(), select().eq().maybeSingle(),
-// update().eq().select().single() and delete().eq().
+// insert().select().single(), select().order(), select().contains().order(),
+// select().eq().maybeSingle(), update().eq().select().single() and
+// delete().eq().
 function createFakeSupabase(options?: {
   insertError?: string;
   updateError?: string;
@@ -24,6 +25,17 @@ function createFakeSupabase(options?: {
   function nextTimestamp() {
     tick += 1;
     return new Date(Date.UTC(2026, 6, 8, 12, 0, tick)).toISOString();
+  }
+
+  function sortRows(
+    subset: Record<string, unknown>[],
+    column: string,
+    ascending: boolean,
+  ) {
+    return [...subset].sort((a, b) => {
+      const comparison = String(a[column]).localeCompare(String(b[column]));
+      return ascending ? comparison : -comparison;
+    });
   }
 
   const client = {
@@ -60,13 +72,25 @@ function createFakeSupabase(options?: {
         select(_columns: string) {
           return {
             async order(column: string, opts: { ascending: boolean }) {
-              const sorted = [...rows].sort((a, b) => {
-                const left = String(a[column]);
-                const right = String(b[column]);
-                const comparison = left.localeCompare(right);
-                return opts.ascending ? comparison : -comparison;
-              });
-              return { data: sorted, error: null };
+              return {
+                data: sortRows(rows, column, opts.ascending),
+                error: null,
+              };
+            },
+            contains(column: string, values: unknown[]) {
+              const matching = rows.filter((row) =>
+                values.every((value) =>
+                  (row[column] as unknown[]).includes(value),
+                ),
+              );
+              return {
+                async order(orderColumn: string, opts: { ascending: boolean }) {
+                  return {
+                    data: sortRows(matching, orderColumn, opts.ascending),
+                    error: null,
+                  };
+                },
+              };
             },
             eq(column: string, value: unknown) {
               return {
@@ -124,8 +148,8 @@ function createFakeSupabase(options?: {
   return client as unknown as SupabaseClient;
 }
 
-function anecdote(title: string, body: string) {
-  return cardSchema.parse({ type: "anecdote", title, payload: { body } });
+function anecdote(title: string, body: string, tags: string[] = []) {
+  return cardSchema.parse({ type: "anecdote", title, tags, payload: { body } });
 }
 
 function quizPayload(correctIndex: number, explanation: string) {
@@ -180,6 +204,37 @@ describe("insertCard and listCards", () => {
     await expect(insertCard(client, anecdote("Doomed", "x"))).rejects.toThrow(
       "Failed to create Card: boom",
     );
+  });
+});
+
+describe("listCards with a Tag filter", () => {
+  it("returns only the Cards carrying the Tag", async () => {
+    const client = createFakeSupabase();
+
+    await insertCard(client, anecdote("Tagged", "a", ["histoire"]));
+    await insertCard(client, anecdote("Other Tag", "b", ["géo"]));
+    await insertCard(client, anecdote("Untagged", "c"));
+
+    const cards = await listCards(client, { tag: "histoire" });
+    expect(cards.map((card) => card.title)).toEqual(["Tagged"]);
+  });
+
+  it("normalizes the filter Tag before matching", async () => {
+    const client = createFakeSupabase();
+
+    await insertCard(client, anecdote("Tagged", "a", ["histoire"]));
+
+    const cards = await listCards(client, { tag: "  Histoire " });
+    expect(cards.map((card) => card.title)).toEqual(["Tagged"]);
+  });
+
+  it("returns every Card when the Tag is blank", async () => {
+    const client = createFakeSupabase();
+
+    await insertCard(client, anecdote("One", "a", ["histoire"]));
+    await insertCard(client, anecdote("Two", "b"));
+
+    expect(await listCards(client, { tag: "   " })).toHaveLength(2);
   });
 });
 

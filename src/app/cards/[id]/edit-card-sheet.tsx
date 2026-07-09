@@ -4,6 +4,7 @@ import { Save, Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { startTransition, useActionState } from "react";
 import { CardTypeFields } from "@/app/cards/card-type-fields";
+import { TagsField } from "@/app/cards/tags-field";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -99,6 +100,7 @@ function EditCardForm({ card }: { card: Card }) {
         ) : null}
       </div>
       <CardTypeFields card={card} />
+      <TagsField defaultTags={card.tags} />
       <div className="flex items-center gap-2">
         <Switch
           id="status"

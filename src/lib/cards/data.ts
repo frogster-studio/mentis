@@ -1,6 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { type Card, type CardData, cardSchema } from "@/lib/cards/schema";
+import {
+  type Card,
+  type CardData,
+  cardSchema,
+  normalizeTag,
+} from "@/lib/cards/schema";
 
 type CardRow = {
   id: string;
@@ -55,11 +60,18 @@ export async function insertCard(
   return rowToCard(row as CardRow);
 }
 
-export async function listCards(client: SupabaseClient): Promise<Card[]> {
-  const { data: rows, error } = await client
-    .from("cards")
-    .select("*")
-    .order("updated_at", { ascending: false });
+export async function listCards(
+  client: SupabaseClient,
+  options: { tag?: string } = {},
+): Promise<Card[]> {
+  // The filter Tag goes through the same normalization as stored Tags, so
+  // "Histoire " finds Cards tagged "histoire". A blank Tag means no filter.
+  const tag = normalizeTag(options.tag ?? "");
+  const base = client.from("cards").select("*");
+  const filtered = tag === "" ? base : base.contains("tags", [tag]);
+  const { data: rows, error } = await filtered.order("updated_at", {
+    ascending: false,
+  });
   if (error) {
     throw new Error(`Failed to list Cards: ${error.message}`);
   }

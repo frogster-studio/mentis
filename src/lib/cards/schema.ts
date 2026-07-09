@@ -33,9 +33,24 @@ const cardImageSchema = z.object({
   caption: z.string().optional(),
 });
 
+// Tags are stored normalized so "Histoire" and "histoire " are the same Tag.
+// The same rule applies to a Tag used as a list filter.
+export function normalizeTag(tag: string): string {
+  return tag.trim().toLowerCase();
+}
+
+const tagsSchema = z
+  .array(z.string())
+  .default([])
+  .transform((tags) => {
+    const unique = new Set(tags.map(normalizeTag));
+    unique.delete("");
+    return [...unique];
+  });
+
 const sharedFields = {
   title: z.string().trim().min(1, "Title is required."),
-  tags: z.array(z.string()).default([]),
+  tags: tagsSchema,
   status: z.enum(CARD_STATUSES).default("draft"),
   images: z.array(cardImageSchema).max(3).default([]),
 };
