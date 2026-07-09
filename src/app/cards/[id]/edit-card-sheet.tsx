@@ -125,9 +125,10 @@ function EditCardForm({
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
         // Picked Images process and upload first (ADR 0001); the action
-        // only ever receives their storage paths, never the files.
-        void images.attachTo(formData).then((ready) => {
-          if (ready) startTransition(() => formAction(formData));
+        // only ever receives their storage paths, never the files. A failed
+        // Image marks only itself — the Card save proceeds without it.
+        void images.attachTo(formData).then(() => {
+          startTransition(() => formAction(formData));
         });
       }}
       className="flex flex-col gap-4 p-4"

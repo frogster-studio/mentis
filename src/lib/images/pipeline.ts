@@ -64,3 +64,28 @@ export async function processImage<TImage>(
   }
   return blob;
 }
+
+export type ImageOutcome<TValue> =
+  | { status: "success"; value: TValue }
+  | { status: "error"; message: string };
+
+// Each Image resolves or fails on its own: one bad Image yields its own
+// error outcome and never throws the batch, so the Card save can carry the
+// successes and surface the failures.
+export async function settleImages<TSource, TValue>(
+  sources: TSource[],
+  process: (source: TSource) => Promise<TValue>,
+): Promise<ImageOutcome<TValue>[]> {
+  return Promise.all(
+    sources.map(async (source): Promise<ImageOutcome<TValue>> => {
+      try {
+        return { status: "success", value: await process(source) };
+      } catch (error) {
+        return {
+          status: "error",
+          message: error instanceof Error ? error.message : String(error),
+        };
+      }
+    }),
+  );
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, ArrowUp, X } from "lucide-react";
+import { ArrowDown, ArrowUp, RotateCcw, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -12,14 +12,22 @@ import {
   IMAGE_FILE_EXTENSIONS,
   imageDimensionsError,
   imageFormatError,
+  settleImages,
 } from "@/lib/images/pipeline";
 
 // Ordered Image list shared by the create and edit forms: up to three
 // Images, each with an optional Caption, reorderable and removable. Picked
 // files stay in the browser until save; attachTo processes and uploads them
 // then, stamping ordered path/Caption pairs onto the outgoing form data
-// (ADR 0001). Removing a stored Image only drops it from the list here —
-// the server deletes its storage object when the save lands.
+// (ADR 0001). Each Image succeeds or fails on its own — a failure marks
+// only its own Image and never blocks the Card save. Removing a stored
+// Image only drops it from the list here — the server deletes its storage
+// object when the save lands.
+
+// Shown on the red strip of a failed thumbnail. The underlying error goes
+// to the console: server action messages are masked in production, so the
+// raw text is not reliably user-readable.
+const IMAGE_SAVE_FAILED = "This Image failed to save.";
 
 // A Card Image already saved on the Card, shown from its public URL.
 export type StoredCardImage = {
@@ -39,17 +47,19 @@ type CardImageItem = {
   path: string | null;
   // Public URL for stored Images, blob: object URL for picked files.
   previewUrl: string;
+  // Set when this Image's last processing or upload attempt failed; shown
+  // as the red strip on its thumbnail. Ephemeral — never persisted.
+  error: string | null;
 };
 
 export type CardImagesSlot = {
   items: CardImageItem[];
   uploading: boolean;
-  uploadError: string | null;
   addFile: (file: File) => void;
   removeAt: (index: number) => void;
   moveBy: (index: number, offset: number) => void;
   setCaptionAt: (index: number, caption: string) => void;
-  attachTo: (formData: FormData) => Promise<boolean>;
+  attachTo: (formData: FormData) => Promise<void>;
 };
 
 export function useCardImages(
@@ -62,10 +72,10 @@ export function useCardImages(
       file: null,
       path: stored.path,
       previewUrl: stored.url,
+      error: null,
     })),
   );
   const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Object URLs live until revoked, so previews of picked files are released
   // when their Image leaves the list or the form unmounts.
@@ -90,10 +100,10 @@ export function useCardImages(
           file,
           path: null,
           previewUrl,
+          error: null,
         },
       ];
     });
-    setUploadError(null);
   }
 
   function removeAt(index: number) {
@@ -105,7 +115,6 @@ export function useCardImages(
       }
       return current.filter((_, i) => i !== index);
     });
-    setUploadError(null);
   }
 
   function moveBy(index: number, offset: number) {
@@ -124,9 +133,11 @@ export function useCardImages(
     );
   }
 
-  // Resolves to false when processing or uploading failed — the save must
-  // not proceed without the Images it was asked to carry.
-  async function attachTo(formData: FormData): Promise<boolean> {
+  // Processes and uploads every pending file independently, then stamps the
+  // ordered path/Caption pairs of the stored and successful Images onto the
+  // outgoing form data. A failure marks only its own Image with the red
+  // strip and leaves it off the form data — the Card save always proceeds.
+  async function attachTo(formData: FormData): Promise<void> {
     const paths = new Map<string, string>();
     for (const item of items) {
       if (item.path) paths.set(item.key, item.path);
@@ -134,23 +145,33 @@ export function useCardImages(
     const pending = items.filter((item) => item.file && !item.path);
     if (pending.length > 0) {
       setUploading(true);
-      setUploadError(null);
-      try {
-        for (const item of pending) {
-          const path = await uploadCardImage(item.file as File);
-          paths.set(item.key, path);
-          setItems((current) =>
-            current.map((c) => (c.key === item.key ? { ...c, path } : c)),
-          );
+      const pendingKeys = new Set(pending.map((item) => item.key));
+      setItems((current) =>
+        current.map((c) =>
+          pendingKeys.has(c.key) ? { ...c, error: null } : c,
+        ),
+      );
+      const outcomes = await settleImages(pending, (item) =>
+        uploadCardImage(item.file as File),
+      );
+      const failedKeys = new Set<string>();
+      outcomes.forEach((outcome, index) => {
+        const key = pending[index].key;
+        if (outcome.status === "success") {
+          paths.set(key, outcome.value);
+        } else {
+          console.error(`Card Image failed to save: ${outcome.message}`);
+          failedKeys.add(key);
         }
-      } catch {
-        setUploadError(
-          "Processing or uploading an Image failed. The Card was not saved.",
-        );
-        return false;
-      } finally {
-        setUploading(false);
-      }
+      });
+      setItems((current) =>
+        current.map((c) => {
+          if (failedKeys.has(c.key)) return { ...c, error: IMAGE_SAVE_FAILED };
+          const path = paths.get(c.key);
+          return path && !c.path ? { ...c, path } : c;
+        }),
+      );
+      setUploading(false);
     }
     for (const item of items) {
       const path = paths.get(item.key);
@@ -158,13 +179,11 @@ export function useCardImages(
       formData.append("imagePaths", path);
       formData.append("imageCaptions", item.caption);
     }
-    return true;
   }
 
   return {
     items,
     uploading,
-    uploadError,
     addFile,
     removeAt,
     moveBy,
@@ -200,21 +219,29 @@ export function ImagesField({ slot }: { slot: CardImagesSlot }) {
     slot.addFile(picked);
   }
 
-  const error = pickError ?? slot.uploadError;
-
   return (
     <div className="flex flex-col gap-2">
       <Label htmlFor="image">Images</Label>
       {slot.items.map((item, index) => (
         <div key={item.key} className="flex items-start gap-2">
-          {/* biome-ignore lint/performance/noImgElement: previews mix blob:
-              object URLs with unknown dimensions and storage URLs, which
-              next/image cannot optimize. */}
-          <img
-            src={item.previewUrl}
-            alt={`Illustration ${index + 1}`}
-            className="h-24 w-auto rounded-lg border border-border"
-          />
+          <div className="relative shrink-0">
+            {/* biome-ignore lint/performance/noImgElement: previews mix blob:
+                object URLs with unknown dimensions and storage URLs, which
+                next/image cannot optimize. */}
+            <img
+              src={item.previewUrl}
+              alt={`Illustration ${index + 1}`}
+              className="h-24 w-auto rounded-lg border border-border"
+            />
+            {item.error ? (
+              <p
+                role="alert"
+                className="absolute inset-x-0 bottom-0 rounded-b-lg bg-destructive px-2 py-1 text-white text-xs"
+              >
+                {item.error}
+              </p>
+            ) : null}
+          </div>
           <Input
             value={item.caption}
             placeholder="Caption (optional)"
@@ -226,7 +253,7 @@ export function ImagesField({ slot }: { slot: CardImagesSlot }) {
             variant="ghost"
             size="icon"
             aria-label={`Move Image ${index + 1} up`}
-            disabled={index === 0}
+            disabled={index === 0 || slot.uploading}
             onClick={() => slot.moveBy(index, -1)}
           >
             <ArrowUp />
@@ -236,16 +263,32 @@ export function ImagesField({ slot }: { slot: CardImagesSlot }) {
             variant="ghost"
             size="icon"
             aria-label={`Move Image ${index + 1} down`}
-            disabled={index === slot.items.length - 1}
+            disabled={index === slot.items.length - 1 || slot.uploading}
             onClick={() => slot.moveBy(index, 1)}
           >
             <ArrowDown />
           </Button>
+          {item.error ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={`Retry Image ${index + 1}`}
+              disabled={slot.uploading}
+              // Retry is a plain re-save: attachTo re-processes only Images
+              // without a path, so successful siblings never re-upload, and
+              // the save then carries this Image onto the Card.
+              onClick={(event) => event.currentTarget.form?.requestSubmit()}
+            >
+              <RotateCcw />
+            </Button>
+          ) : null}
           <Button
             type="button"
             variant="ghost"
             size="icon"
             aria-label={`Remove Image ${index + 1}`}
+            disabled={slot.uploading}
             onClick={() => slot.removeAt(index)}
           >
             <X />
@@ -274,9 +317,9 @@ export function ImagesField({ slot }: { slot: CardImagesSlot }) {
           Processing and uploading the Images…
         </p>
       ) : null}
-      {error ? (
+      {pickError ? (
         <p role="alert" className="text-destructive text-sm">
-          {error}
+          {pickError}
         </p>
       ) : null}
     </div>

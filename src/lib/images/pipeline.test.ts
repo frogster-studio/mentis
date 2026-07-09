@@ -5,6 +5,7 @@ import {
   imageDimensionsError,
   imageFormatError,
   processImage,
+  settleImages,
   WEBP_QUALITY,
 } from "@/lib/images/pipeline";
 
@@ -130,5 +131,52 @@ describe("processImage", () => {
         throw new Error("encoder exploded");
       }),
     ).rejects.toThrow("encoder exploded");
+  });
+});
+
+describe("settleImages", () => {
+  const encodedWebp = new Blob(["webp-bytes"], { type: "image/webp" });
+
+  it("yields a per-image error while sibling images succeed", async () => {
+    const sources = [
+      { image: "one", width: 1200, height: 1200 },
+      { image: "two", width: 1200, height: 1200 },
+      { image: "three", width: 1200, height: 1200 },
+    ];
+    const results = await settleImages(sources, (source) =>
+      processImage(source, async (image) => {
+        if (image === "two") throw new Error("encoder exploded");
+        return encodedWebp;
+      }),
+    );
+    expect(results).toEqual([
+      { status: "success", value: encodedWebp },
+      { status: "error", message: "encoder exploded" },
+      { status: "success", value: encodedWebp },
+    ]);
+  });
+
+  it("settles every image even when all fail", async () => {
+    const results = await settleImages(["a", "b"], async (source) => {
+      throw new Error(`${source} failed`);
+    });
+    expect(results).toEqual([
+      { status: "error", message: "a failed" },
+      { status: "error", message: "b failed" },
+    ]);
+  });
+
+  it("stringifies a non-Error failure", async () => {
+    const results = await settleImages([1], async () => {
+      throw "plain string";
+    });
+    expect(results).toEqual([{ status: "error", message: "plain string" }]);
+  });
+
+  it("resolves to an empty list without calling the processor", async () => {
+    const results = await settleImages([], async () => {
+      throw new Error("must not run");
+    });
+    expect(results).toEqual([]);
   });
 });
