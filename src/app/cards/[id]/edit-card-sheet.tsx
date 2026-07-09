@@ -1,6 +1,6 @@
 "use client";
 
-import { Save, Trash2 } from "lucide-react";
+import { Save, Trash2, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { startTransition, useActionState, useState } from "react";
 import { CardTypeFields } from "@/app/cards/card-type-fields";
@@ -33,9 +33,9 @@ import {
 } from "@/components/ui/select";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetDescription,
-  SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
@@ -84,12 +84,9 @@ export function EditCardSheet({
     >
       <SheetContent
         side="right"
-        className="overflow-y-auto data-[side=right]:w-1/2 data-[side=right]:sm:max-w-none"
+        showCloseButton={false}
+        className="overflow-y-auto p-0 data-[side=right]:w-1/2 data-[side=right]:sm:max-w-none"
       >
-        <SheetHeader>
-          <SheetTitle>Edit Card</SheetTitle>
-          <SheetDescription>{CARD_TYPE_LABELS[card.type]}</SheetDescription>
-        </SheetHeader>
         <EditCardForm key={card.id} card={card} storedImages={storedImages} />
       </SheetContent>
     </Sheet>
@@ -131,116 +128,135 @@ function EditCardForm({
           startTransition(() => formAction(formData));
         });
       }}
-      className="flex flex-col gap-4 p-4"
+      className="flex flex-col"
     >
       <input type="hidden" name="id" value={card.id} />
       <input type="hidden" name="type" value={type} />
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="card-type">Card Type</Label>
-        <Select
-          value={type}
-          onValueChange={(value) => {
-            // Picking another type only stages it; the select keeps showing
-            // the current type until the warning dialog is confirmed.
-            if (value !== type) setPendingType(value as CardType);
-          }}
-        >
-          <SelectTrigger id="card-type">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {CARD_TYPES.map((cardType) => (
-              <SelectItem key={cardType} value={cardType}>
-                {CARD_TYPE_LABELS[cardType]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <AlertDialog
-        open={pendingType !== null}
-        onOpenChange={(open) => {
-          if (!open) setPendingType(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              Switch to {pendingType ? CARD_TYPE_LABELS[pendingType] : ""}?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              The {CARD_TYPE_LABELS[type]} fields —{" "}
-              {CARD_TYPE_FIELD_SUMMARY[type]} — will be cleared. Title, Tags,
-              Status, and Images are kept. Nothing changes until you save the
-              Card.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (pendingType) setType(pendingType);
-              }}
-            >
-              Switch Type
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="title">Title</Label>
-        <Input
-          id="title"
-          name="title"
-          defaultValue={card.title}
-          aria-invalid={state?.errors.title ? true : undefined}
-        />
-        {state?.errors.title ? (
-          <p role="alert" className="text-destructive text-sm">
-            {state.errors.title}
-          </p>
-        ) : null}
-      </div>
-      {/* Keyed on the type so a confirmed switch remounts the fields empty —
-          without it, Anecdote ↔ Did You Know share a subtree and keep their
-          uncontrolled values. Back on the stored type, the saved payload
-          returns: nothing is lost until save. */}
-      <CardTypeFields key={type} card={type === card.type ? card : { type }} />
-      <ImagesField slot={images} />
-      <TagsField defaultTags={card.tags} />
-      <div className="flex items-center gap-2">
-        <Switch
-          id="status"
-          name="status"
-          value="published"
-          defaultChecked={card.status === "published"}
-        />
-        <Label htmlFor="status">Published</Label>
-      </div>
-      <div className="flex gap-4 text-muted-foreground text-xs">
-        <span>
-          Created {timestampFormatter.format(new Date(card.createdAt))}
-        </span>
-        <span>
-          Updated {timestampFormatter.format(new Date(card.updatedAt))}
-        </span>
-      </div>
-      {state?.errors.form ? (
-        <p role="alert" className="text-destructive text-sm">
-          {state.errors.form}
-        </p>
-      ) : null}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b bg-popover px-4 py-3">
+        <div className="flex flex-col gap-0.5">
+          <SheetTitle>Edit Card</SheetTitle>
+          <SheetDescription>{CARD_TYPE_LABELS[card.type]}</SheetDescription>
+        </div>
+        <div className="flex items-center gap-2">
+          {state?.savedAt && !pending ? (
+            <span className="text-muted-foreground text-xs">Saved</span>
+          ) : null}
           <Button type="submit" disabled={pending || images.uploading}>
             <Save />
             {pending || images.uploading ? "Saving…" : "Save Card"}
           </Button>
-          {state?.savedAt && !pending ? (
-            <span className="text-muted-foreground text-xs">Saved</span>
+          <DeleteCardButton card={card} />
+          <SheetClose asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Close"
+            >
+              <X />
+            </Button>
+          </SheetClose>
+        </div>
+      </div>
+      <div className="flex flex-col gap-4 p-4">
+        {state?.errors.form ? (
+          <p role="alert" className="text-destructive text-sm">
+            {state.errors.form}
+          </p>
+        ) : null}
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="card-type">Card Type</Label>
+          <Select
+            value={type}
+            onValueChange={(value) => {
+              // Picking another type only stages it; the select keeps showing
+              // the current type until the warning dialog is confirmed.
+              if (value !== type) setPendingType(value as CardType);
+            }}
+          >
+            <SelectTrigger id="card-type">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {CARD_TYPES.map((cardType) => (
+                <SelectItem key={cardType} value={cardType}>
+                  {CARD_TYPE_LABELS[cardType]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <AlertDialog
+          open={pendingType !== null}
+          onOpenChange={(open) => {
+            if (!open) setPendingType(null);
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Switch to {pendingType ? CARD_TYPE_LABELS[pendingType] : ""}?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                The {CARD_TYPE_LABELS[type]} fields —{" "}
+                {CARD_TYPE_FIELD_SUMMARY[type]} — will be cleared. Title, Tags,
+                Status, and Images are kept. Nothing changes until you save the
+                Card.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (pendingType) setType(pendingType);
+                }}
+              >
+                Switch Type
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="title">Title</Label>
+          <Input
+            id="title"
+            name="title"
+            defaultValue={card.title}
+            aria-invalid={state?.errors.title ? true : undefined}
+          />
+          {state?.errors.title ? (
+            <p role="alert" className="text-destructive text-sm">
+              {state.errors.title}
+            </p>
           ) : null}
         </div>
-        <DeleteCardButton card={card} />
+        {/* Keyed on the type so a confirmed switch remounts the fields empty —
+          without it, Anecdote ↔ Did You Know share a subtree and keep their
+          uncontrolled values. Back on the stored type, the saved payload
+          returns: nothing is lost until save. */}
+        <CardTypeFields
+          key={type}
+          card={type === card.type ? card : { type }}
+        />
+        <ImagesField slot={images} />
+        <TagsField defaultTags={card.tags} />
+        <div className="flex items-center gap-2">
+          <Switch
+            id="status"
+            name="status"
+            value="published"
+            defaultChecked={card.status === "published"}
+          />
+          <Label htmlFor="status">Published</Label>
+        </div>
+        <div className="flex gap-4 text-muted-foreground text-xs">
+          <span>
+            Created {timestampFormatter.format(new Date(card.createdAt))}
+          </span>
+          <span>
+            Updated {timestampFormatter.format(new Date(card.updatedAt))}
+          </span>
+        </div>
       </div>
     </form>
   );

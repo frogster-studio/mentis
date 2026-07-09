@@ -16,6 +16,12 @@ function SheetPortal({
   return <SheetPrimitive.Portal data-slot="sheet-portal" {...props} />;
 }
 
+function SheetClose({
+  ...props
+}: React.ComponentProps<typeof SheetPrimitive.Close>) {
+  return <SheetPrimitive.Close data-slot="sheet-close" {...props} />;
+}
+
 function SheetOverlay({
   className,
   ...props
@@ -72,16 +78,6 @@ function SheetContent({
   );
 }
 
-function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="sheet-header"
-      className={cn("flex flex-col gap-0.5 p-4", className)}
-      {...props}
-    />
-  );
-}
-
 function SheetTitle({
   className,
   ...props
@@ -111,4 +107,4 @@ function SheetDescription({
   );
 }
 
-export { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle };
+export { Sheet, SheetClose, SheetContent, SheetDescription, SheetTitle };
