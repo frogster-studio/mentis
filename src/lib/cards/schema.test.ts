@@ -27,7 +27,7 @@ describe("cardSchema", () => {
       ...validAnecdote,
       payload: { body },
     });
-    expect(result.payload.body).toBe(body);
+    expect(result.payload).toEqual({ body });
   });
 
   it("rejects a missing Title", () => {
@@ -75,5 +75,66 @@ describe("cardSchema", () => {
     expect(cardSchema.safeParse({ ...validAnecdote, images }).success).toBe(
       false,
     );
+  });
+});
+
+const validQuiz = {
+  type: "quiz",
+  title: "La prise de la Bastille",
+  payload: {
+    question: "En quelle année la Bastille a-t-elle été prise ?",
+    choices: [
+      { text: "1789", correct: true },
+      { text: "1792", correct: false },
+      { text: "1848 (belle année aussi)", correct: false },
+      { text: "1815", correct: false },
+    ],
+    explanation: "Le 14 juillet 1789, jour devenu fête nationale.",
+  },
+};
+
+function quizWithChoices(choices: { text: string; correct: boolean }[]) {
+  return { ...validQuiz, payload: { ...validQuiz.payload, choices } };
+}
+
+describe("cardSchema — Quiz", () => {
+  it("accepts a valid Quiz", () => {
+    const result = cardSchema.parse(validQuiz);
+    expect(result).toMatchObject({
+      type: "quiz",
+      title: "La prise de la Bastille",
+      payload: validQuiz.payload,
+    });
+  });
+
+  it("rejects three or five Choices", () => {
+    for (const count of [3, 5]) {
+      const choices = Array.from({ length: count }, (_, index) => ({
+        text: `Choix ${index + 1}`,
+        correct: index === 0,
+      }));
+      expect(cardSchema.safeParse(quizWithChoices(choices)).success).toBe(
+        false,
+      );
+    }
+  });
+
+  it("rejects zero or two correct Choices", () => {
+    for (const correctCount of [0, 2]) {
+      const choices = validQuiz.payload.choices.map((choice, index) => ({
+        ...choice,
+        correct: index < correctCount,
+      }));
+      expect(cardSchema.safeParse(quizWithChoices(choices)).success).toBe(
+        false,
+      );
+    }
+  });
+
+  it("rejects a Choice with empty text", () => {
+    const choices = validQuiz.payload.choices.map((choice, index) =>
+      index === 2 ? { ...choice, text: "   " } : choice,
+    );
+    expect(cardSchema.safeParse(quizWithChoices(choices)).success).toBe(false);
   });
 });

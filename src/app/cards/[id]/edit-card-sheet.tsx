@@ -3,7 +3,7 @@
 import { Save, Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { startTransition, useActionState } from "react";
-
+import { AnecdoteFields, QuizFields } from "@/app/cards/card-type-fields";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,7 +26,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import { deleteCard, updateCard } from "@/lib/cards/actions";
 import { CARD_TYPE_LABELS, type Card } from "@/lib/cards/schema";
 
@@ -99,15 +98,11 @@ function EditCardForm({ card }: { card: Card }) {
           </p>
         ) : null}
       </div>
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="body">Body</Label>
-        <Textarea
-          id="body"
-          name="body"
-          rows={12}
-          defaultValue={card.payload.body}
-        />
-      </div>
+      {card.type === "quiz" ? (
+        <QuizFields payload={card.payload} />
+      ) : (
+        <AnecdoteFields payload={card.payload} />
+      )}
       <div className="flex items-center gap-2">
         <Switch
           id="status"

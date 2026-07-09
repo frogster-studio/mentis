@@ -18,6 +18,12 @@ export const CARD_TYPE_LABELS: Record<CardType, string> = {
   riddle: "Riddle",
 };
 
+// Card Types creatable in the UI so far; later slices grow this until it
+// matches CARD_TYPES.
+export const ENABLED_CARD_TYPES = ["anecdote", "quiz"] as const;
+
+export type EnabledCardType = (typeof ENABLED_CARD_TYPES)[number];
+
 export const CARD_STATUSES = ["draft", "published"] as const;
 
 export type CardStatus = (typeof CARD_STATUSES)[number];
@@ -44,13 +50,39 @@ const anecdotePayloadSchema = z.object({
   body: z.string(),
 });
 
+const quizChoiceSchema = z.object({
+  text: z.string().trim().min(1, "Every Choice needs text."),
+  correct: z.boolean(),
+});
+
+const quizPayloadSchema = z
+  .object({
+    question: z.string(),
+    choices: z
+      .array(quizChoiceSchema)
+      .length(4, "A Quiz needs exactly four Choices."),
+    explanation: z.string(),
+  })
+  .refine(
+    (payload) =>
+      payload.choices.filter((choice) => choice.correct).length === 1,
+    { message: "Mark exactly one Choice as correct.", path: ["choices"] },
+  );
+
+export type QuizPayload = z.output<typeof quizPayloadSchema>;
+
 // The single source of truth for Card structure, shared between form and
-// server. Later slices add the other four Card Type members.
+// server. Later slices add the other three Card Type members.
 export const cardSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("anecdote"),
     ...sharedFields,
     payload: anecdotePayloadSchema,
+  }),
+  z.object({
+    type: z.literal("quiz"),
+    ...sharedFields,
+    payload: quizPayloadSchema,
   }),
 ]);
 

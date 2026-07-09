@@ -128,6 +128,21 @@ function anecdote(title: string, body: string) {
   return cardSchema.parse({ type: "anecdote", title, payload: { body } });
 }
 
+function quizPayload(correctIndex: number, explanation: string) {
+  return {
+    question: "En quelle année la Bastille a-t-elle été prise ?",
+    choices: ["1789", "1792", "1848", "1815"].map((text, index) => ({
+      text,
+      correct: index === correctIndex,
+    })),
+    explanation,
+  };
+}
+
+function quiz(title: string, payload: ReturnType<typeof quizPayload>) {
+  return cardSchema.parse({ type: "quiz", title, payload });
+}
+
 describe("insertCard and listCards", () => {
   it("round-trips a created Anecdote through the list", async () => {
     const client = createFakeSupabase();
@@ -186,11 +201,11 @@ describe("updateCard", () => {
     const client = createFakeSupabase();
 
     const created = await insertCard(client, anecdote("Avant", "ancien"));
-    const updated = await updateCard(client, created.id, {
-      ...created,
-      title: "Après",
-      payload: { body: "nouveau" },
-    });
+    const updated = await updateCard(
+      client,
+      created.id,
+      anecdote("Après", "nouveau"),
+    );
 
     expect(updated).toMatchObject({
       id: created.id,
@@ -233,6 +248,44 @@ describe("updateCard", () => {
     await expect(
       updateCard(client, "00000000-0000-0000-0000-000000000001", card),
     ).rejects.toThrow("Failed to update Card: boom");
+  });
+});
+
+describe("Quiz Cards", () => {
+  it("round-trips a Quiz create through the list", async () => {
+    const client = createFakeSupabase();
+    const payload = quizPayload(0, "Le 14 juillet 1789.");
+
+    const created = await insertCard(client, quiz("Bastille", payload));
+    const cards = await listCards(client);
+
+    expect(cards).toEqual([created]);
+    expect(cards[0]).toMatchObject({
+      type: "quiz",
+      title: "Bastille",
+      status: "draft",
+      payload,
+    });
+  });
+
+  it("round-trips a Quiz update with a changed correct Choice", async () => {
+    const client = createFakeSupabase();
+
+    const created = await insertCard(
+      client,
+      quiz("Bastille", quizPayload(1, "À corriger.")),
+    );
+    const newPayload = quizPayload(0, "Le 14 juillet 1789.");
+
+    const updated = await updateCard(
+      client,
+      created.id,
+      quiz("Bastille", newPayload),
+    );
+
+    expect(updated.payload).toEqual(newPayload);
+    expect(updated.updatedAt > created.updatedAt).toBe(true);
+    expect(await getCard(client, created.id)).toEqual(updated);
   });
 });
 

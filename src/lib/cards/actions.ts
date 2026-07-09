@@ -21,6 +21,26 @@ export type CreateCardState = {
   };
 };
 
+// Rebuilds the type-specific payload from its form fields. Field names line
+// up with the inputs in card-type-fields.tsx; validation stays in the schema.
+function payloadFromFormData(
+  type: FormDataEntryValue | null,
+  formData: FormData,
+): unknown {
+  if (type === "quiz") {
+    const correctChoice = formData.get("correctChoice");
+    return {
+      question: String(formData.get("question") ?? ""),
+      choices: [0, 1, 2, 3].map((index) => ({
+        text: String(formData.get(`choice-${index}`) ?? ""),
+        correct: correctChoice === String(index),
+      })),
+      explanation: String(formData.get("explanation") ?? ""),
+    };
+  }
+  return { body: String(formData.get("body") ?? "") };
+}
+
 // Server actions are reachable by direct POST, so the route guard in the
 // proxy is not enough on its own.
 async function requireSession(): Promise<void> {
@@ -41,10 +61,11 @@ export async function createCard(
 ): Promise<CreateCardState> {
   await requireSession();
 
+  const type = formData.get("type");
   const parsed = cardSchema.safeParse({
-    type: formData.get("type"),
+    type,
     title: String(formData.get("title") ?? ""),
-    payload: { body: String(formData.get("body") ?? "") },
+    payload: payloadFromFormData(type, formData),
   });
   if (!parsed.success) {
     const errors: CreateCardState["errors"] = {};
@@ -97,13 +118,14 @@ export async function updateCard(
     return { errors: { form: "This Card no longer exists." } };
   }
 
+  const type = formData.get("type");
   const parsed = cardSchema.safeParse({
-    type: formData.get("type"),
+    type,
     title: String(formData.get("title") ?? ""),
     status: formData.get("status") === "published" ? "published" : "draft",
     tags: existing.tags,
     images: existing.images,
-    payload: { body: String(formData.get("body") ?? "") },
+    payload: payloadFromFormData(type, formData),
   });
   if (!parsed.success) {
     const errors: UpdateCardState["errors"] = {};
