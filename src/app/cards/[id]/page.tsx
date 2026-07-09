@@ -44,16 +44,17 @@ export default async function CardPage({
     notFound();
   }
 
-  // The public URL is built here because SUPABASE_URL is server-only.
-  const firstImage = card.images[0];
-  const imageUrl = firstImage
-    ? cardImagePublicUrl(client, firstImage.path)
-    : null;
+  // The public URLs are built here because SUPABASE_URL is server-only.
+  const storedImages = card.images.map((image) => ({
+    path: image.path,
+    caption: image.caption ?? "",
+    url: cardImagePublicUrl(client, image.path),
+  }));
 
   return (
     <>
       <CardLibrary activeCardId={card.id} listParams={listParams} />
-      <EditCardSheet card={card} imageUrl={imageUrl} />
+      <EditCardSheet card={card} storedImages={storedImages} />
     </>
   );
 }

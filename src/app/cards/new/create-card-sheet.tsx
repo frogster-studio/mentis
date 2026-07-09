@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { startTransition, useActionState } from "react";
 
 import { CardTypeFields } from "@/app/cards/card-type-fields";
-import { ImageField, useCardImage } from "@/app/cards/image-field";
+import { ImagesField, useCardImages } from "@/app/cards/image-field";
 import { TagsField } from "@/app/cards/tags-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,7 +71,7 @@ function CardTypePicker() {
 
 function CreateCardForm({ type }: { type: CardType }) {
   const [state, formAction, pending] = useActionState(createCard, undefined);
-  const image = useCardImage();
+  const images = useCardImages();
 
   return (
     <form
@@ -82,9 +82,9 @@ function CreateCardForm({ type }: { type: CardType }) {
         // validation fails.
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
-        // A picked Image processes and uploads first (ADR 0001); the action
-        // only ever receives its storage path, never the file.
-        void image.attachTo(formData).then((ready) => {
+        // Picked Images process and upload first (ADR 0001); the action
+        // only ever receives their storage paths, never the files.
+        void images.attachTo(formData).then((ready) => {
           if (ready) startTransition(() => formAction(formData));
         });
       }}
@@ -116,7 +116,7 @@ function CreateCardForm({ type }: { type: CardType }) {
         ) : null}
       </div>
       <CardTypeFields card={{ type }} />
-      <ImageField slot={image} />
+      <ImagesField slot={images} />
       <TagsField />
       {state?.errors.form ? (
         <p role="alert" className="text-destructive text-sm">
@@ -125,11 +125,11 @@ function CreateCardForm({ type }: { type: CardType }) {
       ) : null}
       <Button
         type="submit"
-        disabled={pending || image.uploading}
+        disabled={pending || images.uploading}
         className="self-start"
       >
         <Save />
-        {pending || image.uploading ? "Saving…" : "Save Card"}
+        {pending || images.uploading ? "Saving…" : "Save Card"}
       </Button>
     </form>
   );

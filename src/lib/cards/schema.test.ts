@@ -78,6 +78,34 @@ describe("cardSchema", () => {
   });
 });
 
+describe("cardSchema — Images", () => {
+  it("accepts three Images and keeps their optional Captions", () => {
+    const images = [
+      { path: "a.webp", order: 0, caption: "La une" },
+      { path: "b.webp", order: 1 },
+      { path: "c.webp", order: 2, caption: "La der" },
+    ];
+    const result = cardSchema.parse({ ...validAnecdote, images });
+    expect(result.images).toEqual(images);
+  });
+
+  it("returns Images sorted by order regardless of stored order", () => {
+    const result = cardSchema.parse({
+      ...validAnecdote,
+      images: [
+        { path: "last.webp", order: 2 },
+        { path: "first.webp", order: 0 },
+        { path: "middle.webp", order: 1 },
+      ],
+    });
+    expect(result.images.map((image) => image.path)).toEqual([
+      "first.webp",
+      "middle.webp",
+      "last.webp",
+    ]);
+  });
+});
+
 describe("cardSchema — Tags", () => {
   it("normalizes Tags: trims, lowercases, and drops blanks and duplicates", () => {
     const result = cardSchema.parse({

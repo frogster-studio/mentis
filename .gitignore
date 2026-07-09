@@ -13,10 +13,9 @@
 # testing
 /coverage
 
-# next.js
+# next.js — .next-preview* are per-session dev-server caches, never committed
 /.next/
-/.next-preview/
-/.next-preview-b/
+/.next-preview*/
 /out/
 
 # production

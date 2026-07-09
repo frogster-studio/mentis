@@ -33,6 +33,16 @@ const cardImageSchema = z.object({
   caption: z.string().optional(),
 });
 
+export const MAX_CARD_IMAGES = 3;
+
+// Parsed Images always come out in display order, whatever order the row
+// stored them in.
+const imagesSchema = z
+  .array(cardImageSchema)
+  .max(MAX_CARD_IMAGES, "A Card carries at most three Images.")
+  .default([])
+  .transform((images) => [...images].sort((a, b) => a.order - b.order));
+
 // Tags are stored normalized so "Histoire" and "histoire " are the same Tag.
 // The same rule applies to a Tag used as a list filter.
 export function normalizeTag(tag: string): string {
@@ -52,7 +62,7 @@ const sharedFields = {
   title: z.string().trim().min(1, "Title is required."),
   tags: tagsSchema,
   status: z.enum(CARD_STATUSES).default("draft"),
-  images: z.array(cardImageSchema).max(3).default([]),
+  images: imagesSchema,
 };
 
 const anecdotePayloadSchema = z.object({

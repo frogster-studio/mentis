@@ -10,3 +10,16 @@ export function cardImagePublicUrl(
   return client.storage.from(CARD_IMAGES_BUCKET).getPublicUrl(path).data
     .publicUrl;
 }
+
+// Removing an Image from a Card must also drop its object, or the bucket
+// accumulates orphans no row references.
+export async function removeCardImages(
+  client: SupabaseClient,
+  paths: string[],
+): Promise<void> {
+  if (paths.length === 0) return;
+  const { error } = await client.storage.from(CARD_IMAGES_BUCKET).remove(paths);
+  if (error) {
+    throw new Error(`Failed to remove Card Images: ${error.message}`);
+  }
+}

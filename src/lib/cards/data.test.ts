@@ -685,6 +685,128 @@ describe("Card Type change", () => {
   });
 });
 
+function anecdoteWithImages(
+  title: string,
+  images: { path: string; order: number; caption?: string }[],
+) {
+  return cardSchema.parse({
+    type: "anecdote",
+    title,
+    images,
+    payload: { body: "corps" },
+  });
+}
+
+describe("Card Images", () => {
+  const threeImages = [
+    { path: "a.webp", order: 0, caption: "Première" },
+    { path: "b.webp", order: 1 },
+    { path: "c.webp", order: 2, caption: "Dernière" },
+  ];
+
+  it("round-trips the Image list order through a reorder", async () => {
+    const client = createFakeSupabase();
+
+    const created = await insertCard(
+      client,
+      anecdoteWithImages("Illustrée", threeImages),
+    );
+    expect(created.images.map((image) => image.path)).toEqual([
+      "a.webp",
+      "b.webp",
+      "c.webp",
+    ]);
+
+    // Mirrors a save after moving the last Image first: order reassigned
+    // by display index, Captions travelling with their Image.
+    const reordered = await updateCard(client, created.id, {
+      ...created,
+      images: [
+        { path: "c.webp", order: 0, caption: "Dernière" },
+        { path: "a.webp", order: 1, caption: "Première" },
+        { path: "b.webp", order: 2 },
+      ],
+    });
+
+    const reloaded = await getCard(client, created.id);
+    expect(reloaded).toEqual(reordered);
+    expect(reloaded?.images.map((image) => image.path)).toEqual([
+      "c.webp",
+      "a.webp",
+      "b.webp",
+    ]);
+    expect(reloaded?.images[0].caption).toBe("Dernière");
+  });
+
+  it("persists Caption edits and absent Captions alike", async () => {
+    const client = createFakeSupabase();
+
+    const created = await insertCard(
+      client,
+      anecdoteWithImages("Légendée", threeImages),
+    );
+    expect(created.images.map((image) => image.caption)).toEqual([
+      "Première",
+      undefined,
+      "Dernière",
+    ]);
+
+    await updateCard(client, created.id, {
+      ...created,
+      images: [
+        { path: "a.webp", order: 0, caption: "Première (retouchée)" },
+        { path: "b.webp", order: 1, caption: "Nouvelle" },
+        { path: "c.webp", order: 2 },
+      ],
+    });
+
+    const reloaded = await getCard(client, created.id);
+    expect(reloaded?.images.map((image) => image.caption)).toEqual([
+      "Première (retouchée)",
+      "Nouvelle",
+      undefined,
+    ]);
+  });
+
+  it("keeps order and Captions through an unrelated edit", async () => {
+    const client = createFakeSupabase();
+
+    const created = await insertCard(
+      client,
+      anecdoteWithImages("Avant", threeImages),
+    );
+
+    await updateCard(client, created.id, { ...created, title: "Après" });
+
+    const reloaded = await getCard(client, created.id);
+    expect(reloaded?.title).toBe("Après");
+    expect(reloaded?.images).toEqual(created.images);
+  });
+
+  it("round-trips removing an Image from the Card", async () => {
+    const client = createFakeSupabase();
+
+    const created = await insertCard(
+      client,
+      anecdoteWithImages("Allégée", threeImages),
+    );
+
+    await updateCard(client, created.id, {
+      ...created,
+      images: [
+        { path: "a.webp", order: 0, caption: "Première" },
+        { path: "c.webp", order: 1, caption: "Dernière" },
+      ],
+    });
+
+    const reloaded = await getCard(client, created.id);
+    expect(reloaded?.images.map((image) => image.path)).toEqual([
+      "a.webp",
+      "c.webp",
+    ]);
+  });
+});
+
 describe("deleteCard", () => {
   it("hard-deletes a Card and leaves the others alone", async () => {
     const client = createFakeSupabase();

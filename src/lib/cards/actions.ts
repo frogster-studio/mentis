@@ -11,6 +11,7 @@ import {
   updateCard as updateCardRow,
 } from "@/lib/cards/data";
 import { cardSchema } from "@/lib/cards/schema";
+import { removeCardImages } from "@/lib/images/storage";
 import { createServiceClient } from "@/lib/supabase";
 
 export type CreateCardState = {
@@ -60,14 +61,21 @@ function payloadFromFormData(
   return { body: String(formData.get("body") ?? "") };
 }
 
-// The browser uploads the processed webp itself (ADR 0001) and hands the
-// action only the resulting storage path via the imagePath field.
+// The browser uploads each processed webp itself (ADR 0001) and hands the
+// action only the resulting storage paths, paired index-by-index with their
+// Captions. The pairs arrive in display order; the form always sends the
+// Card's full Image list, so this is authoritative — an empty list means
+// the Card carries no Images.
 function imagesFromFormData(
   formData: FormData,
-): { path: string; order: number }[] | undefined {
-  const imagePath = formData.get("imagePath");
-  if (typeof imagePath !== "string" || imagePath === "") return undefined;
-  return [{ path: imagePath, order: 0 }];
+): { path: string; order: number; caption?: string }[] {
+  const paths = formData.getAll("imagePaths").map(String);
+  const captions = formData.getAll("imageCaptions").map(String);
+  return paths.map((path, index) => {
+    const caption = (captions[index] ?? "").trim();
+    // A blank Caption is stored as absent, not as an empty string.
+    return { path, order: index, ...(caption === "" ? {} : { caption }) };
+  });
 }
 
 export async function createCard(
@@ -81,7 +89,7 @@ export async function createCard(
     type,
     title: String(formData.get("title") ?? ""),
     tags: formData.getAll("tags").map(String),
-    images: imagesFromFormData(formData) ?? [],
+    images: imagesFromFormData(formData),
     payload: payloadFromFormData(type, formData),
   });
   if (!parsed.success) {
@@ -123,8 +131,8 @@ export async function updateCard(
   const id = String(formData.get("id") ?? "");
   const client = createServiceClient();
 
-  // A fresh upload replaces the Image slot; without one the stored Images
-  // carry through untouched.
+  // The stored Images are needed to spot the ones this edit removed, whose
+  // storage objects must go once the save lands.
   let existing: Awaited<ReturnType<typeof getCard>>;
   try {
     existing = await getCard(client, id);
@@ -141,7 +149,7 @@ export async function updateCard(
     title: String(formData.get("title") ?? ""),
     status: formData.get("status") === "published" ? "published" : "draft",
     tags: formData.getAll("tags").map(String),
-    images: imagesFromFormData(formData) ?? existing.images,
+    images: imagesFromFormData(formData),
     payload: payloadFromFormData(type, formData),
   });
   if (!parsed.success) {
@@ -161,6 +169,18 @@ export async function updateCard(
     saved = await updateCardRow(client, id, parsed.data);
   } catch {
     return { errors: { form: "Saving the Card failed. Try again." } };
+  }
+
+  // Storage objects go only after the row update stands, and a cleanup
+  // failure must not fail a save that already succeeded.
+  const keptPaths = new Set(parsed.data.images.map((image) => image.path));
+  const removedPaths = existing.images
+    .map((image) => image.path)
+    .filter((path) => !keptPaths.has(path));
+  try {
+    await removeCardImages(client, removedPaths);
+  } catch (error) {
+    console.error(error);
   }
 
   revalidatePath("/");

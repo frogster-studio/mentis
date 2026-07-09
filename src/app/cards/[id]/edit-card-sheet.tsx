@@ -4,7 +4,11 @@ import { Save, Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { startTransition, useActionState, useState } from "react";
 import { CardTypeFields } from "@/app/cards/card-type-fields";
-import { ImageField, useCardImage } from "@/app/cards/image-field";
+import {
+  ImagesField,
+  type StoredCardImage,
+  useCardImages,
+} from "@/app/cards/image-field";
 import { TagsField } from "@/app/cards/tags-field";
 import {
   AlertDialog,
@@ -60,10 +64,10 @@ const CARD_TYPE_FIELD_SUMMARY: Record<CardType, string> = {
 
 export function EditCardSheet({
   card,
-  imageUrl,
+  storedImages,
 }: {
   card: Card;
-  imageUrl: string | null;
+  storedImages: StoredCardImage[];
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -86,7 +90,7 @@ export function EditCardSheet({
           <SheetTitle>Edit Card</SheetTitle>
           <SheetDescription>{CARD_TYPE_LABELS[card.type]}</SheetDescription>
         </SheetHeader>
-        <EditCardForm key={card.id} card={card} imageUrl={imageUrl} />
+        <EditCardForm key={card.id} card={card} storedImages={storedImages} />
       </SheetContent>
     </Sheet>
   );
@@ -94,13 +98,13 @@ export function EditCardSheet({
 
 function EditCardForm({
   card,
-  imageUrl,
+  storedImages,
 }: {
   card: Card;
-  imageUrl: string | null;
+  storedImages: StoredCardImage[];
 }) {
   const [state, formAction, pending] = useActionState(updateCard, undefined);
-  const image = useCardImage();
+  const images = useCardImages(storedImages);
   // The form's Card Type — diverges from the stored card.type between a
   // confirmed type change and the next save.
   const [type, setType] = useState<CardType>(card.type);
@@ -120,9 +124,9 @@ function EditCardForm({
         // that snaps the Switch back to its mount-time state.
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
-        // A picked Image processes and uploads first (ADR 0001); the action
-        // only ever receives its storage path, never the file.
-        void image.attachTo(formData).then((ready) => {
+        // Picked Images process and upload first (ADR 0001); the action
+        // only ever receives their storage paths, never the files.
+        void images.attachTo(formData).then((ready) => {
           if (ready) startTransition(() => formAction(formData));
         });
       }}
@@ -201,7 +205,7 @@ function EditCardForm({
           uncontrolled values. Back on the stored type, the saved payload
           returns: nothing is lost until save. */}
       <CardTypeFields key={type} card={type === card.type ? card : { type }} />
-      <ImageField slot={image} storedImageUrl={imageUrl} />
+      <ImagesField slot={images} />
       <TagsField defaultTags={card.tags} />
       <div className="flex items-center gap-2">
         <Switch
@@ -227,9 +231,9 @@ function EditCardForm({
       ) : null}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button type="submit" disabled={pending || image.uploading}>
+          <Button type="submit" disabled={pending || images.uploading}>
             <Save />
-            {pending || image.uploading ? "Saving…" : "Save Card"}
+            {pending || images.uploading ? "Saving…" : "Save Card"}
           </Button>
           {state?.savedAt && !pending ? (
             <span className="text-muted-foreground text-xs">Saved</span>

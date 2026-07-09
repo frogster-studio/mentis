@@ -14,6 +14,13 @@
       "runtimeArgs": ["-c", "NEXT_DIST_DIR=.next-preview-b npm run dev"],
       "port": 3000,
       "autoPort": true
+    },
+    {
+      "name": "dev-c",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "NEXT_DIST_DIR=.next-preview-c npm run dev"],
+      "port": 3000,
+      "autoPort": true
     }
   ]
 }
