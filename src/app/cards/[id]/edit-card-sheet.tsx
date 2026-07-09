@@ -2,7 +2,7 @@
 
 import { Save, Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { startTransition, useActionState } from "react";
+import { startTransition, useActionState, useState } from "react";
 import { CardTypeFields } from "@/app/cards/card-type-fields";
 import { TagsField } from "@/app/cards/tags-field";
 import {
@@ -20,6 +20,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -28,13 +35,27 @@ import {
 } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { deleteCard, updateCard } from "@/lib/cards/actions";
-import { CARD_TYPE_LABELS, type Card } from "@/lib/cards/schema";
+import {
+  CARD_TYPE_LABELS,
+  CARD_TYPES,
+  type Card,
+  type CardType,
+} from "@/lib/cards/schema";
 
 const timestampFormatter = new Intl.DateTimeFormat("en-GB", {
   dateStyle: "medium",
   timeStyle: "short",
   timeZone: "Europe/Paris",
 });
+
+// Named in the type-change warning so it says exactly what will be cleared.
+const CARD_TYPE_FIELD_SUMMARY: Record<CardType, string> = {
+  quiz: "the Question, the four Choices, and the Explanation",
+  "true-false": "the Assertion, the answer, and the Explanation",
+  anecdote: "the Body",
+  "did-you-know": "the Body",
+  riddle: "the Clues, the Answer, and the Bonus Info",
+};
 
 export function EditCardSheet({ card }: { card: Card }) {
   const router = useRouter();
@@ -66,6 +87,12 @@ export function EditCardSheet({ card }: { card: Card }) {
 
 function EditCardForm({ card }: { card: Card }) {
   const [state, formAction, pending] = useActionState(updateCard, undefined);
+  // The form's Card Type — diverges from the stored card.type between a
+  // confirmed type change and the next save.
+  const [type, setType] = useState<CardType>(card.type);
+  // A different type picked in the select, staged until the warning dialog
+  // is confirmed or cancelled.
+  const [pendingType, setPendingType] = useState<CardType | null>(null);
 
   return (
     <form
@@ -84,7 +111,59 @@ function EditCardForm({ card }: { card: Card }) {
       className="flex flex-col gap-4 p-4"
     >
       <input type="hidden" name="id" value={card.id} />
-      <input type="hidden" name="type" value={card.type} />
+      <input type="hidden" name="type" value={type} />
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="card-type">Card Type</Label>
+        <Select
+          value={type}
+          onValueChange={(value) => {
+            // Picking another type only stages it; the select keeps showing
+            // the current type until the warning dialog is confirmed.
+            if (value !== type) setPendingType(value as CardType);
+          }}
+        >
+          <SelectTrigger id="card-type">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {CARD_TYPES.map((cardType) => (
+              <SelectItem key={cardType} value={cardType}>
+                {CARD_TYPE_LABELS[cardType]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <AlertDialog
+        open={pendingType !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingType(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Switch to {pendingType ? CARD_TYPE_LABELS[pendingType] : ""}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              The {CARD_TYPE_LABELS[type]} fields —{" "}
+              {CARD_TYPE_FIELD_SUMMARY[type]} — will be cleared. Title, Tags,
+              Status, and Images are kept. Nothing changes until you save the
+              Card.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingType) setType(pendingType);
+              }}
+            >
+              Switch Type
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <div className="flex flex-col gap-2">
         <Label htmlFor="title">Title</Label>
         <Input
@@ -99,7 +178,11 @@ function EditCardForm({ card }: { card: Card }) {
           </p>
         ) : null}
       </div>
-      <CardTypeFields card={card} />
+      {/* Keyed on the type so a confirmed switch remounts the fields empty —
+          without it, Anecdote ↔ Did You Know share a subtree and keep their
+          uncontrolled values. Back on the stored type, the saved payload
+          returns: nothing is lost until save. */}
+      <CardTypeFields key={type} card={type === card.type ? card : { type }} />
       <TagsField defaultTags={card.tags} />
       <div className="flex items-center gap-2">
         <Switch

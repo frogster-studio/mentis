@@ -635,6 +635,56 @@ describe("Did You Know Cards", () => {
   });
 });
 
+describe("Card Type change", () => {
+  it("preserves shared fields and replaces the payload", async () => {
+    const client = createFakeSupabase();
+
+    const created = await insertCard(
+      client,
+      cardSchema.parse({
+        type: "quiz",
+        title: "Bastille",
+        tags: ["histoire", "révolution"],
+        status: "published",
+        payload: quizPayload(0, "Le 14 juillet 1789."),
+      }),
+    );
+
+    // Mirrors a save after a confirmed type change: shared fields carried
+    // over unchanged, the payload rebuilt from the new type's fields.
+    const newPayload = {
+      clues: "Prise le 14 juillet 1789.",
+      answer: "La Bastille",
+    };
+    const updated = await updateCard(
+      client,
+      created.id,
+      cardSchema.parse({
+        type: "riddle",
+        title: created.title,
+        tags: created.tags,
+        status: created.status,
+        images: created.images,
+        payload: newPayload,
+      }),
+    );
+
+    expect(updated).toMatchObject({
+      id: created.id,
+      type: "riddle",
+      title: created.title,
+      tags: created.tags,
+      status: created.status,
+      images: created.images,
+    });
+    expect(updated.payload).toEqual(newPayload);
+    // The saved Card validates against the new type's schema and reloads
+    // intact (getCard re-parses the row through cardSchema).
+    expect(cardSchema.safeParse(updated).success).toBe(true);
+    expect(await getCard(client, created.id)).toEqual(updated);
+  });
+});
+
 describe("deleteCard", () => {
   it("hard-deletes a Card and leaves the others alone", async () => {
     const client = createFakeSupabase();
