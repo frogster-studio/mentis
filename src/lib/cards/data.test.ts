@@ -289,6 +289,101 @@ describe("Quiz Cards", () => {
   });
 });
 
+function trueFalse(title: string, answer: boolean, explanation: string) {
+  return cardSchema.parse({
+    type: "true-false",
+    title,
+    payload: {
+      assertion: "Clovis a brisé lui-même le vase de Soissons.",
+      answer,
+      explanation,
+    },
+  });
+}
+
+function riddle(title: string, payload: Record<string, string>) {
+  return cardSchema.parse({ type: "riddle", title, payload });
+}
+
+describe("True/False Cards", () => {
+  it("round-trips a create and an update with a flipped answer", async () => {
+    const client = createFakeSupabase();
+
+    const created = await insertCard(client, trueFalse("Vase", true, "Si."));
+    expect(created).toMatchObject({
+      type: "true-false",
+      payload: { answer: true, explanation: "Si." },
+    });
+
+    const updated = await updateCard(
+      client,
+      created.id,
+      trueFalse("Vase", false, "C'est un soldat qui l'a brisé."),
+    );
+
+    expect(updated.payload).toMatchObject({
+      answer: false,
+      explanation: "C'est un soldat qui l'a brisé.",
+    });
+    expect(await getCard(client, created.id)).toEqual(updated);
+  });
+});
+
+describe("Riddle Cards", () => {
+  it("round-trips a create with Bonus Info and an update dropping it", async () => {
+    const client = createFakeSupabase();
+    const payload = {
+      clues: "Le matin à quatre pattes.",
+      answer: "L'homme",
+      bonusInfo: "Œdipe l'a résolue.",
+    };
+
+    const created = await insertCard(client, riddle("Sphinx", payload));
+    expect(created.payload).toEqual(payload);
+
+    const { bonusInfo: _bonusInfo, ...withoutBonus } = payload;
+    const updated = await updateCard(
+      client,
+      created.id,
+      riddle("Sphinx", withoutBonus),
+    );
+
+    expect(updated.payload).toEqual(withoutBonus);
+    expect(await getCard(client, created.id)).toEqual(updated);
+  });
+});
+
+function didYouKnow(title: string, body: string) {
+  return cardSchema.parse({ type: "did-you-know", title, payload: { body } });
+}
+
+describe("Did You Know Cards", () => {
+  it("round-trips a create and update under its own type value", async () => {
+    const client = createFakeSupabase();
+
+    const created = await insertCard(
+      client,
+      didYouKnow("Tour Eiffel", "Elle grandit de 15 cm l'été."),
+    );
+    expect(created.type).toBe("did-you-know");
+
+    const updated = await updateCard(
+      client,
+      created.id,
+      didYouKnow(
+        "Tour Eiffel",
+        "La dilatation la fait grandir de 15 cm l'été.",
+      ),
+    );
+
+    expect(updated.type).toBe("did-you-know");
+    expect(updated.payload).toEqual({
+      body: "La dilatation la fait grandir de 15 cm l'été.",
+    });
+    expect(await getCard(client, created.id)).toEqual(updated);
+  });
+});
+
 describe("deleteCard", () => {
   it("hard-deletes a Card and leaves the others alone", async () => {
     const client = createFakeSupabase();

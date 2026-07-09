@@ -38,6 +38,26 @@ function payloadFromFormData(
       explanation: String(formData.get("explanation") ?? ""),
     };
   }
+  if (type === "true-false") {
+    const answer = formData.get("answer");
+    return {
+      assertion: String(formData.get("assertion") ?? ""),
+      // Left undefined when neither radio is picked so the schema rejects
+      // the save.
+      answer: answer === null ? undefined : answer === "true",
+      explanation: String(formData.get("explanation") ?? ""),
+    };
+  }
+  if (type === "riddle") {
+    const bonusInfo = String(formData.get("bonusInfo") ?? "");
+    return {
+      clues: String(formData.get("clues") ?? ""),
+      answer: String(formData.get("answer") ?? ""),
+      // A blank Bonus Info is stored as absent, not as an empty string.
+      ...(bonusInfo.trim() === "" ? {} : { bonusInfo }),
+    };
+  }
+  // Anecdote and Did You Know share the body-only payload.
   return { body: String(formData.get("body") ?? "") };
 }
 

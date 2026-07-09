@@ -3,7 +3,7 @@
 import { Save, Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { startTransition, useActionState } from "react";
-import { AnecdoteFields, QuizFields } from "@/app/cards/card-type-fields";
+import { CardTypeFields } from "@/app/cards/card-type-fields";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -98,11 +98,7 @@ function EditCardForm({ card }: { card: Card }) {
           </p>
         ) : null}
       </div>
-      {card.type === "quiz" ? (
-        <QuizFields payload={card.payload} />
-      ) : (
-        <AnecdoteFields payload={card.payload} />
-      )}
+      <CardTypeFields card={card} />
       <div className="flex items-center gap-2">
         <Switch
           id="status"

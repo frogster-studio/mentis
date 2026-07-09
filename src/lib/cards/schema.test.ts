@@ -138,3 +138,112 @@ describe("cardSchema — Quiz", () => {
     expect(cardSchema.safeParse(quizWithChoices(choices)).success).toBe(false);
   });
 });
+
+const validTrueFalse = {
+  type: "true-false",
+  title: "Le vase de Soissons",
+  payload: {
+    assertion: "Clovis a brisé lui-même le vase de Soissons.",
+    answer: false,
+    explanation:
+      "C'est un soldat qui l'a brisé ; Clovis s'est vengé un an après.",
+  },
+};
+
+describe("cardSchema — True/False", () => {
+  it("accepts a valid True/False", () => {
+    const result = cardSchema.parse(validTrueFalse);
+    expect(result).toMatchObject({
+      type: "true-false",
+      payload: validTrueFalse.payload,
+    });
+  });
+
+  it("rejects a missing or non-boolean answer", () => {
+    const { answer: _answer, ...withoutAnswer } = validTrueFalse.payload;
+    for (const payload of [
+      withoutAnswer,
+      { ...validTrueFalse.payload, answer: "false" },
+    ]) {
+      expect(cardSchema.safeParse({ ...validTrueFalse, payload }).success).toBe(
+        false,
+      );
+    }
+  });
+
+  it("rejects a missing or empty Explanation", () => {
+    const { explanation: _explanation, ...withoutExplanation } =
+      validTrueFalse.payload;
+    for (const payload of [
+      withoutExplanation,
+      { ...validTrueFalse.payload, explanation: "   " },
+    ]) {
+      expect(cardSchema.safeParse({ ...validTrueFalse, payload }).success).toBe(
+        false,
+      );
+    }
+  });
+
+  it("rejects a missing assertion", () => {
+    const { assertion: _assertion, ...payload } = validTrueFalse.payload;
+    expect(cardSchema.safeParse({ ...validTrueFalse, payload }).success).toBe(
+      false,
+    );
+  });
+});
+
+const validRiddle = {
+  type: "riddle",
+  title: "L'énigme du Sphinx",
+  payload: {
+    clues: "Le matin à quatre pattes,\nà midi sur deux,\nle soir sur trois.",
+    answer: "L'homme",
+    bonusInfo: "Œdipe l'a résolue devant Thèbes.",
+  },
+};
+
+describe("cardSchema — Riddle", () => {
+  it("accepts a Riddle with Bonus Info", () => {
+    const result = cardSchema.parse(validRiddle);
+    expect(result).toMatchObject({
+      type: "riddle",
+      payload: validRiddle.payload,
+    });
+  });
+
+  it("accepts a Riddle without Bonus Info", () => {
+    const { bonusInfo: _bonusInfo, ...payload } = validRiddle.payload;
+    const result = cardSchema.parse({ ...validRiddle, payload });
+    expect(result.payload).toEqual(payload);
+  });
+
+  it("rejects missing Clues or a missing Answer", () => {
+    const { clues: _clues, ...withoutClues } = validRiddle.payload;
+    const { answer: _answer, ...withoutAnswer } = validRiddle.payload;
+    for (const payload of [withoutClues, withoutAnswer]) {
+      expect(cardSchema.safeParse({ ...validRiddle, payload }).success).toBe(
+        false,
+      );
+    }
+  });
+});
+
+describe("cardSchema — Did You Know", () => {
+  it("accepts a valid Did You Know under its own type value", () => {
+    const result = cardSchema.parse({
+      type: "did-you-know",
+      title: "La tour Eiffel grandit",
+      payload: { body: "La dilatation la fait grandir de 15 cm l'été." },
+    });
+    expect(result.type).toBe("did-you-know");
+  });
+
+  it("rejects a missing body", () => {
+    const result = cardSchema.safeParse({
+      type: "did-you-know",
+      title: "Sans corps",
+      payload: {},
+    });
+    expect(result.success).toBe(false);
+  });
+});

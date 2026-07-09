@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { startTransition, useActionState } from "react";
 
-import { AnecdoteFields, QuizFields } from "@/app/cards/card-type-fields";
+import { CardTypeFields } from "@/app/cards/card-type-fields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,15 +20,10 @@ import { createCard } from "@/lib/cards/actions";
 import {
   CARD_TYPE_LABELS,
   CARD_TYPES,
-  ENABLED_CARD_TYPES,
-  type EnabledCardType,
+  type CardType,
 } from "@/lib/cards/schema";
 
-export function CreateCardSheet({
-  selectedType,
-}: {
-  selectedType?: EnabledCardType;
-}) {
+export function CreateCardSheet({ selectedType }: { selectedType?: CardType }) {
   const router = useRouter();
 
   return (
@@ -63,34 +58,16 @@ export function CreateCardSheet({
 function CardTypePicker() {
   return (
     <div className="flex flex-col gap-2 p-4">
-      {CARD_TYPES.map((type) =>
-        ENABLED_CARD_TYPES.some((enabled) => enabled === type) ? (
-          <Button
-            key={type}
-            asChild
-            variant="outline"
-            className="justify-start"
-          >
-            <Link href={`/cards/new?type=${type}`}>
-              {CARD_TYPE_LABELS[type]}
-            </Link>
-          </Button>
-        ) : (
-          <Button
-            key={type}
-            variant="outline"
-            className="justify-start"
-            disabled
-          >
-            {CARD_TYPE_LABELS[type]} — coming soon
-          </Button>
-        ),
-      )}
+      {CARD_TYPES.map((type) => (
+        <Button key={type} asChild variant="outline" className="justify-start">
+          <Link href={`/cards/new?type=${type}`}>{CARD_TYPE_LABELS[type]}</Link>
+        </Button>
+      ))}
     </div>
   );
 }
 
-function CreateCardForm({ type }: { type: EnabledCardType }) {
+function CreateCardForm({ type }: { type: CardType }) {
   const [state, formAction, pending] = useActionState(createCard, undefined);
 
   return (
@@ -131,7 +108,7 @@ function CreateCardForm({ type }: { type: EnabledCardType }) {
           </p>
         ) : null}
       </div>
-      {type === "quiz" ? <QuizFields /> : <AnecdoteFields />}
+      <CardTypeFields card={{ type }} />
       {state?.errors.form ? (
         <p role="alert" className="text-destructive text-sm">
           {state.errors.form}

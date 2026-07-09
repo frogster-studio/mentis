@@ -18,12 +18,6 @@ export const CARD_TYPE_LABELS: Record<CardType, string> = {
   riddle: "Riddle",
 };
 
-// Card Types creatable in the UI so far; later slices grow this until it
-// matches CARD_TYPES.
-export const ENABLED_CARD_TYPES = ["anecdote", "quiz"] as const;
-
-export type EnabledCardType = (typeof ENABLED_CARD_TYPES)[number];
-
 export const CARD_STATUSES = ["draft", "published"] as const;
 
 export type CardStatus = (typeof CARD_STATUSES)[number];
@@ -71,8 +65,25 @@ const quizPayloadSchema = z
 
 export type QuizPayload = z.output<typeof quizPayloadSchema>;
 
+const trueFalsePayloadSchema = z.object({
+  assertion: z.string(),
+  answer: z.boolean("Choose True or False."),
+  explanation: z.string().trim().min(1, "An Explanation is required."),
+});
+
+export type TrueFalsePayload = z.output<typeof trueFalsePayloadSchema>;
+
+const riddlePayloadSchema = z.object({
+  clues: z.string(),
+  answer: z.string(),
+  bonusInfo: z.string().optional(),
+});
+
+export type RiddlePayload = z.output<typeof riddlePayloadSchema>;
+
 // The single source of truth for Card structure, shared between form and
-// server. Later slices add the other three Card Type members.
+// server. Did You Know shares the Anecdote payload shape on purpose — the
+// distinct type value is editorial and matters downstream.
 export const cardSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("anecdote"),
@@ -83,6 +94,21 @@ export const cardSchema = z.discriminatedUnion("type", [
     type: z.literal("quiz"),
     ...sharedFields,
     payload: quizPayloadSchema,
+  }),
+  z.object({
+    type: z.literal("true-false"),
+    ...sharedFields,
+    payload: trueFalsePayloadSchema,
+  }),
+  z.object({
+    type: z.literal("riddle"),
+    ...sharedFields,
+    payload: riddlePayloadSchema,
+  }),
+  z.object({
+    type: z.literal("did-you-know"),
+    ...sharedFields,
+    payload: anecdotePayloadSchema,
   }),
 ]);
 
