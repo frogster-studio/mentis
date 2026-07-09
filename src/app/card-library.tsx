@@ -1,6 +1,7 @@
 import { LogOut, Plus } from "lucide-react";
 import Link from "next/link";
 
+import { CardRowLink } from "@/app/card-row-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,7 +27,7 @@ const updatedAtFormatter = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Europe/Paris",
 });
 
-export async function CardLibrary() {
+export async function CardLibrary({ activeCardId }: { activeCardId?: string }) {
   const cards = await listCards(createServiceClient());
 
   return (
@@ -69,7 +70,13 @@ export async function CardLibrary() {
                 </TableCell>
               </TableRow>
             ) : (
-              cards.map((card) => <CardRow key={card.id} card={card} />)
+              cards.map((card) => (
+                <CardRow
+                  key={card.id}
+                  card={card}
+                  active={card.id === activeCardId}
+                />
+              ))
             )}
           </TableBody>
         </Table>
@@ -78,10 +85,12 @@ export async function CardLibrary() {
   );
 }
 
-function CardRow({ card }: { card: Card }) {
+function CardRow({ card, active }: { card: Card; active: boolean }) {
   return (
-    <TableRow>
-      <TableCell className="font-medium">{card.title}</TableCell>
+    <TableRow className="relative" data-state={active ? "selected" : undefined}>
+      <TableCell className="font-medium">
+        <CardRowLink cardId={card.id}>{card.title}</CardRowLink>
+      </TableCell>
       <TableCell>{CARD_TYPE_LABELS[card.type]}</TableCell>
       <TableCell>
         <Badge variant={card.status === "published" ? "default" : "secondary"}>

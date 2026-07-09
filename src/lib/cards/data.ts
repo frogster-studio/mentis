@@ -65,3 +65,53 @@ export async function listCards(client: SupabaseClient): Promise<Card[]> {
   }
   return (rows as CardRow[]).map(rowToCard);
 }
+
+export async function getCard(
+  client: SupabaseClient,
+  id: string,
+): Promise<Card | null> {
+  const { data: row, error } = await client
+    .from("cards")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) {
+    throw new Error(`Failed to load Card: ${error.message}`);
+  }
+  return row ? rowToCard(row as CardRow) : null;
+}
+
+// updated_at is bumped by the cards_set_updated_at trigger, not here.
+export async function updateCard(
+  client: SupabaseClient,
+  id: string,
+  data: CardData,
+): Promise<Card> {
+  const { data: row, error } = await client
+    .from("cards")
+    .update({
+      type: data.type,
+      title: data.title,
+      tags: data.tags,
+      status: data.status,
+      payload: data.payload,
+      images: data.images,
+    })
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) {
+    throw new Error(`Failed to update Card: ${error.message}`);
+  }
+  return rowToCard(row as CardRow);
+}
+
+export async function deleteCard(
+  client: SupabaseClient,
+  id: string,
+): Promise<void> {
+  const { error } = await client.from("cards").delete().eq("id", id);
+  if (error) {
+    throw new Error(`Failed to delete Card: ${error.message}`);
+  }
+}
