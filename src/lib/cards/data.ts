@@ -3,6 +3,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   type Card,
   type CardData,
+  type CardStatus,
+  type CardType,
   cardSchema,
   normalizeTag,
 } from "@/lib/cards/schema";
@@ -60,22 +62,74 @@ export async function insertCard(
   return rowToCard(row as CardRow);
 }
 
+export const CARD_LIST_PAGE_SIZE = 20;
+
+export type CardListOptions = {
+  search?: string;
+  type?: CardType;
+  status?: CardStatus;
+  tag?: string;
+  page?: number;
+  pageSize?: number;
+};
+
+export type CardListResult = {
+  cards: Card[];
+  totalCount: number;
+  page: number;
+  pageCount: number;
+};
+
+// % and _ are LIKE wildcards; escape them so searching "100%" matches the
+// literal characters instead of everything containing "100".
+function escapeLikePattern(term: string): string {
+  return term.replace(/[\\%_]/g, (char) => `\\${char}`);
+}
+
 export async function listCards(
   client: SupabaseClient,
-  options: { tag?: string } = {},
-): Promise<Card[]> {
+  options: CardListOptions = {},
+): Promise<CardListResult> {
   // The filter Tag goes through the same normalization as stored Tags, so
   // "Histoire " finds Cards tagged "histoire". A blank Tag means no filter.
   const tag = normalizeTag(options.tag ?? "");
-  const base = client.from("cards").select("*");
-  const filtered = tag === "" ? base : base.contains("tags", [tag]);
-  const { data: rows, error } = await filtered.order("updated_at", {
-    ascending: false,
-  });
+  const search = (options.search ?? "").trim();
+  const page = Math.max(1, Math.trunc(options.page ?? 1));
+  const pageSize = options.pageSize ?? CARD_LIST_PAGE_SIZE;
+
+  let query = client.from("cards").select("*", { count: "exact" });
+  if (search !== "") {
+    query = query.ilike("title", `%${escapeLikePattern(search)}%`);
+  }
+  if (options.type) {
+    query = query.eq("type", options.type);
+  }
+  if (options.status) {
+    query = query.eq("status", options.status);
+  }
+  if (tag !== "") {
+    query = query.contains("tags", [tag]);
+  }
+
+  const offset = (page - 1) * pageSize;
+  const {
+    data: rows,
+    count,
+    error,
+  } = await query
+    .order("updated_at", { ascending: false })
+    .range(offset, offset + pageSize - 1);
   if (error) {
     throw new Error(`Failed to list Cards: ${error.message}`);
   }
-  return (rows as CardRow[]).map(rowToCard);
+
+  const totalCount = count ?? 0;
+  return {
+    cards: (rows as CardRow[]).map(rowToCard),
+    totalCount,
+    page,
+    pageCount: Math.max(1, Math.ceil(totalCount / pageSize)),
+  };
 }
 
 export async function getCard(

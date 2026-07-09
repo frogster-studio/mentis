@@ -10,10 +10,33 @@ import {
 } from "@/lib/cards/data";
 import { cardSchema } from "@/lib/cards/schema";
 
+// PostgREST ILIKE semantics: % and _ are wildcards, backslash escapes them,
+// matching is case-insensitive.
+function ilikeToRegExp(pattern: string): RegExp {
+  const escapeForRegExp = (char: string) =>
+    char.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  let source = "";
+  for (let i = 0; i < pattern.length; i += 1) {
+    const char = pattern[i];
+    if (char === "\\" && i + 1 < pattern.length) {
+      i += 1;
+      source += escapeForRegExp(pattern[i]);
+    } else if (char === "%") {
+      source += ".*";
+    } else if (char === "_") {
+      source += ".";
+    } else {
+      source += escapeForRegExp(char);
+    }
+  }
+  return new RegExp(`^${source}$`, "is");
+}
+
 // In-memory double of the slice of the Supabase client the data layer uses:
-// insert().select().single(), select().order(), select().contains().order(),
-// select().eq().maybeSingle(), update().eq().select().single() and
-// delete().eq().
+// insert().select().single(), update().eq().select().single(), delete().eq(),
+// and a read query builder — select() chaining ilike/eq/contains, then
+// order().range() awaited as a thenable (like the real client) or terminated
+// with maybeSingle().
 function createFakeSupabase(options?: {
   insertError?: string;
   updateError?: string;
@@ -36,6 +59,60 @@ function createFakeSupabase(options?: {
       const comparison = String(a[column]).localeCompare(String(b[column]));
       return ascending ? comparison : -comparison;
     });
+  }
+
+  function createReadQuery() {
+    type Row = Record<string, unknown>;
+    const filters: ((row: Row) => boolean)[] = [];
+    let ordering: { column: string; ascending: boolean } | null = null;
+    let bounds: { from: number; to: number } | null = null;
+
+    const matching = () => rows.filter((row) => filters.every((f) => f(row)));
+
+    const builder = {
+      ilike(column: string, pattern: string) {
+        const regex = ilikeToRegExp(pattern);
+        filters.push((row) => regex.test(String(row[column])));
+        return builder;
+      },
+      eq(column: string, value: unknown) {
+        filters.push((row) => row[column] === value);
+        return builder;
+      },
+      contains(column: string, values: unknown[]) {
+        filters.push((row) =>
+          values.every((value) => (row[column] as unknown[]).includes(value)),
+        );
+        return builder;
+      },
+      order(column: string, opts: { ascending: boolean }) {
+        ordering = { column, ascending: opts.ascending };
+        return builder;
+      },
+      range(from: number, to: number) {
+        bounds = { from, to };
+        return builder;
+      },
+      async maybeSingle() {
+        return { data: matching()[0] ?? null, error: null };
+      },
+      // Awaiting the builder runs the query, like the real thenable client.
+      // biome-ignore lint/suspicious/noThenProperty: the real Supabase query builder is a thenable; the fake must be too.
+      then(
+        resolve: (result: { data: Row[]; count: number; error: null }) => void,
+      ) {
+        let subset = matching();
+        if (ordering) {
+          subset = sortRows(subset, ordering.column, ordering.ascending);
+        }
+        const count = subset.length;
+        if (bounds) {
+          subset = subset.slice(bounds.from, bounds.to + 1);
+        }
+        resolve({ data: subset, count, error: null });
+      },
+    };
+    return builder;
   }
 
   const client = {
@@ -69,38 +146,8 @@ function createFakeSupabase(options?: {
             },
           };
         },
-        select(_columns: string) {
-          return {
-            async order(column: string, opts: { ascending: boolean }) {
-              return {
-                data: sortRows(rows, column, opts.ascending),
-                error: null,
-              };
-            },
-            contains(column: string, values: unknown[]) {
-              const matching = rows.filter((row) =>
-                values.every((value) =>
-                  (row[column] as unknown[]).includes(value),
-                ),
-              );
-              return {
-                async order(orderColumn: string, opts: { ascending: boolean }) {
-                  return {
-                    data: sortRows(matching, orderColumn, opts.ascending),
-                    error: null,
-                  };
-                },
-              };
-            },
-            eq(column: string, value: unknown) {
-              return {
-                async maybeSingle() {
-                  const row = rows.find((r) => r[column] === value) ?? null;
-                  return { data: row, error: null };
-                },
-              };
-            },
-          };
+        select(_columns: string, _opts?: { count?: string }) {
+          return createReadQuery();
         },
         update(values: Record<string, unknown>) {
           return {
@@ -173,9 +220,14 @@ describe("insertCard and listCards", () => {
     const body = "Ligne un.\nLigne deux.";
 
     const created = await insertCard(client, anecdote("Mendès France", body));
-    const cards = await listCards(client);
+    const { cards, totalCount, page, pageCount } = await listCards(client);
 
     expect(cards).toEqual([created]);
+    expect({ totalCount, page, pageCount }).toEqual({
+      totalCount: 1,
+      page: 1,
+      pageCount: 1,
+    });
     expect(cards[0]).toMatchObject({
       type: "anecdote",
       title: "Mendès France",
@@ -194,7 +246,7 @@ describe("insertCard and listCards", () => {
     await insertCard(client, anecdote("First", "a"));
     await insertCard(client, anecdote("Second", "b"));
 
-    const cards = await listCards(client);
+    const { cards } = await listCards(client);
     expect(cards.map((card) => card.title)).toEqual(["Second", "First"]);
   });
 
@@ -215,7 +267,7 @@ describe("listCards with a Tag filter", () => {
     await insertCard(client, anecdote("Other Tag", "b", ["géo"]));
     await insertCard(client, anecdote("Untagged", "c"));
 
-    const cards = await listCards(client, { tag: "histoire" });
+    const { cards } = await listCards(client, { tag: "histoire" });
     expect(cards.map((card) => card.title)).toEqual(["Tagged"]);
   });
 
@@ -224,7 +276,7 @@ describe("listCards with a Tag filter", () => {
 
     await insertCard(client, anecdote("Tagged", "a", ["histoire"]));
 
-    const cards = await listCards(client, { tag: "  Histoire " });
+    const { cards } = await listCards(client, { tag: "  Histoire " });
     expect(cards.map((card) => card.title)).toEqual(["Tagged"]);
   });
 
@@ -234,7 +286,151 @@ describe("listCards with a Tag filter", () => {
     await insertCard(client, anecdote("One", "a", ["histoire"]));
     await insertCard(client, anecdote("Two", "b"));
 
-    expect(await listCards(client, { tag: "   " })).toHaveLength(2);
+    expect((await listCards(client, { tag: "   " })).cards).toHaveLength(2);
+  });
+});
+
+describe("listCards with a Title search", () => {
+  it("matches partial Titles case-insensitively", async () => {
+    const client = createFakeSupabase();
+
+    await insertCard(client, anecdote("Mendès France", "a"));
+    await insertCard(client, anecdote("La prise de la Bastille", "b"));
+
+    const { cards } = await listCards(client, { search: "bastille" });
+    expect(cards.map((card) => card.title)).toEqual([
+      "La prise de la Bastille",
+    ]);
+  });
+
+  it("treats LIKE wildcards in the term as literal characters", async () => {
+    const client = createFakeSupabase();
+
+    await insertCard(client, anecdote("100% coton", "a"));
+    await insertCard(client, anecdote("100x coton", "b"));
+
+    const { cards } = await listCards(client, { search: "100%" });
+    expect(cards.map((card) => card.title)).toEqual(["100% coton"]);
+  });
+
+  it("ignores a blank search", async () => {
+    const client = createFakeSupabase();
+
+    await insertCard(client, anecdote("Seule", "a"));
+
+    expect((await listCards(client, { search: "   " })).cards).toHaveLength(1);
+  });
+});
+
+describe("listCards with Type and Status filters", () => {
+  it("narrows by Card Type", async () => {
+    const client = createFakeSupabase();
+
+    await insertCard(client, anecdote("Anecdote", "a"));
+    await insertCard(client, quiz("Quiz", quizPayload(0, "Voilà.")));
+
+    const { cards } = await listCards(client, { type: "quiz" });
+    expect(cards.map((card) => card.title)).toEqual(["Quiz"]);
+  });
+
+  it("narrows by Status", async () => {
+    const client = createFakeSupabase();
+
+    const draft = await insertCard(client, anecdote("Brouillon", "a"));
+    await updateCard(client, draft.id, { ...draft, status: "published" });
+    await insertCard(client, anecdote("Encore en cours", "b"));
+
+    const { cards } = await listCards(client, { status: "published" });
+    expect(cards.map((card) => card.title)).toEqual(["Brouillon"]);
+  });
+
+  it("composes search, Type, Status, and Tag filters", async () => {
+    const client = createFakeSupabase();
+
+    const match = await insertCard(
+      client,
+      anecdote("Bastille en fête", "a", ["histoire"]),
+    );
+    await updateCard(client, match.id, { ...match, status: "published" });
+    // Each of these misses exactly one criterion.
+    await insertCard(client, anecdote("Bastille oubliée", "b", ["histoire"]));
+    const wrongTag = await insertCard(
+      client,
+      anecdote("Bastille ailleurs", "c", ["géo"]),
+    );
+    await updateCard(client, wrongTag.id, { ...wrongTag, status: "published" });
+    const wrongTitle = await insertCard(
+      client,
+      anecdote("Autre sujet", "d", ["histoire"]),
+    );
+    await updateCard(client, wrongTitle.id, {
+      ...wrongTitle,
+      status: "published",
+    });
+
+    const { cards, totalCount } = await listCards(client, {
+      search: "bastille",
+      type: "anecdote",
+      status: "published",
+      tag: "histoire",
+    });
+    expect(cards.map((card) => card.title)).toEqual(["Bastille en fête"]);
+    expect(totalCount).toBe(1);
+  });
+});
+
+describe("listCards pagination", () => {
+  async function seedCards(client: SupabaseClient, count: number) {
+    for (let i = 1; i <= count; i += 1) {
+      await insertCard(client, anecdote(`Card ${i}`, "corps"));
+    }
+  }
+
+  it("slices pages server-side, newest first, and reports the totals", async () => {
+    const client = createFakeSupabase();
+    await seedCards(client, 5);
+
+    const firstPage = await listCards(client, { page: 1, pageSize: 2 });
+    expect(firstPage.cards.map((card) => card.title)).toEqual([
+      "Card 5",
+      "Card 4",
+    ]);
+    expect(firstPage).toMatchObject({ totalCount: 5, page: 1, pageCount: 3 });
+
+    const lastPage = await listCards(client, { page: 3, pageSize: 2 });
+    expect(lastPage.cards.map((card) => card.title)).toEqual(["Card 1"]);
+  });
+
+  it("keeps the page count in step with active filters", async () => {
+    const client = createFakeSupabase();
+    await seedCards(client, 3);
+    await insertCard(client, quiz("Quiz", quizPayload(0, "Voilà.")));
+
+    const { totalCount, pageCount } = await listCards(client, {
+      type: "anecdote",
+      page: 1,
+      pageSize: 2,
+    });
+    expect(totalCount).toBe(3);
+    expect(pageCount).toBe(2);
+  });
+
+  it("returns an empty page beyond the last without losing the totals", async () => {
+    const client = createFakeSupabase();
+    await seedCards(client, 3);
+
+    const beyond = await listCards(client, { page: 9, pageSize: 2 });
+    expect(beyond.cards).toEqual([]);
+    expect(beyond).toMatchObject({ totalCount: 3, page: 9, pageCount: 2 });
+  });
+
+  it("clamps a page below 1 to the first page", async () => {
+    const client = createFakeSupabase();
+    await seedCards(client, 2);
+
+    const { cards, page } = await listCards(client, { page: 0, pageSize: 2 });
+    expect(page).toBe(1);
+    expect(cards).toHaveLength(2);
   });
 });
 
@@ -292,7 +488,7 @@ describe("updateCard", () => {
 
     await updateCard(client, first.id, { ...first, title: "First edited" });
 
-    const cards = await listCards(client);
+    const { cards } = await listCards(client);
     expect(cards.map((card) => card.title)).toEqual(["First edited", "Second"]);
   });
 
@@ -312,7 +508,7 @@ describe("Quiz Cards", () => {
     const payload = quizPayload(0, "Le 14 juillet 1789.");
 
     const created = await insertCard(client, quiz("Bastille", payload));
-    const cards = await listCards(client);
+    const { cards } = await listCards(client);
 
     expect(cards).toEqual([created]);
     expect(cards[0]).toMatchObject({
@@ -449,6 +645,6 @@ describe("deleteCard", () => {
     await deleteCard(client, doomed.id);
 
     expect(await getCard(client, doomed.id)).toBeNull();
-    expect(await listCards(client)).toEqual([kept]);
+    expect((await listCards(client)).cards).toEqual([kept]);
   });
 });

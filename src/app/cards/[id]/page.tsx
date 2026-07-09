@@ -4,6 +4,10 @@ import { z } from "zod";
 
 import { CardLibrary } from "@/app/card-library";
 import { getCard } from "@/lib/cards/data";
+import {
+  parseListParams,
+  type RawListSearchParams,
+} from "@/lib/cards/list-params";
 import { createServiceClient } from "@/lib/supabase";
 
 import { EditCardSheet } from "./edit-card-sheet";
@@ -21,12 +25,12 @@ export default async function CardPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ tag?: string }>;
+  searchParams: Promise<RawListSearchParams>;
 }) {
   const { id } = await params;
   // The row link carries the list's query params along, so the list behind
-  // the sidebar keeps its filtered view.
-  const { tag } = await searchParams;
+  // the sidebar keeps its searched, filtered, paginated view.
+  const listParams = parseListParams(await searchParams);
   // Postgres rejects a malformed uuid with an error; treat it as a Card
   // that doesn't exist instead.
   if (!cardIdSchema.safeParse(id).success) {
@@ -40,7 +44,7 @@ export default async function CardPage({
 
   return (
     <>
-      <CardLibrary activeCardId={card.id} filterTag={tag} />
+      <CardLibrary activeCardId={card.id} listParams={listParams} />
       <EditCardSheet card={card} />
     </>
   );
