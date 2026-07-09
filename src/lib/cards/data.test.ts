@@ -9,6 +9,7 @@ import {
   updateCard,
 } from "@/lib/cards/data";
 import { cardSchema } from "@/lib/cards/schema";
+import { CARD_IMAGES_BUCKET } from "@/lib/images/storage";
 
 // PostgREST ILIKE semantics: % and _ are wildcards, backslash escapes them,
 // matching is case-insensitive.
@@ -33,13 +34,15 @@ function ilikeToRegExp(pattern: string): RegExp {
 }
 
 // In-memory double of the slice of the Supabase client the data layer uses:
-// insert().select().single(), update().eq().select().single(), delete().eq(),
-// and a read query builder — select() chaining ilike/eq/contains, then
-// order().range() awaited as a thenable (like the real client) or terminated
-// with maybeSingle().
+// insert().select().single(), update().eq().select().single(),
+// delete().eq().select(), storage.from(bucket).remove(paths), and a read query
+// builder — select() chaining ilike/eq/contains, then order().range() awaited
+// as a thenable (like the real client) or terminated with maybeSingle().
 function createFakeSupabase(options?: {
   insertError?: string;
   updateError?: string;
+  removeError?: string;
+  removals?: { bucket: string; paths: string[] }[];
 }) {
   const rows: Record<string, unknown>[] = [];
   let tick = 0;
@@ -179,16 +182,45 @@ function createFakeSupabase(options?: {
         },
         delete() {
           return {
-            async eq(column: string, value: unknown) {
-              const index = rows.findIndex((r) => r[column] === value);
-              if (index >= 0) {
-                rows.splice(index, 1);
-              }
-              return { error: null };
+            eq(column: string, value: unknown) {
+              // The real client deletes on await and, with select(), returns
+              // the removed rows; mirror that inside the thenable.
+              const runDelete = () => {
+                const index = rows.findIndex((r) => r[column] === value);
+                return index >= 0 ? rows.splice(index, 1) : [];
+              };
+              return {
+                select(_columns?: string) {
+                  return {
+                    // biome-ignore lint/suspicious/noThenProperty: the real Supabase query builder is a thenable; the fake must be too.
+                    then(
+                      resolve: (result: {
+                        data: Record<string, unknown>[];
+                        error: null;
+                      }) => void,
+                    ) {
+                      resolve({ data: runDelete(), error: null });
+                    },
+                  };
+                },
+              };
             },
           };
         },
       };
+    },
+    storage: {
+      from(bucket: string) {
+        return {
+          async remove(paths: string[]) {
+            if (options?.removeError) {
+              return { data: null, error: { message: options.removeError } };
+            }
+            options?.removals?.push({ bucket, paths });
+            return { data: [], error: null };
+          },
+        };
+      },
     },
   };
 
@@ -808,8 +840,14 @@ describe("Card Images", () => {
 });
 
 describe("deleteCard", () => {
-  it("hard-deletes a Card and leaves the others alone", async () => {
-    const client = createFakeSupabase();
+  const withImages = [
+    { path: "a.webp", order: 0, caption: "Première" },
+    { path: "b.webp", order: 1 },
+  ];
+
+  it("hard-deletes a Card without Images and leaves the others alone", async () => {
+    const removals: { bucket: string; paths: string[] }[] = [];
+    const client = createFakeSupabase({ removals });
 
     const doomed = await insertCard(client, anecdote("Doomed", "a"));
     const kept = await insertCard(client, anecdote("Kept", "b"));
@@ -818,5 +856,39 @@ describe("deleteCard", () => {
 
     expect(await getCard(client, doomed.id)).toBeNull();
     expect((await listCards(client)).cards).toEqual([kept]);
+    // A Card without Images makes no storage request.
+    expect(removals).toEqual([]);
+  });
+
+  it("removes the row and requests deletion of every referenced object", async () => {
+    const removals: { bucket: string; paths: string[] }[] = [];
+    const client = createFakeSupabase({ removals });
+
+    const doomed = await insertCard(
+      client,
+      anecdoteWithImages("Illustrée", withImages),
+    );
+
+    await deleteCard(client, doomed.id);
+
+    expect(await getCard(client, doomed.id)).toBeNull();
+    expect(removals).toEqual([
+      { bucket: CARD_IMAGES_BUCKET, paths: ["a.webp", "b.webp"] },
+    ]);
+  });
+
+  it("keeps the row deleted when storage cleanup fails, surfacing the error", async () => {
+    const client = createFakeSupabase({ removeError: "boom" });
+
+    const doomed = await insertCard(
+      client,
+      anecdoteWithImages("Illustrée", withImages),
+    );
+
+    await expect(deleteCard(client, doomed.id)).rejects.toThrow(
+      "Failed to remove Card Images: boom",
+    );
+    // The row deletion stands; the failure never resurrects the Card.
+    expect(await getCard(client, doomed.id)).toBeNull();
   });
 });

@@ -8,6 +8,7 @@ import {
   cardSchema,
   normalizeTag,
 } from "@/lib/cards/schema";
+import { removeCardImages } from "@/lib/images/storage";
 
 type CardRow = {
   id: string;
@@ -176,8 +177,22 @@ export async function deleteCard(
   client: SupabaseClient,
   id: string,
 ): Promise<void> {
-  const { error } = await client.from("cards").delete().eq("id", id);
+  // Delete the row and recover the Images it referenced in one round-trip, so
+  // their storage objects can be dropped and the bucket keeps no orphans.
+  const { data: rows, error } = await client
+    .from("cards")
+    .delete()
+    .eq("id", id)
+    .select("images");
   if (error) {
     throw new Error(`Failed to delete Card: ${error.message}`);
   }
+
+  // The row is already gone: a cleanup failure below surfaces to the caller
+  // but never resurrects the Card.
+  const deleted = (rows ?? []) as { images: { path: string }[] | null }[];
+  const paths = deleted.flatMap((row) =>
+    (row.images ?? []).map((image) => image.path),
+  );
+  await removeCardImages(client, paths);
 }
