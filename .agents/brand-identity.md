@@ -2,13 +2,13 @@
 
 Brand: **Mentis** (Latin — "of the mind"). A French-market general-knowledge brand: a consumer quiz app (core product), a weekly anecdote podcast, and an editorial back-office for the Card library. Grounded in [brand-context.md](brand-context.md).
 
-Audience: French-speaking digital natives (roughly 18–35) who scroll and consume passively today, but light up when knowledge is served well. Positioning: modern, fun, accessible — mass, not niche. The opposite of dusty trivia. Candidate tagline: *"Le cerveau aussi a besoin d'un bon feed."*
+Audience: French-speaking digital natives (roughly 18–35) who scroll and consume passively today, but light up when knowledge is served well. Positioning: modern, fun, accessible — mass, not niche. The opposite of dusty trivia. Candidate tagline: _"Le cerveau aussi a besoin d'un bon feed."_
 
 ---
 
 ## 01 — Identity Strategy Statement
 
-Mentis makes culture générale feel like a modern consumer product, not a school subject. The identity should carry the energy of the smart friend at a dinner party — the one who drops "did you know Louis XIX reigned for 20 minutes?" and has the whole table leaning in. Every visual decision should signal *play with substance*: bright, confident, and snackable on the surface, genuinely well-crafted underneath. We are building the anti-Trivial-Pursuit — nothing dusty, nothing academic, nothing that smells like a classroom.
+Mentis makes culture générale feel like a modern consumer product, not a school subject. The identity should carry the energy of the smart friend at a dinner party — the one who drops "did you know Louis XIX reigned for 20 minutes?" and has the whole table leaning in. Every visual decision should signal _play with substance_: bright, confident, and snackable on the surface, genuinely well-crafted underneath. We are building the anti-Trivial-Pursuit — nothing dusty, nothing academic, nothing that smells like a classroom.
 
 ---
 
@@ -23,6 +23,7 @@ Mentis makes culture générale feel like a modern consumer product, not a schoo
 **What to avoid** — The trivia graveyard: question marks as the mark, lightbulbs, brains, owls, graduation caps, laurel wreaths, serif "heritage" typography. No gradients-on-gradients tech-startup blur. Nothing that could sit on a pub-quiz flyer.
 
 **3 logo references**
+
 1. **Duolingo** — borrow the rounded, friendly wordmark confidence that makes learning read as play without becoming childish.
 2. **Headspace** — borrow how one trivially simple shape (their dot) becomes the entire brand; our spark should work that hard.
 3. **Konbini** — borrow the bold French pop-media energy; Mentis should feel like it belongs next to French youth media, not next to encyclopedia publishers.
@@ -37,6 +38,7 @@ Anchored on the palettes already chosen in the product (Tailwind `SKY` + `ZINC`)
 `#0EA5E9` (Tailwind sky-500). A bright, optimistic, digital-native blue. Blue says "knowledge/trust", but this blue is daylight, not navy — intelligence without the corporate suit or the academic gown.
 
 **Secondary colors**
+
 - **Ink** — `#18181B` (zinc-900): all long-form text and dark surfaces. Near-black, softer than pure black.
 - **Cloud** — `#F4F4F5` (zinc-100): default light background; keeps cards airy.
 - **Spark Amber** — `#F59E0B` (amber-500): the accent. Reserved for the payoff moments — correct answers, streaks, the "did you know" reveal, the spark in the logo.
@@ -55,11 +57,10 @@ Anchored on the palettes already chosen in the product (Tailwind `SKY` + `ZINC`)
 
 **Secondary typeface — Inter** (free, Google Fonts) for dense UI: the back-office, tables, labels, settings. It disappears politely where Lexend performs.
 
-> ⚠️ Licensing note: `googlesans-italic.ttf` is in the repo, but Google Sans is Google's proprietary corporate font and is not licensed for third-party products. Replace it with Lexend Italic (or Inter Italic) before anything ships publicly.
-
 **Type personality** — Clear, modern, a little rounded — spoken French rather than written French. Headlines should sound like the podcast: direct address, first person, contractions welcome.
 
 **Usage hierarchy**
+
 - Headlines: Lexend Bold, tight leading, sentence case (never ALL CAPS lectures)
 - Subheads: Lexend Medium
 - Body / card text: Lexend Regular, 1.5–1.6 line height, generous measure
@@ -121,4 +122,4 @@ Short lines, big type, one idea at a time. If a layout starts looking like a tex
 
 ---
 
-*Related: [brand-context.md](brand-context.md) · next steps: brand-voice (verbal identity), brand-guidelines (full standards doc)*
+_Related: [brand-context.md](brand-context.md) · next steps: brand-voice (verbal identity), brand-guidelines (full standards doc)_
