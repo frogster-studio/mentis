@@ -60,6 +60,14 @@ export function TagsField({ defaultTags = [] }: { defaultTags?: string[] }) {
         }}
         onBlur={commitDraft}
       />
+      {/* Mentis is collaborative — every editor follows the same Tag rules. */}
+      <p className="text-muted-foreground text-xs">
+        Shared rules: Tags are lowercase French, without accents (é, à…) or
+        punctuation; anglicisms are fine when French has no real equivalent
+        (shopping, startup). Keep them singular (animal, not animaux) and prefer
+        a single word — or one multi-word Tag when needed (developpement
+        personnel rather than developpement + personnel).
+      </p>
     </div>
   );
 }

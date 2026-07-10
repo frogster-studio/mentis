@@ -30,6 +30,26 @@ const updatedAtFormatter = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Europe/Paris",
 });
 
+// Compact "5 min ago"-style age for the list, computed at render time (the
+// page is force-dynamic). The exact timestamp stays available on hover.
+function formatUpdatedAgo(iso: string): string {
+  const seconds = Math.max(
+    0,
+    Math.floor((Date.now() - new Date(iso).getTime()) / 1000),
+  );
+  if (seconds < 60) return `${seconds} sec ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 31) return days === 1 ? "1 day ago" : `${days} days ago`;
+  const months = Math.floor(days / 30.44);
+  if (months < 12) return months === 1 ? "1 month ago" : `${months} months ago`;
+  const years = Math.floor(months / 12);
+  return years === 1 ? "1 year ago" : `${years} years ago`;
+}
+
 // listParams is the list state parsed from the page's URL. Pages whose query
 // params mean something else (/cards/new uses ?type= for the picker) omit it:
 // they get the default view without the toolbar and page controls.
@@ -153,8 +173,11 @@ function CardRow({
       <TableCell>
         <CardSocials cardId={card.id} postedOn={card.postedOn} />
       </TableCell>
-      <TableCell className="text-muted-foreground">
-        {updatedAtFormatter.format(new Date(card.updatedAt))}
+      <TableCell
+        className="text-muted-foreground/60"
+        title={updatedAtFormatter.format(new Date(card.updatedAt))}
+      >
+        {formatUpdatedAgo(card.updatedAt)}
       </TableCell>
     </TableRow>
   );
