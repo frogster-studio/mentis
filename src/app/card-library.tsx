@@ -27,8 +27,9 @@ import {
   type CardListParams,
   parseListParams,
 } from "@/lib/cards/list-params";
-import { CARD_TYPE_LABELS, type Card } from "@/lib/cards/schema";
+import { CARD_TYPE_LABELS, type Card, type CardType } from "@/lib/cards/schema";
 import { createServiceClient } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 
 const updatedAtFormatter = new Intl.DateTimeFormat("en-GB", {
   dateStyle: "medium",
@@ -187,6 +188,16 @@ export async function CardLibrary({
   );
 }
 
+// Underline mark per Card Type (docs/ui-conventions.md, Card Type colors).
+// Written out as literal classes so Tailwind's scanner generates them.
+const CARD_TYPE_UNDERLINE: Record<CardType, string> = {
+  quiz: "border-type-quiz",
+  "true-false": "border-type-true-false",
+  anecdote: "border-type-anecdote",
+  "did-you-know": "border-type-did-you-know",
+  riddle: "border-type-riddle",
+};
+
 function CardRow({
   card,
   active,
@@ -201,7 +212,16 @@ function CardRow({
       <TableCell className="py-2.5 pl-4 font-medium">
         <CardRowLink cardId={card.id}>{card.title}</CardRowLink>
       </TableCell>
-      <TableCell className="py-2.5">{CARD_TYPE_LABELS[card.type]}</TableCell>
+      <TableCell className="py-2.5">
+        <span
+          className={cn(
+            "inline-block whitespace-nowrap border-b-[3px] pb-0.5",
+            CARD_TYPE_UNDERLINE[card.type],
+          )}
+        >
+          {CARD_TYPE_LABELS[card.type]}
+        </span>
+      </TableCell>
       <TableCell className="py-2.5">
         <div className="flex flex-wrap gap-1">
           {card.tags.map((tag) => (

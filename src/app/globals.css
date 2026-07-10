@@ -40,6 +40,11 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-type-quiz: var(--type-quiz);
+  --color-type-true-false: var(--type-true-false);
+  --color-type-anecdote: var(--type-anecdote);
+  --color-type-did-you-know: var(--type-did-you-know);
+  --color-type-riddle: var(--type-riddle);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -83,6 +88,13 @@
   --sidebar-accent-foreground: oklch(21% 0.006 285.885);
   --sidebar-border: oklch(92% 0.004 286.32);
   --sidebar-ring: oklch(68.5% 0.169 237.323);
+  /* Canonical Card Type palette — single source of truth, categorical data
+     colors, not accents (docs/ui-conventions.md, Card Type colors). */
+  --type-quiz: #3d9aff;
+  --type-true-false: #7fde2a;
+  --type-anecdote: #7317d0;
+  --type-did-you-know: #fe770c;
+  --type-riddle: #fde22f;
 }
 
 .dark {
