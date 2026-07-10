@@ -118,50 +118,70 @@ export async function CardLibrary({
           </Tooltip>
         </form>
       </header>
-      <main className="flex flex-1 flex-col gap-4 p-6">
-        <h1 className="font-semibold text-2xl text-foreground tracking-tight">
-          Cards
-        </h1>
-        {listParams ? <CardListToolbar /> : null}
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Card Type</TableHead>
-              <TableHead>Tags</TableHead>
-              <TableHead>Socials</TableHead>
-              <TableHead>Updated</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {cards.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-muted-foreground">
-                  {hasActiveFilters
-                    ? "No Cards match the current search and filters."
-                    : "No Cards yet. Use “New Card” to write the first one."}
-                </TableCell>
-              </TableRow>
-            ) : (
-              cards.map((card) => (
-                <CardRow
-                  key={card.id}
-                  card={card}
-                  active={card.id === activeCardId}
-                  listParams={params}
-                />
-              ))
-            )}
-          </TableBody>
-        </Table>
-        {listParams && pageCount > 1 ? (
-          <ListPagination
-            basePath={activeCardId ? `/cards/${activeCardId}` : "/"}
-            params={params}
-            page={page}
-            pageCount={pageCount}
-          />
-        ) : null}
+      {/* Canvas + surface (docs/ui-conventions.md, Surfaces): the tinted
+          canvas is scoped to the library so the login page keeps its own
+          background; only the header spans the viewport. */}
+      <main className="flex-1 bg-zinc-50 p-6">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-4">
+          <h1 className="font-semibold text-2xl text-foreground tracking-tight">
+            Cards
+          </h1>
+          {listParams ? <CardListToolbar /> : null}
+          <div className="overflow-hidden rounded-lg border bg-card shadow-xs">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-zinc-50 hover:bg-zinc-50">
+                  <TableHead className="pl-4 text-muted-foreground text-xs">
+                    Title
+                  </TableHead>
+                  <TableHead className="text-muted-foreground text-xs">
+                    Card Type
+                  </TableHead>
+                  <TableHead className="text-muted-foreground text-xs">
+                    Tags
+                  </TableHead>
+                  <TableHead className="text-muted-foreground text-xs">
+                    Socials
+                  </TableHead>
+                  <TableHead className="pr-4 text-muted-foreground text-xs">
+                    Updated
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {cards.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      className="py-10 text-center text-muted-foreground"
+                    >
+                      {hasActiveFilters
+                        ? "No Cards match the current search and filters."
+                        : "No Cards yet. Use “New Card” to write the first one."}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  cards.map((card) => (
+                    <CardRow
+                      key={card.id}
+                      card={card}
+                      active={card.id === activeCardId}
+                      listParams={params}
+                    />
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          {listParams && pageCount > 1 ? (
+            <ListPagination
+              basePath={activeCardId ? `/cards/${activeCardId}` : "/"}
+              params={params}
+              page={page}
+              pageCount={pageCount}
+            />
+          ) : null}
+        </div>
       </main>
     </>
   );
@@ -178,11 +198,11 @@ function CardRow({
 }) {
   return (
     <TableRow className="relative" data-state={active ? "selected" : undefined}>
-      <TableCell className="font-medium">
+      <TableCell className="py-2.5 pl-4 font-medium">
         <CardRowLink cardId={card.id}>{card.title}</CardRowLink>
       </TableCell>
-      <TableCell>{CARD_TYPE_LABELS[card.type]}</TableCell>
-      <TableCell>
+      <TableCell className="py-2.5">{CARD_TYPE_LABELS[card.type]}</TableCell>
+      <TableCell className="py-2.5">
         <div className="flex flex-wrap gap-1">
           {card.tags.map((tag) => (
             // z-10 lifts the chip above the row-covering link overlay so it
@@ -201,11 +221,11 @@ function CardRow({
           ))}
         </div>
       </TableCell>
-      <TableCell>
+      <TableCell className="py-2.5">
         <CardSocials cardId={card.id} postedOn={card.postedOn} />
       </TableCell>
       <TableCell
-        className="text-muted-foreground/60"
+        className="py-2.5 pr-4 text-muted-foreground/60"
         title={updatedAtFormatter.format(new Date(card.updatedAt))}
       >
         {formatUpdatedAgo(card.updatedAt)}
