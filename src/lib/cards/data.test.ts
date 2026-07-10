@@ -6,6 +6,7 @@ import {
   getCard,
   insertCard,
   listCards,
+  setCardPostedOn,
   updateCard,
 } from "@/lib/cards/data";
 import { cardSchema } from "@/lib/cards/schema";
@@ -47,7 +48,8 @@ function createFakeSupabase(options?: {
   const rows: Record<string, unknown>[] = [];
   let tick = 0;
 
-  // Mimics the cards_set_updated_at trigger: every write gets a later stamp.
+  // Mimics the cards_set_updated_at trigger: content writes get a later
+  // stamp; a posted_on-only write keeps the old one.
   function nextTimestamp() {
     tick += 1;
     return new Date(Date.UTC(2026, 6, 8, 12, 0, tick)).toISOString();
@@ -169,9 +171,26 @@ function createFakeSupabase(options?: {
                       if (!row) {
                         return { data: null, error: { message: "not found" } };
                       }
-                      Object.assign(row, values, {
-                        updated_at: nextTimestamp(),
-                      });
+                      // Like the trigger, only bump updated_at when a content
+                      // column actually changes.
+                      const contentColumns = [
+                        "type",
+                        "title",
+                        "tags",
+                        "payload",
+                        "images",
+                      ];
+                      const contentChanged = contentColumns.some(
+                        (contentColumn) =>
+                          contentColumn in values &&
+                          JSON.stringify(values[contentColumn]) !==
+                            JSON.stringify(row[contentColumn]),
+                      );
+                      Object.assign(
+                        row,
+                        values,
+                        contentChanged ? { updated_at: nextTimestamp() } : {},
+                      );
                       return { data: row, error: null };
                     },
                   };
@@ -263,9 +282,9 @@ describe("insertCard and listCards", () => {
     expect(cards[0]).toMatchObject({
       type: "anecdote",
       title: "Mendès France",
-      status: "draft",
       tags: [],
       images: [],
+      postedOn: [],
       payload: { body },
     });
     expect(cards[0].id).not.toBe("");
@@ -354,7 +373,7 @@ describe("listCards with a Title search", () => {
   });
 });
 
-describe("listCards with Type and Status filters", () => {
+describe("listCards with a Type filter", () => {
   it("narrows by Card Type", async () => {
     const client = createFakeSupabase();
 
@@ -365,45 +384,26 @@ describe("listCards with Type and Status filters", () => {
     expect(cards.map((card) => card.title)).toEqual(["Quiz"]);
   });
 
-  it("narrows by Status", async () => {
+  it("composes search, Type, and Tag filters", async () => {
     const client = createFakeSupabase();
 
-    const draft = await insertCard(client, anecdote("Brouillon", "a"));
-    await updateCard(client, draft.id, { ...draft, status: "published" });
-    await insertCard(client, anecdote("Encore en cours", "b"));
-
-    const { cards } = await listCards(client, { status: "published" });
-    expect(cards.map((card) => card.title)).toEqual(["Brouillon"]);
-  });
-
-  it("composes search, Type, Status, and Tag filters", async () => {
-    const client = createFakeSupabase();
-
-    const match = await insertCard(
-      client,
-      anecdote("Bastille en fête", "a", ["histoire"]),
-    );
-    await updateCard(client, match.id, { ...match, status: "published" });
+    await insertCard(client, anecdote("Bastille en fête", "a", ["histoire"]));
     // Each of these misses exactly one criterion.
-    await insertCard(client, anecdote("Bastille oubliée", "b", ["histoire"]));
-    const wrongTag = await insertCard(
+    await insertCard(
       client,
-      anecdote("Bastille ailleurs", "c", ["géo"]),
+      cardSchema.parse({
+        type: "quiz",
+        title: "Bastille en quiz",
+        tags: ["histoire"],
+        payload: quizPayload(0, "Voilà."),
+      }),
     );
-    await updateCard(client, wrongTag.id, { ...wrongTag, status: "published" });
-    const wrongTitle = await insertCard(
-      client,
-      anecdote("Autre sujet", "d", ["histoire"]),
-    );
-    await updateCard(client, wrongTitle.id, {
-      ...wrongTitle,
-      status: "published",
-    });
+    await insertCard(client, anecdote("Bastille ailleurs", "c", ["géo"]));
+    await insertCard(client, anecdote("Autre sujet", "d", ["histoire"]));
 
     const { cards, totalCount } = await listCards(client, {
       search: "bastille",
       type: "anecdote",
-      status: "published",
       tag: "histoire",
     });
     expect(cards.map((card) => card.title)).toEqual(["Bastille en fête"]);
@@ -500,18 +500,6 @@ describe("updateCard", () => {
     expect(await getCard(client, created.id)).toEqual(updated);
   });
 
-  it("persists a status change", async () => {
-    const client = createFakeSupabase();
-
-    const created = await insertCard(client, anecdote("Statut", "corps"));
-    expect(created.status).toBe("draft");
-
-    await updateCard(client, created.id, { ...created, status: "published" });
-
-    const reloaded = await getCard(client, created.id);
-    expect(reloaded?.status).toBe("published");
-  });
-
   it("re-sorts the list after an update", async () => {
     const client = createFakeSupabase();
 
@@ -534,6 +522,67 @@ describe("updateCard", () => {
   });
 });
 
+describe("setCardPostedOn", () => {
+  it("marks and unmarks Socials, one at a time", async () => {
+    const client = createFakeSupabase();
+
+    const created = await insertCard(client, anecdote("Marquée", "corps"));
+    expect(created.postedOn).toEqual([]);
+
+    const marked = await setCardPostedOn(client, created.id, "linkedin", true);
+    expect(marked.postedOn).toEqual(["linkedin"]);
+
+    const both = await setCardPostedOn(client, created.id, "x", true);
+    expect(both.postedOn).toEqual(["linkedin", "x"]);
+
+    const unmarked = await setCardPostedOn(
+      client,
+      created.id,
+      "linkedin",
+      false,
+    );
+    expect(unmarked.postedOn).toEqual(["x"]);
+    expect(await getCard(client, created.id)).toEqual(unmarked);
+  });
+
+  it("is idempotent: repeating a state stores a single mark", async () => {
+    const client = createFakeSupabase();
+
+    const created = await insertCard(client, anecdote("Répétée", "corps"));
+
+    await setCardPostedOn(client, created.id, "tiktok", true);
+    const repeated = await setCardPostedOn(client, created.id, "tiktok", true);
+
+    expect(repeated.postedOn).toEqual(["tiktok"]);
+  });
+
+  it("never bumps updated_at or reorders the list", async () => {
+    const client = createFakeSupabase();
+
+    const first = await insertCard(client, anecdote("First", "a"));
+    await insertCard(client, anecdote("Second", "b"));
+
+    const marked = await setCardPostedOn(client, first.id, "youtube", true);
+    expect(marked.updatedAt).toBe(first.updatedAt);
+
+    const { cards } = await listCards(client);
+    expect(cards.map((card) => card.title)).toEqual(["Second", "First"]);
+  });
+
+  it("throws for an unknown Card", async () => {
+    const client = createFakeSupabase();
+
+    await expect(
+      setCardPostedOn(
+        client,
+        "ffffffff-ffff-ffff-ffff-ffffffffffff",
+        "x",
+        true,
+      ),
+    ).rejects.toThrow("Card not found");
+  });
+});
+
 describe("Quiz Cards", () => {
   it("round-trips a Quiz create through the list", async () => {
     const client = createFakeSupabase();
@@ -546,7 +595,6 @@ describe("Quiz Cards", () => {
     expect(cards[0]).toMatchObject({
       type: "quiz",
       title: "Bastille",
-      status: "draft",
       payload,
     });
   });
@@ -677,7 +725,6 @@ describe("Card Type change", () => {
         type: "quiz",
         title: "Bastille",
         tags: ["histoire", "révolution"],
-        status: "published",
         payload: quizPayload(0, "Le 14 juillet 1789."),
       }),
     );
@@ -695,7 +742,6 @@ describe("Card Type change", () => {
         type: "riddle",
         title: created.title,
         tags: created.tags,
-        status: created.status,
         images: created.images,
         payload: newPayload,
       }),
@@ -706,7 +752,6 @@ describe("Card Type change", () => {
       type: "riddle",
       title: created.title,
       tags: created.tags,
-      status: created.status,
       images: created.images,
     });
     expect(updated.payload).toEqual(newPayload);

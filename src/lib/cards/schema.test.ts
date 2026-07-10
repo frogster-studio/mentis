@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { cardSchema } from "@/lib/cards/schema";
+import { cardSchema, postedOnSchema } from "@/lib/cards/schema";
 
 const validAnecdote = {
   type: "anecdote",
@@ -9,13 +9,12 @@ const validAnecdote = {
 };
 
 describe("cardSchema", () => {
-  it("accepts a valid Anecdote and defaults status, tags, and images", () => {
+  it("accepts a valid Anecdote and defaults tags and images", () => {
     const result = cardSchema.parse(validAnecdote);
     expect(result).toEqual({
       type: "anecdote",
       title: "Mendès France et le lait",
       tags: [],
-      status: "draft",
       images: [],
       payload: { body: "À la cantine…" },
     });
@@ -61,12 +60,6 @@ describe("cardSchema", () => {
     expect(cardSchema.safeParse(withoutType).success).toBe(false);
   });
 
-  it("rejects an unknown status value", () => {
-    expect(
-      cardSchema.safeParse({ ...validAnecdote, status: "archived" }).success,
-    ).toBe(false);
-  });
-
   it("rejects more than three images", () => {
     const images = [0, 1, 2, 3].map((order) => ({
       path: `cards/x-${order}.webp`,
@@ -103,6 +96,23 @@ describe("cardSchema — Images", () => {
       "middle.webp",
       "last.webp",
     ]);
+  });
+});
+
+describe("postedOnSchema", () => {
+  it("defaults to no Posted marks", () => {
+    expect(postedOnSchema.parse(undefined)).toEqual([]);
+  });
+
+  it("keeps known Socials and drops duplicates", () => {
+    expect(postedOnSchema.parse(["linkedin", "x", "linkedin"])).toEqual([
+      "linkedin",
+      "x",
+    ]);
+  });
+
+  it("rejects an unknown Social", () => {
+    expect(postedOnSchema.safeParse(["myspace"]).success).toBe(false);
   });
 });
 

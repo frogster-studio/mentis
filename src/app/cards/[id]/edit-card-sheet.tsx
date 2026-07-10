@@ -38,7 +38,6 @@ import {
   SheetDescription,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Switch } from "@/components/ui/switch";
 import { deleteCard, updateCard } from "@/lib/cards/actions";
 import {
   CARD_TYPE_LABELS,
@@ -117,8 +116,8 @@ function EditCardForm({
         // so its submit bubbles here too — only handle our own.
         if (event.target !== event.currentTarget) return;
         // Dispatch the action manually: submitting through the action prop
-        // makes React reset the form afterwards, which fires a reset event
-        // that snaps the Switch back to its mount-time state.
+        // makes React reset the form afterwards, which snaps every
+        // uncontrolled field back to its mount-time default.
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
         // Picked Images process and upload first (ADR 0001); the action
@@ -200,8 +199,7 @@ function EditCardForm({
               <AlertDialogDescription>
                 The {CARD_TYPE_LABELS[type]} fields —{" "}
                 {CARD_TYPE_FIELD_SUMMARY[type]} — will be cleared. Title, Tags,
-                Status, and Images are kept. Nothing changes until you save the
-                Card.
+                and Images are kept. Nothing changes until you save the Card.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -240,15 +238,6 @@ function EditCardForm({
         />
         <ImagesField slot={images} />
         <TagsField defaultTags={card.tags} />
-        <div className="flex items-center gap-2">
-          <Switch
-            id="status"
-            name="status"
-            value="published"
-            defaultChecked={card.status === "published"}
-          />
-          <Label htmlFor="status">Published</Label>
-        </div>
         <div className="flex gap-4 text-muted-foreground text-xs">
           <span>
             Created {timestampFormatter.format(new Date(card.createdAt))}

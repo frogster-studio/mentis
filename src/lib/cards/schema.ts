@@ -18,14 +18,33 @@ export const CARD_TYPE_LABELS: Record<CardType, string> = {
   riddle: "Riddle",
 };
 
-export const CARD_STATUSES = ["draft", "published"] as const;
+// Canonical Social order — the toggles render in this order on every row.
+export const SOCIALS = [
+  "x",
+  "linkedin",
+  "facebook",
+  "tiktok",
+  "youtube",
+  "instagram",
+] as const;
 
-export type CardStatus = (typeof CARD_STATUSES)[number];
+export type Social = (typeof SOCIALS)[number];
 
-export const CARD_STATUS_LABELS: Record<CardStatus, string> = {
-  draft: "Draft",
-  published: "Published",
+export const SOCIAL_LABELS: Record<Social, string> = {
+  x: "X",
+  linkedin: "LinkedIn",
+  facebook: "Facebook",
+  tiktok: "TikTok",
+  youtube: "YouTube",
+  instagram: "Instagram",
 };
+
+// Posted marks live outside the Card form schema on purpose: they are set
+// only through their own action, so a form save can never touch them.
+export const postedOnSchema = z
+  .array(z.enum(SOCIALS))
+  .default([])
+  .transform((socials) => [...new Set(socials)]);
 
 const cardImageSchema = z.object({
   path: z.string().min(1),
@@ -61,7 +80,6 @@ const tagsSchema = z
 const sharedFields = {
   title: z.string().trim().min(1, "Title is required."),
   tags: tagsSchema,
-  status: z.enum(CARD_STATUSES).default("draft"),
   images: imagesSchema,
 };
 
@@ -141,6 +159,7 @@ export type CardData = z.output<typeof cardSchema>;
 
 export type Card = CardData & {
   id: string;
+  postedOn: Social[];
   createdAt: string;
   updatedAt: string;
 };

@@ -3,10 +3,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   type Card,
   type CardData,
-  type CardStatus,
   type CardType,
   cardSchema,
   normalizeTag,
+  postedOnSchema,
+  type Social,
 } from "@/lib/cards/schema";
 import { removeCardImages } from "@/lib/images/storage";
 
@@ -15,7 +16,7 @@ type CardRow = {
   type: string;
   title: string;
   tags: string[];
-  status: string;
+  posted_on: unknown;
   payload: unknown;
   images: unknown;
   created_at: string;
@@ -29,13 +30,13 @@ function rowToCard(row: CardRow): Card {
     type: row.type,
     title: row.title,
     tags: row.tags,
-    status: row.status,
     payload: row.payload,
     images: row.images,
   });
   return {
     ...data,
     id: row.id,
+    postedOn: postedOnSchema.parse(row.posted_on),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -51,7 +52,6 @@ export async function insertCard(
       type: data.type,
       title: data.title,
       tags: data.tags,
-      status: data.status,
       payload: data.payload,
       images: data.images,
     })
@@ -68,7 +68,6 @@ export const CARD_LIST_PAGE_SIZE = 20;
 export type CardListOptions = {
   search?: string;
   type?: CardType;
-  status?: CardStatus;
   tag?: string;
   page?: number;
   pageSize?: number;
@@ -104,9 +103,6 @@ export async function listCards(
   }
   if (options.type) {
     query = query.eq("type", options.type);
-  }
-  if (options.status) {
-    query = query.eq("status", options.status);
   }
   if (tag !== "") {
     query = query.contains("tags", [tag]);
@@ -160,7 +156,6 @@ export async function updateCard(
       type: data.type,
       title: data.title,
       tags: data.tags,
-      status: data.status,
       payload: data.payload,
       images: data.images,
     })
@@ -169,6 +164,35 @@ export async function updateCard(
     .single();
   if (error) {
     throw new Error(`Failed to update Card: ${error.message}`);
+  }
+  return rowToCard(row as CardRow);
+}
+
+// Sets one Posted mark to an explicit state (idempotent, so a repeated click
+// can't flip it back). The write touches only posted_on, which the
+// set_updated_at trigger ignores — marking never reorders the list.
+export async function setCardPostedOn(
+  client: SupabaseClient,
+  id: string,
+  social: Social,
+  posted: boolean,
+): Promise<Card> {
+  const card = await getCard(client, id);
+  if (!card) {
+    throw new Error("Failed to update Posted marks: Card not found");
+  }
+
+  const postedOn = posted
+    ? [...new Set([...card.postedOn, social])]
+    : card.postedOn.filter((existing) => existing !== social);
+  const { data: row, error } = await client
+    .from("cards")
+    .update({ posted_on: postedOn })
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) {
+    throw new Error(`Failed to update Posted marks: ${error.message}`);
   }
   return rowToCard(row as CardRow);
 }

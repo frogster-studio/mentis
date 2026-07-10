@@ -7,7 +7,6 @@ describe("parseListParams", () => {
     expect(parseListParams({})).toEqual({
       search: "",
       type: undefined,
-      status: undefined,
       tag: "",
       page: 1,
     });
@@ -18,23 +17,20 @@ describe("parseListParams", () => {
       parseListParams({
         q: " Bastille ",
         type: "quiz",
-        status: "published",
         tag: " Histoire ",
         page: "3",
       }),
     ).toEqual({
       search: "Bastille",
       type: "quiz",
-      status: "published",
       tag: "histoire",
       page: 3,
     });
   });
 
-  it("ignores unknown types and statuses instead of erroring", () => {
-    const params = parseListParams({ type: "poem", status: "archived" });
+  it("ignores unknown types instead of erroring", () => {
+    const params = parseListParams({ type: "poem" });
     expect(params.type).toBeUndefined();
-    expect(params.status).toBeUndefined();
   });
 
   it("falls back to page 1 for missing, malformed, or non-positive pages", () => {

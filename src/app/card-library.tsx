@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { CardListToolbar } from "@/app/card-list-toolbar";
 import { CardRowLink } from "@/app/card-row-link";
+import { CardSocials } from "@/app/card-socials";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,11 +21,7 @@ import {
   type CardListParams,
   parseListParams,
 } from "@/lib/cards/list-params";
-import {
-  CARD_STATUS_LABELS,
-  CARD_TYPE_LABELS,
-  type Card,
-} from "@/lib/cards/schema";
+import { CARD_TYPE_LABELS, type Card } from "@/lib/cards/schema";
 import { createServiceClient } from "@/lib/supabase";
 
 const updatedAtFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -49,10 +46,7 @@ export async function CardLibrary({
     params,
   );
   const hasActiveFilters =
-    params.search !== "" ||
-    params.type !== undefined ||
-    params.status !== undefined ||
-    params.tag !== "";
+    params.search !== "" || params.type !== undefined || params.tag !== "";
 
   return (
     <>
@@ -84,7 +78,7 @@ export async function CardLibrary({
               <TableHead>Title</TableHead>
               <TableHead>Card Type</TableHead>
               <TableHead>Tags</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Socials</TableHead>
               <TableHead>Updated</TableHead>
             </TableRow>
           </TableHeader>
@@ -157,9 +151,7 @@ function CardRow({
         </div>
       </TableCell>
       <TableCell>
-        <Badge variant={card.status === "published" ? "default" : "secondary"}>
-          {CARD_STATUS_LABELS[card.status]}
-        </Badge>
+        <CardSocials cardId={card.id} postedOn={card.postedOn} />
       </TableCell>
       <TableCell className="text-muted-foreground">
         {updatedAtFormatter.format(new Date(card.updatedAt))}

@@ -14,12 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  CARD_STATUS_LABELS,
-  CARD_STATUSES,
-  CARD_TYPE_LABELS,
-  CARD_TYPES,
-} from "@/lib/cards/schema";
+import { CARD_TYPE_LABELS, CARD_TYPES } from "@/lib/cards/schema";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -27,7 +22,7 @@ const SEARCH_DEBOUNCE_MS = 300;
 // sentinel.
 const ALL = "all";
 
-// Search, Type/Status filters, the active Tag, and clear-all. Every control
+// Search, the Type filter, the active Tag, and clear-all. Every control
 // reads from and writes to the URL, which is the list state's single home.
 export function CardListToolbar() {
   const router = useRouter();
@@ -74,11 +69,8 @@ export function CardListToolbar() {
   // An unknown value in a hand-edited URL falls back to "no filter", the
   // same way the server ignores it.
   const type = CARD_TYPES.find((t) => t === searchParams.get("type")) ?? ALL;
-  const status =
-    CARD_STATUSES.find((s) => s === searchParams.get("status")) ?? ALL;
   const tag = searchParams.get("tag") ?? "";
-  const hasActiveFilters =
-    search !== "" || type !== ALL || status !== ALL || tag !== "";
+  const hasActiveFilters = search !== "" || type !== ALL || tag !== "";
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -102,24 +94,6 @@ export function CardListToolbar() {
           {CARD_TYPES.map((cardType) => (
             <SelectItem key={cardType} value={cardType}>
               {CARD_TYPE_LABELS[cardType]}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Select
-        value={status}
-        onValueChange={(value) =>
-          setParam("status", value === ALL ? "" : value)
-        }
-      >
-        <SelectTrigger aria-label="Filter by Status">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ALL}>All Statuses</SelectItem>
-          {CARD_STATUSES.map((cardStatus) => (
-            <SelectItem key={cardStatus} value={cardStatus}>
-              {CARD_STATUS_LABELS[cardStatus]}
             </SelectItem>
           ))}
         </SelectContent>

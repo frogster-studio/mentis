@@ -8,9 +8,10 @@ import {
   deleteCard as deleteCardRow,
   getCard,
   insertCard,
+  setCardPostedOn,
   updateCard as updateCardRow,
 } from "@/lib/cards/data";
-import { cardSchema } from "@/lib/cards/schema";
+import { cardSchema, SOCIALS, type Social } from "@/lib/cards/schema";
 import { removeCardImages } from "@/lib/images/storage";
 import { createServiceClient } from "@/lib/supabase";
 
@@ -147,7 +148,6 @@ export async function updateCard(
   const parsed = cardSchema.safeParse({
     type,
     title: String(formData.get("title") ?? ""),
-    status: formData.get("status") === "published" ? "published" : "draft",
     tags: formData.getAll("tags").map(String),
     images: imagesFromFormData(formData),
     payload: payloadFromFormData(type, formData),
@@ -195,4 +195,25 @@ export async function deleteCard(cardId: string): Promise<void> {
 
   revalidatePath("/");
   redirect("/");
+}
+
+// One toggle click = one call. Setting an explicit state (not flipping) keeps
+// a double-fired click from undoing itself.
+export async function setCardPosted(
+  cardId: string,
+  social: Social,
+  posted: boolean,
+): Promise<void> {
+  await requireSession();
+
+  // Server Functions are reachable by direct POST, so the arguments are
+  // checked even though the UI only sends well-formed ones.
+  if (!SOCIALS.includes(social) || typeof posted !== "boolean") {
+    throw new Error("Invalid Posted mark.");
+  }
+
+  await setCardPostedOn(createServiceClient(), cardId, social, posted);
+
+  revalidatePath("/");
+  revalidatePath(`/cards/${cardId}`);
 }

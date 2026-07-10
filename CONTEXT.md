@@ -52,8 +52,10 @@ _Avoid_: attachment, photo
 **Caption**:
 Optional short audience-facing text accompanying an Image.
 
-**Draft**:
-Card status: work in progress, not ready for consumption.
+**Social**:
+One of the six audience networks a Card can be Posted on: X, LinkedIn, Facebook, TikTok, YouTube, Instagram. The list is fixed.
+_Avoid_: platform, network, channel, social media
 
-**Published**:
-Card status: validated and ready to be performed or consumed.
+**Posted**:
+A per-Social mark on a Card recording that an editor has put the Card on that Social. Pure bookkeeping by the editor.
+_Avoid_: published (retired term — Cards no longer have a status), shared
