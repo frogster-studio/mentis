@@ -15,6 +15,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { logout } from "@/lib/auth/actions";
 import { listCards } from "@/lib/cards/data";
 import {
@@ -71,28 +76,47 @@ export async function CardLibrary({
 
   return (
     <>
-      <header className="flex items-center justify-between border-border border-b px-6 py-3">
+      {/* 3-column grid keeps the New Card action dead-center regardless of
+          how wide the logo and session controls are (docs/ui-conventions.md,
+          App chrome). z-40 stays below the sheets' z-50 overlay. */}
+      <header className="sticky top-0 z-40 grid h-14 grid-cols-[1fr_auto_1fr] items-center border-border border-b bg-background/80 px-6 backdrop-blur">
         <Link
           href="/"
           aria-label="Mentis — Card library"
-          className="rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="justify-self-start rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           <MentisLogo className="h-7 w-auto" />
         </Link>
-        <div className="flex items-center gap-2">
-          <Button asChild>
-            <Link href="/cards/new">
-              <Plus />
-              New Card
-            </Link>
-          </Button>
-          <form action={logout}>
-            <Button type="submit" variant="ghost">
-              <LogOut />
-              Log out
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              asChild
+              size="icon"
+              className="size-10 bg-sky-100 text-sky-600 hover:bg-primary hover:text-primary-foreground"
+            >
+              <Link href="/cards/new" aria-label="New Card">
+                <Plus className="size-5" />
+              </Link>
             </Button>
-          </form>
-        </div>
+          </TooltipTrigger>
+          <TooltipContent>New Card</TooltipContent>
+        </Tooltip>
+        <form action={logout} className="justify-self-end">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="submit"
+                variant="ghost"
+                size="icon"
+                aria-label="Log out"
+                className="size-10 text-muted-foreground"
+              >
+                <LogOut className="size-4.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Log out</TooltipContent>
+          </Tooltip>
+        </form>
       </header>
       <main className="flex flex-1 flex-col gap-4 p-6">
         <h1 className="font-semibold text-2xl text-foreground tracking-tight">
