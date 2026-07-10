@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CardListToolbar } from "@/app/card-list-toolbar";
 import { CardRowLink } from "@/app/card-row-link";
 import { CardSocials } from "@/app/card-socials";
+import { MentisLogo } from "@/components/mentis-logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -71,7 +72,13 @@ export async function CardLibrary({
   return (
     <>
       <header className="flex items-center justify-between border-border border-b px-6 py-3">
-        <span className="font-semibold text-foreground">Mentis</span>
+        <Link
+          href="/"
+          aria-label="Mentis — Card library"
+          className="rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          <MentisLogo className="h-7 w-auto" />
+        </Link>
         <div className="flex items-center gap-2">
           <Button asChild>
             <Link href="/cards/new">

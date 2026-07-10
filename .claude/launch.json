@@ -21,6 +21,12 @@
       "runtimeArgs": ["-c", "NEXT_DIST_DIR=.next-preview-c npm run dev"],
       "port": 3000,
       "autoPort": true
+    },
+    {
+      "name": "mockups",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "4173"],
+      "port": 4173
     }
   ]
 }
