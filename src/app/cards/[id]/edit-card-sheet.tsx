@@ -10,6 +10,7 @@ import {
   useCardImages,
 } from "@/app/cards/image-field";
 import { TagsField } from "@/app/cards/tags-field";
+import { TypeDot } from "@/components/type-dot";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -174,11 +175,18 @@ function EditCardForm({
             }}
           >
             <SelectTrigger id="card-type">
+              {/* The switcher always names a real type, so its dot always
+                  rides into the trigger. */}
+              <TypeDot type={type} />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {CARD_TYPES.map((cardType) => (
-                <SelectItem key={cardType} value={cardType}>
+                <SelectItem
+                  key={cardType}
+                  value={cardType}
+                  leading={<TypeDot type={cardType} />}
+                >
                   {CARD_TYPE_LABELS[cardType]}
                 </SelectItem>
               ))}

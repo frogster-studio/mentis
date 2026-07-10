@@ -84,8 +84,14 @@ function SelectContent({
 function SelectItem({
   className,
   children,
+  leading,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Item>) {
+}: React.ComponentProps<typeof SelectPrimitive.Item> & {
+  // An optional mark (e.g. a Card Type dot) rendered before the label. It sits
+  // outside ItemText on purpose: Radix rides only ItemText's children into the
+  // trigger, so `leading` aligns the menu without leaking into the trigger.
+  leading?: React.ReactNode;
+}) {
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
@@ -100,6 +106,7 @@ function SelectItem({
           <CheckIcon className="pointer-events-none" />
         </SelectPrimitive.ItemIndicator>
       </span>
+      {leading}
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
     </SelectPrimitive.Item>
   );

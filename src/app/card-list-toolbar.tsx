@@ -3,7 +3,7 @@
 import { X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-
+import { TypeDot } from "@/components/type-dot";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,12 +87,26 @@ export function CardListToolbar() {
         onValueChange={(value) => setParam("type", value === ALL ? "" : value)}
       >
         <SelectTrigger aria-label="Filter by Card Type">
+          {/* The selected type's dot rides into the trigger; unfiltered stays
+              plain since "All Types" carries no dot. */}
+          {type !== ALL ? <TypeDot type={type} /> : null}
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={ALL}>All Types</SelectItem>
+          {/* Empty spacer the width of a dot so "All Types" aligns with the
+              dotted type items below it. */}
+          <SelectItem
+            value={ALL}
+            leading={<span aria-hidden className="w-2.5 shrink-0" />}
+          >
+            All Types
+          </SelectItem>
           {CARD_TYPES.map((cardType) => (
-            <SelectItem key={cardType} value={cardType}>
+            <SelectItem
+              key={cardType}
+              value={cardType}
+              leading={<TypeDot type={cardType} />}
+            >
               {CARD_TYPE_LABELS[cardType]}
             </SelectItem>
           ))}
