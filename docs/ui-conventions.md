@@ -41,3 +41,19 @@ one radius, 2–3 type sizes, Lexend headings / Poppins body, lucide only.)
 - Rows: white, hairline dividers (`border-b`, none on last), `hover:bg-muted/50`,
   `data-[state=selected]:bg-muted`. No zebra stripes, no vertical grid lines.
 - Cells `py-2.5`; first and last columns `px-4` so content clears the surface edge.
+
+## Card Type colors
+- Each Card Type has one canonical **categorical color** — Quiz `#3D9AFF`, True/False
+  `#7FDE2A`, Anecdote `#7317D0`, Did You Know `#FE770C`, Riddle `#FDE22F` — with a single
+  source of truth (`--type-*` CSS variables in `globals.css`), never re-hardcoded per use.
+- These are **data colors, not accents**: sky stays the only interactive accent. Type colors
+  never style buttons, links, rings, or text — the type label always stays `foreground`, and
+  color never carries meaning alone (the label is always present).
+- Two standard marks: the **underline** (3px bar in the type color, 2px below the label,
+  `whitespace-nowrap`) where a type is *displayed*; the **dot** (14px `rounded-full`, faint
+  inset ring `black/12` so pale colors keep an edge; 10px compact inside Select
+  items/triggers) where a type is *picked or filtered*.
+- Type pickers may **hover-tint** their control with that type's color at ~10% over white;
+  focus-visible keeps the standard sky ring. Keyboard/hover highlight in menus stays neutral.
+- In type Select menus, the no-filter item ("All Types") keeps an empty spacer so labels
+  align with the dotted items.
