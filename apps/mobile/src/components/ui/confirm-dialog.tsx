@@ -1,10 +1,7 @@
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
-import { COLORS } from "@/utils/colors";
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ModalCard } from '@/components/ui/modal-card';
+import { COLORS } from '@/utils/colors';
 
-// Shared confirmation dialog: a React Native Modal (not Alert) so it renders identically on web
-// and mobile. The confirm action is kept subdued — it is the one that leaves or discards —
-// while cancelling sits on the filled primary button as the encouraged default. Tapping the
-// scrim dismisses (same as cancel).
 export type ConfirmDialogProps = {
   visible: boolean;
   title: string;
@@ -25,69 +22,42 @@ export function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
-      {/* Tap the scrim to dismiss; the inner Pressable swallows taps on the card. */}
-      <Pressable style={styles.backdrop} onPress={onCancel}>
-        <Pressable style={styles.card} onPress={() => {}}>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.message}>{message}</Text>
-          <View style={styles.actions}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.button,
-                styles.confirmButton,
-                pressed && styles.pressed,
-              ]}
-              onPress={onConfirm}
-            >
-              <Text style={styles.confirmLabel}>{confirmLabel}</Text>
-            </Pressable>
-            <Pressable
-              style={({ pressed }) => [
-                styles.button,
-                styles.cancelButton,
-                pressed && styles.pressed,
-              ]}
-              onPress={onCancel}
-            >
-              <Text style={styles.cancelLabel}>{cancelLabel}</Text>
-            </Pressable>
-          </View>
+    <ModalCard
+      visible={visible}
+      title={title}
+      message={message}
+      onRequestClose={onCancel}
+      onBackdropPress={onCancel}
+    >
+      <View style={styles.actions}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.button,
+            styles.confirmButton,
+            pressed && styles.pressed,
+          ]}
+          onPress={onConfirm}
+        >
+          <Text style={styles.confirmLabel}>{confirmLabel}</Text>
         </Pressable>
-      </Pressable>
-    </Modal>
+        <Pressable
+          style={({ pressed }) => [
+            styles.button,
+            styles.cancelButton,
+            pressed && styles.pressed,
+          ]}
+          onPress={onCancel}
+        >
+          <Text style={styles.cancelLabel}>{cancelLabel}</Text>
+        </Pressable>
+      </View>
+    </ModalCard>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: COLORS.scrim,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 32,
-  },
-  card: {
-    width: "100%",
-    maxWidth: 360,
-    backgroundColor: COLORS.surface,
-    borderRadius: 16,
-    padding: 24,
-    gap: 8,
-  },
-  title: {
-    color: COLORS.fill,
-    fontSize: 20,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  message: {
-    color: COLORS.textMuted,
-    fontSize: 15,
-    textAlign: "center",
-  },
   actions: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 12,
     marginTop: 16,
   },
@@ -95,12 +65,11 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 12,
     paddingVertical: 14,
-    alignItems: "center",
+    alignItems: 'center',
   },
   pressed: {
     opacity: 0.85,
   },
-  // The confirm (leaving/discarding) action is kept subdued; cancelling is the encouraged default.
   confirmButton: {
     backgroundColor: COLORS.panel,
     borderColor: COLORS.strokeStrong,
@@ -109,7 +78,7 @@ const styles = StyleSheet.create({
   confirmLabel: {
     color: COLORS.fill,
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   cancelButton: {
     backgroundColor: COLORS.primary,
@@ -117,6 +86,6 @@ const styles = StyleSheet.create({
   cancelLabel: {
     color: COLORS.fillOpposite,
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
 });

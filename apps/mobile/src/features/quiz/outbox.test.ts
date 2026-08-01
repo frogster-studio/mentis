@@ -24,6 +24,14 @@ function entry(overrides: Partial<OutboxEntry> = {}): OutboxEntry {
   };
 }
 
+function mixedOwners(): OutboxEntry[] {
+  return [
+    entry({ id: "s1", owner: OWNER }),
+    entry({ id: "s2", owner: OTHER }),
+    entry({ id: "s3", owner: OWNER }),
+  ];
+}
+
 describe("enqueue", () => {
   it("appends a finished session, owner-tagged, with the injected id and timestamp intact", () => {
     const e = entry();
@@ -72,11 +80,7 @@ describe("ack — push success drains a batch, failure retains the rest", () => 
 
 describe("discardOwner — the owner no longer exists", () => {
   it("drops every row of that Account and keeps the others", () => {
-    const state = [
-      entry({ id: "s1", owner: OWNER }),
-      entry({ id: "s2", owner: OTHER }),
-      entry({ id: "s3", owner: OWNER }),
-    ];
+    const state = mixedOwners();
     expect(
       outboxReducer(state, { type: "discardOwner", owner: OWNER }).map((x) => x.id),
     ).toStrictEqual(["s2"]);
@@ -90,11 +94,7 @@ describe("discardOwner — the owner no longer exists", () => {
 
 describe("entriesForOwner — the drained batch and the fold overlay", () => {
   it("selects only the given owner’s rows, in finish order", () => {
-    const state = [
-      entry({ id: "s1", owner: OWNER }),
-      entry({ id: "s2", owner: OTHER }),
-      entry({ id: "s3", owner: OWNER }),
-    ];
+    const state = mixedOwners();
     expect(entriesForOwner(state, OWNER).map((x) => x.id)).toStrictEqual(["s1", "s3"]);
   });
 

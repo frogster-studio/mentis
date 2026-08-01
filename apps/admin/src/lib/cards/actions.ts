@@ -15,11 +15,15 @@ import { cardSchema, SOCIALS, type Social } from "@/lib/cards/schema";
 import { removeCardImages } from "@/lib/images/storage";
 import { createServiceClient } from "@/lib/supabase";
 
+// The two places the sheets can show a validation message: the Title field
+// keeps its own; everything else lands on the form-level alert.
+type CardFormErrors = {
+  title?: string;
+  form?: string;
+};
+
 export type CreateCardState = {
-  errors: {
-    title?: string;
-    form?: string;
-  };
+  errors: CardFormErrors;
 };
 
 // Rebuilds the type-specific payload from its form fields. Field names line
@@ -76,30 +80,44 @@ function imagesFromFormData(
   });
 }
 
-export async function createCard(
-  _previousState: CreateCardState | undefined,
-  formData: FormData,
-): Promise<CreateCardState> {
-  await requireSession();
-
+// Rebuilds and validates the whole submitted Card; shared so create and
+// update can never drift apart in how they read the form.
+function parseCardForm(formData: FormData) {
   const type = formData.get("type");
-  const parsed = cardSchema.safeParse({
+  return cardSchema.safeParse({
     type,
     title: String(formData.get("title") ?? ""),
     tags: formData.getAll("tags").map(String),
     images: imagesFromFormData(formData),
     payload: payloadFromFormData(type, formData),
   });
-  if (!parsed.success) {
-    const errors: CreateCardState["errors"] = {};
-    for (const issue of parsed.error.issues) {
-      if (issue.path[0] === "title") {
-        errors.title ??= issue.message;
-      } else {
-        errors.form ??= issue.message;
-      }
+}
+
+// The first issue per place wins. Typed structurally so it tracks the issue
+// shape without depending on the schema library's exported types.
+function cardFormErrors(
+  issues: ReadonlyArray<{ path: ReadonlyArray<PropertyKey>; message: string }>,
+): CardFormErrors {
+  const errors: CardFormErrors = {};
+  for (const issue of issues) {
+    if (issue.path[0] === "title") {
+      errors.title ??= issue.message;
+    } else {
+      errors.form ??= issue.message;
     }
-    return { errors };
+  }
+  return errors;
+}
+
+export async function createCard(
+  _previousState: CreateCardState | undefined,
+  formData: FormData,
+): Promise<CreateCardState> {
+  await requireSession();
+
+  const parsed = parseCardForm(formData);
+  if (!parsed.success) {
+    return { errors: cardFormErrors(parsed.error.issues) };
   }
 
   try {
@@ -113,10 +131,7 @@ export async function createCard(
 }
 
 export type UpdateCardState = {
-  errors: {
-    title?: string;
-    form?: string;
-  };
+  errors: CardFormErrors;
   savedAt?: string;
 };
 
@@ -141,24 +156,9 @@ export async function updateCard(
     return { errors: { form: "This Card no longer exists." } };
   }
 
-  const type = formData.get("type");
-  const parsed = cardSchema.safeParse({
-    type,
-    title: String(formData.get("title") ?? ""),
-    tags: formData.getAll("tags").map(String),
-    images: imagesFromFormData(formData),
-    payload: payloadFromFormData(type, formData),
-  });
+  const parsed = parseCardForm(formData);
   if (!parsed.success) {
-    const errors: UpdateCardState["errors"] = {};
-    for (const issue of parsed.error.issues) {
-      if (issue.path[0] === "title") {
-        errors.title ??= issue.message;
-      } else {
-        errors.form ??= issue.message;
-      }
-    }
-    return { errors };
+    return { errors: cardFormErrors(parsed.error.issues) };
   }
 
   let saved: Awaited<ReturnType<typeof updateCardRow>>;

@@ -1,17 +1,16 @@
 "use client";
 
-import { ChevronLeft, Save, X } from "lucide-react";
+import { ChevronLeft, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type * as React from "react";
-import { startTransition, useActionState } from "react";
+import { useActionState } from "react";
 
+import { cardFormSubmit, FormErrorText, SaveCardButton, TitleField } from "@/app/cards/card-form";
 import { CardTypeFields } from "@/app/cards/card-type-fields";
 import { ImagesField, useCardImages } from "@/app/cards/image-field";
 import { TagsField } from "@/app/cards/tags-field";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Sheet,
   SheetClose,
@@ -138,30 +137,13 @@ function CreateCardForm({ type }: { type: CardType }) {
   return (
     <form
       action={formAction}
-      onSubmit={(event) => {
-        // Dispatch the action manually: submitting through the action prop
-        // makes React reset the form afterwards, wiping every field when
-        // validation fails.
-        event.preventDefault();
-        const formData = new FormData(event.currentTarget);
-        // Picked Images process and upload first (ADR 0001); the action
-        // only ever receives their storage paths, never the files. A failed
-        // Image marks only itself — the Card save proceeds without it.
-        void images.attachTo(formData).then(() => {
-          startTransition(() => formAction(formData));
-        });
-      }}
+      onSubmit={cardFormSubmit(images, formAction)}
       className="flex flex-col"
     >
       <input type="hidden" name="type" value={type} />
       <CreateCardHeader
         selectedType={type}
-        actions={
-          <Button type="submit" disabled={pending || images.uploading}>
-            <Save />
-            {pending || images.uploading ? "Saving…" : "Save Card"}
-          </Button>
-        }
+        actions={<SaveCardButton busy={pending || images.uploading} />}
       />
       <div className="flex flex-col gap-4 p-4">
         <Button asChild variant="ghost" size="sm" className="self-start text-muted-foreground">
@@ -170,20 +152,8 @@ function CreateCardForm({ type }: { type: CardType }) {
             Choose another type
           </Link>
         </Button>
-        {state?.errors.form ? (
-          <p role="alert" className="text-destructive text-sm">
-            {state.errors.form}
-          </p>
-        ) : null}
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="title">Title</Label>
-          <Input id="title" name="title" aria-invalid={state?.errors.title ? true : undefined} />
-          {state?.errors.title ? (
-            <p role="alert" className="text-destructive text-sm">
-              {state.errors.title}
-            </p>
-          ) : null}
-        </div>
+        {state?.errors.form ? <FormErrorText message={state.errors.form} /> : null}
+        <TitleField error={state?.errors.title} />
         <CardTypeFields card={{ type }} />
         <ImagesField slot={images} />
         <TagsField />

@@ -8,15 +8,8 @@
 
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
+import { requireEnv } from "./env";
 import { type Feed, transformFeed } from "./transform";
-
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing ${name} — add it to the git-ignored .env file at the repo root`);
-  }
-  return value;
-}
 
 let failures = 0;
 

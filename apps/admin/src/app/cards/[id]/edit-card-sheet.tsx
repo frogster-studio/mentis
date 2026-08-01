@@ -1,8 +1,9 @@
 "use client";
 
-import { Save, Trash2, X } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { startTransition, useActionState, useState } from "react";
+import { useActionState, useState } from "react";
+import { cardFormSubmit, FormErrorText, SaveCardButton, TitleField } from "@/app/cards/card-form";
 import { CardTypeFields } from "@/app/cards/card-type-fields";
 import { ImagesField, type StoredCardImage, useCardImages } from "@/app/cards/image-field";
 import { TagsField } from "@/app/cards/tags-field";
@@ -19,7 +20,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -97,22 +97,7 @@ function EditCardForm({ card, storedImages }: { card: Card; storedImages: Stored
   return (
     <form
       action={formAction}
-      onSubmit={(event) => {
-        // The delete form is DOM-portaled but React-nested inside this form,
-        // so its submit bubbles here too — only handle our own.
-        if (event.target !== event.currentTarget) return;
-        // Dispatch the action manually: submitting through the action prop
-        // makes React reset the form afterwards, which snaps every
-        // uncontrolled field back to its mount-time default.
-        event.preventDefault();
-        const formData = new FormData(event.currentTarget);
-        // Picked Images process and upload first (ADR 0001); the action
-        // only ever receives their storage paths, never the files. A failed
-        // Image marks only itself — the Card save proceeds without it.
-        void images.attachTo(formData).then(() => {
-          startTransition(() => formAction(formData));
-        });
-      }}
+      onSubmit={cardFormSubmit(images, formAction)}
       className="flex flex-col"
     >
       <input type="hidden" name="id" value={card.id} />
@@ -126,10 +111,7 @@ function EditCardForm({ card, storedImages }: { card: Card; storedImages: Stored
           {state?.savedAt && !pending ? (
             <span className="text-muted-foreground text-xs">Saved</span>
           ) : null}
-          <Button type="submit" disabled={pending || images.uploading}>
-            <Save />
-            {pending || images.uploading ? "Saving…" : "Save Card"}
-          </Button>
+          <SaveCardButton busy={pending || images.uploading} />
           <DeleteCardButton card={card} />
           <SheetClose asChild>
             <Button type="button" variant="ghost" size="icon" aria-label="Close">
@@ -139,11 +121,7 @@ function EditCardForm({ card, storedImages }: { card: Card; storedImages: Stored
         </div>
       </div>
       <div className="flex flex-col gap-4 p-4">
-        {state?.errors.form ? (
-          <p role="alert" className="text-destructive text-sm">
-            {state.errors.form}
-          </p>
-        ) : null}
+        {state?.errors.form ? <FormErrorText message={state.errors.form} /> : null}
         <div className="flex flex-col gap-2">
           <Label htmlFor="card-type">Card Type</Label>
           <Select
@@ -197,20 +175,7 @@ function EditCardForm({ card, storedImages }: { card: Card; storedImages: Stored
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="title">Title</Label>
-          <Input
-            id="title"
-            name="title"
-            defaultValue={card.title}
-            aria-invalid={state?.errors.title ? true : undefined}
-          />
-          {state?.errors.title ? (
-            <p role="alert" className="text-destructive text-sm">
-              {state.errors.title}
-            </p>
-          ) : null}
-        </div>
+        <TitleField defaultValue={card.title} error={state?.errors.title} />
         {/* Keyed on the type so a confirmed switch remounts the fields empty —
           without it, Anecdote ↔ Did You Know share a subtree and keep their
           uncontrolled values. Back on the stored type, the saved payload

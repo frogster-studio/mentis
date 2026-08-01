@@ -3,10 +3,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { QuizPayload, RiddlePayload, TrueFalsePayload } from "@/lib/cards/schema";
 
-// Type-specific form fields shared by the create and edit sheets. Without a
-// payload the fields render empty for a new Card. Field names line up with
-// payloadFromFormData in lib/cards/actions.ts.
-
 export function CardTypeFields({
   card,
 }: {
@@ -26,15 +22,27 @@ export function CardTypeFields({
     default:
       // Anecdote and Did You Know share the body-only form; only the stored
       // type value differs.
-      return <AnecdoteFields payload={card.payload} />;
+      return <TextareaField id="body" label="Body" rows={12} defaultValue={card.payload?.body} />;
   }
 }
 
-function AnecdoteFields({ payload }: { payload?: { body: string } }) {
+// Label + textarea pair used by every long-text payload field; the field's
+// name doubles as its id, which payloadFromFormData reads back.
+function TextareaField({
+  id,
+  label,
+  rows,
+  defaultValue,
+}: {
+  id: string;
+  label: string;
+  rows: number;
+  defaultValue?: string;
+}) {
   return (
     <div className="flex flex-col gap-2">
-      <Label htmlFor="body">Body</Label>
-      <Textarea id="body" name="body" rows={12} defaultValue={payload?.body} />
+      <Label htmlFor={id}>{label}</Label>
+      <Textarea id={id} name={id} rows={rows} defaultValue={defaultValue} />
     </div>
   );
 }
@@ -42,10 +50,7 @@ function AnecdoteFields({ payload }: { payload?: { body: string } }) {
 function QuizFields({ payload }: { payload?: QuizPayload }) {
   return (
     <>
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="question">Question</Label>
-        <Textarea id="question" name="question" rows={3} defaultValue={payload?.question} />
-      </div>
+      <TextareaField id="question" label="Question" rows={3} defaultValue={payload?.question} />
       <fieldset className="flex flex-col gap-2">
         <legend className="pb-2 font-medium text-sm leading-none">Choices</legend>
         {[0, 1, 2, 3].map((index) => (
@@ -69,15 +74,12 @@ function QuizFields({ payload }: { payload?: QuizPayload }) {
           Select the correct Choice with the round button.
         </p>
       </fieldset>
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="explanation">Explanation</Label>
-        <Textarea
-          id="explanation"
-          name="explanation"
-          rows={4}
-          defaultValue={payload?.explanation}
-        />
-      </div>
+      <TextareaField
+        id="explanation"
+        label="Explanation"
+        rows={4}
+        defaultValue={payload?.explanation}
+      />
     </>
   );
 }
@@ -85,10 +87,7 @@ function QuizFields({ payload }: { payload?: QuizPayload }) {
 function TrueFalseFields({ payload }: { payload?: TrueFalsePayload }) {
   return (
     <>
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="assertion">Assertion</Label>
-        <Textarea id="assertion" name="assertion" rows={3} defaultValue={payload?.assertion} />
-      </div>
+      <TextareaField id="assertion" label="Assertion" rows={3} defaultValue={payload?.assertion} />
       <fieldset className="flex flex-col gap-2">
         <legend className="pb-2 font-medium text-sm leading-none">Answer</legend>
         <div className="flex items-center gap-6">
@@ -116,15 +115,12 @@ function TrueFalseFields({ payload }: { payload?: TrueFalsePayload }) {
           </div>
         </div>
       </fieldset>
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="explanation">Explanation</Label>
-        <Textarea
-          id="explanation"
-          name="explanation"
-          rows={4}
-          defaultValue={payload?.explanation}
-        />
-      </div>
+      <TextareaField
+        id="explanation"
+        label="Explanation"
+        rows={4}
+        defaultValue={payload?.explanation}
+      />
     </>
   );
 }
@@ -132,18 +128,17 @@ function TrueFalseFields({ payload }: { payload?: TrueFalsePayload }) {
 function RiddleFields({ payload }: { payload?: RiddlePayload }) {
   return (
     <>
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="clues">Clues</Label>
-        <Textarea id="clues" name="clues" rows={6} defaultValue={payload?.clues} />
-      </div>
+      <TextareaField id="clues" label="Clues" rows={6} defaultValue={payload?.clues} />
       <div className="flex flex-col gap-2">
         <Label htmlFor="answer">Answer</Label>
         <Input id="answer" name="answer" defaultValue={payload?.answer} />
       </div>
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="bonusInfo">Bonus Info (optional)</Label>
-        <Textarea id="bonusInfo" name="bonusInfo" rows={4} defaultValue={payload?.bonusInfo} />
-      </div>
+      <TextareaField
+        id="bonusInfo"
+        label="Bonus Info (optional)"
+        rows={4}
+        defaultValue={payload?.bonusInfo}
+      />
     </>
   );
 }
