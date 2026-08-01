@@ -1,0 +1,13 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreExportsUsedInFile": true,
+  "workspaces": {
+    ".": {},
+    "apps/admin": {},
+    "apps/mobile": {
+      "entry": ["src/app/**/*.tsx", "scripts/*.ts"],
+      "project": ["src/**/*.{ts,tsx}", "scripts/**/*.ts", "*.{js,ts}"],
+      "ignoreDependencies": ["expo-updates"]
+    }
+  }
+}

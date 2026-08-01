@@ -1,0 +1,149 @@
+import { z } from "zod";
+
+export const CARD_TYPES = ["quiz", "true-false", "anecdote", "did-you-know", "riddle"] as const;
+
+export type CardType = (typeof CARD_TYPES)[number];
+
+export const CARD_TYPE_LABELS: Record<CardType, string> = {
+  quiz: "Quiz",
+  "true-false": "True/False",
+  anecdote: "Anecdote",
+  "did-you-know": "Did You Know",
+  riddle: "Riddle",
+};
+
+// Canonical Social order — the toggles render in this order on every row.
+export const SOCIALS = ["x", "linkedin", "facebook", "tiktok", "youtube", "instagram"] as const;
+
+export type Social = (typeof SOCIALS)[number];
+
+export const SOCIAL_LABELS: Record<Social, string> = {
+  x: "X",
+  linkedin: "LinkedIn",
+  facebook: "Facebook",
+  tiktok: "TikTok",
+  youtube: "YouTube",
+  instagram: "Instagram",
+};
+
+// Posted marks live outside the Card form schema on purpose: they are set
+// only through their own action, so a form save can never touch them.
+export const postedOnSchema = z
+  .array(z.enum(SOCIALS))
+  .default([])
+  .transform((socials) => [...new Set(socials)]);
+
+const cardImageSchema = z.object({
+  path: z.string().min(1),
+  order: z.number().int().min(0),
+  caption: z.string().optional(),
+});
+
+export const MAX_CARD_IMAGES = 3;
+
+// Parsed Images always come out in display order, whatever order the row
+// stored them in.
+const imagesSchema = z
+  .array(cardImageSchema)
+  .max(MAX_CARD_IMAGES, "A Card carries at most three Images.")
+  .default([])
+  .transform((images) => [...images].sort((a, b) => a.order - b.order));
+
+// Tags are stored normalized so "Histoire" and "histoire " are the same Tag.
+// The same rule applies to a Tag used as a list filter.
+export function normalizeTag(tag: string): string {
+  return tag.trim().toLowerCase();
+}
+
+const tagsSchema = z
+  .array(z.string())
+  .default([])
+  .transform((tags) => {
+    const unique = new Set(tags.map(normalizeTag));
+    unique.delete("");
+    return [...unique];
+  });
+
+const sharedFields = {
+  title: z.string().trim().min(1, "Title is required."),
+  tags: tagsSchema,
+  images: imagesSchema,
+};
+
+const anecdotePayloadSchema = z.object({
+  body: z.string(),
+});
+
+const quizChoiceSchema = z.object({
+  text: z.string().trim().min(1, "Every Choice needs text."),
+  correct: z.boolean(),
+});
+
+const quizPayloadSchema = z
+  .object({
+    question: z.string(),
+    choices: z.array(quizChoiceSchema).length(4, "A Quiz needs exactly four Choices."),
+    explanation: z.string(),
+  })
+  .refine((payload) => payload.choices.filter((choice) => choice.correct).length === 1, {
+    message: "Mark exactly one Choice as correct.",
+    path: ["choices"],
+  });
+
+export type QuizPayload = z.output<typeof quizPayloadSchema>;
+
+const trueFalsePayloadSchema = z.object({
+  assertion: z.string(),
+  answer: z.boolean("Choose True or False."),
+  explanation: z.string().trim().min(1, "An Explanation is required."),
+});
+
+export type TrueFalsePayload = z.output<typeof trueFalsePayloadSchema>;
+
+const riddlePayloadSchema = z.object({
+  clues: z.string(),
+  answer: z.string(),
+  bonusInfo: z.string().optional(),
+});
+
+export type RiddlePayload = z.output<typeof riddlePayloadSchema>;
+
+// The single source of truth for Card structure, shared between form and
+// server. Did You Know shares the Anecdote payload shape on purpose — the
+// distinct type value is editorial and matters downstream.
+export const cardSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("anecdote"),
+    ...sharedFields,
+    payload: anecdotePayloadSchema,
+  }),
+  z.object({
+    type: z.literal("quiz"),
+    ...sharedFields,
+    payload: quizPayloadSchema,
+  }),
+  z.object({
+    type: z.literal("true-false"),
+    ...sharedFields,
+    payload: trueFalsePayloadSchema,
+  }),
+  z.object({
+    type: z.literal("riddle"),
+    ...sharedFields,
+    payload: riddlePayloadSchema,
+  }),
+  z.object({
+    type: z.literal("did-you-know"),
+    ...sharedFields,
+    payload: anecdotePayloadSchema,
+  }),
+]);
+
+export type CardData = z.output<typeof cardSchema>;
+
+export type Card = CardData & {
+  id: string;
+  postedOn: Social[];
+  createdAt: string;
+  updatedAt: string;
+};

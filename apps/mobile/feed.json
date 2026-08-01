@@ -1,0 +1,2064 @@
+{
+  "themes": [
+    {
+      "id": "marie-antoinette",
+      "name": "Marie-Antoinette",
+      "questions": [
+        {
+          "question": "De quel pays Marie-Antoinette était-elle originaire ?",
+          "answers": [
+            "Autriche",
+            "France",
+            "Espagne",
+            "Prusse"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Quel roi de France Marie-Antoinette a-t-elle épousé ?",
+          "answers": [
+            "Louis XIV",
+            "Louis XV",
+            "Louis XVI",
+            "Charles X"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Comment Marie-Antoinette est-elle morte ?",
+          "answers": [
+            "Empoisonnée",
+            "Guillotinée",
+            "Morte de vieillesse",
+            "Noyée"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Qui était la mère de Marie-Antoinette ?",
+          "answers": [
+            "Catherine de Médicis",
+            "Anne d'Autriche",
+            "Élisabeth Ire",
+            "Marie-Thérèse d'Autriche"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Dans quel château Marie-Antoinette a-t-elle principalement vécu ?",
+          "answers": [
+            "Versailles",
+            "Chambord",
+            "Fontainebleau",
+            "Amboise"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Quel domaine de Versailles était le refuge favori de Marie-Antoinette ?",
+          "answers": [
+            "Le Grand Trianon",
+            "Le Petit Trianon",
+            "La galerie des Glaces",
+            "Le pavillon de l'Aurore"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Quelle célèbre phrase est faussement attribuée à Marie-Antoinette ?",
+          "answers": [
+            "« L'État, c'est moi »",
+            "« Après moi, le déluge »",
+            "« Qu'ils mangent de la brioche »",
+            "« Paris vaut bien une messe »"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Quel scandale de 1785 a terni la réputation de Marie-Antoinette ?",
+          "answers": [
+            "L'affaire du collier de la reine",
+            "L'affaire des poisons",
+            "L'affaire Calas",
+            "L'affaire du Courrier de Lyon"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Combien d'enfants Marie-Antoinette a-t-elle eus ?",
+          "answers": [
+            "Deux",
+            "Quatre",
+            "Six",
+            "Aucun"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Comment a-t-on appelé la tentative de fuite de la famille royale en 1791 ?",
+          "answers": [
+            "La journée des Tuileries",
+            "La prise des Tuileries",
+            "La marche sur Versailles",
+            "La fuite à Varennes"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "En quelle année Marie-Antoinette a-t-elle été exécutée ?",
+          "answers": [
+            "1789",
+            "1791",
+            "1793",
+            "1799"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Quel surnom péjoratif les pamphlets donnaient-ils à Marie-Antoinette ?",
+          "answers": [
+            "La Bien-Aimée",
+            "L'Autrichienne",
+            "La Divine",
+            "La Grande Mademoiselle"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Quelle artiste a réalisé les portraits officiels les plus connus de Marie-Antoinette ?",
+          "answers": [
+            "Élisabeth Vigée Le Brun",
+            "Rosa Bonheur",
+            "Berthe Morisot",
+            "Camille Claudel"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "À quel âge environ Marie-Antoinette est-elle arrivée en France pour se marier ?",
+          "answers": [
+            "14 ans",
+            "18 ans",
+            "21 ans",
+            "25 ans"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Dans quelle prison Marie-Antoinette a-t-elle passé ses dernières semaines avant son exécution ?",
+          "answers": [
+            "La Bastille",
+            "Le château d'If",
+            "Le Temple",
+            "La Conciergerie"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Quel était le titre de Marie-Antoinette avant de devenir reine de France ?",
+          "answers": [
+            "Infante d'Espagne",
+            "Archiduchesse d'Autriche",
+            "Princesse de Galles",
+            "Grande-duchesse de Toscane"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Quelle révolution a conduit à la chute de Marie-Antoinette ?",
+          "answers": [
+            "La Révolution américaine",
+            "La Révolution de Juillet",
+            "La Révolution française",
+            "La Révolution russe"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Que représentait le Hameau de la Reine, construit pour Marie-Antoinette à Versailles ?",
+          "answers": [
+            "Un port militaire",
+            "Un temple antique",
+            "Un village de paysans",
+            "Un jardin japonais"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Quel comte suédois est resté célèbre pour sa proximité avec Marie-Antoinette ?",
+          "answers": [
+            "Axel de Fersen",
+            "Léopold de Habsbourg",
+            "Charles de Ligne",
+            "Gustave de Staël"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "De quel empereur du Saint-Empire Marie-Antoinette était-elle la sœur ?",
+          "answers": [
+            "Charles Quint",
+            "Joseph II",
+            "François-Joseph Ier",
+            "Maximilien Ier"
+          ],
+          "correctAnswer": 1
+        }
+      ]
+    },
+    {
+      "id": "acteurs-de-cinema",
+      "name": "Acteurs de cinéma",
+      "questions": [
+        {
+          "question": "Quel acteur incarne Jack Dawson dans le film « Titanic » (1997) ?",
+          "answers": [
+            "Brad Pitt",
+            "Leonardo DiCaprio",
+            "Tom Cruise",
+            "Johnny Depp"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Quel acteur a incarné James Bond dans « GoldenEye » (1995) ?",
+          "answers": [
+            "Sean Connery",
+            "Roger Moore",
+            "Pierce Brosnan",
+            "Daniel Craig"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Quelle actrice tient le rôle principal féminin dans « Titanic » ?",
+          "answers": [
+            "Nicole Kidman",
+            "Kate Winslet",
+            "Julia Roberts",
+            "Cameron Diaz"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Quel acteur joue le personnage d'« Edward aux mains d'argent » ?",
+          "answers": [
+            "Johnny Depp",
+            "Tom Hanks",
+            "Keanu Reeves",
+            "Brad Pitt"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Quel acteur a remporté l'Oscar du meilleur acteur pour « Forrest Gump » ?",
+          "answers": [
+            "Robin Williams",
+            "Kevin Costner",
+            "Mel Gibson",
+            "Tom Hanks"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Quelle actrice incarne Hermione dans la saga « Harry Potter » ?",
+          "answers": [
+            "Emma Stone",
+            "Emma Watson",
+            "Keira Knightley",
+            "Emma Thompson"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Quel acteur incarne le personnage de Neo dans « Matrix » ?",
+          "answers": [
+            "Tom Cruise",
+            "Nicolas Cage",
+            "Keanu Reeves",
+            "Will Smith"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Quel acteur est célèbre pour la réplique « Je reviendrai » dans « Terminator » ?",
+          "answers": [
+            "Sylvester Stallone",
+            "Arnold Schwarzenegger",
+            "Bruce Willis",
+            "Jean-Claude Van Damme"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Quelle actrice interprète Vivian dans « Pretty Woman » ?",
+          "answers": [
+            "Julia Roberts",
+            "Meg Ryan",
+            "Demi Moore",
+            "Sandra Bullock"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Quelle actrice tient le rôle-titre du « Fabuleux Destin d'Amélie Poulain » ?",
+          "answers": [
+            "Marion Cotillard",
+            "Juliette Binoche",
+            "Sophie Marceau",
+            "Audrey Tautou"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Quel acteur incarne le gladiateur Maximus dans « Gladiator » ?",
+          "answers": [
+            "Russell Crowe",
+            "Mel Gibson",
+            "Gerard Butler",
+            "Brad Pitt"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Quel acteur incarne Indiana Jones au cinéma ?",
+          "answers": [
+            "Kurt Russell",
+            "Michael Douglas",
+            "Harrison Ford",
+            "Chevy Chase"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Quelle actrice a remporté l'Oscar de la meilleure actrice pour « La Môme » (2007) ?",
+          "answers": [
+            "Juliette Binoche",
+            "Marion Cotillard",
+            "Isabelle Adjani",
+            "Catherine Deneuve"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Quel acteur a remporté l'Oscar du meilleur acteur pour « Le Discours d'un roi » ?",
+          "answers": [
+            "Hugh Grant",
+            "Kenneth Branagh",
+            "Colin Firth",
+            "Jude Law"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Quelle actrice incarne Sarah Connor dans « Terminator 2 » ?",
+          "answers": [
+            "Sigourney Weaver",
+            "Linda Hamilton",
+            "Jamie Lee Curtis",
+            "Geena Davis"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Quel comédien français est la vedette du film « La Chèvre » ?",
+          "answers": [
+            "Pierre Richard",
+            "Louis de Funès",
+            "Bourvil",
+            "Fernandel"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Quel comédien français est la vedette du « Gendarme de Saint-Tropez » ?",
+          "answers": [
+            "Louis de Funès",
+            "Bourvil",
+            "Coluche",
+            "Jean Gabin"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Quel acteur a refusé l'Oscar du meilleur acteur en 1973 pour « Le Parrain » ?",
+          "answers": [
+            "Al Pacino",
+            "Robert De Niro",
+            "Dustin Hoffman",
+            "Marlon Brando"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Quelle actrice incarne Katniss dans « Hunger Games » ?",
+          "answers": [
+            "Jennifer Lawrence",
+            "Shailene Woodley",
+            "Kristen Stewart",
+            "Emma Watson"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Quel acteur incarne Vito Corleone jeune dans « Le Parrain, 2e partie » ?",
+          "answers": [
+            "Al Pacino",
+            "Robert De Niro",
+            "Joe Pesci",
+            "Robert Duvall"
+          ],
+          "correctAnswer": 1
+        }
+      ]
+    },
+    {
+      "id": "les-simpson",
+      "name": "Les Simpson",
+      "questions": [
+        {
+          "question": "Dans quelle ville vit la famille Simpson ?",
+          "answers": [
+            "Shelbyville",
+            "Springfield",
+            "Quahog",
+            "Portland"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Comment se prénomme le père de la famille Simpson ?",
+          "answers": [
+            "Ned",
+            "Homer",
+            "Barney",
+            "Moe"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Quelle est la couleur de peau des personnages des Simpson ?",
+          "answers": [
+            "Rose",
+            "Orange",
+            "Jaune",
+            "Verte"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Combien d'enfants ont Homer et Marge Simpson ?",
+          "answers": [
+            "Trois",
+            "Deux",
+            "Quatre",
+            "Cinq"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Comment se prénomme le fils aîné des Simpson ?",
+          "answers": [
+            "Milhouse",
+            "Bart",
+            "Nelson",
+            "Ralph"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Comment se prénomme l'épouse d'Homer ?",
+          "answers": [
+            "Maude",
+            "Edna",
+            "Patty",
+            "Marge"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Comment se prénomme le bébé de la famille Simpson ?",
+          "answers": [
+            "Lisa",
+            "Todd",
+            "Maggie",
+            "Marge"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "De quel instrument de musique joue Lisa Simpson ?",
+          "answers": [
+            "Le piano",
+            "La flûte",
+            "La trompette",
+            "Le saxophone"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Où travaille Homer Simpson ?",
+          "answers": [
+            "Au Kwik-E-Mart",
+            "À la centrale nucléaire",
+            "À la brasserie Duff",
+            "À l'école"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Qui est le propriétaire de la centrale nucléaire de Springfield ?",
+          "answers": [
+            "Ned Flanders",
+            "Waylon Smithers",
+            "Monsieur Burns",
+            "Moe Szyslak"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Comment se nomme le voisin très pieux des Simpson ?",
+          "answers": [
+            "Moe",
+            "Ned Flanders",
+            "Barney",
+            "Apu"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Comment s'appelle le bar où Homer boit de la bière ?",
+          "answers": [
+            "Le bar Duff",
+            "Le Kwik-E-Mart",
+            "Le Krusty Burger",
+            "La taverne de Moe"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Quelle marque de bière Homer consomme-t-il ?",
+          "answers": [
+            "La Buzz",
+            "La Pawtucket",
+            "La Duff",
+            "La Fizzy"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Comment se nomme le clown vedette de la télévision de Springfield ?",
+          "answers": [
+            "Tahiti Bob",
+            "Gabbo",
+            "Krusty",
+            "Bozo"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Comment se nomme le patron du Kwik-E-Mart ?",
+          "answers": [
+            "Moe",
+            "Carl",
+            "Apu",
+            "Lenny"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Comment se nomment les deux héros du dessin animé ultra-violent que regardent les enfants ?",
+          "answers": [
+            "Itchy et Scratchy",
+            "Tom et Jerry",
+            "Ren et Stimpy",
+            "Pinky et le Cerveau"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Quel est le nom de famille de Milhouse, le meilleur ami de Bart ?",
+          "answers": [
+            "Muntz",
+            "Van Houten",
+            "Wiggum",
+            "Leonard"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Qui est le créateur de la série « Les Simpson » ?",
+          "answers": [
+            "Seth MacFarlane",
+            "Trey Parker",
+            "Mike Judge",
+            "Matt Groening"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Comment se nomme le chien de la famille Simpson ?",
+          "answers": [
+            "Boule de Neige",
+            "Petit Papa Noël",
+            "Rex",
+            "Médor"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "En quelle année « Les Simpson » a-t-elle été diffusée pour la première fois comme série à part entière ?",
+          "answers": [
+            "1985",
+            "1993",
+            "1989",
+            "1997"
+          ],
+          "correctAnswer": 2
+        }
+      ]
+    },
+    {
+      "id": "sports-nautiques",
+      "name": "Sports nautiques",
+      "questions": [
+        {
+          "question": "Quel sport nautique consiste à glisser sur les vagues debout sur une planche ?",
+          "answers": [
+            "L'aviron",
+            "Le surf",
+            "La voile",
+            "Le kayak"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Dans quel sport utilise-t-on une planche munie d'une voile ?",
+          "answers": [
+            "Le ski nautique",
+            "La planche à voile",
+            "Le surf",
+            "Le canoë"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Quel sport se pratique tiré par un bateau, chaussé de skis sur l'eau ?",
+          "answers": [
+            "Le ski nautique",
+            "Le surf",
+            "Le kitesurf",
+            "L'aviron"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Comment appelle-t-on la nage effectuée sur le dos ?",
+          "answers": [
+            "La brasse",
+            "Le dos crawlé",
+            "Le papillon",
+            "Le crawl"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Quelle nage imite le mouvement d'une grenouille ?",
+          "answers": [
+            "Le crawl",
+            "Le papillon",
+            "La brasse",
+            "Le dos crawlé"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Combien de joueurs de chaque équipe sont dans l'eau au water-polo ?",
+          "answers": [
+            "Cinq",
+            "Six",
+            "Sept",
+            "Onze"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Quelle discipline consiste à réaliser des figures en musique, en équipe, dans l'eau ?",
+          "answers": [
+            "La natation synchronisée",
+            "Le plongeon",
+            "Le water-polo",
+            "L'aquagym"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Dans quel sport pagaie-t-on assis dans une embarcation étroite et fermée ?",
+          "answers": [
+            "L'aviron",
+            "Le kayak",
+            "La voile",
+            "Le surf"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Quel sport de glisse utilise un cerf-volant pour tracter le pratiquant sur l'eau ?",
+          "answers": [
+            "Le windsurf",
+            "Le wakeboard",
+            "Le kitesurf",
+            "Le bodyboard"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Quelle discipline olympique consiste à sauter depuis une plateforme de dix mètres ?",
+          "answers": [
+            "Le saut à ski",
+            "Le plongeon",
+            "Le trampoline",
+            "Le saut en hauteur"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Quel équipement permet au plongeur de respirer sous l'eau ?",
+          "answers": [
+            "La bouteille de plongée",
+            "Le tuba",
+            "Les palmes",
+            "Le masque"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Comment appelle-t-on la glisse tractée par un bateau, debout sur une planche à fixations ?",
+          "answers": [
+            "Le bodyboard",
+            "Le skimboard",
+            "Le wakeboard",
+            "Le longboard"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Quelle compétition de voile est réputée être le plus ancien trophée sportif international ?",
+          "answers": [
+            "La Coupe de l'America",
+            "La Route du Rhum",
+            "Le Vendée Globe",
+            "Le Trophée Jules-Verne"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Quelle transatlantique à la voile en solitaire relie Saint-Malo à Pointe-à-Pitre ?",
+          "answers": [
+            "Le Vendée Globe",
+            "La Route du Rhum",
+            "La Transat Jacques Vabre",
+            "La Solitaire du Figaro"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Comment se dispute le Vendée Globe, célèbre course à la voile autour du monde ?",
+          "answers": [
+            "En solitaire et sans escale",
+            "En équipage avec escales",
+            "À la rame",
+            "En relais par étapes"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Quel style de nage est le plus rapide en compétition ?",
+          "answers": [
+            "La brasse",
+            "Le dos crawlé",
+            "Le papillon",
+            "Le crawl"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Combien de styles de nage différents composent une épreuve de « quatre nages » ?",
+          "answers": [
+            "Deux",
+            "Trois",
+            "Quatre",
+            "Cinq"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Quel sport oppose des équipes sur de longues embarcations, en pagayant au rythme d'un tambour ?",
+          "answers": [
+            "Le canoë-kayak",
+            "Le dragon boat",
+            "L'aviron",
+            "Le rafting"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Comment appelle-t-on la descente de rivières tumultueuses en radeau pneumatique ?",
+          "answers": [
+            "Le canyoning",
+            "Le rafting",
+            "Le kayak",
+            "L'hydrospeed"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Quelle est la longueur d'un bassin de natation olympique ?",
+          "answers": [
+            "25 mètres",
+            "33 mètres",
+            "50 mètres",
+            "100 mètres"
+          ],
+          "correctAnswer": 2
+        }
+      ]
+    },
+    {
+      "id": "coupe-du-monde-football",
+      "name": "Coupe du Monde de Football",
+      "questions": [
+        {
+          "question": "Tous les combien d'années a lieu la Coupe du Monde de football ?",
+          "answers": [
+            "Tous les 4 ans",
+            "Tous les 2 ans",
+            "Tous les 3 ans",
+            "Tous les 5 ans"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Quel pays a remporté la Coupe du Monde 1998, organisée sur son sol ?",
+          "answers": [
+            "Le Brésil",
+            "La France",
+            "L'Italie",
+            "L'Allemagne"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Quel pays a remporté le plus de Coupes du Monde, avec cinq titres ?",
+          "answers": [
+            "L'Italie",
+            "Le Brésil",
+            "L'Allemagne",
+            "L'Argentine"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Quel joueur brésilien surnommé « le Roi » a remporté trois Coupes du Monde ?",
+          "answers": [
+            "Pelé",
+            "Garrincha",
+            "Ronaldo",
+            "Zico"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Dans quel pays s'est tenue la toute première Coupe du Monde, en 1930 ?",
+          "answers": [
+            "Le Brésil",
+            "L'Italie",
+            "L'Uruguay",
+            "L'Argentine"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Quel joueur français a marqué deux buts en finale de la Coupe du Monde 1998 ?",
+          "answers": [
+            "Thierry Henry",
+            "Emmanuel Petit",
+            "Zinédine Zidane",
+            "Didier Deschamps"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Contre quelle équipe la France a-t-elle gagné la finale de 1998 ?",
+          "answers": [
+            "L'Italie",
+            "Le Brésil",
+            "L'Allemagne",
+            "L'Argentine"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "En quelle année la France a-t-elle remporté sa deuxième Coupe du Monde, en Russie ?",
+          "answers": [
+            "2010",
+            "2014",
+            "2022",
+            "2018"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Quel pays a remporté la Coupe du Monde 2014, au Brésil ?",
+          "answers": [
+            "L'Argentine",
+            "L'Allemagne",
+            "Le Brésil",
+            "L'Espagne"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Quel pays a remporté la Coupe du Monde 2022, au Qatar ?",
+          "answers": [
+            "La France",
+            "Le Brésil",
+            "La Croatie",
+            "L'Argentine"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Quel joueur argentin a marqué le fameux but de « la main de Dieu » en 1986 ?",
+          "answers": [
+            "Mario Kempes",
+            "Diego Maradona",
+            "Lionel Messi",
+            "Gabriel Batistuta"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Comment s'appelait le trophée de la Coupe du Monde avant 1970 ?",
+          "answers": [
+            "La Coupe Henri-Delaunay",
+            "La Coupe Jules-Rimet",
+            "La Coupe UEFA",
+            "Le Trophée Pelé"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Combien de joueurs par équipe sont présents sur le terrain au football ?",
+          "answers": [
+            "Onze",
+            "Neuf",
+            "Dix",
+            "Douze"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Quel pays a organisé la Coupe du Monde 2010, la première sur le continent africain ?",
+          "answers": [
+            "Le Nigeria",
+            "Le Maroc",
+            "L'Afrique du Sud",
+            "L'Égypte"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Quel joueur détient le record de buts marqués en phase finale de Coupe du Monde ?",
+          "answers": [
+            "Ronaldo",
+            "Gerd Müller",
+            "Pelé",
+            "Miroslav Klose"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Quel geste de Zinédine Zidane en finale 2006 lui a valu un carton rouge ?",
+          "answers": [
+            "Un crachat",
+            "Un coup de tête",
+            "Un tacle dangereux",
+            "Une gifle"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Quel pays a remporté la Coupe du Monde 2006 en battant la France aux tirs au but ?",
+          "answers": [
+            "L'Italie",
+            "L'Espagne",
+            "L'Allemagne",
+            "Le Portugal"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Quel pays a remporté la Coupe du Monde 2010, disputée en Afrique du Sud ?",
+          "answers": [
+            "Les Pays-Bas",
+            "L'Espagne",
+            "L'Allemagne",
+            "Le Brésil"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Qui était le capitaine de l'équipe de France championne du monde en 1998 ?",
+          "answers": [
+            "Didier Deschamps",
+            "Laurent Blanc",
+            "Marcel Desailly",
+            "Zinédine Zidane"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Quel attaquant français a été le meilleur buteur de la Coupe du Monde 2022 ?",
+          "answers": [
+            "Olivier Giroud",
+            "Antoine Griezmann",
+            "Lionel Messi",
+            "Kylian Mbappé"
+          ],
+          "correctAnswer": 3
+        }
+      ]
+    },
+    {
+      "id": "expressions-francaises",
+      "name": "Les expressions françaises",
+      "questions": [
+        {
+          "question": "Que signifie l'expression « il pleut des cordes » ?",
+          "answers": [
+            "Il pleut très fort",
+            "Il fait un temps splendide",
+            "Il neige",
+            "Il y a du vent"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Complétez l'expression : « avoir le cœur sur ___ ».",
+          "answers": [
+            "Le pied",
+            "La main",
+            "La bouche",
+            "La tête"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Que veut dire « poser un lapin à quelqu'un » ?",
+          "answers": [
+            "Offrir un cadeau",
+            "Ne pas venir à un rendez-vous",
+            "Dire un mensonge",
+            "Faire une blague"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Que signifie « donner sa langue au chat » ?",
+          "answers": [
+            "Se taire à jamais",
+            "Trahir un secret",
+            "Renoncer à deviner",
+            "Manger goulûment"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Que veut dire « tomber dans les pommes » ?",
+          "answers": [
+            "S'évanouir",
+            "Se tromper",
+            "Tomber amoureux",
+            "Se blesser"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Complétez l'expression : « quand les poules auront ___ ».",
+          "answers": [
+            "Des ailes",
+            "Des plumes",
+            "Des dents",
+            "Des œufs"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Que signifie « avoir un chat dans la gorge » ?",
+          "answers": [
+            "Avoir faim",
+            "Être enroué",
+            "Mentir",
+            "Avoir peur"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Complétez : « il ne faut pas vendre la peau de l'ours ___ ».",
+          "answers": [
+            "... avant l'hiver",
+            "... sans permis de chasse",
+            "... avant de l'avoir tué",
+            "... au marché"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Que veut dire « couper la poire en deux » ?",
+          "answers": [
+            "Faire un compromis",
+            "Partager un repas",
+            "Trancher nettement",
+            "Hésiter longtemps"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Que signifie « être au septième ciel » ?",
+          "answers": [
+            "Être perdu",
+            "Être malade",
+            "Être très heureux",
+            "Être distrait"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Que veut dire « mettre la charrue avant les bœufs » ?",
+          "answers": [
+            "Travailler très dur",
+            "Faire les choses dans le mauvais ordre",
+            "Se presser inutilement",
+            "Labourer un champ"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Que signifie « passer du coq à l'âne » ?",
+          "answers": [
+            "Changer brusquement de sujet",
+            "Se contredire",
+            "Parler pour ne rien dire",
+            "Radoter sans cesse"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Que veut dire « être fier comme un pou » ?",
+          "answers": [
+            "Être misérable",
+            "Être malin",
+            "Être minuscule",
+            "Être très vaniteux"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Que signifie « avoir la main verte » ?",
+          "answers": [
+            "Être jaloux",
+            "Être doué pour le jardinage",
+            "Être maladroit",
+            "Être écologiste"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Que veut dire « chercher midi à quatorze heures » ?",
+          "answers": [
+            "Être toujours en retard",
+            "Perdre son temps",
+            "Se lever tard",
+            "Compliquer inutilement les choses"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Complétez le proverbe : « petit à petit, l'oiseau fait son ___ ».",
+          "answers": [
+            "Nid",
+            "Chant",
+            "Vol",
+            "Œuf"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Que signifie « faire chou blanc » ?",
+          "answers": [
+            "Réussir de justesse",
+            "Se mettre à cuisiner",
+            "Échouer, ne rien obtenir",
+            "Blêmir de peur"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Que veut dire « être comme un poisson dans l'eau » ?",
+          "answers": [
+            "Être parfaitement à l'aise",
+            "Nager très vite",
+            "Rester muet",
+            "Boire beaucoup"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Que signifie « jeter l'éponge » ?",
+          "answers": [
+            "Abandonner, renoncer",
+            "Faire le ménage",
+            "Provoquer quelqu'un",
+            "Se laver les mains"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Que veut dire « avoir d'autres chats à fouetter » ?",
+          "answers": [
+            "Avoir d'autres choses plus importantes à faire",
+            "Être cruel envers les animaux",
+            "Être débordé de travail",
+            "Chercher la bagarre"
+          ],
+          "correctAnswer": 0
+        }
+      ]
+    },
+    {
+      "id": "vocabulaire-agriculture",
+      "name": "Le vocabulaire de l'agriculture",
+      "questions": [
+        {
+          "question": "Comment appelle-t-on le fait de retourner la terre avant de semer ?",
+          "answers": [
+            "La moisson",
+            "Le labour",
+            "La fenaison",
+            "Le semis"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Comment appelle-t-on la récolte des céréales comme le blé ?",
+          "answers": [
+            "La moisson",
+            "Les vendanges",
+            "La cueillette",
+            "La tonte"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Comment appelle-t-on la récolte du raisin ?",
+          "answers": [
+            "Les vendanges",
+            "La moisson",
+            "La cueillette",
+            "La fenaison"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Comment appelle-t-on la machine qui coupe et bat les céréales ?",
+          "answers": [
+            "Le tracteur",
+            "La charrue",
+            "La moissonneuse-batteuse",
+            "La faucheuse"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Quel animal tirait traditionnellement la charrue dans les fermes d'autrefois ?",
+          "answers": [
+            "Le mouton",
+            "Le cochon",
+            "Le bœuf",
+            "La chèvre"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Comment appelle-t-on l'agriculteur qui cultive la vigne ?",
+          "answers": [
+            "L'apiculteur",
+            "Le viticulteur",
+            "L'aviculteur",
+            "L'horticulteur"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Que produit un apiculteur ?",
+          "answers": [
+            "Du vin",
+            "Du miel",
+            "Des œufs",
+            "Du lait"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Comment appelle-t-on l'élevage de volailles ?",
+          "answers": [
+            "L'apiculture",
+            "La pisciculture",
+            "L'aviculture",
+            "La sylviculture"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Comment appelle-t-on la culture des arbres fruitiers ?",
+          "answers": [
+            "L'arboriculture",
+            "L'horticulture",
+            "La sylviculture",
+            "La viticulture"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Comment appelle-t-on la couche superficielle du sol, fertile et riche en matière organique ?",
+          "answers": [
+            "Le sable",
+            "Le calcaire",
+            "L'argile",
+            "L'humus"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Dans quel bâtiment stocke-t-on le foin et la paille à la ferme ?",
+          "answers": [
+            "L'étable",
+            "Le poulailler",
+            "La grange",
+            "La cave"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Dans quel bâtiment abrite-t-on les vaches ?",
+          "answers": [
+            "L'écurie",
+            "La porcherie",
+            "La bergerie",
+            "L'étable"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Dans quel bâtiment loge-t-on les chevaux ?",
+          "answers": [
+            "La bergerie",
+            "Le poulailler",
+            "L'écurie",
+            "L'étable"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Comment appelle-t-on l'abri des moutons ?",
+          "answers": [
+            "L'étable",
+            "La bergerie",
+            "L'écurie",
+            "La porcherie"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Comment appelle-t-on la période durant laquelle on coupe et récolte le foin ?",
+          "answers": [
+            "La moisson",
+            "Les vendanges",
+            "La fenaison",
+            "Le labour"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Qu'est-ce qu'un engrais en agriculture ?",
+          "answers": [
+            "Un produit qui tue les insectes",
+            "Une substance qui nourrit les plantes",
+            "Une graine sélectionnée",
+            "Un outil de labour"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Comment appelle-t-on le fait d'alterner les cultures d'une année sur l'autre ?",
+          "answers": [
+            "La jachère",
+            "Le repiquage",
+            "La rotation des cultures",
+            "Le paillage"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Qu'est-ce que la « jachère » ?",
+          "answers": [
+            "Une récolte abondante",
+            "Une terre laissée au repos",
+            "Une variété de blé",
+            "Un outil de labour"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Comment appelle-t-on l'apport artificiel d'eau aux cultures ?",
+          "answers": [
+            "Le drainage",
+            "L'épandage",
+            "L'irrigation",
+            "Le labour"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Comment appelle-t-on l'action de mettre les graines en terre ?",
+          "answers": [
+            "La récolte",
+            "Le battage",
+            "L'ensilage",
+            "Le semis"
+          ],
+          "correctAnswer": 3
+        }
+      ]
+    },
+    {
+      "id": "animaux-de-la-ferme",
+      "name": "Les animaux de la ferme",
+      "questions": [
+        {
+          "question": "Quel animal de la ferme produit le lait que nous buvons le plus couramment ?",
+          "answers": [
+            "La vache",
+            "La poule",
+            "Le cochon",
+            "Le cheval"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Quel animal de la ferme pond les œufs ?",
+          "answers": [
+            "La vache",
+            "La poule",
+            "La chèvre",
+            "Le mouton"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Comment appelle-t-on le mâle de la poule ?",
+          "answers": [
+            "Le canard",
+            "Le coq",
+            "Le dindon",
+            "Le paon"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Comment appelle-t-on le petit de la vache ?",
+          "answers": [
+            "L'agneau",
+            "Le poulain",
+            "Le veau",
+            "Le chevreau"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Comment appelle-t-on le petit du mouton ?",
+          "answers": [
+            "L'agneau",
+            "Le veau",
+            "Le chevreau",
+            "Le poulain"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Comment appelle-t-on le petit du cheval ?",
+          "answers": [
+            "Le veau",
+            "L'agneau",
+            "Le poulain",
+            "Le porcelet"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Comment appelle-t-on le mâle reproducteur de la vache ?",
+          "answers": [
+            "Le bœuf",
+            "Le taureau",
+            "Le veau",
+            "Le bouc"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Comment appelle-t-on le mâle de la brebis ?",
+          "answers": [
+            "Le bouc",
+            "Le taureau",
+            "Le bélier",
+            "Le verrat"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Comment appelle-t-on la femelle du mouton ?",
+          "answers": [
+            "La brebis",
+            "La chèvre",
+            "La jument",
+            "La truie"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Comment appelle-t-on le mâle de la chèvre ?",
+          "answers": [
+            "Le bouc",
+            "Le bélier",
+            "Le taureau",
+            "Le cerf"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Comment appelle-t-on le petit de la chèvre ?",
+          "answers": [
+            "L'agneau",
+            "Le veau",
+            "Le chevreau",
+            "Le porcelet"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Comment appelle-t-on la femelle du porc ?",
+          "answers": [
+            "La brebis",
+            "La jument",
+            "La truie",
+            "La vache"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Comment appelle-t-on le petit du cochon ?",
+          "answers": [
+            "Le chevreau",
+            "L'agneau",
+            "Le poulain",
+            "Le porcelet"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Comment appelle-t-on le mâle reproducteur du porc ?",
+          "answers": [
+            "Le bouc",
+            "Le bélier",
+            "Le taureau",
+            "Le verrat"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Quel cri pousse la vache ?",
+          "answers": [
+            "Elle bêle",
+            "Elle meugle",
+            "Elle hennit",
+            "Elle caquette"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Quel cri pousse le mouton ?",
+          "answers": [
+            "Il bêle",
+            "Il meugle",
+            "Il hennit",
+            "Il grogne"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Quel cri pousse le cheval ?",
+          "answers": [
+            "Il bêle",
+            "Il meugle",
+            "Il hennit",
+            "Il caquette"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Quel cri pousse la poule ?",
+          "answers": [
+            "Elle hennit",
+            "Elle bêle",
+            "Elle caquette",
+            "Elle beugle"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Comment appelle-t-on la femelle du canard ?",
+          "answers": [
+            "La cane",
+            "L'oie",
+            "La poule",
+            "La dinde"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Comment appelle-t-on le petit du canard ?",
+          "answers": [
+            "Le poussin",
+            "Le caneton",
+            "L'oison",
+            "Le dindonneau"
+          ],
+          "correctAnswer": 1
+        }
+      ]
+    },
+    {
+      "id": "produits-laitiers",
+      "name": "Les produits laitiers",
+      "questions": [
+        {
+          "question": "Quel produit laitier obtient-on en battant la crème ?",
+          "answers": [
+            "Le beurre",
+            "Le fromage",
+            "Le yaourt",
+            "La crème fraîche"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "De quel animal provient le lait le plus consommé en France ?",
+          "answers": [
+            "La chèvre",
+            "La vache",
+            "La brebis",
+            "La jument"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Quel produit laitier fermenté se mange souvent au petit-déjeuner, nature ou aux fruits ?",
+          "answers": [
+            "Le yaourt",
+            "Le beurre",
+            "La crème",
+            "Le fromage"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "De quel lait le fromage de Roquefort est-il traditionnellement fabriqué ?",
+          "answers": [
+            "Le lait de vache",
+            "Le lait de chèvre",
+            "Le lait de brebis",
+            "Le lait de bufflonne"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Quel fromage italien est l'ingrédient principal de la pizza margherita ?",
+          "answers": [
+            "La mozzarella",
+            "Le parmesan",
+            "Le gorgonzola",
+            "La ricotta"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "De quelle région française le camembert est-il originaire ?",
+          "answers": [
+            "La Savoie",
+            "L'Auvergne",
+            "La Normandie",
+            "La Bretagne"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Quel fromage est célèbre pour les gros trous qui le percent ?",
+          "answers": [
+            "Le comté",
+            "Le brie",
+            "Le reblochon",
+            "L'emmental"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Comment appelle-t-on la partie grasse qui remonte à la surface du lait ?",
+          "answers": [
+            "Le petit-lait",
+            "La crème",
+            "Le caillé",
+            "Le babeurre"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Comment appelle-t-on le liquide restant après la coagulation du lait, utilisé pour la ricotta ?",
+          "answers": [
+            "La présure",
+            "Le caillé",
+            "La crème",
+            "Le petit-lait"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Quelle substance fait cailler le lait pour fabriquer le fromage ?",
+          "answers": [
+            "La levure",
+            "Le bicarbonate",
+            "La présure",
+            "Le sucre"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Quel fromage italien dur se râpe couramment sur les pâtes ?",
+          "answers": [
+            "Le parmesan",
+            "La mozzarella",
+            "La feta",
+            "Le mascarpone"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "De quel pays la feta est-elle originaire ?",
+          "answers": [
+            "L'Italie",
+            "La France",
+            "La Grèce",
+            "L'Espagne"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "De quel massif montagneux français le comté est-il originaire ?",
+          "answers": [
+            "Les Alpes",
+            "Les Pyrénées",
+            "Le Massif central",
+            "Le Jura"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Quel dessert italien à base de mascarpone est parfumé au café ?",
+          "answers": [
+            "La panna cotta",
+            "Le flan",
+            "Le tiramisu",
+            "La crème brûlée"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Comment appelle-t-on le lait dont on a retiré toute la matière grasse ?",
+          "answers": [
+            "Le lait entier",
+            "Le lait écrémé",
+            "Le lait concentré",
+            "Le lait cru"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Quel produit laitier glacé se déguste en dessert, surtout l'été ?",
+          "answers": [
+            "Le beurre",
+            "La glace",
+            "Le fromage",
+            "La crème fraîche"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Quel procédé mis au point par Louis Pasteur conserve le lait en le chauffant ?",
+          "answers": [
+            "La fermentation",
+            "La pasteurisation",
+            "La congélation",
+            "La stérilisation"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Comment appelle-t-on la boisson fermentée à base de lait, originaire du Caucase ?",
+          "answers": [
+            "Le skyr",
+            "Le lassi",
+            "Le kéfir",
+            "Le babeurre"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "De quel lait est fabriqué un authentique fromage de chèvre ?",
+          "answers": [
+            "Le lait de chèvre",
+            "Le lait de vache",
+            "Le lait de brebis",
+            "Le lait de jument"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Quel fromage à croûte fleurie, plus grand que le camembert, est originaire de Seine-et-Marne ?",
+          "answers": [
+            "Le munster",
+            "Le maroilles",
+            "Le livarot",
+            "Le brie"
+          ],
+          "correctAnswer": 3
+        }
+      ]
+    },
+    {
+      "id": "chocolats",
+      "name": "Chocolats",
+      "questions": [
+        {
+          "question": "De quel arbre provient le chocolat ?",
+          "answers": [
+            "Le cacaoyer",
+            "Le caféier",
+            "Le cocotier",
+            "La canne à sucre"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "À partir de quelle fève fabrique-t-on le chocolat ?",
+          "answers": [
+            "La fève de café",
+            "La fève de cacao",
+            "La gousse de vanille",
+            "La noisette"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Quel type de chocolat ne contient pas de cacao solide, mais seulement du beurre de cacao ?",
+          "answers": [
+            "Le chocolat noir",
+            "Le chocolat au lait",
+            "Le chocolat praliné",
+            "Le chocolat blanc"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Quel ingrédient distingue principalement le chocolat au lait du chocolat noir ?",
+          "answers": [
+            "Le sucre",
+            "La vanille",
+            "Le lait",
+            "Les noisettes"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "De quel continent le cacaoyer est-il originaire ?",
+          "answers": [
+            "L'Afrique",
+            "L'Asie",
+            "L'Europe",
+            "L'Amérique"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Quelle civilisation précolombienne utilisait les fèves de cacao comme monnaie ?",
+          "answers": [
+            "Les Vikings",
+            "Les Égyptiens",
+            "Les Aztèques",
+            "Les Romains"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Comment appelle-t-on la matière grasse naturellement contenue dans la fève de cacao ?",
+          "answers": [
+            "La lécithine",
+            "La caséine",
+            "La margarine",
+            "Le beurre de cacao"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Quel pays est aujourd'hui le premier producteur mondial de cacao ?",
+          "answers": [
+            "Le Ghana",
+            "Le Nigeria",
+            "La Côte d'Ivoire",
+            "Le Cameroun"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Comment appelle-t-on la friandise en chocolat en forme de boule roulée dans le cacao ?",
+          "answers": [
+            "La ganache",
+            "Le praliné",
+            "Le nougat",
+            "La truffe"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Comment appelle-t-on le mélange onctueux de chocolat et de crème utilisé en pâtisserie ?",
+          "answers": [
+            "Le praliné",
+            "La frangipane",
+            "La ganache",
+            "Le nappage"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Comment appelle-t-on le mélange de chocolat et de noisettes broyées ?",
+          "answers": [
+            "La ganache",
+            "Le nougat",
+            "Le caramel",
+            "Le praliné"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "question": "Quelle fête est particulièrement associée aux œufs et aux lapins en chocolat ?",
+          "answers": [
+            "Pâques",
+            "Noël",
+            "Halloween",
+            "La Chandeleur"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Que désigne le pourcentage indiqué sur une tablette de chocolat noir ?",
+          "answers": [
+            "Le taux de sucre",
+            "Le taux de matière grasse",
+            "Le taux de cacao",
+            "Le taux de lait"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Quelle boisson chaude prépare-t-on à partir de cacao ?",
+          "answers": [
+            "Le chocolat chaud",
+            "Le thé",
+            "Le café",
+            "La tisane"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Quel pays est réputé pour ses pralines et des maisons comme Neuhaus et Godiva ?",
+          "answers": [
+            "La Suisse",
+            "La Belgique",
+            "L'Italie",
+            "L'Allemagne"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Quel pays alpin est célèbre pour son chocolat au lait et la marque Lindt ?",
+          "answers": [
+            "La Belgique",
+            "La France",
+            "La Suisse",
+            "L'Autriche"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Quelle est la forme caractéristique de la barre chocolatée Toblerone ?",
+          "answers": [
+            "Triangulaire",
+            "Ronde",
+            "Carrée",
+            "En forme d'étoile"
+          ],
+          "correctAnswer": 0
+        },
+        {
+          "question": "Comment appelle-t-on le long brassage qui rend le chocolat lisse, inventé par Rodolphe Lindt ?",
+          "answers": [
+            "Le tempérage",
+            "Le conchage",
+            "Le pralinage",
+            "Le moulage"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "question": "Comment appelle-t-on la mise en température qui donne au chocolat son brillant et son cassant ?",
+          "answers": [
+            "Le conchage",
+            "Le glaçage",
+            "Le tempérage",
+            "Le pétrissage"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "question": "Quelle substance stimulante, proche de la caféine, le chocolat contient-il ?",
+          "answers": [
+            "La nicotine",
+            "La théobromine",
+            "La mélatonine",
+            "La créatine"
+          ],
+          "correctAnswer": 1
+        }
+      ]
+    }
+  ]
+}

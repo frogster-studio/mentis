@@ -1,0 +1,14 @@
+# local working images
+*.jpg
+
+# next.js — .next-preview* are per-session dev-server caches, never committed
+/.next/
+/.next-preview*/
+/out/
+/build/
+
+# vercel
+.vercel
+
+# generated types
+next-env.d.ts

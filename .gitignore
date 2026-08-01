@@ -1,0 +1,24 @@
+# dependencies
+node_modules/
+
+# env & secrets — each app keeps its own .env*; examples stay tracked
+.env*
+!.env.example
+
+# macOS
+.DS_Store
+*.pem
+
+# typescript
+*.tsbuildinfo
+
+# testing
+coverage/
+
+# local planning & session tooling
+.grilled/
+.feeds
+.claude/settings.local.json
+
+# supabase CLI temp
+supabase/.temp/

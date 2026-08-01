@@ -1,0 +1,19 @@
+{
+  "name": "mentis",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "format": "biome check --write .",
+    "knip": "knip --fix && bun run format",
+    "typecheck": "bun run --filter '*' typecheck",
+    "test": "bun run --filter '*' test",
+    "check": "bun run typecheck && bun run test && bun run knip"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.4",
+    "knip": "^6.25.0"
+  }
+}

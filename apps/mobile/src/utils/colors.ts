@@ -1,0 +1,15 @@
+export const COLORS = {
+  surface: "#F8FAFC",
+  panel: "#f1f5f9",
+  fill: "#431407",
+  fillOpposite: "#F8FAFC",
+  strokeDefault: "rgba(0, 0, 0, 0.05)",
+  strokeStrong: "rgba(0, 0, 0, 0.1)",
+  primary: "#ea580c",
+  textMuted: "#9A9A9A",
+  scrim: "rgba(0, 0, 0, 0.4)",
+  green50: "#bbf7d0",
+  green500: "#22c55e",
+  red50: "#fef2f2",
+  red500: "#ef4444",
+} as const;

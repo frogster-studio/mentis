@@ -1,0 +1,18 @@
+It is an app built with React Native and Expo. This app must work on Web, iOS and Android (a single codebase).
+This app is a general knowledge quiz application. The user enters a session of 10 general knowledge questions based on a category. When they want to start a quiz session, they get 4 random categories, and when they choose one category they get a series of 10 random questions from that category.
+These questions and categories are stored in a Supabase database. A question can have multiple categories.
+
+For each question, the user has 25 seconds to answer. The real difference from other quiz applications is that the user has two choices when a question is asked:
+(scenario 1, called "cash"): they answer with no clue,
+(scenario 2, called "square"): they click on a button and 4 answers, including the correct one, are shown, and the user just needs to click on the answer they think is correct.
+
+Scenario 1 is the default. The 25-second countdown starts automatically when the question and the answer input are shown to the user. At any time, the user can click the button to switch to "square" mode, and they cannot go back to "cash" mode afterward. Switching from cash to square does not reset the countdown. The user does not have to confirm their choice, because the currently selected choice or the current value of the input in cash mode is considered the user's answer at the end of the countdown. However, at any time, if the user selects an answer or types something (even a single character), they can confirm their answer.
+
+There will always be 4 possible answers (including the correct one) during "square" mode.
+
+For the input in "cash" mode, it can be difficult to determine whether or not the user has given the correct answer, because of case sensitivity, a misspelling of a word, or a proper noun. The strength of this kind of application is knowing whether the user was right or not despite a misspelling; this is a real "human feeling" of being able to understand whether the user got it or not. We can't simply require the user to spell the answer exactly as it is written in the database. So we must brainstorm how we can give the user as much freedom as possible in their response. One idea I have is to generate all the possible misspellings with an AI for each answer and accept the user's answer only if it is in this list of answers. I think it can cover 90% of the cases, and generating and storing these lists is easy. But maybe there is a better way?
+
+Here is the full process and the number of clicks by the user during a quiz session. The goal is to ask the user for the fewest clicks:
+q1 is displayed -> countdown starts -> the keyboard opens automatically, the question is always visible and scrollable without dismissing the keyboard, with autofocus on the input + the "square mode" button is always visible, and when the user clicks on it, the keyboard disappears (the potential value of the input is deleted because "cash" mode is no longer available). In cash mode, the keyboard can be dismissed via the confirm button on the keyboard itself (native), and then the "confirm" button is visible; since it is optional, it must not take up the main section of the UI. On countdown end or confirm button, the user is automatically redirected to the next question. The answers to the 10 questions are only visible at the end of the quiz session, on a single page.
+
+Each correct answer in "cash" mode gives 5 pts, each correct answer in "square" mode gives 2 pts. Otherwise, regardless of the mode or whether the user enters an answer or not, it is considered a wrong answer = 0 pt.
