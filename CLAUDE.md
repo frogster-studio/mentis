@@ -15,6 +15,7 @@ Before working inside an app, read its `CLAUDE.md`; each also has a normative `C
 
 - `bun run format` — Biome auto-fix, whole repo
 - `bun run knip` — drop unused files/exports/deps, then format
+- `bun run jscpd` — copy-paste detection report (advisory; not part of `check`)
 - `bun run typecheck` / `bun run test` — every workspace
 - `bun run check` — all of the above; **every piece of work must end with `check` green**
 - Single workspace: `bun run --filter @mentis/admin <script>` / `--filter @mentis/mobile`

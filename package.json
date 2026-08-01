@@ -8,12 +8,14 @@
   "scripts": {
     "format": "biome check --write .",
     "knip": "knip --fix && bun run format",
+    "jscpd": "jscpd .",
     "typecheck": "bun run --filter '*' typecheck",
     "test": "bun run --filter '*' test",
     "check": "bun run typecheck && bun run test && bun run knip"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.4",
+    "jscpd": "^5.0.14",
     "knip": "^6.25.0"
   }
 }
