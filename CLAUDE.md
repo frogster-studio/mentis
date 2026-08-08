@@ -25,3 +25,17 @@ Biome and Knip are configured **only at the root** (`biome.json`, `knip.json`) �
 ## Database
 
 Migrations live in `supabase/` at the root — never inside an app. Both apps currently query Supabase directly; the decided trajectory is a future `apps/api` that becomes the **sole** database gateway, at which point `supabase/` moves inside it. Until `apps/api` exists, don't route either app through intermediaries.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues on `frogster-studio/mentis`, driven by the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default vocabulary — the five canonical roles used verbatim (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Multi-context — root `CONTEXT-MAP.md` maps per-app `CONTEXT.md` glossaries and `docs/adr/` directories. See `docs/agents/domain.md`.

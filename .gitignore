@@ -19,6 +19,7 @@ coverage/
 .grilled/
 .feeds
 .claude/settings.local.json
+.claude/worktrees/
 
 # supabase CLI temp
 supabase/.temp/

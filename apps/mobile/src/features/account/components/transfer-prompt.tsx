@@ -1,25 +1,19 @@
-import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { ModalCard } from '@/components/ui/modal-card';
-import { useAuthStore } from '@/features/account/auth-store';
+import { useState } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ModalCard } from "@/components/ui/modal-card";
+import { useAuthStore } from "@/features/account/auth-store";
 import {
   TRANSFER_ACCEPT_LABEL,
   TRANSFER_DECLINE_LABEL,
   TRANSFER_ERROR,
   TRANSFER_MESSAGE,
   TRANSFER_TITLE,
-} from '@/features/account/constants';
-import { useStatsStore } from '@/features/quiz/stats-store';
-import { shouldOfferTransfer } from '@/features/quiz/stats-transfer';
-import { useTransferStore } from '@/features/quiz/transfer-store';
-import { transferDeviceStats } from '@/features/quiz/transfer-sync';
-import { COLORS } from '@/utils/colors';
+} from "@/features/account/constants";
+import { useStatsStore } from "@/features/quiz/stats-store";
+import { shouldOfferTransfer } from "@/features/quiz/stats-transfer";
+import { useTransferStore } from "@/features/quiz/transfer-store";
+import { transferDeviceStats } from "@/features/quiz/transfer-sync";
+import { COLORS } from "@/utils/colors";
 
 export function TransferPrompt() {
   const owner = useAuthStore((state) => state.session?.user.id);
@@ -30,9 +24,7 @@ export function TransferPrompt() {
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
 
-  const visible =
-    owner !== undefined &&
-    shouldOfferTransfer(deviceStats, dormant, transferred);
+  const visible = owner !== undefined && shouldOfferTransfer(deviceStats, dormant, transferred);
 
   const onAccept = async () => {
     if (owner === undefined) {
@@ -61,11 +53,7 @@ export function TransferPrompt() {
       {failed ? <Text style={styles.error}>{TRANSFER_ERROR}</Text> : null}
       <View style={styles.actions}>
         <Pressable
-          style={({ pressed }) => [
-            styles.button,
-            styles.acceptButton,
-            pressed && styles.pressed,
-          ]}
+          style={({ pressed }) => [styles.button, styles.acceptButton, pressed && styles.pressed]}
           disabled={busy}
           onPress={onAccept}
         >
@@ -76,11 +64,7 @@ export function TransferPrompt() {
           )}
         </Pressable>
         <Pressable
-          style={({ pressed }) => [
-            styles.button,
-            styles.declineButton,
-            pressed && styles.pressed,
-          ]}
+          style={({ pressed }) => [styles.button, styles.declineButton, pressed && styles.pressed]}
           disabled={busy}
           onPress={decline}
         >
@@ -95,7 +79,7 @@ const styles = StyleSheet.create({
   error: {
     color: COLORS.red500,
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: "center",
   },
   actions: {
     gap: 12,
@@ -104,8 +88,8 @@ const styles = StyleSheet.create({
   button: {
     borderRadius: 12,
     paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   pressed: {
     opacity: 0.85,
@@ -116,7 +100,7 @@ const styles = StyleSheet.create({
   acceptLabel: {
     color: COLORS.fillOpposite,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   declineButton: {
     backgroundColor: COLORS.panel,
@@ -126,6 +110,6 @@ const styles = StyleSheet.create({
   declineLabel: {
     color: COLORS.fill,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });

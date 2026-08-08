@@ -1,6 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { ModalCard } from '@/components/ui/modal-card';
-import { COLORS } from '@/utils/colors';
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { ModalCard } from "@/components/ui/modal-card";
+import { COLORS } from "@/utils/colors";
 
 export type ConfirmDialogProps = {
   visible: boolean;
@@ -31,21 +31,13 @@ export function ConfirmDialog({
     >
       <View style={styles.actions}>
         <Pressable
-          style={({ pressed }) => [
-            styles.button,
-            styles.confirmButton,
-            pressed && styles.pressed,
-          ]}
+          style={({ pressed }) => [styles.button, styles.confirmButton, pressed && styles.pressed]}
           onPress={onConfirm}
         >
           <Text style={styles.confirmLabel}>{confirmLabel}</Text>
         </Pressable>
         <Pressable
-          style={({ pressed }) => [
-            styles.button,
-            styles.cancelButton,
-            pressed && styles.pressed,
-          ]}
+          style={({ pressed }) => [styles.button, styles.cancelButton, pressed && styles.pressed]}
           onPress={onCancel}
         >
           <Text style={styles.cancelLabel}>{cancelLabel}</Text>
@@ -57,7 +49,7 @@ export function ConfirmDialog({
 
 const styles = StyleSheet.create({
   actions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
     marginTop: 16,
   },
@@ -65,7 +57,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 12,
     paddingVertical: 14,
-    alignItems: 'center',
+    alignItems: "center",
   },
   pressed: {
     opacity: 0.85,
@@ -78,7 +70,7 @@ const styles = StyleSheet.create({
   confirmLabel: {
     color: COLORS.fill,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   cancelButton: {
     backgroundColor: COLORS.primary,
@@ -86,6 +78,6 @@ const styles = StyleSheet.create({
   cancelLabel: {
     color: COLORS.fillOpposite,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
