@@ -44,6 +44,10 @@ _Avoid_: cloud stats, synced stats
 The one-time, consented move of a device's Device Stats into an Account at sign-in. A move, not a copy: transferred stats leave the device world. Declining leaves them dormant on the device, hidden while signed in.
 _Avoid_: merge, import
 
+**Stat Baseline**:
+The per-Theme totals (points, session count) a Stats Transfer deposits under an Account, frozen at transfer time. Keyed by (Account, device, Theme).
+_Avoid_: baseline (alone), transferred stats
+
 **Question**:
 A prompt tied to exactly one Theme, answerable in both modes: it has one canonical correct answer and exactly 3 wrong choices for Square mode. Similar — even identical — wording may exist under different Themes; those are distinct Questions with distinct ids.
 
