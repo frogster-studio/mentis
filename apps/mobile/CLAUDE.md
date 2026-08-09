@@ -1,6 +1,6 @@
 # Mentis — quiz « Cash ou Carré » (Expo, iOS/Android/Web)
 
-`@mentis/mobile` workspace of the Mentis monorepo (bun only — see the root `CLAUDE.md`). Normative docs: `CONTEXT.md` (domain glossary — use its vocabulary), `docs/adr/` (decisions), `docs/prds/` (specs). Issues live in `.grilled/issues/` (gitignored), implemented via the `implement-next-issue` loop.
+`@mentis/mobile` workspace of the Mentis monorepo (bun only — see the root `CLAUDE.md`). Normative docs: `CONTEXT.md` (domain glossary — use its vocabulary), `docs/adr/` (decisions). Issues live in `.grilled/issues/` (gitignored), implemented via the `implement-next-issue` loop.
 
 ## Commands (run in `apps/mobile`)
 

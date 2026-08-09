@@ -18,6 +18,7 @@ coverage/
 # local planning & session tooling
 .grilled/
 .feeds
+.private/
 .claude/settings.local.json
 .claude/worktrees/
 

@@ -7,6 +7,6 @@ We rejected keeping owner-scoped RLS policies as defense-in-depth: the API bypas
 ## Consequences
 
 - Every future table or function is born inaccessible from outside: a forgotten grant or missing policy fails closed, and re-opening direct access requires defeating all three locks at once.
-- Score integrity rests entirely on the API's validation — no client-writable path to the player tables exists. Supersedes the [mobile context's supabase-only-backend ADR](../../apps/mobile/docs/adr/0002-supabase-only-backend.md) wholly, including its accepted forged-rows caveat and its edge-function fallback.
+- Score integrity rests entirely on the API's validation — no client-writable path to the player tables exists.
 - The whole end-state is encoded in one migration, `lock_database_to_api_gateway`, applied immediately after the mobile cutover — the moment the last direct consumer disappears.
 - pg_graphql resolves against SQL privileges, so the auto-exposed GraphQL endpoint goes inert with no separate switch.

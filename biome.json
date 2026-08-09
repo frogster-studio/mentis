@@ -12,7 +12,6 @@
       "!apps/admin/public",
       "!apps/mobile/assets",
       "!apps/mobile/docs",
-      "!apps/mobile/feed.json",
       "!supabase"
     ]
   },

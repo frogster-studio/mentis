@@ -1,6 +1,6 @@
 # Mentis — admin
 
-Back-office for the Mentis Card library: an authenticated web app where allowlisted editors create, browse, edit, and delete Cards (Quiz, True/False, Anecdote, Did You Know, Riddle). See [docs/prds/0001-card-back-office.md](docs/prds/0001-card-back-office.md) for the full product spec and [CONTEXT.md](CONTEXT.md) for the domain glossary.
+Back-office for the Mentis Card library: an authenticated web app where editors create, browse, edit, and delete Cards (Quiz, True/False, Anecdote, Did You Know, Riddle). See [CONTEXT.md](CONTEXT.md) for the domain glossary.
 
 Part of the [Mentis monorepo](../../README.md) — `@mentis/admin` workspace.
 

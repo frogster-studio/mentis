@@ -16,7 +16,7 @@ This is a **multi-context** repo — two bounded contexts mapped by the root `CO
 ```
 /
 ├── CONTEXT-MAP.md                     ← start here
-├── docs/adr/                          ← system-wide decisions (created lazily; none yet)
+├── docs/adr/                          ← system-wide decisions
 ├── apps/admin/                        ← Card curation context
 │   ├── CONTEXT.md
 │   └── docs/adr/
