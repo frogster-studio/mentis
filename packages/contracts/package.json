@@ -1,0 +1,34 @@
+{
+  "name": "@mentis/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./admin": {
+      "bun": "./src/admin/index.ts",
+      "types": "./dist/admin/index.d.ts",
+      "default": "./dist/admin/index.js"
+    },
+    "./app": {
+      "bun": "./src/app/index.ts",
+      "types": "./dist/app/index.d.ts",
+      "default": "./dist/app/index.js"
+    },
+    "./shared": {
+      "bun": "./src/shared/index.ts",
+      "types": "./dist/shared/index.d.ts",
+      "default": "./dist/shared/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.10"
+  }
+}

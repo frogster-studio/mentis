@@ -1,0 +1,16 @@
+# Build context for apps/api/Dockerfile (context = repo root).
+# Admin/mobile sources stay out; their manifests are re-included because
+# bun install --frozen-lockfile validates every workspace package.json.
+.git
+**/node_modules
+**/dist
+**/.env*
+apps/admin
+apps/mobile
+!apps/admin/package.json
+!apps/mobile/package.json
+supabase
+docs
+.claude
+.grilled
+*.md

@@ -11,6 +11,8 @@ node_modules/
 
 # typescript
 *.tsbuildinfo
+apps/api/dist/
+packages/contracts/dist/
 
 # testing
 coverage/
