@@ -4,9 +4,9 @@ import type { Social } from "@/lib/cards/schema";
 
 // The six Social brand marks as currentColor SVGs, sized by the same CSS the
 // Buttons apply to lucide icons. lucide-react ships no brand icons (see the
-// AGENTS.md exception); the path data comes from the logos in /public/socials,
-// flattened to a single tintable color: glyphs are knocked out of their
-// containers with fill-rule or a mask instead of being drawn in white.
+// AGENTS.md exception); the path data is flattened to a single tintable color:
+// glyphs are knocked out of their containers with fill-rule or a mask instead
+// of being drawn in white.
 
 export function XIcon() {
   return (

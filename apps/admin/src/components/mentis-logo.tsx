@@ -1,7 +1,7 @@
 // Two-tone brand lockup, inlined (not an <img>) so the wordmark can follow the
 // theme: the spark keeps the brand yellow #F7C400 — the only place that color
 // may appear in the UI (docs/ui-conventions.md, Brand) — while the wordmark
-// inherits currentColor. Path data comes from public/brand/mentis-logo.svg.
+// inherits currentColor.
 export function MentisLogo({ className }: { className?: string }) {
   return (
     <svg
