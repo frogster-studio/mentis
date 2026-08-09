@@ -59,3 +59,7 @@ _Avoid_: platform, network, channel, social media
 **Posted**:
 A per-Social mark on a Card recording that an editor has put the Card on that Social. Pure bookkeeping by the editor.
 _Avoid_: published (retired term — Cards no longer have a status), shared
+
+**Editor**:
+A person who curates Cards in the back-office. Editors are hand-provisioned — there is no self-service signup or password reset.
+_Avoid_: admin, administrator, admin user
