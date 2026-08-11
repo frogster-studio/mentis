@@ -11,6 +11,7 @@ import { testEnv } from "./test-env";
 const probeQuerySchema = z.object({ page: z.coerce.number().int().min(1).default(1) });
 type ProbeQuery = z.infer<typeof probeQuerySchema>;
 
+// No business routes exist yet, so proving pipe -> filter over real HTTP needs a test-only route.
 @Controller("probe")
 class ProbeController {
   @Get()
