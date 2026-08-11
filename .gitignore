@@ -24,3 +24,6 @@ coverage/
 
 # supabase CLI temp
 supabase/.temp/
+
+# Vercel CLI link state (local only)
+.vercel

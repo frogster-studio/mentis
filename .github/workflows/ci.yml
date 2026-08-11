@@ -17,3 +17,50 @@ jobs:
       - run: bunx biome ci .
       - run: bun run test
       - run: bunx knip
+
+  admin-changed:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    outputs:
+      relevant: ${{ steps.filter.outputs.relevant }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: filter
+        env:
+          BASE: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          # A first push or rewritten history leaves no usable base: deploy rather than guess.
+          if ! git cat-file -e "${BASE}^{commit}" 2>/dev/null; then
+            echo 'relevant=true' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if git diff --name-only "$BASE" "$HEAD_SHA" \
+            | grep -Eq '^(apps/admin/|packages/contracts/|bun\.lock$|\.github/workflows/ci\.yml$)'; then
+            echo 'relevant=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'relevant=false' >> "$GITHUB_OUTPUT"
+          fi
+
+  # Vercel's Git integration cannot deploy a private organization repo on the
+  # Hobby plan, so the push never reaches it — the deploy is driven from here.
+  deploy-admin:
+    needs: [check, admin-changed]
+    if: needs.admin-changed.outputs.relevant == 'true'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-admin
+      cancel-in-progress: false
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bunx vercel@58 pull --yes --environment=production
+      - run: bunx vercel@58 build --prod
+      - run: bunx vercel@58 deploy --prebuilt --prod
