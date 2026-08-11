@@ -28,6 +28,7 @@ Deliberately **not** a bounded context, so no `CONTEXT.md` and no row in `CONTEX
 
 ```
 src/
+  admin/          # the /admin surface: Card curation, EditorGuard-bound
   app/            # the /app surface: public Quiz play reads
   auth/           # SupabaseUserGuard (401) and EditorGuard (403), plus the project JWKS
   common/         # cross-cutting spine: ZodValidationPipe, HttpErrorFilter

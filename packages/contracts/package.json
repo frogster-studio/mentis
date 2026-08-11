@@ -3,6 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "exports": {
+    "./admin": {
+      "bun": "./src/admin/index.ts",
+      "types": "./dist/admin/index.d.ts",
+      "default": "./dist/admin/index.js"
+    },
     "./app": {
       "bun": "./src/app/index.ts",
       "types": "./dist/app/index.d.ts",
