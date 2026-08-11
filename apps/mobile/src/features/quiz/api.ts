@@ -32,7 +32,7 @@ export function useThemes() {
   return useQuery({ queryKey: quizKeys.themes, queryFn: fetchThemes });
 }
 
-// Row shape of the `get_random_questions` RPC (setof questions).
+// The `get_random_questions` RPC columns this app reads — it returns more.
 type QuestionRow = {
   id: string;
   text: string;

@@ -15,7 +15,7 @@ Deliberately **not** a bounded context, so no `CONTEXT.md` and no row in `CONTEX
 ## Hard constraints
 
 - **Nine third-party production dependencies, and no more** (plus the workspace `@mentis/contracts`): `@nestjs/common`, `@nestjs/core`, `@nestjs/platform-express`, `reflect-metadata`, `rxjs`, `zod`, `helmet`, `@nestjs/throttler`, `@supabase/supabase-js`. No `@nestjs/cli`, class-validator/transformer, `@nestjs/config`/dotenv, `nestjs-zod`, swagger, passport.
-- Root Nest module is `RootModule` — never `AppModule`: "app" is reserved surface vocabulary. Surface directories mirror the URL namespaces (`src/admin/`, `src/app/`) as routes arrive.
+- The root Nest module is `RootModule`, never `AppModule`: "app" is reserved surface vocabulary, and `AppModule` is the `/app` surface module (`src/app/app.module.ts`). Surface directories mirror the URL namespaces (`src/admin/`, `src/app/`) as routes arrive.
 - Decorator flags live directly in `tsconfig.json` — never move them into a shared base (bun bug oven-sh/bun#6326). `tsconfig.build.json` needs an explicit `rootDir` beside `outDir` (TS 6).
 - The service client from `src/supabase.ts` is the only database path, with no per-request user-authed client. RLS owner-scoping is re-implemented as explicit owner filters.
 - Every non-2xx body is the `ErrorResponse` envelope from `@mentis/contracts/shared`, emitted by `HttpErrorFilter` and nowhere else.
@@ -27,6 +27,7 @@ Deliberately **not** a bounded context, so no `CONTEXT.md` and no row in `CONTEX
 
 ```
 src/
+  app/            # the /app surface: public Quiz play reads
   common/         # cross-cutting spine: ZodValidationPipe, HttpErrorFilter
   health/         # GET /health
   core.module.ts  # global providers: ENV, SUPABASE
