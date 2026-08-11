@@ -8,6 +8,7 @@ const configured = {
 };
 
 describe("loadEnv", () => {
+  // It is a test
   it("applies the defaults for the vars .env.example deliberately omits", () => {
     const env = loadEnv(configured);
     expect(env.PORT).toBe(3001);
