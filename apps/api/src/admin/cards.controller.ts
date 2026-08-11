@@ -30,6 +30,7 @@ import {
 } from "@nestjs/common";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { EditorGuard } from "../auth/editor.guard";
+import { AuthenticatedThrottlerGuard } from "../common/rate-limit.guard";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
 import { SUPABASE } from "../supabase";
 import { removeCardImages } from "./card-image-storage";
@@ -66,7 +67,7 @@ const imagePaths = (rows: StoredImages[]): string[] =>
   rows.flatMap((row) => (row.images ?? []).map((image) => image.path));
 
 @Controller("admin/cards")
-@UseGuards(EditorGuard)
+@UseGuards(EditorGuard, AuthenticatedThrottlerGuard)
 export class CardsController {
   private readonly logger = new Logger(CardsController.name);
 

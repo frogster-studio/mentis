@@ -3,11 +3,12 @@ import { type AdminUploadUrlResponse, adminUploadUrlResponseSchema } from "@ment
 import { Controller, HttpCode, HttpStatus, Inject, Post, UseGuards } from "@nestjs/common";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { EditorGuard } from "../auth/editor.guard";
+import { AuthenticatedThrottlerGuard } from "../common/rate-limit.guard";
 import { SUPABASE } from "../supabase";
 import { CARD_IMAGES_BUCKET } from "./card-image-storage";
 
 @Controller("admin/card-images")
-@UseGuards(EditorGuard)
+@UseGuards(EditorGuard, AuthenticatedThrottlerGuard)
 export class CardImagesController {
   constructor(@Inject(SUPABASE) private readonly supabase: SupabaseClient) {}
 

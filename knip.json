@@ -11,8 +11,7 @@
     },
     "apps/api": {
       "entry": ["src/main.ts"],
-      "project": ["src/**/*.ts", "test/**/*.ts"],
-      "ignoreDependencies": ["@nestjs/throttler"]
+      "project": ["src/**/*.ts", "test/**/*.ts"]
     },
     "packages/contracts": {
       "project": ["src/**/*.ts"]

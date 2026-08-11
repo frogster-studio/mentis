@@ -2,7 +2,14 @@ import { randomUUID } from "node:crypto";
 import { errorResponseSchema } from "@mentis/contracts/shared";
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
-import { createLocalJWKSet, exportJWK, generateKeyPair, type JWTPayload, SignJWT } from "jose";
+import {
+  createLocalJWKSet,
+  exportJWK,
+  type GenerateKeyPairResult,
+  generateKeyPair,
+  type JWTPayload,
+  SignJWT,
+} from "jose";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { CARD_LIST_PAGE_SIZE } from "../src/admin/cards.controller";
 import { JWKS } from "../src/auth/jwks";
@@ -26,6 +33,21 @@ type CardRow = {
 };
 
 type Removal = { bucket: string; paths: string[]; storedIds: string[] };
+
+let signingKey: GenerateKeyPairResult;
+
+const mint = (claims: JWTPayload): Promise<string> =>
+  new SignJWT({
+    iss: `${testEnv.SUPABASE_URL}/auth/v1`,
+    aud: "authenticated",
+    sub: randomUUID(),
+    role: "authenticated",
+    ...claims,
+  } satisfies JWTPayload)
+    .setProtectedHeader({ alg: "ES256", kid: "test-key" })
+    .setIssuedAt()
+    .setExpirationTime("1h")
+    .sign(signingKey.privateKey);
 
 let cardRows: CardRow[] = [];
 let removals: Removal[] = [];
@@ -325,21 +347,8 @@ describe("admin card routes e2e", () => {
   };
 
   beforeAll(async () => {
-    const signingKey = await generateKeyPair("ES256", { extractable: true });
+    signingKey = await generateKeyPair("ES256", { extractable: true });
     const publicJwk = { ...(await exportJWK(signingKey.publicKey)), alg: "ES256", kid: "test-key" };
-    const mint = (claims: JWTPayload): Promise<string> =>
-      new SignJWT({
-        iss: `${testEnv.SUPABASE_URL}/auth/v1`,
-        aud: "authenticated",
-        sub: randomUUID(),
-        role: "authenticated",
-        ...claims,
-      } satisfies JWTPayload)
-        .setProtectedHeader({ alg: "ES256", kid: "test-key" })
-        .setIssuedAt()
-        .setExpirationTime("1h")
-        .sign(signingKey.privateKey);
-    editorToken = await mint({ app_metadata: { role: "editor" } });
     playerToken = await mint({ app_metadata: { provider: "google" } });
 
     const moduleRef = await Test.createTestingModule({ imports: [RootModule] })
@@ -359,12 +368,14 @@ describe("admin card routes e2e", () => {
     await app.close();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     cardRows = [];
     removals = [];
     signedPaths = [];
     removeFails = false;
     tick = 0;
+    // A fresh Editor each time: one sub across the whole suite would spend its rate-limit allowance.
+    editorToken = await mint({ app_metadata: { role: "editor" } });
   });
 
   const routes: [method: string, path: string, body?: unknown][] = [

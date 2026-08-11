@@ -21,6 +21,7 @@ import {
 } from "@nestjs/common";
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import { type AuthedRequest, SupabaseUserGuard } from "../auth/supabase-user.guard";
+import { AuthenticatedThrottlerGuard } from "../common/rate-limit.guard";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
 import { SUPABASE } from "../supabase";
 
@@ -32,7 +33,7 @@ const SESSION_SELECT = "id, themeId:theme_id, themeName:theme_name, points";
 const OWNER_FK_VIOLATION = "23503";
 
 @Controller("app/me")
-@UseGuards(SupabaseUserGuard)
+@UseGuards(SupabaseUserGuard, AuthenticatedThrottlerGuard)
 export class MeController {
   constructor(@Inject(SUPABASE) private readonly supabase: SupabaseClient) {}
 

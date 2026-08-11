@@ -4,8 +4,9 @@ import {
   appQuestionDrawQuerySchema,
   appQuestionDrawResponseSchema,
 } from "@mentis/contracts/app";
-import { Controller, Get, Inject, NotFoundException, Query } from "@nestjs/common";
+import { Controller, Get, Inject, NotFoundException, Query, UseGuards } from "@nestjs/common";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { DrawThrottlerGuard } from "../common/rate-limit.guard";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
 import { SUPABASE } from "../supabase";
 
@@ -13,6 +14,7 @@ const DRAW_SELECT =
   "id, themeId:theme_id, themeName:theme_name, text, answer, aliases, misspellings, wrongChoices:wrong_choices";
 
 @Controller("app/questions")
+@UseGuards(DrawThrottlerGuard)
 export class QuestionsController {
   constructor(@Inject(SUPABASE) private readonly supabase: SupabaseClient) {}
 

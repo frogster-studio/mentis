@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { APP_FILTER } from "@nestjs/core";
+import { ThrottlerModule } from "@nestjs/throttler";
 import { AdminModule } from "./admin/admin.module";
 import { AppModule } from "./app/app.module";
 import { HttpErrorFilter } from "./common/http-error.filter";
@@ -8,7 +9,8 @@ import { HealthController } from "./health/health.controller";
 
 // Named RootModule: "app" is reserved vocabulary for the mobile surface here.
 @Module({
-  imports: [CoreModule, AdminModule, AppModule],
+  // The throttler is registered for its storage alone — the tiers live on the per-surface guards.
+  imports: [CoreModule, ThrottlerModule.forRoot([]), AdminModule, AppModule],
   controllers: [HealthController],
   providers: [{ provide: APP_FILTER, useClass: HttpErrorFilter }],
 })

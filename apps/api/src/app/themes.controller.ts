@@ -1,12 +1,14 @@
 import { type AppThemeListResponse, appThemeListResponseSchema } from "@mentis/contracts/app";
-import { Controller, Get, Inject } from "@nestjs/common";
+import { Controller, Get, Inject, UseGuards } from "@nestjs/common";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { PublicThrottlerGuard } from "../common/rate-limit.guard";
 import { SUPABASE } from "../supabase";
 
 // PostgREST returns an embedded aggregate as a one-row array, so questionCount folds here.
 type ThemeCountRow = { id: string; name: string; questions: { count: number }[] };
 
 @Controller("app/themes")
+@UseGuards(PublicThrottlerGuard)
 export class ThemesController {
   constructor(@Inject(SUPABASE) private readonly supabase: SupabaseClient) {}
 
