@@ -12,8 +12,10 @@ export const configureApp = (app: NestExpressApplication): void => {
   app.use(helmet());
   // Browser origins only (future Expo web); native and server callers send no Origin.
   app.enableCors({ origin: env.CORS_ORIGINS.length > 0 ? env.CORS_ORIGINS : false });
-  // Railway fronts the container, so req.ip must read X-Forwarded-For or every caller shares one bucket.
-  app.set("trust proxy", 1);
+  // Railway fronts the container with two hops, so the client sits two from the right of
+  // X-Forwarded-For; trusting one hop reads the edge itself and every caller shares its buckets.
+  // Counting from the right also keeps the key unforgeable — a client-sent header is pushed left.
+  app.set("trust proxy", 2);
   // Sized against the capped push batches, replacing Express's unchosen 100 kb default.
   app.useBodyParser("json", { limit: "64kb" });
 };

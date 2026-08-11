@@ -165,6 +165,22 @@ describe("rate limiting e2e", () => {
     expect((await from("203.0.113.4", "/app/questions")).status).toBe(200);
   });
 
+  // Railway appends its own edge to X-Forwarded-For, and that edge rotates between addresses.
+  // A one-hop trust setting buckets on the edge, so callers share it and one client can spend
+  // everyone's allowance. Single-entry headers read the same under either setting — only a real
+  // two-hop chain tells them apart.
+  it("keys on the client through the proxy chain, not on the rotating edge", async () => {
+    const client = "203.0.113.7";
+    const viaEdge = (edge: string) =>
+      fetch(`${baseUrl}/app/questions`, { headers: { "X-Forwarded-For": `${client}, ${edge}` } });
+
+    await exhaust(DRAW_TIER.limit, () => viaEdge("79.127.178.81"));
+    // A different edge for the same client must not hand it a second allowance.
+    await expectRateLimited(await viaEdge("79.127.178.82"));
+    // And one spent client must not lock out the others sharing that edge.
+    expect((await from("203.0.113.8, 79.127.178.81", "/app/questions")).status).toBe(200);
+  });
+
   it("the authenticated allowance is one bucket per sub across both surfaces", async () => {
     const editor = await mint("33333333-3333-4333-8333-333333333333", true);
     const half = AUTHENTICATED_TIER.limit / 2;
