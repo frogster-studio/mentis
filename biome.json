@@ -12,7 +12,7 @@
       "!apps/admin/public",
       "!apps/mobile/assets",
       "!apps/mobile/docs",
-      "!supabase"
+      "!**/supabase"
     ]
   },
   "formatter": {
@@ -44,5 +44,22 @@
         "organizeImports": "on"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["apps/api/**"],
+      "javascript": {
+        "parser": {
+          "unsafeParameterDecoratorsEnabled": true
+        }
+      },
+      "linter": {
+        "rules": {
+          "style": {
+            "useImportType": "off"
+          }
+        }
+      }
+    }
+  ]
 }

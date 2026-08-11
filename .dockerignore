@@ -1,0 +1,18 @@
+# Build context for apps/api/Dockerfile; globs stay path-independent so supabase/ moves by pure git mv.
+.git
+**/node_modules
+**/dist
+**/.env*
+apps/admin
+apps/mobile
+# Re-included because bun install --frozen-lockfile validates every workspace manifest.
+!apps/admin/package.json
+!apps/mobile/package.json
+**/supabase
+docs
+.agents
+.claude
+.feeds
+.grilled
+.private
+*.md

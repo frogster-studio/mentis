@@ -1,18 +1,20 @@
 # Mentis
 
-Monorepo for **Mentis**, a French general-knowledge quiz product: a mobile quiz app ("Cash ou Carré") and the back-office that curates its content, sharing one Supabase project.
+Monorepo for **Mentis**, a French general-knowledge quiz product: a mobile quiz app ("Cash ou Carré"), the back-office that curates its content, and the REST gateway between them and the database — sharing one Supabase project.
 
 ## Layout
 
 ```
 apps/
   admin/     # Next.js back-office — editors curate the Card library (deployed on Vercel)
+  api/       # NestJS REST gateway — becoming the sole database path (Railway)
   mobile/    # Expo app (iOS/Android/Web) — the quiz game itself (EAS builds)
-packages/    # future shared packages (none yet)
+packages/
+  contracts/ # @mentis/contracts — zod request/response schemas the API publishes
 supabase/    # shared database: migrations + CLI config for the hosted project
 ```
 
-Each app has its own `README.md` / `CLAUDE.md` with app-specific details, and its own `CONTEXT.md` domain glossary (see [CONTEXT-MAP.md](CONTEXT-MAP.md)).
+Each app carries a `CLAUDE.md` with its app-specific details. Admin and mobile also have a `CONTEXT.md` domain glossary (see [CONTEXT-MAP.md](CONTEXT-MAP.md)); the API has none by design — it publishes both vocabularies rather than owning one.
 
 ## Tooling
 
@@ -24,8 +26,11 @@ Everything runs with **[bun](https://bun.sh)** — no npm, pnpm, or yarn. Format
 bun install                # once, at the repo root
 
 cd apps/admin && bun run dev     # back-office on http://localhost:3000
+cd apps/api && bun run dev       # REST gateway on http://localhost:3001
 cd apps/mobile && bun run start  # Expo dev server
 ```
+
+`apps/api` needs a `.env` first: `cp .env.example .env` and fill `SUPABASE_SECRET_KEY`.
 
 ## Root commands
 
@@ -37,11 +42,11 @@ cd apps/mobile && bun run start  # Expo dev server
 | `bun run test` | vitest in every workspace |
 | `bun run check` | typecheck + test + knip — **must be green before any commit** |
 
-Run a single workspace's script with `bun run --filter @mentis/admin <script>` (packages: `@mentis/admin`, `@mentis/mobile`).
+Run a single workspace's script with `bun run --filter @mentis/admin <script>` (packages: `@mentis/admin`, `@mentis/api`, `@mentis/mobile`, `@mentis/contracts`).
 
 ## Database
 
-Both apps talk to the same hosted Supabase project (eu-central-1). Migrations and the CLI link live in [supabase/](supabase/) at the root — run `supabase` CLI commands from here. A future `apps/api` is planned to become the sole database gateway; the schema moves into it when that happens.
+Everything talks to the same hosted Supabase project (eu-central-1). Migrations and the CLI link live in [supabase/](supabase/) at the root — run `supabase` CLI commands from here. Admin and mobile still query it directly; `apps/api` becomes the sole database gateway at their cutover, and the schema moves into it when that happens.
 
 ## CI
 
