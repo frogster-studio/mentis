@@ -1,30 +1,34 @@
 "use client";
 
+import { SOCIALS, type Social } from "@mentis/contracts/admin";
 import { startTransition, useOptimistic } from "react";
 
 import { SOCIAL_ICONS } from "@/components/social-icons";
 import { Button } from "@/components/ui/button";
 import { setCardPosted } from "@/lib/cards/actions";
-import { SOCIAL_LABELS, SOCIALS, type Social } from "@/lib/cards/schema";
+import { SOCIAL_LABELS } from "@/lib/cards/labels";
 
 // One ghost toggle per Social. Clicks are optimistic: the icon flips
 // immediately and only flips back if the save fails — the revert is the
 // error signal.
 export function CardSocials({ cardId, postedOn }: { cardId: string; postedOn: Social[] }) {
-  const [optimisticPostedOn, applyMark] = useOptimistic(
+  const [optimisticPostedOn, applyNextMarks] = useOptimistic(
     postedOn,
-    (current: Social[], mark: { social: Social; posted: boolean }) =>
-      mark.posted ? [...current, mark.social] : current.filter((social) => social !== mark.social),
+    (_current: Social[], next: Social[]) => next,
   );
 
   function toggle(social: Social) {
     const posted = !optimisticPostedOn.includes(social);
+    // Sending the whole next set keeps a double-fired click from undoing itself.
+    const next = posted
+      ? SOCIALS.filter((mark) => mark === social || optimisticPostedOn.includes(mark))
+      : optimisticPostedOn.filter((mark) => mark !== social);
     startTransition(async () => {
-      applyMark({ social, posted });
+      applyNextMarks(next);
       try {
-        await setCardPosted(cardId, social, posted);
+        await setCardPosted(cardId, next);
       } catch {
-        // The optimistic mark rolls back to the server state by itself.
+        // The optimistic marks roll back to the server state by themselves.
       }
     });
   }

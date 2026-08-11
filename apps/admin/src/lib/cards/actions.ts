@@ -1,19 +1,16 @@
 "use server";
 
+import type { AdminCardResponse, Social } from "@mentis/contracts/admin";
+import { adminCardPostedInputSchema, adminCardWriteInputSchema } from "@mentis/contracts/admin";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-
-import { requireSession } from "@/lib/auth/require-session";
+import { redirect, unstable_rethrow } from "next/navigation";
 import {
-  deleteCard as deleteCardRow,
-  getCard,
-  insertCard,
+  createCard as createCardOnApi,
+  deleteCard as deleteCardOnApi,
+  replaceCard,
   setCardPostedOn,
-  updateCard as updateCardRow,
-} from "@/lib/cards/data";
-import { cardSchema, SOCIALS, type Social } from "@/lib/cards/schema";
-import { removeCardImages } from "@/lib/images/storage";
-import { createServiceClient } from "@/lib/supabase";
+} from "@/lib/api/cards";
+import { isApiError } from "@/lib/api/client";
 
 // The two places the sheets can show a validation message: the Title field
 // keeps its own; everything else lands on the form-level alert.
@@ -84,7 +81,7 @@ function imagesFromFormData(
 // update can never drift apart in how they read the form.
 function parseCardForm(formData: FormData) {
   const type = formData.get("type");
-  return cardSchema.safeParse({
+  return adminCardWriteInputSchema.safeParse({
     type,
     title: String(formData.get("title") ?? ""),
     tags: formData.getAll("tags").map(String),
@@ -109,21 +106,31 @@ function cardFormErrors(
   return errors;
 }
 
+function saveErrorMessage(error: unknown): string {
+  if (isApiError(error, "NOT_FOUND")) {
+    return "This Card no longer exists.";
+  }
+  if (isApiError(error, "VALIDATION_FAILED")) {
+    return error.message;
+  }
+  return "Saving the Card failed. Try again.";
+}
+
 export async function createCard(
   _previousState: CreateCardState | undefined,
   formData: FormData,
 ): Promise<CreateCardState> {
-  await requireSession();
-
   const parsed = parseCardForm(formData);
   if (!parsed.success) {
     return { errors: cardFormErrors(parsed.error.issues) };
   }
 
   try {
-    await insertCard(createServiceClient(), parsed.data);
-  } catch {
-    return { errors: { form: "Saving the Card failed. Try again." } };
+    await createCardOnApi(parsed.data);
+  } catch (error) {
+    // The seam redirects on 401/403, and that travels as a thrown error.
+    unstable_rethrow(error);
+    return { errors: { form: saveErrorMessage(error) } };
   }
 
   revalidatePath("/");
@@ -139,45 +146,19 @@ export async function updateCard(
   _previousState: UpdateCardState | undefined,
   formData: FormData,
 ): Promise<UpdateCardState> {
-  await requireSession();
-
   const id = String(formData.get("id") ?? "");
-  const client = createServiceClient();
-
-  // The stored Images are needed to spot the ones this edit removed, whose
-  // storage objects must go once the save lands.
-  let existing: Awaited<ReturnType<typeof getCard>>;
-  try {
-    existing = await getCard(client, id);
-  } catch {
-    return { errors: { form: "Saving the Card failed. Try again." } };
-  }
-  if (!existing) {
-    return { errors: { form: "This Card no longer exists." } };
-  }
 
   const parsed = parseCardForm(formData);
   if (!parsed.success) {
     return { errors: cardFormErrors(parsed.error.issues) };
   }
 
-  let saved: Awaited<ReturnType<typeof updateCardRow>>;
+  let saved: AdminCardResponse;
   try {
-    saved = await updateCardRow(client, id, parsed.data);
-  } catch {
-    return { errors: { form: "Saving the Card failed. Try again." } };
-  }
-
-  // Storage objects go only after the row update stands, and a cleanup
-  // failure must not fail a save that already succeeded.
-  const keptPaths = new Set(parsed.data.images.map((image) => image.path));
-  const removedPaths = existing.images
-    .map((image) => image.path)
-    .filter((path) => !keptPaths.has(path));
-  try {
-    await removeCardImages(client, removedPaths);
+    saved = await replaceCard(id, parsed.data);
   } catch (error) {
-    console.error(error);
+    unstable_rethrow(error);
+    return { errors: { form: saveErrorMessage(error) } };
   }
 
   revalidatePath("/");
@@ -186,30 +167,22 @@ export async function updateCard(
 }
 
 export async function deleteCard(cardId: string): Promise<void> {
-  await requireSession();
-
-  await deleteCardRow(createServiceClient(), cardId);
+  await deleteCardOnApi(cardId);
 
   revalidatePath("/");
   redirect("/");
 }
 
-// One toggle click = one call. Setting an explicit state (not flipping) keeps
-// a double-fired click from undoing itself.
-export async function setCardPosted(
-  cardId: string,
-  social: Social,
-  posted: boolean,
-): Promise<void> {
-  await requireSession();
-
+// Two editors marking at once clobber each other — accepted with the whole-set write.
+export async function setCardPosted(cardId: string, postedOn: Social[]): Promise<void> {
   // Server Functions are reachable by direct POST, so the arguments are
   // checked even though the UI only sends well-formed ones.
-  if (!SOCIALS.includes(social) || typeof posted !== "boolean") {
-    throw new Error("Invalid Posted mark.");
+  const parsed = adminCardPostedInputSchema.safeParse({ postedOn });
+  if (!parsed.success) {
+    throw new Error("Invalid Posted marks.");
   }
 
-  await setCardPostedOn(createServiceClient(), cardId, social, posted);
+  await setCardPostedOn(cardId, parsed.data.postedOn);
 
   revalidatePath("/");
   revalidatePath(`/cards/${cardId}`);

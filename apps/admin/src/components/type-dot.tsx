@@ -1,4 +1,4 @@
-import type { CardType } from "@/lib/cards/schema";
+import type { CardType } from "@mentis/contracts/admin";
 import { cn } from "@/lib/utils";
 
 // Per-type dot color (docs/ui-conventions.md, Card Type colors). Written as

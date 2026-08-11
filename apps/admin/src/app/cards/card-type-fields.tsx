@@ -1,7 +1,7 @@
+import type { QuizPayload, RiddlePayload, TrueFalsePayload } from "@mentis/contracts/admin";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { QuizPayload, RiddlePayload, TrueFalsePayload } from "@/lib/cards/schema";
 
 export function CardTypeFields({
   card,

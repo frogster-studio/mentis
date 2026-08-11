@@ -1,3 +1,4 @@
+import type { AdminCardResponse, CardType } from "@mentis/contracts/admin";
 import { ChevronLeft, ChevronRight, LogOut, Plus } from "lucide-react";
 import Link from "next/link";
 
@@ -16,11 +17,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { listCards } from "@/lib/api/cards";
 import { logout } from "@/lib/auth/actions";
-import { listCards } from "@/lib/cards/data";
+import { CARD_TYPE_LABELS } from "@/lib/cards/labels";
 import { buildListHref, type CardListParams, parseListParams } from "@/lib/cards/list-params";
-import { CARD_TYPE_LABELS, type Card, type CardType } from "@/lib/cards/schema";
-import { createServiceClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
 const updatedAtFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -57,7 +57,8 @@ export async function CardLibrary({
   listParams?: CardListParams;
 }) {
   const params = listParams ?? parseListParams({});
-  const { cards, page, pageCount } = await listCards(createServiceClient(), params);
+  const { items, total, page, pageSize } = await listCards(params);
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
   const hasActiveFilters = params.search !== "" || params.type !== undefined || params.tag !== "";
 
   return (
@@ -123,7 +124,7 @@ export async function CardLibrary({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {cards.length === 0 ? (
+                {items.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
                       {hasActiveFilters
@@ -132,7 +133,7 @@ export async function CardLibrary({
                     </TableCell>
                   </TableRow>
                 ) : (
-                  cards.map((card) => (
+                  items.map((card) => (
                     <CardRow
                       key={card.id}
                       card={card}
@@ -173,7 +174,7 @@ function CardRow({
   active,
   listParams,
 }: {
-  card: Card;
+  card: AdminCardResponse;
   active: boolean;
   listParams: CardListParams;
 }) {

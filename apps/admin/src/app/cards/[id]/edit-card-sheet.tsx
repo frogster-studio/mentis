@@ -1,5 +1,6 @@
 "use client";
 
+import { type AdminCardResponse, CARD_TYPES, type CardType } from "@mentis/contracts/admin";
 import { Trash2, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useActionState, useState } from "react";
@@ -36,7 +37,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { deleteCard, updateCard } from "@/lib/cards/actions";
-import { CARD_TYPE_LABELS, CARD_TYPES, type Card, type CardType } from "@/lib/cards/schema";
+import { CARD_TYPE_LABELS } from "@/lib/cards/labels";
 
 const timestampFormatter = new Intl.DateTimeFormat("en-GB", {
   dateStyle: "medium",
@@ -57,7 +58,7 @@ export function EditCardSheet({
   card,
   storedImages,
 }: {
-  card: Card;
+  card: AdminCardResponse;
   storedImages: StoredCardImage[];
 }) {
   const router = useRouter();
@@ -84,7 +85,13 @@ export function EditCardSheet({
   );
 }
 
-function EditCardForm({ card, storedImages }: { card: Card; storedImages: StoredCardImage[] }) {
+function EditCardForm({
+  card,
+  storedImages,
+}: {
+  card: AdminCardResponse;
+  storedImages: StoredCardImage[];
+}) {
   const [state, formAction, pending] = useActionState(updateCard, undefined);
   const images = useCardImages(storedImages);
   // The form's Card Type — diverges from the stored card.type between a
@@ -192,7 +199,7 @@ function EditCardForm({ card, storedImages }: { card: Card; storedImages: Stored
   );
 }
 
-function DeleteCardButton({ card }: { card: Card }) {
+function DeleteCardButton({ card }: { card: AdminCardResponse }) {
   const deleteAction = deleteCard.bind(null, card.id);
 
   return (

@@ -25,7 +25,7 @@ Biome and Knip are configured **only at the root** (`biome.json`, `knip.json`) �
 
 ## Database
 
-Migrations live in `supabase/` at the root — never inside an app. Admin and mobile still query Supabase directly; `apps/api` becomes the **sole** database gateway at their cutover slices, at which point `supabase/` moves inside it. Until then, don't route either app through intermediaries.
+Migrations live in `supabase/` at the root — never inside an app. Admin reaches the database only through `apps/api`; mobile still queries Supabase directly until its cutover slice, after which `supabase/` moves inside the api workspace. Until then, don't route mobile through intermediaries.
 
 ## Agent skills
 

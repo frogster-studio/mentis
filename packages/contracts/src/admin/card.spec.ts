@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { cardSchema, postedOnSchema } from "@/lib/cards/schema";
+import { adminCardWriteInputSchema, postedOnSchema } from "./card";
 
 const validAnecdote = {
   type: "anecdote",
@@ -8,9 +8,9 @@ const validAnecdote = {
   payload: { body: "À la cantine…" },
 };
 
-describe("cardSchema", () => {
+describe("adminCardWriteInputSchema", () => {
   it("accepts a valid Anecdote and defaults tags and images", () => {
-    const result = cardSchema.parse(validAnecdote);
+    const result = adminCardWriteInputSchema.parse(validAnecdote);
     expect(result).toEqual({
       type: "anecdote",
       title: "Mendès France et le lait",
@@ -22,7 +22,7 @@ describe("cardSchema", () => {
 
   it("preserves line breaks in the body", () => {
     const body = "Première ligne.\n\nDeuxième ligne.\nTroisième.";
-    const result = cardSchema.parse({
+    const result = adminCardWriteInputSchema.parse({
       ...validAnecdote,
       payload: { body },
     });
@@ -31,18 +31,18 @@ describe("cardSchema", () => {
 
   it("rejects a missing Title", () => {
     const { title: _title, ...withoutTitle } = validAnecdote;
-    expect(cardSchema.safeParse(withoutTitle).success).toBe(false);
+    expect(adminCardWriteInputSchema.safeParse(withoutTitle).success).toBe(false);
   });
 
   it("rejects an empty or whitespace-only Title", () => {
     for (const title of ["", "   "]) {
-      const result = cardSchema.safeParse({ ...validAnecdote, title });
+      const result = adminCardWriteInputSchema.safeParse({ ...validAnecdote, title });
       expect(result.success).toBe(false);
     }
   });
 
   it("trims whitespace around the Title", () => {
-    const result = cardSchema.parse({
+    const result = adminCardWriteInputSchema.parse({
       ...validAnecdote,
       title: "  Mendès France  ",
     });
@@ -50,12 +50,14 @@ describe("cardSchema", () => {
   });
 
   it("rejects an unknown type value", () => {
-    expect(cardSchema.safeParse({ ...validAnecdote, type: "haiku" }).success).toBe(false);
+    expect(adminCardWriteInputSchema.safeParse({ ...validAnecdote, type: "haiku" }).success).toBe(
+      false,
+    );
   });
 
   it("rejects a missing type", () => {
     const { type: _type, ...withoutType } = validAnecdote;
-    expect(cardSchema.safeParse(withoutType).success).toBe(false);
+    expect(adminCardWriteInputSchema.safeParse(withoutType).success).toBe(false);
   });
 
   it("rejects more than three images", () => {
@@ -63,23 +65,23 @@ describe("cardSchema", () => {
       path: `cards/x-${order}.webp`,
       order,
     }));
-    expect(cardSchema.safeParse({ ...validAnecdote, images }).success).toBe(false);
+    expect(adminCardWriteInputSchema.safeParse({ ...validAnecdote, images }).success).toBe(false);
   });
 });
 
-describe("cardSchema — Images", () => {
+describe("adminCardWriteInputSchema — Images", () => {
   it("accepts three Images and keeps their optional Captions", () => {
     const images = [
       { path: "a.webp", order: 0, caption: "La une" },
       { path: "b.webp", order: 1 },
       { path: "c.webp", order: 2, caption: "La der" },
     ];
-    const result = cardSchema.parse({ ...validAnecdote, images });
+    const result = adminCardWriteInputSchema.parse({ ...validAnecdote, images });
     expect(result.images).toEqual(images);
   });
 
   it("returns Images sorted by order regardless of stored order", () => {
-    const result = cardSchema.parse({
+    const result = adminCardWriteInputSchema.parse({
       ...validAnecdote,
       images: [
         { path: "last.webp", order: 2 },
@@ -109,9 +111,9 @@ describe("postedOnSchema", () => {
   });
 });
 
-describe("cardSchema — Tags", () => {
+describe("adminCardWriteInputSchema — Tags", () => {
   it("normalizes Tags: trims, lowercases, and drops blanks and duplicates", () => {
-    const result = cardSchema.parse({
+    const result = adminCardWriteInputSchema.parse({
       ...validAnecdote,
       tags: [" Histoire ", "histoire", "GÉO", "   "],
     });
@@ -119,7 +121,7 @@ describe("cardSchema — Tags", () => {
   });
 
   it("accepts a Card with zero Tags", () => {
-    const result = cardSchema.parse({ ...validAnecdote, tags: [] });
+    const result = adminCardWriteInputSchema.parse({ ...validAnecdote, tags: [] });
     expect(result.tags).toEqual([]);
   });
 });
@@ -143,9 +145,9 @@ function quizWithChoices(choices: { text: string; correct: boolean }[]) {
   return { ...validQuiz, payload: { ...validQuiz.payload, choices } };
 }
 
-describe("cardSchema — Quiz", () => {
+describe("adminCardWriteInputSchema — Quiz", () => {
   it("accepts a valid Quiz", () => {
-    const result = cardSchema.parse(validQuiz);
+    const result = adminCardWriteInputSchema.parse(validQuiz);
     expect(result).toMatchObject({
       type: "quiz",
       title: "La prise de la Bastille",
@@ -159,7 +161,7 @@ describe("cardSchema — Quiz", () => {
         text: `Choix ${index + 1}`,
         correct: index === 0,
       }));
-      expect(cardSchema.safeParse(quizWithChoices(choices)).success).toBe(false);
+      expect(adminCardWriteInputSchema.safeParse(quizWithChoices(choices)).success).toBe(false);
     }
   });
 
@@ -169,7 +171,7 @@ describe("cardSchema — Quiz", () => {
         ...choice,
         correct: index < correctCount,
       }));
-      expect(cardSchema.safeParse(quizWithChoices(choices)).success).toBe(false);
+      expect(adminCardWriteInputSchema.safeParse(quizWithChoices(choices)).success).toBe(false);
     }
   });
 
@@ -177,7 +179,7 @@ describe("cardSchema — Quiz", () => {
     const choices = validQuiz.payload.choices.map((choice, index) =>
       index === 2 ? { ...choice, text: "   " } : choice,
     );
-    expect(cardSchema.safeParse(quizWithChoices(choices)).success).toBe(false);
+    expect(adminCardWriteInputSchema.safeParse(quizWithChoices(choices)).success).toBe(false);
   });
 });
 
@@ -191,9 +193,9 @@ const validTrueFalse = {
   },
 };
 
-describe("cardSchema — True/False", () => {
+describe("adminCardWriteInputSchema — True/False", () => {
   it("accepts a valid True/False", () => {
-    const result = cardSchema.parse(validTrueFalse);
+    const result = adminCardWriteInputSchema.parse(validTrueFalse);
     expect(result).toMatchObject({
       type: "true-false",
       payload: validTrueFalse.payload,
@@ -203,20 +205,24 @@ describe("cardSchema — True/False", () => {
   it("rejects a missing or non-boolean answer", () => {
     const { answer: _answer, ...withoutAnswer } = validTrueFalse.payload;
     for (const payload of [withoutAnswer, { ...validTrueFalse.payload, answer: "false" }]) {
-      expect(cardSchema.safeParse({ ...validTrueFalse, payload }).success).toBe(false);
+      expect(adminCardWriteInputSchema.safeParse({ ...validTrueFalse, payload }).success).toBe(
+        false,
+      );
     }
   });
 
   it("rejects a missing or empty Explanation", () => {
     const { explanation: _explanation, ...withoutExplanation } = validTrueFalse.payload;
     for (const payload of [withoutExplanation, { ...validTrueFalse.payload, explanation: "   " }]) {
-      expect(cardSchema.safeParse({ ...validTrueFalse, payload }).success).toBe(false);
+      expect(adminCardWriteInputSchema.safeParse({ ...validTrueFalse, payload }).success).toBe(
+        false,
+      );
     }
   });
 
   it("rejects a missing assertion", () => {
     const { assertion: _assertion, ...payload } = validTrueFalse.payload;
-    expect(cardSchema.safeParse({ ...validTrueFalse, payload }).success).toBe(false);
+    expect(adminCardWriteInputSchema.safeParse({ ...validTrueFalse, payload }).success).toBe(false);
   });
 });
 
@@ -230,9 +236,9 @@ const validRiddle = {
   },
 };
 
-describe("cardSchema — Riddle", () => {
+describe("adminCardWriteInputSchema — Riddle", () => {
   it("accepts a Riddle with Bonus Info", () => {
-    const result = cardSchema.parse(validRiddle);
+    const result = adminCardWriteInputSchema.parse(validRiddle);
     expect(result).toMatchObject({
       type: "riddle",
       payload: validRiddle.payload,
@@ -241,7 +247,7 @@ describe("cardSchema — Riddle", () => {
 
   it("accepts a Riddle without Bonus Info", () => {
     const { bonusInfo: _bonusInfo, ...payload } = validRiddle.payload;
-    const result = cardSchema.parse({ ...validRiddle, payload });
+    const result = adminCardWriteInputSchema.parse({ ...validRiddle, payload });
     expect(result.payload).toEqual(payload);
   });
 
@@ -249,14 +255,14 @@ describe("cardSchema — Riddle", () => {
     const { clues: _clues, ...withoutClues } = validRiddle.payload;
     const { answer: _answer, ...withoutAnswer } = validRiddle.payload;
     for (const payload of [withoutClues, withoutAnswer]) {
-      expect(cardSchema.safeParse({ ...validRiddle, payload }).success).toBe(false);
+      expect(adminCardWriteInputSchema.safeParse({ ...validRiddle, payload }).success).toBe(false);
     }
   });
 });
 
-describe("cardSchema — Did You Know", () => {
+describe("adminCardWriteInputSchema — Did You Know", () => {
   it("accepts a valid Did You Know under its own type value", () => {
-    const result = cardSchema.parse({
+    const result = adminCardWriteInputSchema.parse({
       type: "did-you-know",
       title: "La tour Eiffel grandit",
       payload: { body: "La dilatation la fait grandir de 15 cm l'été." },
@@ -265,7 +271,7 @@ describe("cardSchema — Did You Know", () => {
   });
 
   it("rejects a missing body", () => {
-    const result = cardSchema.safeParse({
+    const result = adminCardWriteInputSchema.safeParse({
       type: "did-you-know",
       title: "Sans corps",
       payload: {},
@@ -274,10 +280,12 @@ describe("cardSchema — Did You Know", () => {
   });
 });
 
-describe("cardSchema — Card Type change", () => {
+describe("adminCardWriteInputSchema — Card Type change", () => {
   it("rejects the old payload left under the new type", () => {
     // A type change must rebuild the payload for the new type; a stale Quiz
     // payload does not validate as a Riddle.
-    expect(cardSchema.safeParse({ ...validQuiz, type: "riddle" }).success).toBe(false);
+    expect(adminCardWriteInputSchema.safeParse({ ...validQuiz, type: "riddle" }).success).toBe(
+      false,
+    );
   });
 });

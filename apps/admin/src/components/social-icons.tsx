@@ -1,6 +1,5 @@
+import type { Social } from "@mentis/contracts/admin";
 import { useId } from "react";
-
-import type { Social } from "@/lib/cards/schema";
 
 // The six Social brand marks as currentColor SVGs, sized by the same CSS the
 // Buttons apply to lucide icons. lucide-react ships no brand icons (see the

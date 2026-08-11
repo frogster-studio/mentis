@@ -38,7 +38,7 @@ export async function uploadCardImage(file: File): Promise<string> {
   }
 
   const upload = await createCardImageUpload();
-  const response = await fetch(upload.url, {
+  const response = await fetch(upload.signedUrl, {
     method: "PUT",
     headers: { "content-type": "image/webp" },
     body: blob,

@@ -1,4 +1,4 @@
-import { CARD_TYPES, type CardType, normalizeTag } from "@/lib/cards/schema";
+import { CARD_TYPES, type CardType, normalizeTag } from "@mentis/contracts/admin";
 
 // Query params as Next.js delivers them; a repeated key arrives as an array.
 export type RawListSearchParams = {

@@ -1,7 +1,7 @@
+import { CARD_TYPES } from "@mentis/contracts/admin";
 import type { Metadata } from "next";
 
 import { CardLibrary } from "@/app/card-library";
-import { CARD_TYPES } from "@/lib/cards/schema";
 
 import { CreateCardSheet } from "./create-card-sheet";
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { CARD_TYPES, type CardType } from "@mentis/contracts/admin";
 import { ChevronLeft, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -19,7 +20,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { createCard } from "@/lib/cards/actions";
-import { CARD_TYPE_LABELS, CARD_TYPES, type CardType } from "@/lib/cards/schema";
+import { CARD_TYPE_LABELS } from "@/lib/cards/labels";
 import { cn } from "@/lib/utils";
 
 export function CreateCardSheet({ selectedType }: { selectedType?: CardType }) {

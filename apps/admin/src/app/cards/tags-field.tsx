@@ -1,13 +1,12 @@
 "use client";
 
+import { normalizeTag } from "@mentis/contracts/admin";
 import { X } from "lucide-react";
 import { useState } from "react";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { normalizeTag } from "@/lib/cards/schema";
 
 // Free-form Tag editor shared by the create and edit forms. Committed Tags
 // travel as repeated hidden "tags" fields, so the server actions read them

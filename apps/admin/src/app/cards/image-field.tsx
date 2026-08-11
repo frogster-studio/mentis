@@ -1,12 +1,11 @@
 "use client";
 
+import { MAX_CARD_IMAGES } from "@mentis/contracts/admin";
 import { ArrowDown, ArrowUp, RotateCcw, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MAX_CARD_IMAGES } from "@/lib/cards/schema";
 import { decodeImage, uploadCardImage } from "@/lib/images/browser";
 import {
   IMAGE_FILE_EXTENSIONS,

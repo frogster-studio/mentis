@@ -1,6 +1,6 @@
 # Mentis — API gateway (NestJS 11, REST-only)
 
-`@mentis/api` workspace of the Mentis monorepo (bun only — see the root `CLAUDE.md`). It is on its way to being the **sole** database gateway; admin and mobile still query Supabase directly until their cutover slices land. Issues live in `.grilled/issues/` (gitignored), implemented via the `implement-next-issue` loop.
+`@mentis/api` workspace of the Mentis monorepo (bun only — see the root `CLAUDE.md`). It is on its way to being the **sole** database gateway: admin already goes through it, mobile still queries Supabase directly until its cutover slice lands. Issues live in `.grilled/issues/` (gitignored), implemented via the `implement-next-issue` loop.
 
 Deliberately **not** a bounded context, so no `CONTEXT.md` and no row in `CONTEXT-MAP.md`: a gateway publishes existing vocabularies rather than owning one. `/admin/*` speaks Card curation (`apps/admin/CONTEXT.md`), `/app/*` speaks Quiz play (`apps/mobile/CONTEXT.md`).
 

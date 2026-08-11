@@ -1,5 +1,6 @@
 "use client";
 
+import { CARD_TYPES } from "@mentis/contracts/admin";
 import { X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -14,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CARD_TYPE_LABELS, CARD_TYPES } from "@/lib/cards/schema";
+import { CARD_TYPE_LABELS } from "@/lib/cards/labels";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
