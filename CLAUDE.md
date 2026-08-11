@@ -39,3 +39,7 @@ Default vocabulary — the five canonical roles used verbatim (`needs-triage`, `
 ### Domain docs
 
 Multi-context — root `CONTEXT-MAP.md` maps per-app `CONTEXT.md` glossaries and `docs/adr/` directories. See `docs/agents/domain.md`.
+
+### Conventions
+
+Code style and repo hygiene house rules, incl. comment style. See `docs/agents/conventions.md`.
