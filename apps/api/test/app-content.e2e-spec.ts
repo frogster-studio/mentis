@@ -2,9 +2,10 @@ import { errorResponseSchema } from "@mentis/contracts/shared";
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { ENV, type Env } from "../src/env";
+import { ENV } from "../src/env";
 import { RootModule } from "../src/root.module";
 import { SUPABASE } from "../src/supabase";
+import { testEnv } from "./test-env";
 
 const themes = [
   { id: "les-simpson", name: "Les Simpson", questionCount: 2 },
@@ -68,13 +69,6 @@ const stubSupabase = {
       .slice(0, args.n);
     return { select: () => Promise.resolve({ data: drawn, error: null }) };
   },
-};
-
-const testEnv: Env = {
-  PORT: 0,
-  SUPABASE_URL: "https://stub.supabase.co",
-  SUPABASE_SECRET_KEY: "sb_secret_stub",
-  CORS_ORIGINS: [],
 };
 
 describe("app content routes e2e", () => {

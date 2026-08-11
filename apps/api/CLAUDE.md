@@ -14,10 +14,11 @@ Deliberately **not** a bounded context, so no `CONTEXT.md` and no row in `CONTEX
 
 ## Hard constraints
 
-- **Nine third-party production dependencies, and no more** (plus the workspace `@mentis/contracts`): `@nestjs/common`, `@nestjs/core`, `@nestjs/platform-express`, `reflect-metadata`, `rxjs`, `zod`, `helmet`, `@nestjs/throttler`, `@supabase/supabase-js`. No `@nestjs/cli`, class-validator/transformer, `@nestjs/config`/dotenv, `nestjs-zod`, swagger, passport.
+- **Ten third-party production dependencies, and no more** (plus the workspace `@mentis/contracts`): `@nestjs/common`, `@nestjs/core`, `@nestjs/platform-express`, `reflect-metadata`, `rxjs`, `zod`, `helmet`, `@nestjs/throttler`, `@supabase/supabase-js`, `jose`. No `@nestjs/cli`, class-validator/transformer, `@nestjs/config`/dotenv, `nestjs-zod`, swagger, passport.
 - The root Nest module is `RootModule`, never `AppModule`: "app" is reserved surface vocabulary, and `AppModule` is the `/app` surface module (`src/app/app.module.ts`). Surface directories mirror the URL namespaces (`src/admin/`, `src/app/`) as routes arrive.
 - Decorator flags live directly in `tsconfig.json` — never move them into a shared base (bun bug oven-sh/bun#6326). `tsconfig.build.json` needs an explicit `rootDir` beside `outDir` (TS 6).
 - The service client from `src/supabase.ts` is the only database path, with no per-request user-authed client. RLS owner-scoping is re-implemented as explicit owner filters.
+- Supabase Auth signs access tokens with ES256 asymmetric keys, so JWT verification is local — `jose` against the project JWKS with `iss`/`aud`/`alg` pinned, never a per-request Auth-server call and never the legacy JWT secret. The namespace prefix is the guard boundary: `EditorGuard` on `/admin/*`, `SupabaseUserGuard` on `/app/me/*`, nothing on public `/app` reads.
 - Every non-2xx body is the `ErrorResponse` envelope from `@mentis/contracts/shared`, emitted by `HttpErrorFilter` and nowhere else.
 - Wire casing is camelCase — one aliased select string per endpoint, no ORM.
 - `GET /health` stays unguarded and unthrottled: Railway restarts the container on a failed poll.
@@ -28,9 +29,10 @@ Deliberately **not** a bounded context, so no `CONTEXT.md` and no row in `CONTEX
 ```
 src/
   app/            # the /app surface: public Quiz play reads
+  auth/           # SupabaseUserGuard (401) and EditorGuard (403), plus the project JWKS
   common/         # cross-cutting spine: ZodValidationPipe, HttpErrorFilter
   health/         # GET /health
-  core.module.ts  # global providers: ENV, SUPABASE
+  core.module.ts  # global providers: ENV, SUPABASE, JWKS
   env.ts          # zod-validated config, parsed once at boot
   supabase.ts     # the service client — the only database path
   main.ts         # bootstrap: helmet, CORS allowlist, shutdown hooks

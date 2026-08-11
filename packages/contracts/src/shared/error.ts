@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-// FORBIDDEN joins the union when the editor tier arrives with the auth guards.
 export const errorCodeSchema = z.enum([
   "VALIDATION_FAILED",
   "UNAUTHENTICATED",
+  "FORBIDDEN",
   "NOT_FOUND",
   "THEME_NOT_FOUND",
   "ACCOUNT_GONE",

@@ -14,6 +14,7 @@ import type { Response } from "express";
 const DEFAULT_CODES: Record<number, ErrorCode> = {
   400: "VALIDATION_FAILED",
   401: "UNAUTHENTICATED",
+  403: "FORBIDDEN",
   404: "NOT_FOUND",
   410: "ACCOUNT_GONE",
   429: "RATE_LIMITED",

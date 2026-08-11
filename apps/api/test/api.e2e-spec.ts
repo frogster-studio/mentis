@@ -4,8 +4,9 @@ import { Test } from "@nestjs/testing";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { ZodValidationPipe } from "../src/common/zod-validation.pipe";
-import { ENV, type Env } from "../src/env";
+import { ENV } from "../src/env";
 import { RootModule } from "../src/root.module";
+import { testEnv } from "./test-env";
 
 const probeQuerySchema = z.object({ page: z.coerce.number().int().min(1).default(1) });
 type ProbeQuery = z.infer<typeof probeQuerySchema>;
@@ -18,13 +19,6 @@ class ProbeController {
     return query;
   }
 }
-
-const testEnv: Env = {
-  PORT: 0,
-  SUPABASE_URL: "https://stub.supabase.co",
-  SUPABASE_SECRET_KEY: "sb_secret_stub",
-  CORS_ORIGINS: [],
-};
 
 describe("api spine e2e", () => {
   let app: INestApplication;
