@@ -6,17 +6,14 @@
 //
 // Pure and injectable: no time, no network, no auth — the inputs are the whole world.
 
+import type { AppAccountStatsResponse } from "@mentis/contracts/app";
 import { type DeviceStats, recordSession } from "./stats";
 
 // A pre-account baseline: the Device Stats totals moved into the Account by a Stats Transfer,
 // one row per (owner, device, Theme). Several devices can carry the same Theme id — the fold
-// sums their totals. The Theme name is captured, so the row survives a catalog rotation.
-export type StatBaseline = {
-  themeId: string;
-  themeName: string;
-  totalPoints: number;
-  sessionCount: number;
-};
+// sums their totals. The Theme name is captured, so the row survives a catalog rotation. Taken
+// from the contract: this is the wire shape, so it has one home.
+export type StatBaseline = AppAccountStatsResponse["baselines"][number];
 
 // One finished Quiz Session as it lives in the Account: a single session's points under the
 // Theme name captured when it was recorded. The same shape describes a session already synced

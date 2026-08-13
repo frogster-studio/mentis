@@ -1,3 +1,4 @@
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { ChevronLeft } from "lucide-react-native";
 import { useState } from "react";
@@ -41,7 +42,10 @@ export function AccountScreen() {
   const [signOutVisible, setSignOutVisible] = useState(false);
   const [signInFailed, setSignInFailed] = useState(false);
   const [deleteVisible, setDeleteVisible] = useState(false);
-  const [deleteFailed, setDeleteFailed] = useState(false);
+  // Erases the Account server-side (both player tables cascade), wipes its local footprint, and
+  // signs out — which flips this screen to the signed-out body via the auth store. A failure leaves
+  // everything intact and the mutation's error state surfaces it so the Player can retry.
+  const accountDeletion = useMutation({ mutationFn: deleteAccount });
 
   const user = session?.user;
 
@@ -72,7 +76,9 @@ export function AccountScreen() {
             {user.email ? <Text style={styles.email}>{user.email}</Text> : null}
           </View>
           <View style={styles.footer}>
-            {deleteFailed ? <Text style={styles.error}>{DELETE_ACCOUNT_ERROR}</Text> : null}
+            {accountDeletion.isError ? (
+              <Text style={styles.error}>{DELETE_ACCOUNT_ERROR}</Text>
+            ) : null}
             <Pressable
               style={({ pressed }) => [styles.signOutButton, pressed && styles.pressed]}
               onPress={() => setSignOutVisible(true)}
@@ -131,18 +137,10 @@ export function AccountScreen() {
         confirmLabel={DELETE_ACCOUNT_CONFIRM_LABEL}
         cancelLabel={DELETE_ACCOUNT_CANCEL_LABEL}
         onCancel={() => setDeleteVisible(false)}
-        onConfirm={async () => {
+        onConfirm={() => {
           if (!user) return;
           setDeleteVisible(false);
-          setDeleteFailed(false);
-          try {
-            // Erases the Account server-side (both player tables cascade), wipes its local footprint,
-            // and signs out — which flips this screen to the signed-out body via the auth store. A
-            // failure leaves everything intact and surfaces the error so the Player can retry.
-            await deleteAccount(user.id);
-          } catch {
-            setDeleteFailed(true);
-          }
+          accountDeletion.mutate(user.id);
         }}
       />
     </ScreenContainer>

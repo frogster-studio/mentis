@@ -1,5 +1,6 @@
+import { appQuestionDrawResponseSchema, appThemeListResponseSchema } from "@mentis/contracts/app";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { api } from "@/lib/api";
 import type { Question, ThemeWithCount } from "@/types/quiz";
 
 export const quizKeys = {
@@ -7,57 +8,24 @@ export const quizKeys = {
   sessionQuestions: (themeId: string) => ["quiz", "session-questions", themeId] as const,
 };
 
-// Shape returned by PostgREST for `questions(count)` (aggregate embed over the
-// themes→questions foreign key).
-type ThemeCountRow = {
-  id: string;
-  name: string;
-  questions: { count: number }[];
-};
-
-async function fetchThemes(): Promise<ThemeWithCount[]> {
-  const { data, error } = await supabase.from("themes").select("id, name, questions(count)");
-  if (error) {
-    throw new Error(error.message);
-  }
-  const rows = (data ?? []) as ThemeCountRow[];
-  return rows.map((row) => ({
-    id: row.id,
-    name: row.name,
-    questionCount: row.questions[0]?.count ?? 0,
-  }));
+// Both reads are public: the seam sends no Authorization header, so a Player sees the same catalog
+// and the same draw signed in or signed out. `questionCount` is computed server-side, and draw
+// eligibility (≥10 Questions) stays the client's call — the shelf still decides what it offers.
+function fetchThemes(): Promise<ThemeWithCount[]> {
+  return api.requestJson({ method: "GET", path: "/app/themes" }, appThemeListResponseSchema);
 }
 
 export function useThemes() {
   return useQuery({ queryKey: quizKeys.themes, queryFn: fetchThemes });
 }
 
-// The `get_random_questions` RPC columns this app reads — it returns more.
-type QuestionRow = {
-  id: string;
-  text: string;
-  answer: string;
-  aliases: string[];
-  misspellings: string[];
-  wrong_choices: string[];
-};
-
-async function fetchSessionQuestions(themeId: string): Promise<Question[]> {
-  const { data, error } = await supabase.rpc("get_random_questions", {
-    theme_slug: themeId,
-  });
-  if (error) {
-    throw new Error(error.message);
-  }
-  const rows = (data ?? []) as QuestionRow[];
-  return rows.map((row) => ({
-    id: row.id,
-    text: row.text,
-    answer: row.answer,
-    aliases: row.aliases,
-    misspellings: row.misspellings,
-    wrongChoices: row.wrong_choices,
-  }));
+// `n` is left off the wire: the API defaults it to the 10 a session needs. The cross-theme draw the
+// endpoint also offers stays deliberately unused — a session is one Theme.
+function fetchSessionQuestions(themeId: string): Promise<Question[]> {
+  return api.requestJson(
+    { method: "GET", path: "/app/questions", query: { theme: themeId } },
+    appQuestionDrawResponseSchema,
+  );
 }
 
 export function useSessionQuestions(themeId: string) {

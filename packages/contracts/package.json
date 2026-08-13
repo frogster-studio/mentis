@@ -5,16 +5,19 @@
   "exports": {
     "./admin": {
       "bun": "./src/admin/index.ts",
+      "react-native": "./src/admin/index.ts",
       "types": "./dist/admin/index.d.ts",
       "default": "./dist/admin/index.js"
     },
     "./app": {
       "bun": "./src/app/index.ts",
+      "react-native": "./src/app/index.ts",
       "types": "./dist/app/index.d.ts",
       "default": "./dist/app/index.js"
     },
     "./shared": {
       "bun": "./src/shared/index.ts",
+      "react-native": "./src/shared/index.ts",
       "types": "./dist/shared/index.d.ts",
       "default": "./dist/shared/index.js"
     }

@@ -5,8 +5,8 @@
     ".": {},
     "apps/admin": {},
     "apps/mobile": {
-      "entry": ["src/app/**/*.tsx", "scripts/*.ts"],
-      "project": ["src/**/*.{ts,tsx}", "scripts/**/*.ts", "*.{js,ts}"],
+      "entry": ["src/app/**/*.tsx"],
+      "project": ["src/**/*.{ts,tsx}", "*.{js,ts}"],
       "ignoreDependencies": ["expo-updates"]
     },
     "apps/api": {

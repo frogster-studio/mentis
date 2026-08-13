@@ -1,66 +1,67 @@
-// The push side of the outbox — the thin, deliberately-untested shell around Supabase and the
-// query cache (PRD: query wiring and Supabase calls are not unit-tested). `drainOutbox` pushes the
-// signed-in owner's queued sessions as one idempotent upsert on the client UUID; `useOutboxSync`
-// fires it on the PRD's rhythm (launch, foreground, sign-in) while the finish path fires it once
-// more. All queue decisions stay in the pure `outbox` seam.
+// The push side of the outbox — the thin shell around the API seam and the query cache.
+// `drainOutbox` pushes the signed-in Player's queued sessions in capped batches, each one idempotent
+// on the client UUID; `useOutboxSync` fires it on the PRD's rhythm (launch, foreground, sign-in)
+// while the finish path fires it once more. All queue decisions stay in the pure `outbox` seam.
 
+import type { AppAccountStatsResponse } from "@mentis/contracts/app";
+import { useMutation } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { AppState } from "react-native";
-import { type AccountWorld, accountKeys } from "@/features/account/api";
+import { accountKeys } from "@/features/account/api";
 import { useAuthStore } from "@/features/account/auth-store";
+import { api } from "@/lib/api";
 import { queryClient } from "@/lib/query-client";
-import { supabase } from "@/lib/supabase";
+import { isOwnerGoneError, pushInBatches } from "./batch-push";
 import { entriesForOwner, type OutboxEntry } from "./outbox";
 import { useOutboxStore } from "./outbox-store";
 
-// The snake_case `quiz_sessions` row (row mapping lives in the network shell, as in account/api).
-function toSessionRow(entry: OutboxEntry) {
+// The push body: exactly the contract's session rows. The owner never goes on the wire — the API
+// derives it from the verified token.
+function toPushRow(entry: OutboxEntry) {
   return {
     id: entry.id,
-    owner: entry.owner,
-    theme_id: entry.themeId,
-    theme_name: entry.themeName,
+    themeId: entry.themeId,
+    themeName: entry.themeName,
     points: entry.points,
-    finished_at: entry.finishedAt,
+    finishedAt: entry.finishedAt,
   };
 }
 
-// Postgres foreign_key_violation: the insert names an owner no longer in auth.users — the Account
-// was deleted (its rows cascaded) while this device still held queued sessions. Any other error is
-// treated as transient, so those rows stay queued (retention) rather than being lost.
-function isOwnerGoneError(error: { code?: string }): boolean {
-  return error.code === "23503";
+// Push the Player's queued sessions, idempotently and in capped batches. Each landed batch is acked
+// on its own, so a long backlog that fails halfway keeps the progress it made: the rows that landed
+// leave the queue, the rest wait for the next trigger. A success hands the just-synced rows straight
+// to the cached Account Stats, so the shelf stays continuous — the row leaves the pending overlay
+// and joins the synced set in the same tick, never flickering, never counted twice. An owner-gone
+// rejection discards that Account's rows silently.
+export async function drainOutbox(playerId: string): Promise<void> {
+  const queued = entriesForOwner(useOutboxStore.getState().entries, playerId);
+  try {
+    await pushInBatches(
+      queued,
+      (batch) =>
+        api.requestNoContent({
+          method: "POST",
+          path: "/app/me/quiz-sessions",
+          body: batch.map(toPushRow),
+        }),
+      (batch) => seedAckedSessions(playerId, batch),
+    );
+  } catch (error) {
+    if (isOwnerGoneError(error)) {
+      useOutboxStore.getState().discardOwner(playerId);
+    }
+    // Anything else is transient: the batches still queued wait for the next trigger.
+  }
 }
 
-// Push the owner's queued sessions, idempotently. A success drains the batch and hands the
-// just-synced rows straight to the cached Account world, so the shelf stays continuous: the row
-// leaves the pending overlay and joins the synced set in the same tick — never flickering, never
-// counted twice. A generic failure keeps the rows for the next trigger; an owner-gone rejection
-// discards that Account's rows silently.
-export async function drainOutbox(owner: string): Promise<void> {
-  const batch = entriesForOwner(useOutboxStore.getState().entries, owner);
-  if (batch.length === 0) {
-    return;
-  }
-
-  const { error } = await supabase
-    .from("quiz_sessions")
-    .upsert(batch.map(toSessionRow), { onConflict: "id" });
-
-  if (error) {
-    if (isOwnerGoneError(error)) {
-      useOutboxStore.getState().discardOwner(owner);
-    }
-    return;
-  }
-
-  // ack returns only the rows it actually removed, so a concurrent double-drain seeds them at most
-  // once — the upsert already collapsed the duplicate server-side.
+// ack returns only the rows it actually removed, so a concurrent double-drain seeds them at most
+// once — the server-side insert-if-absent already collapsed the duplicate.
+function seedAckedSessions(playerId: string, batch: OutboxEntry[]): void {
   const removed = useOutboxStore.getState().ack(batch.map((entry) => entry.id));
   if (removed.length === 0) {
     return;
   }
-  queryClient.setQueryData<AccountWorld>(accountKeys.world(owner), (previous) => {
+  queryClient.setQueryData<AppAccountStatsResponse>(accountKeys.stats(playerId), (previous) => {
     // Seed only rows the cache does not already hold. A concurrent foreground pull may have landed
     // the same row first; because it carries the client UUID, reconciling by id keeps the shelf
     // continuous (the row never flickers) without ever counting the session twice.
@@ -85,29 +86,35 @@ export async function drainOutbox(owner: string): Promise<void> {
 }
 
 // Drives the push rhythm (PRD): drain at launch and on every foreground, and whenever an Account
-// signs in (the effect re-runs when `owner` becomes defined). The finish path drains once more,
+// signs in (the effect re-runs when `playerId` becomes defined). The finish path drains once more,
 // straight after enqueue. Signed out there is nothing to push. Mounted once, at the app root.
 export function useOutboxSync(): void {
-  const owner = useAuthStore((state) => state.session?.user.id);
+  const playerId = useAuthStore((state) => state.session?.user.id);
+  // A background push with no UI state of its own, so the mutation earns its place by shape rather
+  // than by state: every write in the app goes through one, and this one gives the three triggers
+  // below a single call site. `drainOutbox` absorbs its own failures (retention), so nothing here
+  // ever sees an error.
+  const { mutate: drain } = useMutation({ mutationFn: drainOutbox });
+
   useEffect(() => {
-    if (owner === undefined) {
+    if (playerId === undefined) {
       return;
     }
-    void drainOutbox(owner);
-    // The outbox hydrates from AsyncStorage asynchronously; if the owner resolves first, the launch
+    drain(playerId);
+    // The outbox hydrates from AsyncStorage asynchronously; if the id resolves first, the launch
     // drain above reads an empty queue. Drain once more when hydration lands, so a backlog left by
     // a previous run still pushes at launch — not only at the next foreground or finish.
     const stopHydrationWatch = useOutboxStore.persist.hasHydrated()
       ? undefined
-      : useOutboxStore.persist.onFinishHydration(() => void drainOutbox(owner));
+      : useOutboxStore.persist.onFinishHydration(() => drain(playerId));
     const subscription = AppState.addEventListener("change", (status) => {
       if (status === "active") {
-        void drainOutbox(owner);
+        drain(playerId);
       }
     });
     return () => {
       stopHydrationWatch?.();
       subscription.remove();
     };
-  }, [owner]);
+  }, [playerId, drain]);
 }

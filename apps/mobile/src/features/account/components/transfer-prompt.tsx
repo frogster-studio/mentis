@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { ModalCard } from "@/components/ui/modal-card";
 import { useAuthStore } from "@/features/account/auth-store";
@@ -16,30 +16,22 @@ import { transferDeviceStats } from "@/features/quiz/transfer-sync";
 import { COLORS } from "@/utils/colors";
 
 export function TransferPrompt() {
-  const owner = useAuthStore((state) => state.session?.user.id);
+  const playerId = useAuthStore((state) => state.session?.user.id);
   const deviceStats = useStatsStore((state) => state.stats);
   const dormant = useTransferStore((state) => state.dormant);
   const transferred = useTransferStore((state) => state.transferred);
   const decline = useTransferStore((state) => state.decline);
-  const [busy, setBusy] = useState(false);
-  const [failed, setFailed] = useState(false);
+  // Success empties the device world → the predicate flips false → this modal closes itself. The
+  // mutation owns the in-flight and failed states the prompt used to track by hand.
+  const transfer = useMutation({ mutationFn: transferDeviceStats });
 
-  const visible = owner !== undefined && shouldOfferTransfer(deviceStats, dormant, transferred);
+  const visible = playerId !== undefined && shouldOfferTransfer(deviceStats, dormant, transferred);
 
-  const onAccept = async () => {
-    if (owner === undefined) {
+  const onAccept = () => {
+    if (playerId === undefined) {
       return;
     }
-    setBusy(true);
-    setFailed(false);
-    try {
-      // Success empties the device world → the predicate flips false → this modal closes itself.
-      await transferDeviceStats(owner);
-    } catch {
-      setFailed(true);
-    } finally {
-      setBusy(false);
-    }
+    transfer.mutate(playerId);
   };
 
   return (
@@ -48,16 +40,16 @@ export function TransferPrompt() {
       title={TRANSFER_TITLE}
       message={TRANSFER_MESSAGE}
       // Android back is a safe, reversible decline (never a silent accept), unless a push is in flight.
-      onRequestClose={busy ? undefined : decline}
+      onRequestClose={transfer.isPending ? undefined : decline}
     >
-      {failed ? <Text style={styles.error}>{TRANSFER_ERROR}</Text> : null}
+      {transfer.isError ? <Text style={styles.error}>{TRANSFER_ERROR}</Text> : null}
       <View style={styles.actions}>
         <Pressable
           style={({ pressed }) => [styles.button, styles.acceptButton, pressed && styles.pressed]}
-          disabled={busy}
+          disabled={transfer.isPending}
           onPress={onAccept}
         >
-          {busy ? (
+          {transfer.isPending ? (
             <ActivityIndicator color={COLORS.fillOpposite} />
           ) : (
             <Text style={styles.acceptLabel}>{TRANSFER_ACCEPT_LABEL}</Text>
@@ -65,7 +57,7 @@ export function TransferPrompt() {
         </Pressable>
         <Pressable
           style={({ pressed }) => [styles.button, styles.declineButton, pressed && styles.pressed]}
-          disabled={busy}
+          disabled={transfer.isPending}
           onPress={decline}
         >
           <Text style={styles.declineLabel}>{TRANSFER_DECLINE_LABEL}</Text>

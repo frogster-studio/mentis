@@ -9,11 +9,10 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "seed": "bun scripts/seed.ts",
-    "seed:verify": "bun scripts/verify-content.ts"
+    "test": "vitest run"
   },
   "dependencies": {
+    "@mentis/contracts": "workspace:*",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-google-signin/google-signin": "^16.1.2",
     "@supabase/supabase-js": "^2.110.7",

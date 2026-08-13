@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useAccountWorld } from "@/features/account/api";
+import { useAccountStats } from "@/features/account/api";
 import { useAuthStore } from "@/features/account/auth-store";
 import { foldAccountStats } from "./account-stats";
 import { overlaySessions } from "./outbox";
@@ -14,7 +14,7 @@ import { useStatsStore } from "./stats-store";
 export function useHomeCards(): HomeCard[] {
   const owner = useAuthStore((state) => state.session?.user.id);
   const deviceStats = useStatsStore((state) => state.stats);
-  const accountWorld = useAccountWorld(owner).data;
+  const accountStats = useAccountStats(owner).data;
   const outbox = useOutboxStore((state) => state.entries);
 
   return useMemo(() => {
@@ -25,9 +25,9 @@ export function useHomeCards(): HomeCard[] {
     // overlay — this Account's still-pending sessions, reconciled by id against the synced pull —
     // puts a just-finished session on the shelf instantly, offline included; a push moves each row
     // from this overlay to the synced set without ever double-counting a session in flight.
-    const world = accountWorld ?? { baselines: [], sessions: [] };
-    const syncedIds = new Set(world.sessions.map((session) => session.id));
+    const stats = accountStats ?? { baselines: [], sessions: [] };
+    const syncedIds = new Set(stats.sessions.map((session) => session.id));
     const pending = overlaySessions(outbox, owner, syncedIds);
-    return homeCards(foldAccountStats(world.baselines, world.sessions, pending));
-  }, [owner, deviceStats, accountWorld, outbox]);
+    return homeCards(foldAccountStats(stats.baselines, stats.sessions, pending));
+  }, [owner, deviceStats, accountStats, outbox]);
 }

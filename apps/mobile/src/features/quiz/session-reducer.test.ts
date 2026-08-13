@@ -15,6 +15,8 @@ const T0 = 1_760_000_000_000;
 function question(id: string, answer: string): Question {
   return {
     id,
+    themeId: "histoire",
+    themeName: "Histoire",
     text: `Question ${id} ?`,
     answer,
     aliases: [],
