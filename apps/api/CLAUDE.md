@@ -1,6 +1,6 @@
 # Mentis — API gateway (NestJS 11, REST-only)
 
-`@mentis/api` workspace of the Mentis monorepo (bun only — see the root `CLAUDE.md`). It is on its way to being the **sole** database gateway: admin already goes through it, mobile still queries Supabase directly until its cutover slice lands. Issues live in `.grilled/issues/` (gitignored), implemented via the `implement-next-issue` loop.
+`@mentis/api` workspace of the Mentis monorepo (bun only — see the root `CLAUDE.md`). It is the **sole** database gateway: admin and mobile both reach every row through it, and neither holds a database key. Issues live in `.grilled/issues/` (gitignored), implemented via the `implement-next-issue` loop.
 
 Deliberately **not** a bounded context, so no `CONTEXT.md` and no row in `CONTEXT-MAP.md`: a gateway publishes existing vocabularies rather than owning one. `/admin/*` speaks Card curation (`apps/admin/CONTEXT.md`), `/app/*` speaks Quiz play (`apps/mobile/CONTEXT.md`).
 
@@ -18,6 +18,7 @@ Deliberately **not** a bounded context, so no `CONTEXT.md` and no row in `CONTEX
 - The root Nest module is `RootModule`, never `AppModule`: "app" is reserved surface vocabulary, and `AppModule` is the `/app` surface module (`src/app/app.module.ts`). Surface directories mirror the URL namespaces (`src/admin/`, `src/app/`) as routes arrive.
 - Decorator flags live directly in `tsconfig.json` — never move them into a shared base (bun bug oven-sh/bun#6326). `tsconfig.build.json` needs an explicit `rootDir` beside `outDir` (TS 6).
 - The service client from `src/supabase.ts` is the only database path, with no per-request user-authed client. RLS owner-scoping is re-implemented as explicit owner filters.
+- **The schema lives here, in `supabase/`** — run every Supabase CLI command from `apps/api/`, the only directory where the CLI finds `supabase/config.toml` (it searches upward, never down). It is one init migration, born locked per [ADR 0003](../../docs/adr/0003-database-admits-only-the-api.md): RLS on every table, zero policies, privileges for `service_role` alone. The recreated schema carries no default privileges, so a new table or function must grant `service_role` explicitly or the API cannot reach it.
 - Supabase Auth signs access tokens with ES256 asymmetric keys, so JWT verification is local — `jose` against the project JWKS with `iss`/`aud`/`alg` pinned, never a per-request Auth-server call and never the legacy JWT secret. The namespace prefix is the auth boundary: `EditorGuard` on `/admin/*`, `SupabaseUserGuard` on `/app/me/*`, no auth guard on public `/app` reads.
 - Every non-2xx body is the `ErrorResponse` envelope from `@mentis/contracts/shared`, emitted by `HttpErrorFilter` and nowhere else.
 - Wire casing is camelCase — one aliased select string per endpoint, no ORM.
@@ -42,6 +43,7 @@ src/
   main.ts         # boot: create, configure, shutdown hooks, listen
   root.module.ts
 test/             # fetch-based e2e (no supertest)
+supabase/         # the shared schema: the init migration + the CLI link
 ```
 
 ## Conventions

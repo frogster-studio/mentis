@@ -40,7 +40,7 @@ Every quiz and account read or write goes through `apps/api` via the seam in `sr
 - Request/response schemas come from `@mentis/contracts` (source-first: Metro resolves it through the package's `react-native` export condition). Every response is parsed through its contract schema at the seam, so drift dies there. No direct `zod` dependency, no HTTP library — React Native's global `fetch`.
 - The `/app/me` prefix is the token boundary, mirroring the API's guard boundary: public reads never send an `Authorization` header. A `401` on a guarded call signs the Player out globally.
 
-Database migrations live in `supabase/` at the **repo root** (shared with the back-office; hosted project, eu-central-1) — never add a local supabase folder here.
+Database migrations live in `apps/api/supabase/` (shared with the back-office; hosted project, eu-central-1) — never add a local supabase folder here.
 
 ## Conventions
 

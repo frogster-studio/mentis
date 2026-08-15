@@ -23,7 +23,7 @@ coverage/
 .claude/worktrees/
 
 # supabase CLI temp
-supabase/.temp/
+apps/api/supabase/.temp/
 
 # Vercel CLI link state (local only)
 .vercel

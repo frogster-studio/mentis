@@ -1,4 +1,5 @@
-# Build context for apps/api/Dockerfile; globs stay path-independent so supabase/ moves by pure git mv.
+# Build context for apps/api/Dockerfile; the supabase glob stays path-independent so a schema
+# change never lands in the image and busts its cache.
 .git
 **/node_modules
 **/dist

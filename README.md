@@ -7,11 +7,11 @@ Monorepo for **Mentis**, a French general-knowledge quiz product: a mobile quiz 
 ```
 apps/
   admin/     # Next.js back-office — editors curate the Card library (deployed on Vercel)
-  api/       # NestJS REST gateway — becoming the sole database path (Railway)
+  api/       # NestJS REST gateway — the sole database path (Railway)
+    supabase/  # shared database: migrations + CLI config for the hosted project
   mobile/    # Expo app (iOS/Android/Web) — the quiz game itself (EAS builds)
 packages/
   contracts/ # @mentis/contracts — zod request/response schemas the API publishes
-supabase/    # shared database: migrations + CLI config for the hosted project
 ```
 
 Each app carries a `CLAUDE.md` with its app-specific details. Admin and mobile also have a `CONTEXT.md` domain glossary (see [CONTEXT-MAP.md](CONTEXT-MAP.md)); the API has none by design — it publishes both vocabularies rather than owning one.
@@ -46,7 +46,7 @@ Run a single workspace's script with `bun run --filter @mentis/admin <script>` (
 
 ## Database
 
-Everything talks to the same hosted Supabase project (eu-central-1). Migrations and the CLI link live in [supabase/](supabase/) at the root — run `supabase` CLI commands from here. Admin and mobile still query it directly; `apps/api` becomes the sole database gateway at their cutover, and the schema moves into it when that happens.
+Everything talks to the same hosted Supabase project (eu-central-1). Migrations and the CLI link live in [apps/api/supabase/](apps/api/supabase/) — run `supabase` CLI commands from `apps/api/`, the only directory where the CLI finds `supabase/config.toml` (it searches upward, never down). `apps/api` is the sole database gateway: admin and mobile hold no database key and reach every row through it.
 
 ## CI
 
