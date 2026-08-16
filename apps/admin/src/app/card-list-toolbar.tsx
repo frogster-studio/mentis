@@ -19,12 +19,10 @@ import { CARD_TYPE_LABELS } from "@/lib/cards/labels";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
-// Radix Select items cannot carry an empty value, so "no filter" is a
-// sentinel.
+// Radix Select items cannot carry an empty value, so "no filter" is a sentinel.
 const ALL = "all";
 
-// Search, the Type filter, the active Tag, and clear-all. Every control
-// reads from and writes to the URL, which is the list state's single home.
+// Every control reads from and writes to the URL, the list state's single home.
 export function CardListToolbar() {
   const router = useRouter();
   const pathname = usePathname();
@@ -32,9 +30,7 @@ export function CardListToolbar() {
   const [search, setSearch] = useState(searchParams.get("q") ?? "");
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  // The debounced search must fire against the params current at that
-  // moment — a filter changed while the debounce was pending would otherwise
-  // be dropped by the stale closure.
+  // The debounced search must see the params current at fire time, not the stale closure's.
   const paramsRef = useRef(searchParams);
   paramsRef.current = searchParams;
 
@@ -67,8 +63,7 @@ export function CardListToolbar() {
     router.replace(pathname);
   }
 
-  // An unknown value in a hand-edited URL falls back to "no filter", the
-  // same way the server ignores it.
+  // An unknown value in a hand-edited URL falls back to "no filter", matching the server.
   const type = CARD_TYPES.find((t) => t === searchParams.get("type")) ?? ALL;
   const tag = searchParams.get("tag") ?? "";
   const hasActiveFilters = search !== "" || type !== ALL || tag !== "";
@@ -85,14 +80,12 @@ export function CardListToolbar() {
       />
       <Select value={type} onValueChange={(value) => setParam("type", value === ALL ? "" : value)}>
         <SelectTrigger aria-label="Filter by Card Type">
-          {/* The selected type's dot rides into the trigger; unfiltered stays
-              plain since "All Types" carries no dot. */}
+          {/* "All Types" carries no dot, so the unfiltered trigger stays plain. */}
           {type !== ALL ? <TypeDot type={type} /> : null}
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {/* Empty spacer the width of a dot so "All Types" aligns with the
-              dotted type items below it. */}
+          {/* A dot-wide spacer keeps "All Types" aligned with the dotted type items. */}
           <SelectItem value={ALL} leading={<span aria-hidden className="w-2.5 shrink-0" />}>
             All Types
           </SelectItem>

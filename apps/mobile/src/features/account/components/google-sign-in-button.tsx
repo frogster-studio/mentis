@@ -8,10 +8,7 @@ export type GoogleSignInButtonProps = {
   onError: () => void;
 };
 
-// « Continuer avec Google » — opens the native Google account sheet on iOS and Android. The web
-// redirect flow arrives in a later slice, so this self-gates to nothing on web: callers can
-// render it unconditionally. The height matches the Apple button's frame so the two providers
-// line up in the footer.
+// Self-gates to nothing on web (redirect flow comes later), so callers render it unconditionally.
 export function GoogleSignInButton({ onError }: GoogleSignInButtonProps) {
   if (Platform.OS === "web") return null;
 

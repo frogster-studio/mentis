@@ -1,6 +1,4 @@
-// Splits a list into fixed-size batches. Both push paths chunk through this: the API caps every
-// batch contract at MAX_PUSH_BATCH and the request body at 64 kb, so a backlog that grew over a long
-// offline stretch must arrive in pieces rather than as one rejected wall of rows.
+// The API caps each batch and body, so a long-offline backlog must arrive in pieces.
 
 export function chunk<T>(items: readonly T[], size: number): T[][] {
   const batches: T[][] = [];

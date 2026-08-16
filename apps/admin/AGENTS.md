@@ -17,3 +17,9 @@ Every UI change must respect these. Whitespace and restraint over decoration.
 - **Icons:** `lucide-react` only. No other icon sets. One exception: the six Social brand marks (X, LinkedIn, Facebook, TikTok, YouTube, Instagram) are local `currentColor` SVG components in `src/components/social-icons.tsx` — lucide ships no brand icons.
 - **Icon action buttons:** when an action reads clearly as a single icon (edit, delete, add, close…), render it as an icon-only ghost button — no label, no filled background. Use the shadcn `Button` with `variant="ghost"` and `size="icon"` (`src/components/ui/button.tsx`); the icon is transparent at rest and shows a subtle background only on hover. Reserve labelled/solid buttons for primary or ambiguous actions.
 <!-- END:design-rules -->
+
+<!-- BEGIN:comment-rules -->
+# Comments
+
+Follow the repo rule ([docs/agents/conventions.md](../../docs/agents/conventions.md)): none by default — prefer a longer, precise name; business-logic "why" only; one short sentence max, never multi-line, file headers included.
+<!-- END:comment-rules -->

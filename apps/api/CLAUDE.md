@@ -53,6 +53,7 @@ supabase/         # the shared schema: the init migration + the CLI link
 - Request/response schemas live in `@mentis/contracts`, never here; the API validates requests *and* parses its own responses through them.
 - `@mentis/contracts` is **source-first**: the `bun` export condition (plus tsc `customConditions` and the vitest alias) serves `src/`. `dist/` is built only inside the Docker image, so `bun run check` never builds anything and stays order-independent.
 - e2e tests build their app through `bootstrap.ts` when the express-level config is part of what they prove (body cap, `X-Forwarded-For` buckets), so the suite can never drift from `main.ts`.
+- Comments follow the repo rule ([docs/agents/conventions.md](../../docs/agents/conventions.md)): none by default — prefer a longer, precise name; business-logic "why" only; one short sentence max, never multi-line, file headers included.
 
 ## Environment
 

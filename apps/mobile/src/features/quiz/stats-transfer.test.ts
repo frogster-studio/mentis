@@ -30,8 +30,6 @@ describe("shouldOfferTransfer — the offer predicate", () => {
   });
 
   it("never offers an already-transferred device world (the move is one-time per device)", () => {
-    // A refilled device world after a transfer must not be re-offered: baselines are insert-if-absent
-    // per (owner, device, Theme), so a second move would silently drop the replayed sessions.
     expect(shouldOfferTransfer(deviceStats, false, true)).toBe(false);
   });
 });
@@ -61,9 +59,6 @@ describe("buildTransferBaselines — the baseline payload", () => {
   });
 });
 
-// The accept half of the move: the baselines it builds must reproduce the device world once folded
-// into the Account, so a transfer moves the totals in exactly — never inflated, never lost. A
-// TransferBaseline is a StatBaseline plus a device tag, so it folds straight in (the fold ignores it).
 describe("accept — the move conserves the totals exactly once", () => {
   it("folds the built baselines back into the very device world that was moved", () => {
     const baselines = buildTransferBaselines(deviceStats, DEVICE);
@@ -108,8 +103,6 @@ describe("transferReducer — move semantics and dormancy", () => {
   });
 
   it("resetting after an accept clears transferred (the deleted Account no longer holds the stats)", () => {
-    // Account deletion: unlike sign-out, the stats were erased rather than moved, so the transferred
-    // flag must clear — otherwise the signed-out home points at a compte that no longer exists.
     const accepted = transferReducer(INITIAL_TRANSFER_STATE, { type: "accept" });
     expect(transferReducer(accepted, { type: "reset" })).toStrictEqual(INITIAL_TRANSFER_STATE);
   });
@@ -126,8 +119,6 @@ describe("transferReducer — move semantics and dormancy", () => {
   });
 });
 
-// The full re-offer arc across a decline: offered, declined (suppressed), signed out (live again),
-// re-offered at the later sign-in — the girlfriend walk's dormancy, in the pure seam.
 describe("re-offer after decline", () => {
   it("suppresses the offer after a decline, then re-offers it after a sign-out", () => {
     let state = INITIAL_TRANSFER_STATE;

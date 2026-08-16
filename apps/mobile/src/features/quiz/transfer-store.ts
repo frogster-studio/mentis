@@ -1,8 +1,4 @@
-// The Stats Transfer's small persisted local state — a zustand store alongside the Device stats and
-// outbox stores. It holds the per-install device id (a random UUID minted once and persisted, used
-// solely to key baselines — no fingerprinting) and the pure transfer state (dormant / transferred).
-// Every state transition runs through the pure `transferReducer` seam; this shell only persists and
-// mints the device id, injecting nothing else.
+// The device id is a random per-install UUID keying baselines — no fingerprinting.
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { randomUUID } from "expo-crypto";
@@ -11,8 +7,6 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import { INITIAL_TRANSFER_STATE, type TransferState, transferReducer } from "./stats-transfer";
 
 type TransferStore = TransferState & {
-  // Minted lazily on the first transfer and persisted, so a device keys its baselines by one stable
-  // id for the life of the install. `null` until then.
   device: string | null;
   // Returns the device id, minting and persisting it on first use.
   ensureDevice: () => string;
@@ -22,9 +16,7 @@ type TransferStore = TransferState & {
   markTransferred: () => void;
   // Sign-out: clear dormancy so a later sign-in re-offers a still-present device world.
   signOut: () => void;
-  // The Account was deleted: forget both flags (the device id survives — it is per-install, not
-  // per-Account). The signed-out home then renders the plain device world again instead of the
-  // "stats now on your compte" note, which would point at a compte that no longer exists.
+  // Account deletion: forget both flags; the device id survives (per-install, not per-Account).
   reset: () => void;
 };
 

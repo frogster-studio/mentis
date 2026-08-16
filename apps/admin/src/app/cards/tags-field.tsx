@@ -8,9 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-// Free-form Tag editor shared by the create and edit forms. Committed Tags
-// travel as repeated hidden "tags" fields, so the server actions read them
-// with formData.getAll("tags"); the schema re-normalizes on save.
+// Committed Tags travel as repeated hidden "tags" fields the server actions read with getAll.
 export function TagsField({ defaultTags = [] }: { defaultTags?: string[] }) {
   const [tags, setTags] = useState(defaultTags);
   const [draft, setDraft] = useState("");

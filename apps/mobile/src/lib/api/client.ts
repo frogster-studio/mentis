@@ -1,12 +1,4 @@
-// The seam: every call to the API gateway goes through here, and nothing else in the app speaks
-// HTTP. A pure factory over injected `{fetch, getToken, onUnauthenticated}` (the app's injectability
-// rule), so the whole thing is testable without a network, a session or a running app — the
-// composition module next door wires the real ones.
-//
-// Two invariants it exists to hold: no response reaches a caller unparsed (drift dies here, not in a
-// component three screens later), and the Authorization header follows the server's own boundary —
-// the `/app/me` prefix is the guard boundary on the API, so it is the token boundary here. A public
-// read behaves identically signed-in and signed-out because the header is never even built.
+// Nothing else in the app speaks HTTP, and no response reaches a caller unparsed — drift dies here.
 
 import type { ErrorCode, ErrorResponse } from "@mentis/contracts/shared";
 import { errorResponseSchema } from "@mentis/contracts/shared";
@@ -38,8 +30,7 @@ export type ApiRequest = {
   body?: unknown;
 };
 
-// Typed structurally so the seam tracks the contract schemas without depending on the schema
-// library's exported types (mobile has no direct zod).
+// Structural, so the seam tracks contract schemas without a direct zod dependency.
 type ResponseSchema<T> = { parse: (value: unknown) => T };
 
 export type ApiClientDeps = {
@@ -47,8 +38,7 @@ export type ApiClientDeps = {
   fetch: typeof globalThis.fetch;
   // The current access token, or null when signed out. Guarded calls only.
   getToken: () => Promise<string | null>;
-  // A guarded call came back 401: supabase-js has already had its chance to refresh, so the session
-  // is unrecoverable. The composition module signs out globally; the auth listener lands the UI.
+  // On a guarded 401 supabase-js has already tried refreshing, so the session is unrecoverable.
   onUnauthenticated: () => void;
 };
 
@@ -57,9 +47,7 @@ export type ApiClient = {
   requestNoContent: (request: ApiRequest) => Promise<void>;
 };
 
-// The API's namespace prefix is its guard boundary (`SupabaseUserGuard` on `/app/me/*`, nothing on
-// the public reads). Deriving the header from the same prefix means a new guarded route cannot be
-// added without its token, and a public one cannot accidentally start sending it.
+// Deriving the header from the guard prefix keeps token and guard boundaries from drifting apart.
 function isGuarded(path: string): boolean {
   return path.startsWith("/app/me");
 }
@@ -76,9 +64,7 @@ function serializeQuery(query: Record<string, QueryValue> | undefined): string {
   return serialized === "" ? "" : `?${serialized}`;
 }
 
-// Every non-2xx body is the shared ErrorResponse envelope — but a proxy, a cold start or a crash can
-// still put something else on the wire, so an unparseable body degrades to INTERNAL rather than
-// throwing a parse error over the real failure.
+// A proxy or a crash can put junk on the wire; it degrades to INTERNAL rather than a parse error.
 async function toApiError(response: Response): Promise<ApiError> {
   const body = await response.json().catch(() => null);
   const parsed = errorResponseSchema.safeParse(body);
@@ -108,8 +94,7 @@ export function createApiClient(deps: ApiClientDeps): ApiClient {
     if (token) {
       headers.authorization = `Bearer ${token}`;
     }
-    // No token on a guarded call still goes out: the server answers 401 and the sign-out below is
-    // the single place that reacts to a dead session.
+    // A guarded call without a token still goes out — the 401 path is the single reaction point.
     return headers;
   }
 
@@ -123,9 +108,7 @@ export function createApiClient(deps: ApiClientDeps): ApiClient {
 
     if (!response.ok) {
       const error = await toApiError(response);
-      // Only a guarded call can report on the session. A 401 from a public read says nothing about
-      // the Player's token, and signing them out mid-session over it would be a bug with a plausible
-      // cause — a misrouted proxy answer, say.
+      // A 401 from a public read says nothing about the token, so only guarded calls may sign out.
       if (error.code === "UNAUTHENTICATED" && isGuarded(request.path)) {
         deps.onUnauthenticated();
       }

@@ -1,5 +1,4 @@
-// Draw sampling (seam 3 of the PRD's testing decisions): pure, deterministic under
-// an injected RNG. Filters to eligible Themes, then uniform partial Fisher–Yates.
+// Uniform partial Fisher–Yates over the eligible pool — deterministic under the injected RNG.
 
 import type { ThemeWithCount } from "@/types/quiz";
 import { DRAW_SIZE, MIN_QUESTIONS_PER_THEME } from "./constants";

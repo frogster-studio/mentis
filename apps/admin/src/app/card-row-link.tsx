@@ -4,8 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import type * as React from "react";
 
-// Carries the current query params onto the Card URL so that closing the
-// sidebar can restore the exact list view (search, filters) it came from.
+// Carries the query params onto the Card URL so closing the sheet restores the exact list view.
 export function CardRowLink({ cardId, children }: { cardId: string; children: React.ReactNode }) {
   const searchParams = useSearchParams();
   const query = searchParams.toString();

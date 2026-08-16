@@ -7,9 +7,6 @@ import { type SessionAnswer, sessionScore } from "@/features/quiz/session-reduce
 import type { Question } from "@/types/quiz";
 import { COLORS } from "@/utils/colors";
 
-// The full results reveal: total score /50 and Theme on top, then one row per
-// question — all scrolling as one. « Rejouer » sticks to the bottom (fresh Draw at the
-// call site); a discreet affordance returns home.
 export type SessionResultsProps = {
   themeName: string;
   questions: Question[];

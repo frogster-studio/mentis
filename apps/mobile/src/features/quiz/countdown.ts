@@ -1,6 +1,4 @@
-// Countdown math (seam 5 of the PRD's testing decisions): the 25s per-question timer
-// is an absolute wall-clock end-timestamp, so it survives backgrounding and interval
-// throttling. `now` is always injected — Date.now() lives at the call sites only.
+// The timer is an absolute wall-clock end-timestamp, so it survives backgrounding and throttling.
 
 import { COUNTDOWN_DURATION_MS } from "./constants";
 

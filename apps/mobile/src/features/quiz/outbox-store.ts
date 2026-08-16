@@ -1,8 +1,4 @@
-// The persisted outbox: a zustand store, backed by AsyncStorage, that drives the pure outbox
-// reducer (seam) alongside the Device stats store. It survives app restarts and sign-out — rows
-// stay owner-tagged so a finished session is never lost to timing, only cleared when acked, when
-// their Account is deleted, or when a push proves the owner is gone. All queue logic lives in the
-// pure `outbox` module; this shell only holds the array and injects nothing.
+// Survives restarts and sign-out, so a finished session is never lost to timing.
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
@@ -13,8 +9,7 @@ type OutboxStore = {
   entries: Outbox;
   // A finished signed-in session, already carrying its injected id, owner and finish timestamp.
   enqueue: (entry: OutboxEntry) => void;
-  // A landed push. Returns the entries actually removed, so the caller can hand exactly those —
-  // and only those — to the cached Account world, seeding a double-drain at most once.
+  // Returns the entries actually removed, so a double-drain seeds the Account world at most once.
   ack: (ids: string[]) => OutboxEntry[];
   // A push rejected because the owner no longer exists: drop every one of that Account's rows.
   discardOwner: (owner: string) => void;

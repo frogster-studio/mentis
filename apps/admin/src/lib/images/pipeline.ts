@@ -1,7 +1,4 @@
-// Card Image processing per ADR 0001 (browser-only image processing): the
-// browser validates at pick time, then downscales and encodes to webp at
-// save time. This module is pure — the encoder is injected — so the whole
-// pipeline runs under vitest without a real browser.
+// The encoder is injected so the whole pipeline runs under vitest without a browser (ADR 0001).
 
 export const IMAGE_FILE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp"];
 export const MIN_IMAGE_DIMENSION = 1000;
@@ -25,8 +22,6 @@ export function imageDimensionsError({ width, height }: ImageDimensions): string
   return `This image is ${width}×${height}px. Images must be at least ${MIN_IMAGE_DIMENSION}×${MIN_IMAGE_DIMENSION}px.`;
 }
 
-// Longest side capped at MAX_IMAGE_LONGEST_SIDE, aspect ratio kept, and a
-// smaller image never upscaled.
 export function fitWithinCap({ width, height }: ImageDimensions): ImageDimensions {
   const longest = Math.max(width, height);
   if (longest <= MAX_IMAGE_LONGEST_SIDE) {
@@ -51,8 +46,7 @@ export async function processImage<TImage>(
 ): Promise<Blob> {
   const target = fitWithinCap(source);
   const blob = await encode(source.image, target, WEBP_QUALITY);
-  // A browser without a webp encoder falls back to png silently; fail loudly
-  // instead of storing a mislabelled object.
+  // A browser without a webp encoder silently falls back to png.
   if (blob.type !== "image/webp") {
     throw new Error("This browser cannot encode webp images.");
   }
@@ -63,9 +57,7 @@ export type ImageOutcome<TValue> =
   | { status: "success"; value: TValue }
   | { status: "error"; message: string };
 
-// Each Image resolves or fails on its own: one bad Image yields its own
-// error outcome and never throws the batch, so the Card save can carry the
-// successes and surface the failures.
+// One bad Image yields its own error outcome and never throws the batch.
 export async function settleImages<TSource, TValue>(
   sources: TSource[],
   process: (source: TSource) => Promise<TValue>,

@@ -75,8 +75,6 @@ describe("account constants", () => {
   });
 
   it("spells out exactly what account deletion erases, and that it cannot be undone", () => {
-    // The confirmation must name what is erased — the compte and its statistiques — and warn that
-    // the action is irreversible (issue 008 + App Store guideline 5.1.1(v)).
     expect(DELETE_ACCOUNT_MESSAGE).toContain("compte");
     expect(DELETE_ACCOUNT_MESSAGE).toContain("statistiques");
     expect(DELETE_ACCOUNT_MESSAGE).toContain("irréversible");

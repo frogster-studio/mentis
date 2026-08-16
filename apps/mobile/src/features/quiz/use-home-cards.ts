@@ -7,10 +7,7 @@ import { useOutboxStore } from "./outbox-store";
 import { type HomeCard, homeCards } from "./stats";
 import { useStatsStore } from "./stats-store";
 
-// The world selector behind the home shelf: signed in → Account Stats (the fold of baselines +
-// synced sessions + still-pending local sessions); signed out → Device Stats, exactly as before.
-// The world is chosen by auth state and the two never mix. The Device store, the Account query and
-// the outbox are all read unconditionally (the hooks rule); the branch decides which one renders.
+// All sources are read unconditionally (the hooks rule); auth state picks which world renders.
 export function useHomeCards(): HomeCard[] {
   const owner = useAuthStore((state) => state.session?.user.id);
   const deviceStats = useStatsStore((state) => state.stats);
@@ -21,10 +18,7 @@ export function useHomeCards(): HomeCard[] {
     if (owner === undefined) {
       return homeCards(deviceStats);
     }
-    // Empty until the pull lands (or the cache restores on an offline launch). The optimistic
-    // overlay — this Account's still-pending sessions, reconciled by id against the synced pull —
-    // puts a just-finished session on the shelf instantly, offline included; a push moves each row
-    // from this overlay to the synced set without ever double-counting a session in flight.
+    // The pending overlay puts a just-finished session on the shelf instantly, offline included.
     const stats = accountStats ?? { baselines: [], sessions: [] };
     const syncedIds = new Set(stats.sessions.map((session) => session.id));
     const pending = overlaySessions(outbox, owner, syncedIds);

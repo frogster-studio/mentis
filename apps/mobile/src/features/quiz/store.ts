@@ -1,6 +1,3 @@
-// In-flight Quiz Session state: a thin zustand shell over the pure session reducer.
-// Callers inject `now` (Date.now at the component layer) — the store adds no logic.
-
 import { create } from "zustand";
 import type { Question } from "@/types/quiz";
 import {

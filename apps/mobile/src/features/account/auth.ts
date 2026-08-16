@@ -1,6 +1,3 @@
-// Provider sign-in / sign-out actions — thin shells over the native Apple and Google flows and
-// Supabase. Deliberately untested (native sheets + network), per the PRD's provider-flow decision.
-
 import {
   GoogleSignin,
   isErrorWithCode,
@@ -13,11 +10,7 @@ import * as AppleAuthentication from "expo-apple-authentication";
 import { Platform } from "react-native";
 import { supabase } from "@/lib/supabase";
 
-// Configure the native Google SDK once, off the web build (web sign-in gets its own redirect
-// flow in a later slice). `webClientId` makes the ID token's audience one Supabase trusts;
-// `iosClientId` names the iOS OAuth client — Android is matched implicitly by package + SHA-1,
-// so it needs no id here. The reversed iOS id is also registered as a URL scheme by the config
-// plugin (see app.json).
+// webClientId sets the audience Supabase trusts; Android matches by package + SHA-1, needing no id.
 if (Platform.OS !== "web") {
   GoogleSignin.configure({
     webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
@@ -25,10 +18,7 @@ if (Platform.OS !== "web") {
   });
 }
 
-// Runs the native Apple flow, hands the returned ID token to Supabase, and captures the full
-// name Apple offers only at the very first authorization (never re-sent) into the Account
-// metadata. Resolves silently when the Player dismisses the sheet; throws on a real failure so
-// the caller can surface the error.
+// Apple offers the full name only at the very first authorization, so it is captured right away.
 export async function signInWithApple(): Promise<void> {
   let credential: AppleAuthentication.AppleAuthenticationCredential;
   try {
@@ -54,17 +44,13 @@ export async function signInWithApple(): Promise<void> {
   });
   if (error) throw error;
 
-  // Persist the name immediately as raw material for a future pseudo suggestion. Best-effort:
-  // a failed write must never undo a successful sign-in.
+  // Best-effort: a failed name write must never undo a successful sign-in.
   const fullName = formatFullName(credential.fullName);
   if (fullName) {
     await supabase.auth.updateUser({ data: { full_name: fullName } }).catch(() => undefined);
   }
 }
 
-// Runs the native Google account sheet, hands the returned ID token to Supabase, and captures
-// the profile name into the Account metadata like the Apple path does. Resolves silently when
-// the Player dismisses the sheet; throws on a real failure so the caller can surface the error.
 export async function signInWithGoogle(): Promise<void> {
   // Android will not open the sheet without Play Services; a no-op that resolves true on iOS.
   await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
@@ -92,8 +78,7 @@ export async function signInWithGoogle(): Promise<void> {
   });
   if (error) throw error;
 
-  // Persist the name immediately as raw material for a future pseudo suggestion. Best-effort:
-  // a failed write must never undo a successful sign-in.
+  // Best-effort: a failed name write must never undo a successful sign-in.
   const fullName = formatGoogleName(user);
   if (fullName) {
     await supabase.auth.updateUser({ data: { full_name: fullName } }).catch(() => undefined);
@@ -119,8 +104,6 @@ function formatFullName(
   return name ? joinNameParts(name.givenName, name.familyName) : null;
 }
 
-// Google usually hands back the display `name` directly; fall back to joining the given/family
-// parts when it does not.
 function formatGoogleName(user: User["user"]): string | null {
   return user.name?.trim() || joinNameParts(user.givenName, user.familyName);
 }

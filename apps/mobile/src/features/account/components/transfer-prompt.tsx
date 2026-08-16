@@ -21,8 +21,7 @@ export function TransferPrompt() {
   const dormant = useTransferStore((state) => state.dormant);
   const transferred = useTransferStore((state) => state.transferred);
   const decline = useTransferStore((state) => state.decline);
-  // Success empties the device world → the predicate flips false → this modal closes itself. The
-  // mutation owns the in-flight and failed states the prompt used to track by hand.
+  // Success empties the device world, the predicate flips false, and this modal closes itself.
   const transfer = useMutation({ mutationFn: transferDeviceStats });
 
   const visible = playerId !== undefined && shouldOfferTransfer(deviceStats, dormant, transferred);
@@ -39,7 +38,7 @@ export function TransferPrompt() {
       visible={visible}
       title={TRANSFER_TITLE}
       message={TRANSFER_MESSAGE}
-      // Android back is a safe, reversible decline (never a silent accept), unless a push is in flight.
+      // Android back is a reversible decline, never a silent accept — ignored mid-push.
       onRequestClose={transfer.isPending ? undefined : decline}
     >
       {transfer.isError ? <Text style={styles.error}>{TRANSFER_ERROR}</Text> : null}

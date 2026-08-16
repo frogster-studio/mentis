@@ -5,9 +5,7 @@ import type * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-// Icon-only buttons always pair an aria-label with one of these tooltips
-// (docs/ui-conventions.md, Buttons). The ~450 ms delay keeps them out of the
-// way during normal mousing.
+// The ~450 ms delay keeps tooltips out of the way during normal mousing.
 const TOOLTIP_DELAY_MS = 450;
 
 function Tooltip({ ...props }: React.ComponentProps<typeof TooltipPrimitive.Root>) {

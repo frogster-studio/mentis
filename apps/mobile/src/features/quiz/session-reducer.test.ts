@@ -25,8 +25,6 @@ function question(id: string, answer: string): Question {
   };
 }
 
-// The shuffled 2×2 grid the component would hand to `switchToSquare`; the Canonical
-// Answer for question n is `bonne réponse n`, sitting among its three wrong choices.
 function squareGrid(id: number): string[] {
   return ["faux un", `bonne réponse ${id}`, "faux deux", "faux trois"];
 }
@@ -122,10 +120,7 @@ describe("expire", () => {
 });
 
 describe("interruption — expiry while backgrounded", () => {
-  // Because each Countdown is an absolute end-timestamp, a hidden tab or a backgrounded
-  // app never pauses it. On return the clock jumps far past `endsAt`, yet a single
-  // `expire` must still consume exactly one question — a question's 25s only start when
-  // it is shown, so the rest never expire in cascade.
+  // The clock may jump far past endsAt, yet one expire consumes exactly one question — no cascade.
 
   it("resolves the standing Answer and starts the next question with a full, un-expired Countdown", () => {
     const typed = sessionReducer(activeSession(), { type: "setInput", value: "bonne réponse 1" });
@@ -136,8 +131,7 @@ describe("interruption — expiry while backgrounded", () => {
     expect(state.answers).toHaveLength(1);
     expect(state.answers[0]).toMatchObject({ correct: true, points: POINTS_CASH });
     expect(currentQuestion(state)).toBe(QUESTIONS[1]);
-    // Next question's timer is anchored to the return clock, not the stale one: a fresh
-    // 25s that is not already expired against that same `now` (no cascade of expiries).
+    // The next timer anchors to the return clock, not the stale one.
     expect(state.endsAt).toBe(returnedAt + COUNTDOWN_DURATION_MS);
     expect(isExpired(state.endsAt, returnedAt)).toBe(false);
   });

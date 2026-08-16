@@ -12,8 +12,7 @@ import {
 } from "@/lib/api/cards";
 import { isApiError } from "@/lib/api/client";
 
-// The two places the sheets can show a validation message: the Title field
-// keeps its own; everything else lands on the form-level alert.
+// The Title field keeps its own message and everything else lands on the form-level alert.
 type CardFormErrors = {
   title?: string;
   form?: string;
@@ -23,8 +22,7 @@ export type CreateCardState = {
   errors: CardFormErrors;
 };
 
-// Rebuilds the type-specific payload from its form fields. Field names line
-// up with the inputs in card-type-fields.tsx; validation stays in the schema.
+// Field names line up with the inputs in card-type-fields.tsx.
 function payloadFromFormData(type: FormDataEntryValue | null, formData: FormData): unknown {
   if (type === "quiz") {
     const correctChoice = formData.get("correctChoice");
@@ -41,8 +39,7 @@ function payloadFromFormData(type: FormDataEntryValue | null, formData: FormData
     const answer = formData.get("answer");
     return {
       assertion: String(formData.get("assertion") ?? ""),
-      // Left undefined when neither radio is picked so the schema rejects
-      // the save.
+      // Left undefined when neither radio is picked so the schema rejects the save.
       answer: answer === null ? undefined : answer === "true",
       explanation: String(formData.get("explanation") ?? ""),
     };
@@ -60,11 +57,7 @@ function payloadFromFormData(type: FormDataEntryValue | null, formData: FormData
   return { body: String(formData.get("body") ?? "") };
 }
 
-// The browser uploads each processed webp itself (ADR 0001) and hands the
-// action only the resulting storage paths, paired index-by-index with their
-// Captions. The pairs arrive in display order; the form always sends the
-// Card's full Image list, so this is authoritative — an empty list means
-// the Card carries no Images.
+// The form always sends the full Image list, so an empty list means the Card has no Images.
 function imagesFromFormData(
   formData: FormData,
 ): { path: string; order: number; caption?: string }[] {
@@ -77,8 +70,7 @@ function imagesFromFormData(
   });
 }
 
-// Rebuilds and validates the whole submitted Card; shared so create and
-// update can never drift apart in how they read the form.
+// Shared so create and update can never drift in how they read the form.
 function parseCardForm(formData: FormData) {
   const type = formData.get("type");
   return adminCardWriteInputSchema.safeParse({
@@ -90,8 +82,7 @@ function parseCardForm(formData: FormData) {
   });
 }
 
-// The first issue per place wins. Typed structurally so it tracks the issue
-// shape without depending on the schema library's exported types.
+// Typed structurally to stay off the schema library's issue types.
 function cardFormErrors(
   issues: ReadonlyArray<{ path: ReadonlyArray<PropertyKey>; message: string }>,
 ): CardFormErrors {
@@ -175,8 +166,7 @@ export async function deleteCard(cardId: string): Promise<void> {
 
 // Two editors marking at once clobber each other — accepted with the whole-set write.
 export async function setCardPosted(cardId: string, postedOn: Social[]): Promise<void> {
-  // Server Functions are reachable by direct POST, so the arguments are
-  // checked even though the UI only sends well-formed ones.
+  // Server Functions are reachable by direct POST, so the arguments are checked here too.
   const parsed = adminCardPostedInputSchema.safeParse({ postedOn });
   if (!parsed.success) {
     throw new Error("Invalid Posted marks.");

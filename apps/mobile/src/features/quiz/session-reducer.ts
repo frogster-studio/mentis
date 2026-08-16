@@ -1,7 +1,4 @@
-// Session state machine (seam 2 of the PRD's testing decisions): pure transitions
-// driving a Quiz Session. Time and the Carré shuffle only arrive through action
-// payloads; correctness is judged by the Answer Matching engine (Cash, +5) or by the
-// selected choice (Carré, +2). Cash is the initial mode; switching to Carré is one-way.
+// Time and the Carré shuffle only arrive through action payloads, so transitions stay pure.
 
 import type { Question, QuizMode } from "@/types/quiz";
 import { POINTS_CASH, POINTS_SQUARE } from "./constants";
@@ -87,8 +84,7 @@ function canConfirm(state: SessionState): boolean {
   return state.mode === "square" ? state.selection !== null : state.input.trim() !== "";
 }
 
-// Submission takes whatever stands — even empty on expiry — then advances instantly:
-// the next question restarts in Cash with a fresh Countdown, or the session finishes.
+// Takes whatever stands — even empty on expiry — then advances instantly with a fresh Countdown.
 function submit(state: SessionState, now: number): SessionState {
   const answers = [...state.answers, resolveAnswer(state)];
   const finished = answers.length === state.questions.length;
@@ -107,8 +103,7 @@ function submit(state: SessionState, now: number): SessionState {
 function resolveAnswer(state: SessionState): SessionAnswer {
   const question = currentQuestion(state);
   if (state.mode === "square") {
-    // The selected card's text verbatim — the Canonical Answer sits among the choices,
-    // so an exact match is the whole verdict; no fuzzy matching for a tap.
+    // The Canonical Answer sits among the choices, so an exact match is the whole verdict.
     const chosen = state.selection === null ? "" : (state.choices?.[state.selection] ?? "");
     const correct = chosen !== "" && chosen === question.answer;
     return { input: chosen, correct, points: correct ? POINTS_SQUARE : 0, mode: "square" };

@@ -1,11 +1,7 @@
 import type { Social } from "@mentis/contracts/admin";
 import { useId } from "react";
 
-// The six Social brand marks as currentColor SVGs, sized by the same CSS the
-// Buttons apply to lucide icons. lucide-react ships no brand icons (see the
-// AGENTS.md exception); the path data is flattened to a single tintable color:
-// glyphs are knocked out of their containers with fill-rule or a mask instead
-// of being drawn in white.
+// The glyphs are knocked out, never drawn in white, so each mark stays one tintable currentColor.
 
 export function XIcon() {
   return (
@@ -27,8 +23,7 @@ export function LinkedinIcon() {
 }
 
 export function FacebookIcon() {
-  // The f glyph bleeds past the circle's edge, so an even-odd knockout would
-  // leave the overhang filled; a mask cuts the whole glyph cleanly.
+  // The f glyph overhangs the circle, so only a mask — not an even-odd knockout — cuts it cleanly.
   const maskId = useId();
   return (
     <svg viewBox="0 0 512 512" fill="currentColor" aria-hidden="true">

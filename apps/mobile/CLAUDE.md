@@ -48,3 +48,4 @@ Database migrations live in `apps/api/supabase/` (shared with the back-office; h
 - Styling: `StyleSheet.create` in each component file. No shared style files.
 - Short files; split anything reusable into its own component. No speculative props — add a prop only when the current implementation uses it.
 - Vitest targets pure TS logic only (matching, reducer, draw, scoring/stats, countdown math, batching) plus the API seam's core, which is logic like any other; no component rendering tests in v1. Supabase auth wiring stays untested. Randomness, time and I/O are always injectable.
+- Comments follow the repo rule ([docs/agents/conventions.md](../../docs/agents/conventions.md)): none by default — prefer a longer, precise name; business-logic "why" only; one short sentence max, never multi-line, file headers included.

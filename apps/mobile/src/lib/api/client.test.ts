@@ -7,8 +7,6 @@ const BASE_URL = "https://api.test";
 
 type Call = { url: string; init: RequestInit };
 
-// A fetch stand-in that records what the seam sent and replays a queued answer. The whole point of
-// the factory shape: no network, no session, no app.
 function stubFetch(responses: Response[]) {
   const calls: Call[] = [];
   const fetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {

@@ -17,8 +17,7 @@ const COOKIE_OPTIONS = {
   sameSite: "lax",
 } as const;
 
-// Callers differ only in where their cookies live: the proxy reads and writes a
-// request/response pair, everything else the `next/headers` store.
+// Callers differ only in where cookies live: the proxy's request/response pair or next/headers.
 export function createSupabaseClient(cookies: CookieMethodsServer) {
   const { url, publishableKey } = supabaseProject();
   return createServerClient(url, publishableKey, { cookieOptions: COOKIE_OPTIONS, cookies });

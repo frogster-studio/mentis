@@ -282,8 +282,7 @@ describe("adminCardWriteInputSchema — Did You Know", () => {
 
 describe("adminCardWriteInputSchema — Card Type change", () => {
   it("rejects the old payload left under the new type", () => {
-    // A type change must rebuild the payload for the new type; a stale Quiz
-    // payload does not validate as a Riddle.
+    // A type change must rebuild the payload; a stale Quiz payload does not validate as a Riddle.
     expect(adminCardWriteInputSchema.safeParse({ ...validQuiz, type: "riddle" }).success).toBe(
       false,
     );

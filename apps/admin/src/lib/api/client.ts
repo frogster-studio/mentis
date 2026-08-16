@@ -31,8 +31,7 @@ type ApiRequest = {
   body?: unknown;
 };
 
-// Typed structurally so the seam tracks the contract schemas without depending
-// on the schema library's exported types.
+// Typed structurally so the seam tracks contract schemas without depending on the schema library.
 type ResponseSchema<T> = { parse: (value: unknown) => T };
 
 function apiUrl(): string {

@@ -20,14 +20,12 @@ export function CardTypeFields({
     case "riddle":
       return <RiddleFields payload={card.payload} />;
     default:
-      // Anecdote and Did You Know share the body-only form; only the stored
-      // type value differs.
+      // Anecdote and Did You Know share the body-only form; only the stored type differs.
       return <TextareaField id="body" label="Body" rows={12} defaultValue={card.payload?.body} />;
   }
 }
 
-// Label + textarea pair used by every long-text payload field; the field's
-// name doubles as its id, which payloadFromFormData reads back.
+// The field's name doubles as its id, which payloadFromFormData reads back.
 function TextareaField({
   id,
   label,

@@ -31,10 +31,6 @@ import { drainOutbox } from "@/features/quiz/outbox-sync";
 import { useTransferStore } from "@/features/quiz/transfer-store";
 import { COLORS } from "@/utils/colors";
 
-// The « Compte » screen. Signed out: the French pitch above the provider buttons (Apple on iOS,
-// Google on iOS and Android; web gets its redirect flow later). Signed in: the account email and
-// « Se déconnecter » behind the reassuring confirmation. Auth state comes from the app-wide store,
-// so the screen flips the moment sign-in or sign-out lands — no navigation, no refetch.
 export function AccountScreen() {
   const router = useRouter();
   const session = useAuthStore((state) => state.session);
@@ -42,9 +38,7 @@ export function AccountScreen() {
   const [signOutVisible, setSignOutVisible] = useState(false);
   const [signInFailed, setSignInFailed] = useState(false);
   const [deleteVisible, setDeleteVisible] = useState(false);
-  // Erases the Account server-side (both player tables cascade), wipes its local footprint, and
-  // signs out — which flips this screen to the signed-out body via the auth store. A failure leaves
-  // everything intact and the mutation's error state surfaces it so the Player can retry.
+  // A failure leaves everything intact; the mutation's error state lets the Player retry.
   const accountDeletion = useMutation({ mutationFn: deleteAccount });
 
   const user = session?.user;
@@ -70,8 +64,7 @@ export function AccountScreen() {
         </View>
       ) : user ? (
         <View style={styles.body}>
-          {/* The provider name is captured into metadata but never shown in v1 (PRD): the email
-              is the identity — which Account you are signed into. */}
+          {/* The provider is never shown in v1: the email is the identity. */}
           <View style={styles.identity}>
             {user.email ? <Text style={styles.email}>{user.email}</Text> : null}
           </View>
@@ -85,8 +78,7 @@ export function AccountScreen() {
             >
               <Text style={styles.signOutLabel}>{SIGN_OUT_LABEL}</Text>
             </Pressable>
-            {/* The irreversible action, kept plain and de-emphasized below sign-out, and gated behind
-                its own French confirmation (App Store guideline 5.1.1(v)). */}
+            {/* Gated behind its own confirmation (App Store guideline 5.1.1(v)). */}
             <Pressable
               style={({ pressed }) => [styles.deleteButton, pressed && styles.pressed]}
               onPress={() => setDeleteVisible(true)}
@@ -117,14 +109,11 @@ export function AccountScreen() {
         onCancel={() => setSignOutVisible(false)}
         onConfirm={async () => {
           setSignOutVisible(false);
-          // Flush what we still can before the token dies; anything that fails to push stays
-          // queued, owner-tagged, for this Account's next sign-in (PRD: sign-out never loses a
-          // session). Best-effort — offline, this resolves at once and the rows simply wait.
+          // Flush before the token dies — anything unpushed stays queued for the next sign-in.
           if (user) {
             await drainOutbox(user.id);
           }
-          // The device world is live again: clear any dormancy so a still-present world is re-offered
-          // at the next sign-in (PRD user story 9). The signed-out home shows Device Stats once more.
+          // Clear any dormancy so a still-present device world is re-offered at the next sign-in.
           useTransferStore.getState().signOut();
           await signOut();
         }}
@@ -216,8 +205,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  // Plain, borderless and destructive-tinted: visually secondary to sign-out so the irreversible
-  // action never reads as the default.
+  // Visually secondary to sign-out, so the irreversible action never reads as the default.
   deleteButton: {
     paddingVertical: 12,
     alignItems: "center",

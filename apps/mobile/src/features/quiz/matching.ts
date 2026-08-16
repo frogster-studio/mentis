@@ -1,7 +1,4 @@
-// Answer Matching engine (ADR 0001, seam 1 of the PRD's testing decisions): decides
-// on-device whether a Cash answer is correct. Pure TS — no React, no network, no runtime AI.
-// Pipeline: normalize → exact match (Canonical Answer + Aliases + Misspellings) →
-// bounded Levenshtein (Canonical Answer + Aliases only, never Misspellings).
+// Normalize → exact match → bounded Levenshtein (never over Misspellings); on-device per ADR 0001.
 
 import type { Question } from "@/types/quiz";
 
@@ -35,8 +32,7 @@ function normalize(raw: string): string {
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
   const words = folded.split(" ");
-  // Strip a leading article only when something remains: an answer that IS an
-  // article-shaped word (« Dés ») must not normalize to the empty string.
+  // Strip a leading article only when something remains: « Dés » must not normalize to empty.
   if (words.length > 1 && LEADING_ARTICLES.has(words[0])) {
     words.shift();
   }
@@ -62,8 +58,7 @@ function isPurelyNumeric(value: string): boolean {
   return /^[0-9 ]+$/.test(value);
 }
 
-// Length-scaled thresholds fixed by the PRD interview; the shorter side decides the tier
-// so a ≤3-char string is never fuzz-matched. Tune only via failing test cases.
+// Fixed product thresholds; the shorter side decides the tier, so ≤3 chars never fuzz-match.
 function maxEditsFor(length: number): number {
   if (length <= 3) {
     return 0;

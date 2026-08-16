@@ -3,8 +3,6 @@ import { MAX_SESSION_SCORE } from "@/features/quiz/constants";
 import { formatAverage } from "@/features/quiz/stats";
 import { COLORS } from "@/utils/colors";
 
-// A single home shelf card for a played Theme: its Theme Average out of 50 (French
-// formatting) over the Theme name captured when the session was recorded.
 export type HomeThemeCardProps = {
   name: string;
   average: number;

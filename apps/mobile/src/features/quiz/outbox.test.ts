@@ -170,11 +170,7 @@ describe("replay-idempotence invariant — a flaky push never corrupts totals", 
   });
 
   it("conserves totals through an ugly network dance: each session counts once — never twice, never zero", () => {
-    // The strong invariant tying the outbox to the fold: at every step, fold(synced ∪ pending)
-    // equals fold(all finished sessions). A session is pending until its push is acked and synced
-    // after — never both (a double-count), never neither (a lost session). `ackBatch` mirrors the
-    // wiring exactly: it moves only the rows the ack actually removed into `synced`, so a replayed
-    // ack (a forced double-push) can neither re-seed a row nor drop it twice.
+    // At every step fold(synced ∪ pending) must equal fold(all finished sessions).
     const finished: OutboxEntry[] = [
       entry({ id: "s1", themeId: "geo", themeName: "Géographie", points: 30 }),
       entry({ id: "s2", themeId: "geo", themeName: "Géographie", points: 20 }),

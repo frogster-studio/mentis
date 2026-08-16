@@ -13,4 +13,5 @@ user to approve, edit, or reject it. Never write to this file without that sign-
 Default: none — prefer a longer, precise name over a comment. Write one only when the
 code's reason for existing isn't obvious from reading it (business-logic "why"), never to
 explain what changed or why it used to be different — that's `docs/adr/` territory, not a
-comment. One short sentence max; never multi-line.
+comment. One short sentence max; never multi-line. The rule binds file headers exactly as
+it binds inline comments — a multi-line header block is the same violation.

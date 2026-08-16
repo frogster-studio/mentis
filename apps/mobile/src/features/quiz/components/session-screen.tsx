@@ -86,11 +86,7 @@ export function SessionScreen() {
     return () => clearInterval(tick);
   }, [isActive]);
 
-  // Backgrounding the app (or hiding the web tab) throttles or pauses the interval, but
-  // the Countdown is an absolute end-timestamp — it never really paused. On return, sync
-  // `now` to the wall clock at once so the expiry effect resolves a question that ran out
-  // while away, instead of waiting for the next throttled tick. (AppState maps to tab
-  // visibility on react-native-web, so this covers web too.)
+  // On foreground, sync to the wall clock so a question that expired while away resolves now.
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (next) => {
       if (next === "active") {
@@ -106,12 +102,7 @@ export function SessionScreen() {
     }
   }, [session, now, expire]);
 
-  // A finished Quiz Session is recorded into its world exactly once — the ref guards the
-  // re-renders that follow. Abandoned Sessions never reach 'finished', so they never write.
-  // Signed out → Device Stats, exactly as before. Signed in → the Account world: the session
-  // is queued in the outbox first (the fold's optimistic overlay lands it on the home shelf
-  // instantly, offline included), then pushed — a failed push just stays queued for the next
-  // trigger. The two worlds never mix: a signed-in finish never touches Device Stats.
+  // The ref guards re-renders, so a finished session is recorded into its world exactly once.
   useEffect(() => {
     if (session?.status === "finished" && !recordedRef.current) {
       recordedRef.current = true;
@@ -132,8 +123,7 @@ export function SessionScreen() {
     }
   }, [session, themeId, name, owner, recordSession, enqueue]);
 
-  // Every question starts with the keyboard open: refocus after each advance,
-  // including when the player had dismissed the keyboard to see « Valider ».
+  // Every question starts with the keyboard open — refocus after each advance.
   useEffect(() => {
     if (activeQuestion) {
       inputRef.current?.focus();
@@ -147,9 +137,7 @@ export function SessionScreen() {
         questions={session.questions}
         answers={session.answers}
         onReplay={() => {
-          // A fresh Draw means a freshly mounted picker: drop the whole stack back to
-          // home, then push a new picker so its Draw re-rolls. dismissTo would reuse the
-          // stale picker still in the stack and recycle the same 10 themes.
+          // dismissTo would reuse the stale picker and recycle its Draw; a fresh push re-rolls it.
           router.dismissAll();
           router.push("/picker");
         }}
@@ -180,15 +168,13 @@ export function SessionScreen() {
     if (!activeQuestion) {
       return;
     }
-    // Dismiss the keyboard, then reveal the shuffled grid — the RNG is injected here at
-    // the call site so the reducer stays pure. The switch discards the typed input.
+    // The RNG is injected here at the call site, so the reducer stays pure.
     inputRef.current?.blur();
     switchToSquare(squareChoices(activeQuestion, Math.random));
   };
 
   const onConfirmQuit = () => {
-    // Discard the Abandoned Session and land home. The screen's unmount cleanup
-    // (clearSession) wipes the store, so no score and no trace of the session survive.
+    // The unmount cleanup (clearSession) wipes the store, so no trace of the session survives.
     setQuitVisible(false);
     router.dismissTo("/");
   };
@@ -257,16 +243,11 @@ export function SessionScreen() {
               style={styles.input}
               value={session.input}
               onChangeText={setInput}
-              // Web: Enter submits the standing Answer (an empty Enter is a no-op via
-              // the reducer's confirm guard), then reclaims focus — react-native-web
-              // blurs after submit no matter what, and it must not win, so the player
-              // can chain Enter answer after answer. Native keyboards: the confirm key
-              // only dismisses — the check button stays visible either way.
+              // Web: Enter keeps focus (RN-web blurs on submit); native only dismisses.
               onSubmitEditing={() =>
                 Platform.OS === "web" ? confirm(Date.now()) : inputRef.current?.blur()
               }
-              // Both spellings of « don't blur on submit »: react-native-web only
-              // honors the legacy blurOnSubmit prop, native RN the current submitBehavior.
+              // Both spellings: RN-web honors only blurOnSubmit, native only submitBehavior.
               blurOnSubmit={false}
               submitBehavior="submit"
               placeholder={ANSWER_PLACEHOLDER}
@@ -332,8 +313,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 8,
   },
-  // The one-way quit affordance, top-left; the negative margin pulls the glyph flush
-  // with the content gutter while keeping a comfortable touch target.
+  // The negative margin pulls the glyph flush with the gutter while keeping the touch target.
   quitButton: {
     padding: 4,
     marginLeft: -4,
@@ -391,8 +371,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  // Outlined sibling of the filled confirm button: the primary-colored 2×2 grid icon
-  // is the one-way switch to Carré, always available beside the input during Cash.
   squareToggle: {
     width: 52,
     borderRadius: 12,

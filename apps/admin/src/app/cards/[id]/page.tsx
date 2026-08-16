@@ -22,8 +22,7 @@ export default async function CardPage({
   searchParams: Promise<RawListSearchParams>;
 }) {
   const { id } = await params;
-  // The row link carries the list's query params along, so the list behind
-  // the sidebar keeps its searched, filtered, paginated view.
+  // The row link carries the query params along, so the list behind the sheet keeps its view.
   const listParams = parseListParams(await searchParams);
 
   const card = await getCard(id);

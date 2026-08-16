@@ -12,10 +12,7 @@ if (!supabaseUrl || !supabasePublishableKey) {
   );
 }
 
-// The Account era needs a real session: sign-in must survive app restarts and the access
-// token must refresh itself. Persisted through AsyncStorage (the same store the device stats
-// already use) and auto-refreshed. `detectSessionInUrl` stays off — mobile hands ID tokens
-// directly; the web OAuth redirect flow turns it on later.
+// detectSessionInUrl stays off — mobile hands ID tokens directly; web's redirect flow comes later.
 export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
   auth: {
     storage: AsyncStorage,
@@ -25,9 +22,7 @@ export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
   },
 });
 
-// Auto-refresh must only tick while the app is in the foreground: Supabase drives it off
-// AppState transitions. Native only — on web the token refreshes on its own timer and there
-// is no AppState to hang this on (and it would run during the static export build).
+// Auto-refresh ticks only while foregrounded; web refreshes on its own timer, with no AppState.
 if (Platform.OS !== "web") {
   AppState.addEventListener("change", (state) => {
     if (state === "active") {

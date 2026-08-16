@@ -5,8 +5,7 @@ export type RawListSearchParams = {
   [key: string]: string | string[] | undefined;
 };
 
-// The list's full URL state: search, filters, and page. Everything the list
-// renders derives from this, so any view is shareable and refresh-safe.
+// Everything the list renders derives from this, so any view is shareable and refresh-safe.
 export type CardListParams = {
   search: string;
   type?: CardType;
@@ -18,8 +17,7 @@ function first(value: string | string[] | undefined): string {
   return (Array.isArray(value) ? value[0] : value) ?? "";
 }
 
-// Unknown types and page numbers degrade to "no filter" / page 1 instead of
-// erroring — a hand-edited URL still renders a valid list.
+// Unknown types and pages degrade to "no filter" / page 1, so a hand-edited URL still renders.
 export function parseListParams(params: RawListSearchParams): CardListParams {
   const page = Number.parseInt(first(params.page), 10);
   return {
@@ -30,8 +28,7 @@ export function parseListParams(params: RawListSearchParams): CardListParams {
   };
 }
 
-// Serializes list state back into a URL, with overrides for the link being
-// built (a page control, a Tag chip). Defaults are omitted to keep URLs clean.
+// Defaults are omitted to keep URLs clean.
 export function buildListHref(
   basePath: string,
   params: CardListParams,

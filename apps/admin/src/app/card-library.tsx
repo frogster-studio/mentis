@@ -29,8 +29,7 @@ const updatedAtFormatter = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Europe/Paris",
 });
 
-// Compact "5 min ago"-style age for the list, computed at render time (the
-// page is force-dynamic). The exact timestamp stays available on hover.
+// Computing ages at render time is safe because the page is force-dynamic.
 function formatUpdatedAgo(iso: string): string {
   const seconds = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
   if (seconds < 60) return `${seconds} sec ago`;
@@ -46,9 +45,7 @@ function formatUpdatedAgo(iso: string): string {
   return years === 1 ? "1 year ago" : `${years} years ago`;
 }
 
-// listParams is the list state parsed from the page's URL. Pages whose query
-// params mean something else (/cards/new uses ?type= for the picker) omit it:
-// they get the default view without the toolbar and page controls.
+// Pages whose query params mean something else (/cards/new) omit listParams and get no toolbar.
 export async function CardLibrary({
   activeCardId,
   listParams,
@@ -63,9 +60,7 @@ export async function CardLibrary({
 
   return (
     <>
-      {/* 3-column grid keeps the New Card action dead-center regardless of
-          how wide the logo and session controls are (docs/ui-conventions.md,
-          App chrome). z-40 stays below the sheets' z-50 overlay. */}
+      {/* The 3-column grid keeps New Card dead-center however wide the logo and controls are. */}
       <header className="sticky top-0 z-40 grid h-14 grid-cols-[1fr_auto_1fr] items-center border-border border-b bg-background/80 px-6 backdrop-blur">
         <Link
           href="/"
@@ -105,9 +100,7 @@ export async function CardLibrary({
           </Tooltip>
         </form>
       </header>
-      {/* Canvas + surface (docs/ui-conventions.md, Surfaces): the tinted
-          canvas is scoped to the library so the login page keeps its own
-          background; only the header spans the viewport. */}
+      {/* The tinted canvas is scoped to the library so the login page keeps its own background. */}
       <main className="flex-1 bg-zinc-50 p-6">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-4">
           <h1 className="font-semibold text-2xl text-foreground tracking-tight">Cards</h1>
@@ -159,8 +152,7 @@ export async function CardLibrary({
   );
 }
 
-// Underline mark per Card Type (docs/ui-conventions.md, Card Type colors).
-// Written out as literal classes so Tailwind's scanner generates them.
+// Written as literal classes so Tailwind's scanner emits them.
 const CARD_TYPE_UNDERLINE: Record<CardType, string> = {
   quiz: "border-type-quiz",
   "true-false": "border-type-true-false",
@@ -196,9 +188,7 @@ function CardRow({
       <TableCell className="py-2.5">
         <div className="flex flex-wrap gap-1">
           {card.tags.map((tag) => (
-            // z-10 lifts the chip above the row-covering link overlay so it
-            // stays clickable. The link keeps search and filters, composing
-            // the Tag into the current view.
+            // z-10 keeps the chip clickable above the row-covering link overlay.
             <Badge key={tag} asChild variant="outline" className="relative z-10">
               <Link href={buildListHref("/", listParams, { tag, page: 1 })}>{tag}</Link>
             </Badge>
@@ -237,8 +227,7 @@ function ListPagination({
       <PageButton
         label="Previous page"
         disabled={page <= 1}
-        // A stale URL can point past the last page; Previous then returns
-        // to the real last page instead of another empty one.
+        // A stale URL can point past the last page, so Previous clamps to the real last page.
         href={buildListHref(basePath, params, {
           page: Math.min(page - 1, pageCount),
         })}

@@ -8,9 +8,7 @@ import { Button } from "@/components/ui/button";
 import { setCardPosted } from "@/lib/cards/actions";
 import { SOCIAL_LABELS } from "@/lib/cards/labels";
 
-// One ghost toggle per Social. Clicks are optimistic: the icon flips
-// immediately and only flips back if the save fails — the revert is the
-// error signal.
+// Clicks are optimistic: the icon flips immediately and the revert is the error signal.
 export function CardSocials({ cardId, postedOn }: { cardId: string; postedOn: Social[] }) {
   const [optimisticPostedOn, applyNextMarks] = useOptimistic(
     postedOn,
@@ -34,8 +32,7 @@ export function CardSocials({ cardId, postedOn }: { cardId: string; postedOn: So
   }
 
   return (
-    // z-10 lifts the toggles above the row-covering link overlay, like the
-    // Tag chips.
+    // z-10 lifts the toggles above the row-covering link overlay, like the Tag chips.
     <div className="relative z-10 flex items-center">
       {SOCIALS.map((social) => {
         const Icon = SOCIAL_ICONS[social];

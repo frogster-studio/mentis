@@ -5,10 +5,6 @@ import type { SessionAnswer } from "@/features/quiz/session-reducer";
 import type { Question } from "@/types/quiz";
 import { COLORS } from "@/utils/colors";
 
-// One reveal row on the results page: the question, what the Player answered, and —
-// whenever it differed — the Canonical Answer. Correct rows wear the green pair, wrong
-// rows the red pair (the four tokens live nowhere else). The mode icon (Cash / Carré)
-// and the points chip (+5 / +2 / 0) make each row scannable at a glance.
 export type ResultRowProps = {
   question: Question;
   answer: SessionAnswer;
@@ -18,8 +14,7 @@ export function ResultRow({ question, answer }: ResultRowProps) {
   const typed = answer.input.trim();
   const isEmpty = typed === "";
   const playerAnswer = isEmpty ? RESULTS_NO_ANSWER : answer.input;
-  // Reveal the Canonical Answer unless the Player wrote it verbatim, so a correct Cash
-  // answer with a typo or missing accent still shows the official spelling.
+  // Reveal the Canonical Answer unless verbatim, so a typo'd correct answer shows the spelling.
   const showCanonical = typed !== question.answer;
   const ModeIcon = answer.mode === "square" ? Grid2x2 : Pencil;
   const accent = answer.correct ? COLORS.green500 : COLORS.red500;

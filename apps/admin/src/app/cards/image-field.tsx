@@ -14,18 +14,9 @@ import {
   settleImages,
 } from "@/lib/images/pipeline";
 
-// Ordered Image list shared by the create and edit forms: up to three
-// Images, each with an optional Caption, reorderable and removable. Picked
-// files stay in the browser until save; attachTo processes and uploads them
-// then, stamping ordered path/Caption pairs onto the outgoing form data
-// (ADR 0001). Each Image succeeds or fails on its own — a failure marks
-// only its own Image and never blocks the Card save. Removing a stored
-// Image only drops it from the list here — the server deletes its storage
-// object when the save lands.
+// Picked files stay in the browser until attachTo processes and uploads them at save (ADR 0001).
 
-// Shown on the red strip of a failed thumbnail. The underlying error goes
-// to the console: server action messages are masked in production, so the
-// raw text is not reliably user-readable.
+// Server action messages are masked in production, so the raw error goes to the console instead.
 const IMAGE_SAVE_FAILED = "This Image failed to save.";
 
 // A Card Image already saved on the Card, shown from its public URL.
@@ -40,14 +31,11 @@ type CardImageItem = {
   caption: string;
   // The picked file awaiting processing; null for stored Images.
   file: File | null;
-  // The storage path: present for stored Images, set once a picked file
-  // uploads. Kept after upload so a save retried after a validation error
-  // does not re-process and re-upload the same file.
+  // Kept after upload so a save retried after a validation error does not re-upload the file.
   path: string | null;
   // Public URL for stored Images, blob: object URL for picked files.
   previewUrl: string;
-  // Set when this Image's last processing or upload attempt failed; shown
-  // as the red strip on its thumbnail. Ephemeral — never persisted.
+  // Set when the last processing or upload attempt failed; ephemeral, never persisted.
   error: string | null;
 };
 
@@ -74,8 +62,7 @@ export function useCardImages(storedImages: StoredCardImage[] = []): CardImagesS
   );
   const [uploading, setUploading] = useState(false);
 
-  // Object URLs live until revoked, so previews of picked files are released
-  // when their Image leaves the list or the form unmounts.
+  // Object URLs live until revoked, so previews are released on removal and unmount.
   const objectUrls = useRef(new Set<string>());
   useEffect(() => {
     const urls = objectUrls.current;
@@ -128,10 +115,7 @@ export function useCardImages(storedImages: StoredCardImage[] = []): CardImagesS
     setItems((current) => current.map((item, i) => (i === index ? { ...item, caption } : item)));
   }
 
-  // Processes and uploads every pending file independently, then stamps the
-  // ordered path/Caption pairs of the stored and successful Images onto the
-  // outgoing form data. A failure marks only its own Image with the red
-  // strip and leaves it off the form data — the Card save always proceeds.
+  // Each pending file settles on its own: a failure marks only its Image and never blocks the save.
   async function attachTo(formData: FormData): Promise<void> {
     const paths = new Map<string, string>();
     for (const item of items) {
@@ -216,9 +200,7 @@ export function ImagesField({ slot }: { slot: CardImagesSlot }) {
       {slot.items.map((item, index) => (
         <div key={item.key} className="flex items-start gap-2">
           <div className="relative shrink-0">
-            {/* biome-ignore lint/performance/noImgElement: previews mix blob:
-                object URLs with unknown dimensions and storage URLs, which
-                next/image cannot optimize. */}
+            {/* biome-ignore lint/performance/noImgElement: blob: previews rule out next/image. */}
             <img
               src={item.previewUrl}
               alt={`Illustration ${index + 1}`}
@@ -266,9 +248,7 @@ export function ImagesField({ slot }: { slot: CardImagesSlot }) {
               size="icon"
               aria-label={`Retry Image ${index + 1}`}
               disabled={slot.uploading}
-              // Retry is a plain re-save: attachTo re-processes only Images
-              // without a path, so successful siblings never re-upload, and
-              // the save then carries this Image onto the Card.
+              // Retry is a plain re-save: attachTo re-processes only Images without a path.
               onClick={(event) => event.currentTarget.form?.requestSubmit()}
             >
               <RotateCcw />

@@ -22,6 +22,5 @@ export const COUNTDOWN_TICK_MS = 100;
 export const POINTS_CASH = 5;
 export const POINTS_SQUARE = 2;
 const QUESTIONS_PER_SESSION = 10;
-// Each of the session's Questions is worth at most POINTS_CASH — so 50 is the score
-// ceiling a Theme Average is measured against on the home shelf.
+// The score ceiling a Theme Average is measured against on the home shelf.
 export const MAX_SESSION_SCORE = POINTS_CASH * QUESTIONS_PER_SESSION;

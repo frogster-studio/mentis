@@ -44,8 +44,6 @@ export function CreateCardSheet({ selectedType }: { selectedType?: CardType }) {
   );
 }
 
-// Sticky top bar shared by both the type picker and the form. The form passes
-// its Save button as `actions`; the close button is always present.
 function CreateCardHeader({
   selectedType,
   actions,
@@ -75,10 +73,7 @@ function CreateCardHeader({
   );
 }
 
-// Hover-tint + dot color per Card Type (docs/ui-conventions.md, Card Type
-// colors). Written as literal classes so Tailwind's scanner emits them.
-// Hovering a chip fills it with its own type color at ~10% over white — the one
-// sanctioned type-tinted interaction; focus-visible still shows the sky ring.
+// Written as literal classes so Tailwind's scanner emits them.
 const CARD_TYPE_CHIP: Record<CardType, { dot: string; hover: string }> = {
   quiz: {
     dot: "bg-type-quiz",

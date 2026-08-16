@@ -94,11 +94,9 @@ function EditCardForm({
 }) {
   const [state, formAction, pending] = useActionState(updateCard, undefined);
   const images = useCardImages(storedImages);
-  // The form's Card Type — diverges from the stored card.type between a
-  // confirmed type change and the next save.
+  // Diverges from the stored card.type between a confirmed type change and the next save.
   const [type, setType] = useState<CardType>(card.type);
-  // A different type picked in the select, staged until the warning dialog
-  // is confirmed or cancelled.
+  // Staged until the warning dialog is confirmed or cancelled.
   const [pendingType, setPendingType] = useState<CardType | null>(null);
 
   return (
@@ -134,14 +132,12 @@ function EditCardForm({
           <Select
             value={type}
             onValueChange={(value) => {
-              // Picking another type only stages it; the select keeps showing
-              // the current type until the warning dialog is confirmed.
+              // Picking another type only stages it until the warning dialog is confirmed.
               if (value !== type) setPendingType(value as CardType);
             }}
           >
             <SelectTrigger id="card-type">
-              {/* The switcher always names a real type, so its dot always
-                  rides into the trigger. */}
+              {/* The switcher always names a real type, so its dot always shows. */}
               <TypeDot type={type} />
               <SelectValue />
             </SelectTrigger>
@@ -183,10 +179,7 @@ function EditCardForm({
           </AlertDialogContent>
         </AlertDialog>
         <TitleField defaultValue={card.title} error={state?.errors.title} />
-        {/* Keyed on the type so a confirmed switch remounts the fields empty —
-          without it, Anecdote ↔ Did You Know share a subtree and keep their
-          uncontrolled values. Back on the stored type, the saved payload
-          returns: nothing is lost until save. */}
+        {/* Keyed on the type: a switch must remount the fields or uncontrolled values survive. */}
         <CardTypeFields key={type} card={type === card.type ? card : { type }} />
         <ImagesField slot={images} />
         <TagsField defaultTags={card.tags} />
@@ -224,8 +217,7 @@ function DeleteCardButton({ card }: { card: AdminCardResponse }) {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          {/* The form lives in the dialog's portal, so it never nests inside
-              the edit form. */}
+          {/* The form lives in the dialog's portal, so it never nests inside the edit form. */}
           <form action={deleteAction}>
             <AlertDialogAction asChild>
               <Button type="submit" variant="destructive">

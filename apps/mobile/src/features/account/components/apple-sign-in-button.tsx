@@ -8,9 +8,7 @@ export type AppleSignInButtonProps = {
   onError: () => void;
 };
 
-// « Continuer avec Apple » — the OS-drawn, OS-localized native button. Apple's native flow
-// exists on iOS only (no Android sheet; web sign-in gets its own redirect flow later), so this
-// self-gates to nothing off-iOS: callers can render it unconditionally.
+// The native flow exists on iOS only, so this self-gates and callers render it unconditionally.
 export function AppleSignInButton({ onError }: AppleSignInButtonProps) {
   const [available, setAvailable] = useState(false);
 
