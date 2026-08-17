@@ -14,6 +14,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ScreenContainer } from "@/components/ui/screen-container";
 import { useAuthStore } from "@/features/account/auth-store";
@@ -225,16 +226,11 @@ export function SessionScreen() {
                 );
               })}
             </View>
-            <Pressable
-              style={({ pressed }) => [
-                styles.validateButton,
-                (pressed || confirmDisabled) && styles.buttonDimmed,
-              ]}
+            <Button
+              label={CONFIRM_LABEL}
               onPress={() => confirm(Date.now())}
               disabled={confirmDisabled}
-            >
-              <Text style={styles.validateLabel}>{CONFIRM_LABEL}</Text>
-            </Pressable>
+            />
           </View>
         ) : (
           <View style={styles.footer}>
@@ -257,24 +253,20 @@ export function SessionScreen() {
               autoCorrect={false}
               returnKeyType="done"
             />
-            <Pressable
-              style={styles.squareToggle}
-              onPress={onSwitchToSquare}
+            <Button
+              layout="circle"
+              icon={Grid2x2}
               accessibilityLabel={SQUARE_SWITCH_LABEL}
-            >
-              <Grid2x2 color={COLORS.primary} size={26} />
-            </Pressable>
-            <Pressable
-              style={({ pressed }) => [
-                styles.confirmButton,
-                (pressed || confirmDisabled) && styles.buttonDimmed,
-              ]}
+              onPress={onSwitchToSquare}
+              theme="neutral"
+            />
+            <Button
+              layout="circle"
+              icon={Check}
+              accessibilityLabel={CONFIRM_LABEL}
               onPress={() => confirm(Date.now())}
               disabled={confirmDisabled}
-              accessibilityLabel={CONFIRM_LABEL}
-            >
-              <Check color={COLORS.fillOpposite} size={26} />
-            </Pressable>
+            />
           </View>
         )}
       </KeyboardAvoidingView>
@@ -346,42 +338,26 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     lineHeight: 32,
   },
+  // Top-aligned so the input lines up with the buttons' faces, leaving their plates below it.
   footer: {
     flexDirection: "row",
+    alignItems: "flex-start",
     gap: 10,
     paddingHorizontal: 24,
     paddingBottom: 12,
   },
+  // Without minWidth the web input never shrinks past min-content and pushes the buttons out.
   input: {
     flex: 1,
+    minWidth: 0,
+    height: 52,
     backgroundColor: COLORS.panel,
     borderColor: COLORS.strokeStrong,
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 14,
     color: COLORS.fill,
     fontSize: 18,
-  },
-  // Stretches to the input's height (row default), stays square-ish via fixed width.
-  confirmButton: {
-    width: 52,
-    borderRadius: 12,
-    backgroundColor: COLORS.primary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  squareToggle: {
-    width: 52,
-    borderRadius: 12,
-    backgroundColor: COLORS.panel,
-    borderColor: COLORS.strokeStrong,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  buttonDimmed: {
-    opacity: 0.5,
   },
   squareFooter: {
     gap: 12,
@@ -413,16 +389,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
-  },
-  validateButton: {
-    borderRadius: 12,
-    paddingVertical: 16,
-    backgroundColor: COLORS.primary,
-    alignItems: "center",
-  },
-  validateLabel: {
-    color: COLORS.fillOpposite,
-    fontSize: 16,
-    fontWeight: "bold",
   },
 });

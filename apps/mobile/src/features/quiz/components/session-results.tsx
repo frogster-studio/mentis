@@ -1,5 +1,5 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { PrimaryButton } from "@/components/ui/primary-button";
+import { Button } from "@/components/ui/button";
 import { ScreenContainer } from "@/components/ui/screen-container";
 import { ResultRow } from "@/features/quiz/components/result-row";
 import { POINTS_CASH, RESULTS_HOME_LABEL, RESULTS_REPLAY_LABEL } from "@/features/quiz/constants";
@@ -41,7 +41,7 @@ export function SessionResults({
         </View>
       </ScrollView>
       <View style={styles.footer}>
-        <PrimaryButton label={RESULTS_REPLAY_LABEL} onPress={onReplay} />
+        <Button label={RESULTS_REPLAY_LABEL} onPress={onReplay} />
         <Pressable style={styles.homeButton} onPress={onGoHome}>
           <Text style={styles.homeLabel}>{RESULTS_HOME_LABEL}</Text>
         </Pressable>

@@ -2,7 +2,7 @@ import Logo from "@assets/logo/mentis-logo.svg";
 import { useRouter } from "expo-router";
 import { CircleUser } from "lucide-react-native";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { PrimaryButton } from "@/components/ui/primary-button";
+import { Button } from "@/components/ui/button";
 import { ScreenContainer } from "@/components/ui/screen-container";
 import { useAuthStore } from "@/features/account/auth-store";
 import { ACCOUNT_TITLE, TRANSFER_DONE_HOME } from "@/features/account/constants";
@@ -50,7 +50,7 @@ export function HomeScreen() {
         )}
       </View>
       <View style={styles.footer}>
-        <PrimaryButton label={PLAY_LABEL} onPress={() => router.push("/picker")} />
+        <Button label={PLAY_LABEL} onPress={() => router.push("/picker")} />
       </View>
     </ScreenContainer>
   );

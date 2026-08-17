@@ -12,4 +12,13 @@ export const COLORS = {
   green500: "#22c55e",
   red50: "#fef2f2",
   red500: "#ef4444",
+  amber400: "#fbbf24",
+  amber500: "#f59e0b",
+  amber600: "#d97706",
+  amber900: "#78350f",
+  slate200: "#e2e8f0",
+  slate300: "#cbd5e1",
+  slate400: "#94a3b8",
+  slate500: "#64748b",
+  slate700: "#334155",
 } as const;
