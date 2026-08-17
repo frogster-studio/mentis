@@ -20,6 +20,7 @@ import { ScreenContainer } from "@/components/ui/screen-container";
 import { useAuthStore } from "@/features/account/auth-store";
 import { useSessionQuestions } from "@/features/quiz/api";
 import { CountdownRing } from "@/features/quiz/components/countdown-ring";
+import { DevSkipToResults } from "@/features/quiz/components/dev-skip-to-results";
 import { SessionResults } from "@/features/quiz/components/session-results";
 import {
   ANSWER_PLACEHOLDER,
@@ -207,6 +208,7 @@ export function SessionScreen() {
             />
           </View>
         </View>
+        <DevSkipToResults />
         <ScrollView style={styles.flex} contentContainerStyle={styles.questionContent}>
           <Text style={styles.questionText}>{activeQuestion?.text}</Text>
         </ScrollView>
