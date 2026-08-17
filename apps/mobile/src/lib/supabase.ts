@@ -12,12 +12,22 @@ if (!supabaseUrl || !supabasePublishableKey) {
   );
 }
 
+// The static web prerender runs in Node, where AsyncStorage's localStorage shim finds no window.
+const isPrerender = typeof window === "undefined";
+
+// A prerender has no signed-in Player to restore, so reads answer empty and writes go nowhere.
+const prerenderStorage = {
+  getItem: async () => null,
+  setItem: async () => undefined,
+  removeItem: async () => undefined,
+};
+
 // detectSessionInUrl stays off — mobile hands ID tokens directly; web's redirect flow comes later.
 export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
   auth: {
-    storage: AsyncStorage,
-    persistSession: true,
-    autoRefreshToken: true,
+    storage: isPrerender ? prerenderStorage : AsyncStorage,
+    persistSession: !isPrerender,
+    autoRefreshToken: !isPrerender,
     detectSessionInUrl: false,
   },
 });
