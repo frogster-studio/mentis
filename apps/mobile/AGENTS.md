@@ -16,6 +16,13 @@
 - All UI copy in **French**, defined in the feature's `constants.ts`.
 - No `theme/` folder (user decision: `utils/colors.ts` instead).
 - Lucide is the exclusive icon library.
+- **`Button` (`components/ui/button.tsx`) is the control for every primary action** — « Jouer », « Rejouer », « Valider », the Cash and Carré icon buttons. Secondary chrome stays a plain `Pressable`.
+
+  ```tsx
+  // ✅ <Button layout="circle" icon={Check} accessibilityLabel={CONFIRM_LABEL} onPress={…} />
+
+  // ❌ home profile icon, session « X » quit — these stay <Pressable>
+  ```
 - Install a dependency in the issue that first uses it (keeps knip green). Add it with `bun add` in `apps/mobile`.
 
 ## Structure
@@ -47,5 +54,11 @@ Database migrations live in `apps/api/supabase/` (shared with the back-office; h
 - Files kebab-case. Component `post-card.tsx` → exports `function PostCard` (+ `type PostCardProps` only if it has props). Screen `*-screen.tsx` → `function XxxScreen`. Hook `use-x.ts` → `function useX`. Store `store.ts` → `useQuizStore`. Queries `api.ts` → `useXxx`, `quizKeys`. Constants `constants.ts` → SCREAMING_SNAKE_CASE. Tests co-located `*.test.ts`.
 - Styling: `StyleSheet.create` in each component file. No shared style files.
 - Short files; split anything reusable into its own component. No speculative props — add a prop only when the current implementation uses it.
+- `Button`'s height, depth and press animation are module constants, never props — every button presses identically. `layout` is the only shape control (`block` | `flex` | `circle`), and `circle` takes an icon, never a label.
+
+  ```tsx
+  // ✅ <Button label="Valider" layout="flex" />
+  // ❌ <Button label="Valider" size="sm" depth={4} />
+  ```
 - Vitest targets pure TS logic only (matching, reducer, draw, scoring/stats, countdown math, batching) plus the API seam's core, which is logic like any other; no component rendering tests in v1. Supabase auth wiring stays untested. Randomness, time and I/O are always injectable.
 - Comments follow the repo rule ([docs/agents/conventions.md](../../docs/agents/conventions.md)): none by default — prefer a longer, precise name; business-logic "why" only; one short sentence max, never multi-line, file headers included.
