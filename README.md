@@ -14,7 +14,7 @@ packages/
   contracts/ # @mentis/contracts — zod request/response schemas the API publishes
 ```
 
-Each app carries a `CLAUDE.md` with its app-specific details. Admin and mobile also have a `CONTEXT.md` domain glossary (see [CONTEXT-MAP.md](CONTEXT-MAP.md)); the API has none by design — it publishes both vocabularies rather than owning one.
+Each app carries an `AGENTS.md` with its app-specific details. Admin and mobile also have a `CONTEXT.md` domain glossary (see [CONTEXT-MAP.md](CONTEXT-MAP.md)); the API has none by design — it publishes both vocabularies rather than owning one.
 
 ## Tooling
 
