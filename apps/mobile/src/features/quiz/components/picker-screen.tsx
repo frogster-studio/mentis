@@ -6,7 +6,7 @@ import { useThemes } from "@/features/quiz/api";
 import { ThemeCard } from "@/features/quiz/components/theme-card";
 import { PICKER_ERROR, PICKER_TITLE } from "@/features/quiz/constants";
 import { drawThemes } from "@/features/quiz/draw";
-import { COLORS } from "@/utils/colors";
+import { COLORS } from "@/theme/tokens";
 
 export function PickerScreen() {
   const router = useRouter();
@@ -48,7 +48,7 @@ export function PickerScreen() {
 
 const styles = StyleSheet.create({
   title: {
-    color: COLORS.fill,
+    color: COLORS.ink,
     fontSize: 22,
     fontWeight: "bold",
     textAlign: "center",
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
   },
   error: {
-    color: COLORS.textMuted,
+    color: COLORS.inkMuted,
     fontSize: 16,
     textAlign: "center",
   },

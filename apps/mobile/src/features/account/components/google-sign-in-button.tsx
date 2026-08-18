@@ -1,7 +1,7 @@
 import { Platform, Pressable, StyleSheet, Text } from "react-native";
 import { signInWithGoogle } from "@/features/account/auth";
 import { GOOGLE_SIGN_IN_LABEL } from "@/features/account/constants";
-import { COLORS } from "@/utils/colors";
+import { COLORS, PRESSED, RADIUS } from "@/theme/tokens";
 
 export type GoogleSignInButtonProps = {
   // Called when sign-in fails for a real reason (a dismissed sheet is not an error).
@@ -27,18 +27,16 @@ export function GoogleSignInButton({ onError }: GoogleSignInButtonProps) {
 const styles = StyleSheet.create({
   button: {
     height: 52,
-    borderRadius: 12,
-    backgroundColor: COLORS.panel,
-    borderColor: COLORS.strokeStrong,
+    borderRadius: RADIUS.base,
+    backgroundColor: COLORS.quiet,
+    borderColor: COLORS.stroke,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },
-  pressed: {
-    opacity: 0.85,
-  },
+  pressed: PRESSED,
   label: {
-    color: COLORS.fill,
+    color: COLORS.ink,
     fontSize: 16,
     fontWeight: "bold",
   },

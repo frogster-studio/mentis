@@ -1,11 +1,10 @@
 import type { LucideIcon } from "lucide-react-native";
 import { useRef } from "react";
 import { Animated, Easing, Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import { COLORS } from "@/utils/colors";
+import { RADIUS } from "@/theme/tokens";
 
 const HEIGHT = 52;
 const DEPTH = 6;
-const RADIUS = 16;
 const PUSH_MS = 70;
 const RELEASE_MS = 180;
 // Under this, a quick tap releases before the eye ever registers the face going down.
@@ -17,28 +16,28 @@ const NATIVE_DRIVER = Platform.OS !== "web";
 
 const PALETTES = {
   amber: {
-    face: COLORS.amber400,
-    border: COLORS.amber500,
-    shadow: COLORS.amber600,
-    text: COLORS.amber900,
+    face: "#fbbf24",
+    border: "#f59e0b",
+    shadow: "#d97706",
+    text: "#78350f",
   },
   neutral: {
-    face: COLORS.panel,
-    border: COLORS.slate200,
-    shadow: COLORS.slate300,
-    text: COLORS.slate700,
+    face: "#f1f5f9",
+    border: "#e2e8f0",
+    shadow: "#cbd5e1",
+    text: "#334155",
   },
   ghost: {
     face: "transparent",
     border: "transparent",
     shadow: "transparent",
-    text: COLORS.slate500,
+    text: "#64748b",
   },
   disabled: {
-    face: COLORS.slate200,
-    border: COLORS.slate200,
-    shadow: COLORS.slate300,
-    text: COLORS.slate400,
+    face: "#e2e8f0",
+    border: "#e2e8f0",
+    shadow: "#cbd5e1",
+    text: "#94a3b8",
   },
 } as const;
 
@@ -125,7 +124,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     height: HEIGHT,
-    borderRadius: RADIUS,
+    borderRadius: RADIUS.base,
     borderCurve: "continuous",
   },
   face: {
@@ -133,7 +132,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 20,
-    borderRadius: RADIUS,
+    borderRadius: RADIUS.base,
     borderCurve: "continuous",
     borderWidth: 2,
   },

@@ -2,8 +2,8 @@ import { Grid2x2, Pencil } from "lucide-react-native";
 import { StyleSheet, Text, View } from "react-native";
 import { RESULTS_CANONICAL_LABEL, RESULTS_NO_ANSWER } from "@/features/quiz/constants";
 import type { SessionAnswer } from "@/features/quiz/session-reducer";
+import { COLORS, RADIUS } from "@/theme/tokens";
 import type { Question } from "@/types/quiz";
-import { COLORS } from "@/utils/colors";
 
 export type ResultRowProps = {
   question: Question;
@@ -17,10 +17,10 @@ export function ResultRow({ question, answer }: ResultRowProps) {
   // Reveal the Canonical Answer unless verbatim, so a typo'd correct answer shows the spelling.
   const showCanonical = typed !== question.answer;
   const ModeIcon = answer.mode === "square" ? Grid2x2 : Pencil;
-  const accent = answer.correct ? COLORS.green500 : COLORS.red500;
+  const accent = answer.correct ? COLORS.success : COLORS.danger;
 
   return (
-    <View style={[styles.card, answer.correct ? styles.cardCorrect : styles.cardWrong]}>
+    <View style={styles.card}>
       <View style={styles.head}>
         <Text style={styles.question}>{question.text}</Text>
         <View style={[styles.chip, answer.correct ? styles.chipCorrect : styles.chipWrong]}>
@@ -42,15 +42,10 @@ export function ResultRow({ question, answer }: ResultRowProps) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 16,
+    backgroundColor: COLORS.card,
+    borderRadius: RADIUS.base,
     padding: 16,
     gap: 8,
-  },
-  cardCorrect: {
-    backgroundColor: COLORS.green50,
-  },
-  cardWrong: {
-    backgroundColor: COLORS.red50,
   },
   head: {
     flexDirection: "row",
@@ -60,26 +55,26 @@ const styles = StyleSheet.create({
   },
   question: {
     flex: 1,
-    color: COLORS.fill,
+    color: COLORS.ink,
     fontSize: 16,
     fontWeight: "bold",
     lineHeight: 22,
   },
   chip: {
-    borderRadius: 999,
+    borderRadius: RADIUS.round,
     minWidth: 36,
     paddingHorizontal: 10,
     paddingVertical: 4,
     alignItems: "center",
   },
   chipCorrect: {
-    backgroundColor: COLORS.green500,
+    backgroundColor: COLORS.success,
   },
   chipWrong: {
-    backgroundColor: COLORS.red500,
+    backgroundColor: COLORS.danger,
   },
   chipText: {
-    color: COLORS.fillOpposite,
+    color: COLORS.background,
     fontSize: 14,
     fontWeight: "bold",
   },
@@ -90,15 +85,15 @@ const styles = StyleSheet.create({
   },
   answer: {
     flex: 1,
-    color: COLORS.fill,
+    color: COLORS.ink,
     fontSize: 15,
   },
   answerEmpty: {
-    color: COLORS.textMuted,
+    color: COLORS.inkMuted,
     fontStyle: "italic",
   },
   canonical: {
-    color: COLORS.fill,
+    color: COLORS.ink,
     fontSize: 14,
   },
 });

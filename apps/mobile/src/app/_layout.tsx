@@ -3,7 +3,7 @@ import { Stack } from "expo-router";
 import { TransferPrompt } from "@/features/account/components/transfer-prompt";
 import { useOutboxSync } from "@/features/quiz/outbox-sync";
 import { persistOptions, queryClient } from "@/lib/query-client";
-import { COLORS } from "@/utils/colors";
+import { COLORS } from "@/theme/tokens";
 
 export default function RootLayout() {
   return (
@@ -19,7 +19,7 @@ function RootNavigator() {
   return (
     <>
       <Stack
-        screenOptions={{ headerShown: false, contentStyle: { backgroundColor: COLORS.surface } }}
+        screenOptions={{ headerShown: false, contentStyle: { backgroundColor: COLORS.background } }}
       />
       <TransferPrompt />
     </>

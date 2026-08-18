@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS } from "@/utils/colors";
+import { COLORS } from "@/theme/tokens";
 
 // Desktop web must not stretch edge-to-edge; on phones the cap never engages.
 const MAX_CONTENT_WIDTH = 480;
@@ -21,7 +21,7 @@ export function ScreenContainer({ children }: ScreenContainerProps) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.background,
   },
   // A wrapper under the safe area shifts KeyboardAvoidingView's frame and covers the input on iOS.
   content: {

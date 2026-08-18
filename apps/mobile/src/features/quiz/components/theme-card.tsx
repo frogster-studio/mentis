@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text } from "react-native";
-import { COLORS } from "@/utils/colors";
+import { COLORS, PRESSED, RADIUS } from "@/theme/tokens";
 
 export type ThemeCardProps = {
   name: string;
@@ -16,19 +16,17 @@ export function ThemeCard({ name, onPress }: ThemeCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.panel,
-    borderColor: COLORS.strokeDefault,
-    borderRadius: 16,
+    backgroundColor: COLORS.quiet,
+    borderColor: COLORS.stroke,
+    borderRadius: RADIUS.base,
     borderWidth: 1,
     paddingVertical: 24,
     paddingHorizontal: 16,
     alignItems: "center",
   },
-  pressed: {
-    opacity: 0.85,
-  },
+  pressed: PRESSED,
   name: {
-    color: COLORS.fill,
+    color: COLORS.ink,
     fontSize: 18,
     fontWeight: "bold",
   },

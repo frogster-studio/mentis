@@ -10,7 +10,7 @@ import { HomeThemeCard } from "@/features/quiz/components/home-theme-card";
 import { PLAY_LABEL } from "@/features/quiz/constants";
 import { useTransferStore } from "@/features/quiz/transfer-store";
 import { useHomeCards } from "@/features/quiz/use-home-cards";
-import { COLORS } from "@/utils/colors";
+import { COLORS } from "@/theme/tokens";
 
 export function HomeScreen() {
   const router = useRouter();
@@ -31,7 +31,7 @@ export function HomeScreen() {
           accessibilityLabel={ACCOUNT_TITLE}
           hitSlop={8}
         >
-          <CircleUser size={32} color={session ? COLORS.primary : COLORS.fill} />
+          <CircleUser size={32} color={session ? COLORS.primary : COLORS.ink} />
         </Pressable>
       </View>
       <View style={styles.cardsSection}>
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   transferredNote: {
-    color: COLORS.textMuted,
+    color: COLORS.inkMuted,
     fontSize: 15,
     lineHeight: 21,
     paddingHorizontal: 24,

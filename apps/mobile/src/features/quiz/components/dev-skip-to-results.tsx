@@ -5,8 +5,8 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { POINTS_CASH } from "@/features/quiz/constants";
 import type { SessionAnswer } from "@/features/quiz/session-reducer";
 import { useQuizStore } from "@/features/quiz/store";
+import { COLORS } from "@/theme/tokens";
 import type { Question } from "@/types/quiz";
-import { COLORS } from "@/utils/colors";
 
 const CORRECT_COUNTS = [0, 2, 4, 6, 8, 10];
 const DEFAULT_CORRECT_COUNT = 4;
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   count: {
-    color: COLORS.textMuted,
+    color: COLORS.inkMuted,
     fontSize: 12,
     fontWeight: "bold",
   },
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
   },
   skip: {
-    color: COLORS.textMuted,
+    color: COLORS.inkMuted,
     fontSize: 12,
     fontWeight: "bold",
     textDecorationLine: "underline",

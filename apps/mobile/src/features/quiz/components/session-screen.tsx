@@ -41,7 +41,7 @@ import { currentQuestion, sessionScore } from "@/features/quiz/session-reducer";
 import { squareChoices } from "@/features/quiz/shuffle";
 import { useStatsStore } from "@/features/quiz/stats-store";
 import { useQuizStore } from "@/features/quiz/store";
-import { COLORS } from "@/utils/colors";
+import { COLORS, RADIUS } from "@/theme/tokens";
 
 export function SessionScreen() {
   const { themeId, name } = useLocalSearchParams<{ themeId: string; name: string }>();
@@ -194,7 +194,7 @@ export function SessionScreen() {
             accessibilityLabel={QUIT_LABEL}
             hitSlop={8}
           >
-            <X color={COLORS.fill} size={26} />
+            <X color={COLORS.ink} size={26} />
           </Pressable>
           <View style={styles.headerRight}>
             <View style={styles.badge}>
@@ -249,7 +249,7 @@ export function SessionScreen() {
               blurOnSubmit={false}
               submitBehavior="submit"
               placeholder={ANSWER_PLACEHOLDER}
-              placeholderTextColor={COLORS.textMuted}
+              placeholderTextColor={COLORS.inkMuted}
               autoFocus
               autoCapitalize="none"
               autoCorrect={false}
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   error: {
-    color: COLORS.textMuted,
+    color: COLORS.inkMuted,
     fontSize: 16,
     textAlign: "center",
   },
@@ -318,15 +318,15 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   badge: {
-    backgroundColor: COLORS.panel,
-    borderColor: COLORS.strokeDefault,
+    backgroundColor: COLORS.quiet,
+    borderColor: COLORS.stroke,
     borderWidth: 1,
-    borderRadius: 999,
+    borderRadius: RADIUS.round,
     paddingHorizontal: 14,
     paddingVertical: 6,
   },
   badgeText: {
-    color: COLORS.fill,
+    color: COLORS.ink,
     fontSize: 16,
     fontWeight: "bold",
   },
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
   },
   questionText: {
-    color: COLORS.fill,
+    color: COLORS.ink,
     fontSize: 24,
     fontWeight: "bold",
     lineHeight: 32,
@@ -353,12 +353,12 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     height: 52,
-    backgroundColor: COLORS.panel,
-    borderColor: COLORS.strokeStrong,
+    backgroundColor: COLORS.quiet,
+    borderColor: COLORS.stroke,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: RADIUS.base,
     paddingHorizontal: 16,
-    color: COLORS.fill,
+    color: COLORS.ink,
     fontSize: 18,
   },
   squareFooter: {
@@ -375,10 +375,10 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     flexBasis: "45%",
     minHeight: 72,
-    borderRadius: 12,
+    borderRadius: RADIUS.base,
     borderWidth: 2,
-    borderColor: COLORS.strokeStrong,
-    backgroundColor: COLORS.panel,
+    borderColor: COLORS.stroke,
+    backgroundColor: COLORS.quiet,
     paddingHorizontal: 14,
     alignItems: "center",
     justifyContent: "center",
@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
   },
   choiceText: {
-    color: COLORS.fill,
+    color: COLORS.ink,
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",

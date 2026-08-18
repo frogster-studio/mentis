@@ -4,8 +4,8 @@ import { ScreenContainer } from "@/components/ui/screen-container";
 import { ResultRow } from "@/features/quiz/components/result-row";
 import { POINTS_CASH, RESULTS_HOME_LABEL, RESULTS_REPLAY_LABEL } from "@/features/quiz/constants";
 import { type SessionAnswer, sessionScore } from "@/features/quiz/session-reducer";
+import { COLORS } from "@/theme/tokens";
 import type { Question } from "@/types/quiz";
-import { COLORS } from "@/utils/colors";
 
 export type SessionResultsProps = {
   themeName: string;
@@ -66,12 +66,12 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   score: {
-    color: COLORS.fill,
+    color: COLORS.ink,
     fontSize: 48,
     fontWeight: "bold",
   },
   theme: {
-    color: COLORS.textMuted,
+    color: COLORS.inkMuted,
     fontSize: 18,
     fontWeight: "bold",
     textAlign: "center",
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   footer: {
-    borderTopColor: COLORS.strokeDefault,
+    borderTopColor: COLORS.stroke,
     borderTopWidth: 1,
     paddingHorizontal: 24,
     paddingTop: 12,
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   homeLabel: {
-    color: COLORS.textMuted,
+    color: COLORS.inkMuted,
     fontSize: 15,
     fontWeight: "bold",
   },

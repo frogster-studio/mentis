@@ -13,7 +13,7 @@ import { useStatsStore } from "@/features/quiz/stats-store";
 import { shouldOfferTransfer } from "@/features/quiz/stats-transfer";
 import { useTransferStore } from "@/features/quiz/transfer-store";
 import { transferDeviceStats } from "@/features/quiz/transfer-sync";
-import { COLORS } from "@/utils/colors";
+import { COLORS, PRESSED, RADIUS } from "@/theme/tokens";
 
 export function TransferPrompt() {
   const playerId = useAuthStore((state) => state.session?.user.id);
@@ -49,7 +49,7 @@ export function TransferPrompt() {
           onPress={onAccept}
         >
           {transfer.isPending ? (
-            <ActivityIndicator color={COLORS.fillOpposite} />
+            <ActivityIndicator color={COLORS.background} />
           ) : (
             <Text style={styles.acceptLabel}>{TRANSFER_ACCEPT_LABEL}</Text>
           )}
@@ -68,7 +68,7 @@ export function TransferPrompt() {
 
 const styles = StyleSheet.create({
   error: {
-    color: COLORS.red500,
+    color: COLORS.danger,
     fontSize: 14,
     textAlign: "center",
   },
@@ -77,29 +77,27 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   button: {
-    borderRadius: 12,
+    borderRadius: RADIUS.base,
     paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
   },
-  pressed: {
-    opacity: 0.85,
-  },
+  pressed: PRESSED,
   acceptButton: {
     backgroundColor: COLORS.primary,
   },
   acceptLabel: {
-    color: COLORS.fillOpposite,
+    color: COLORS.background,
     fontSize: 16,
     fontWeight: "bold",
   },
   declineButton: {
-    backgroundColor: COLORS.panel,
-    borderColor: COLORS.strokeStrong,
+    backgroundColor: COLORS.quiet,
+    borderColor: COLORS.stroke,
     borderWidth: 1,
   },
   declineLabel: {
-    color: COLORS.fill,
+    color: COLORS.ink,
     fontSize: 16,
     fontWeight: "bold",
   },

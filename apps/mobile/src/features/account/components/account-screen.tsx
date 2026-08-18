@@ -29,7 +29,7 @@ import {
 import { deleteAccount } from "@/features/account/delete-account";
 import { drainOutbox } from "@/features/quiz/outbox-sync";
 import { useTransferStore } from "@/features/quiz/transfer-store";
-import { COLORS } from "@/utils/colors";
+import { COLORS, PRESSED, RADIUS } from "@/theme/tokens";
 
 export function AccountScreen() {
   const router = useRouter();
@@ -51,7 +51,7 @@ export function AccountScreen() {
           accessibilityLabel={ACCOUNT_BACK_LABEL}
           hitSlop={8}
         >
-          <ChevronLeft size={28} color={COLORS.fill} />
+          <ChevronLeft size={28} color={COLORS.ink} />
         </Pressable>
         <Text style={styles.title}>{ACCOUNT_TITLE}</Text>
         {/* Balances the back button's width so the title stays optically centered. */}
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   title: {
-    color: COLORS.fill,
+    color: COLORS.ink,
     fontSize: 22,
     fontWeight: "bold",
   },
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     paddingTop: 32,
   },
   pitch: {
-    color: COLORS.fill,
+    color: COLORS.ink,
     fontSize: 18,
     lineHeight: 26,
   },
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     paddingTop: 32,
   },
   email: {
-    color: COLORS.fill,
+    color: COLORS.ink,
     fontSize: 17,
   },
   footer: {
@@ -185,23 +185,21 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   error: {
-    color: COLORS.red500,
+    color: COLORS.danger,
     fontSize: 14,
     textAlign: "center",
   },
   signOutButton: {
-    backgroundColor: COLORS.panel,
-    borderColor: COLORS.strokeStrong,
+    backgroundColor: COLORS.quiet,
+    borderColor: COLORS.stroke,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: RADIUS.base,
     paddingVertical: 16,
     alignItems: "center",
   },
-  pressed: {
-    opacity: 0.85,
-  },
+  pressed: PRESSED,
   signOutLabel: {
-    color: COLORS.fill,
+    color: COLORS.ink,
     fontSize: 16,
     fontWeight: "bold",
   },
@@ -211,7 +209,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   deleteLabel: {
-    color: COLORS.red500,
+    color: COLORS.danger,
     fontSize: 15,
   },
 });

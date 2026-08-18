@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 import Svg, { Circle } from "react-native-svg";
-import { COLORS } from "@/utils/colors";
+import { COLORS } from "@/theme/tokens";
 
 export type CountdownRingProps = {
   fraction: number;
@@ -20,7 +20,7 @@ export function CountdownRing({ fraction, seconds }: CountdownRingProps) {
           cx={SIZE / 2}
           cy={SIZE / 2}
           r={RADIUS}
-          stroke={COLORS.strokeStrong}
+          stroke={COLORS.stroke}
           strokeWidth={STROKE_WIDTH}
           fill="none"
         />
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   seconds: {
-    color: COLORS.fill,
+    color: COLORS.ink,
     fontSize: 16,
     fontWeight: "bold",
   },

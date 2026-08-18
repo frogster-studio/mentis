@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
-import { COLORS } from "@/utils/colors";
+import { COLORS, RADIUS } from "@/theme/tokens";
 
 export type ModalCardProps = {
   visible: boolean;
@@ -55,19 +55,19 @@ const styles = StyleSheet.create({
   card: {
     width: "100%",
     maxWidth: 360,
-    backgroundColor: COLORS.surface,
-    borderRadius: 16,
+    backgroundColor: COLORS.background,
+    borderRadius: RADIUS.base,
     padding: 24,
     gap: 8,
   },
   title: {
-    color: COLORS.fill,
+    color: COLORS.ink,
     fontSize: 20,
     fontWeight: "bold",
     textAlign: "center",
   },
   message: {
-    color: COLORS.textMuted,
+    color: COLORS.inkMuted,
     fontSize: 15,
     textAlign: "center",
     lineHeight: 21,
