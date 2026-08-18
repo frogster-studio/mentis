@@ -5,7 +5,8 @@ import Link from "next/link";
 import { CardListToolbar } from "@/app/card-list-toolbar";
 import { CardRowLink } from "@/app/card-row-link";
 import { CardSocials } from "@/app/card-socials";
-import { MentisLogo } from "@/components/mentis-logo";
+import { LogoMark } from "@/components/logo-mark";
+import { LogoWordmark } from "@/components/logo-wordmark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -65,9 +66,10 @@ export async function CardLibrary({
         <Link
           href="/"
           aria-label="Mentis — Card library"
-          className="justify-self-start rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="flex items-center gap-2 justify-self-start rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
-          <MentisLogo className="h-7 w-auto" />
+          <LogoMark className="size-6" />
+          <LogoWordmark className="h-3.5 w-auto" />
         </Link>
         <Tooltip>
           <TooltipTrigger asChild>

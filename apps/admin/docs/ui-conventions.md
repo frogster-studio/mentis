@@ -6,10 +6,10 @@ per feature. Area-specific choices live in their issue, not here.
 one radius, 2–3 type sizes, Lexend headings / Poppins body, lucide only.)
 
 ## Brand
-- The yellow `#F7C400` is **brand-mark only** (logo spark, favicon). It is never a UI
-  accent — no yellow buttons, links, rings, or highlights. Sky stays the only UI accent.
-- The logo renders as a **two-tone lockup**: spark `#F7C400`, wordmark `currentColor`
-  (foreground). Inline SVG component, not an `<img>`, so the wordmark follows the theme.
+- The orange `#F59E0B` is **brand-mark only** (the Mark, favicon). It is never a UI
+  accent — no orange buttons, links, rings, or highlights. Sky stays the only UI accent.
+- Brand art is two inline SVG components, never an `<img>`: `LogoMark` with `#F59E0B`
+  baked, `LogoWordmark` in `currentColor` so the lettering follows the theme.
 
 ## App chrome
 - The app header is a **sticky translucent bar**: `sticky top-0 z-40 bg-background/80

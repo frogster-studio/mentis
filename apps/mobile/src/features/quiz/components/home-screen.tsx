@@ -1,7 +1,7 @@
-import Logo from "@assets/logo/mentis-logo.svg";
 import { useRouter } from "expo-router";
 import { CircleUser } from "lucide-react-native";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { LogoWordmark } from "@/components/logo-wordmark";
 import { Button } from "@/components/ui/button";
 import { ScreenContainer } from "@/components/ui/screen-container";
 import { useAuthStore } from "@/features/account/auth-store";
@@ -25,7 +25,7 @@ export function HomeScreen() {
   return (
     <ScreenContainer>
       <View style={styles.header}>
-        <Logo width={140} height={40} />
+        <LogoWordmark color={COLORS.ink} width={140} />
         {/* Opens the « Compte » screen; tinted primary while signed in, muted while signed out. */}
         <Pressable
           onPress={() => router.push("/account")}
