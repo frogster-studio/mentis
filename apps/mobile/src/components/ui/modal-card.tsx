@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { TEXT } from "@/theme/text";
-import { COLORS, RADIUS } from "@/theme/tokens";
+import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
 
 export type ModalCardProps = {
   visible: boolean;
@@ -51,15 +51,15 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.scrim,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 32,
+    paddingHorizontal: SPACE.xxl,
   },
   card: {
     width: "100%",
     maxWidth: 360,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.card,
     borderRadius: RADIUS.base,
-    padding: 24,
-    gap: 8,
+    padding: SPACE.xl,
+    gap: SPACE.sm,
   },
   title: {
     ...TEXT.cardTitle,

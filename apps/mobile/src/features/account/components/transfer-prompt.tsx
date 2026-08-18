@@ -1,6 +1,8 @@
 import { useMutation } from "@tanstack/react-query";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import { Button } from "@/components/ui/button";
 import { ModalCard } from "@/components/ui/modal-card";
+import { QuietButton } from "@/components/ui/quiet-button";
 import { useAuthStore } from "@/features/account/auth-store";
 import {
   TRANSFER_ACCEPT_LABEL,
@@ -14,7 +16,7 @@ import { shouldOfferTransfer } from "@/features/quiz/stats-transfer";
 import { useTransferStore } from "@/features/quiz/transfer-store";
 import { transferDeviceStats } from "@/features/quiz/transfer-sync";
 import { TEXT } from "@/theme/text";
-import { COLORS, PRESSED, RADIUS } from "@/theme/tokens";
+import { COLORS, SPACE } from "@/theme/tokens";
 
 export function TransferPrompt() {
   const playerId = useAuthStore((state) => state.session?.user.id);
@@ -44,24 +46,12 @@ export function TransferPrompt() {
     >
       {transfer.isError ? <Text style={styles.error}>{TRANSFER_ERROR}</Text> : null}
       <View style={styles.actions}>
-        <Pressable
-          style={({ pressed }) => [styles.button, styles.acceptButton, pressed && styles.pressed]}
-          disabled={transfer.isPending}
-          onPress={onAccept}
-        >
-          {transfer.isPending ? (
-            <ActivityIndicator color={COLORS.background} />
-          ) : (
-            <Text style={styles.acceptLabel}>{TRANSFER_ACCEPT_LABEL}</Text>
-          )}
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [styles.button, styles.declineButton, pressed && styles.pressed]}
-          disabled={transfer.isPending}
+        <Button label={TRANSFER_ACCEPT_LABEL} onPress={onAccept} disabled={transfer.isPending} />
+        <QuietButton
+          label={TRANSFER_DECLINE_LABEL}
           onPress={decline}
-        >
-          <Text style={styles.declineLabel}>{TRANSFER_DECLINE_LABEL}</Text>
-        </Pressable>
+          disabled={transfer.isPending}
+        />
       </View>
     </ModalCard>
   );
@@ -74,30 +64,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   actions: {
-    gap: 12,
-    marginTop: 16,
-  },
-  button: {
-    borderRadius: RADIUS.base,
-    paddingVertical: 14,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  pressed: PRESSED,
-  acceptButton: {
-    backgroundColor: COLORS.primary,
-  },
-  acceptLabel: {
-    ...TEXT.label,
-    color: COLORS.background,
-  },
-  declineButton: {
-    backgroundColor: COLORS.quiet,
-    borderColor: COLORS.stroke,
-    borderWidth: 1,
-  },
-  declineLabel: {
-    ...TEXT.label,
-    color: COLORS.ink,
+    gap: SPACE.md,
+    marginTop: SPACE.lg,
   },
 });

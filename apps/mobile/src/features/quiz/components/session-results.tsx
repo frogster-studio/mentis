@@ -5,7 +5,7 @@ import { ResultRow } from "@/features/quiz/components/result-row";
 import { POINTS_CASH, RESULTS_HOME_LABEL, RESULTS_REPLAY_LABEL } from "@/features/quiz/constants";
 import { type SessionAnswer, sessionScore } from "@/features/quiz/session-reducer";
 import { TEXT } from "@/theme/text";
-import { COLORS } from "@/theme/tokens";
+import { COLORS, PRESSED } from "@/theme/tokens";
 import type { Question } from "@/types/quiz";
 
 export type SessionResultsProps = {
@@ -43,7 +43,10 @@ export function SessionResults({
       </ScrollView>
       <View style={styles.footer}>
         <Button label={RESULTS_REPLAY_LABEL} onPress={onReplay} />
-        <Pressable style={styles.homeButton} onPress={onGoHome}>
+        <Pressable
+          style={({ pressed }) => [styles.homeButton, pressed && styles.pressed]}
+          onPress={onGoHome}
+        >
           <Text style={styles.homeLabel}>{RESULTS_HOME_LABEL}</Text>
         </Pressable>
       </View>
@@ -90,6 +93,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: "center",
   },
+  pressed: PRESSED,
   homeLabel: {
     ...TEXT.label,
     color: COLORS.inkMuted,

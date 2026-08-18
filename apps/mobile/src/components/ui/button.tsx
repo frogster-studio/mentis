@@ -1,50 +1,35 @@
 import type { LucideIcon } from "lucide-react-native";
-import { useRef } from "react";
-import { Animated, Easing, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
+import { PRESS_DEPTH, usePressSink } from "@/components/ui/use-press-sink";
 import { TEXT } from "@/theme/text";
-import { RADIUS } from "@/theme/tokens";
+import { COLORS, CONTROL_HEIGHT, RADIUS } from "@/theme/tokens";
 
-const HEIGHT = 52;
-const DEPTH = 6;
-const PUSH_MS = 70;
-const RELEASE_MS = 180;
-// Under this, a quick tap releases before the eye ever registers the face going down.
-const MIN_HOLD_MS = 90;
-const PUSH_EASING = Easing.bezier(0.4, 0, 1, 1);
-const RELEASE_EASING = Easing.bezier(0.16, 1, 0.3, 1);
-// Web has no native animated module and warns on every press; it falls back to JS anyway.
-const NATIVE_DRIVER = Platform.OS !== "web";
+const QUIET_SHADOW = "#CFCFCF";
 
 const PALETTES = {
-  amber: {
-    face: "#fbbf24",
-    border: "#f59e0b",
-    shadow: "#d97706",
-    text: "#78350f",
+  primary: {
+    face: "#FBBF24",
+    border: "#F59E0B",
+    shadow: "#D97706",
+    text: "#78350F",
   },
-  neutral: {
-    face: "#f1f5f9",
-    border: "#e2e8f0",
-    shadow: "#cbd5e1",
-    text: "#334155",
-  },
-  ghost: {
-    face: "transparent",
-    border: "transparent",
-    shadow: "transparent",
-    text: "#64748b",
+  quiet: {
+    face: COLORS.quiet,
+    border: COLORS.quiet,
+    shadow: QUIET_SHADOW,
+    text: COLORS.ink,
   },
   disabled: {
-    face: "#e2e8f0",
-    border: "#e2e8f0",
-    shadow: "#cbd5e1",
-    text: "#94a3b8",
+    face: COLORS.quiet,
+    border: COLORS.quiet,
+    shadow: QUIET_SHADOW,
+    text: COLORS.inkMuted,
   },
 } as const;
 
 type ButtonBaseProps = {
   onPress: () => void;
-  theme?: "amber" | "neutral" | "ghost";
+  theme?: "primary" | "quiet";
   disabled?: boolean;
 };
 
@@ -55,31 +40,10 @@ export type ButtonProps = ButtonBaseProps &
   );
 
 export function Button(props: ButtonProps) {
-  const { onPress, theme = "amber", disabled = false } = props;
-  const travel = useRef(new Animated.Value(0)).current;
-  const pressedAt = useRef(0);
+  const { onPress, theme = "primary", disabled = false } = props;
+  const { travel, pressIn, pressOut } = usePressSink();
   const palette = PALETTES[disabled ? "disabled" : theme];
   const isCircle = props.layout === "circle";
-
-  const pressIn = () => {
-    pressedAt.current = Date.now();
-    Animated.timing(travel, {
-      toValue: DEPTH,
-      duration: PUSH_MS,
-      easing: PUSH_EASING,
-      useNativeDriver: NATIVE_DRIVER,
-    }).start();
-  };
-
-  const pressOut = () => {
-    Animated.timing(travel, {
-      toValue: 0,
-      duration: RELEASE_MS,
-      delay: Math.max(0, MIN_HOLD_MS - (Date.now() - pressedAt.current)),
-      easing: RELEASE_EASING,
-      useNativeDriver: NATIVE_DRIVER,
-    }).start();
-  };
 
   return (
     <Pressable
@@ -115,21 +79,21 @@ export function Button(props: ButtonProps) {
 
 const styles = StyleSheet.create({
   // Holding the travel inside the layout box keeps everything around the button still as it sinks.
-  root: { height: HEIGHT + DEPTH },
+  root: { height: CONTROL_HEIGHT + PRESS_DEPTH },
   block: { alignSelf: "stretch" },
   flex: { flex: 1 },
-  circle: { width: HEIGHT },
+  circle: { width: CONTROL_HEIGHT },
   shadow: {
     position: "absolute",
     left: 0,
     right: 0,
     bottom: 0,
-    height: HEIGHT,
+    height: CONTROL_HEIGHT,
     borderRadius: RADIUS.base,
     borderCurve: "continuous",
   },
   face: {
-    height: HEIGHT,
+    height: CONTROL_HEIGHT,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 20,

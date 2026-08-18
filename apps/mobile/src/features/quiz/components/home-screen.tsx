@@ -11,7 +11,7 @@ import { PLAY_LABEL } from "@/features/quiz/constants";
 import { useTransferStore } from "@/features/quiz/transfer-store";
 import { useHomeCards } from "@/features/quiz/use-home-cards";
 import { TEXT } from "@/theme/text";
-import { COLORS } from "@/theme/tokens";
+import { COLORS, PRESSED } from "@/theme/tokens";
 
 export function HomeScreen() {
   const router = useRouter();
@@ -28,6 +28,7 @@ export function HomeScreen() {
         <LogoWordmark color={COLORS.ink} width={140} />
         {/* Opens the « Compte » screen; tinted primary while signed in, muted while signed out. */}
         <Pressable
+          style={({ pressed }) => pressed && styles.pressed}
           onPress={() => router.push("/account")}
           accessibilityLabel={ACCOUNT_TITLE}
           hitSlop={8}
@@ -65,6 +66,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 16,
   },
+  pressed: PRESSED,
   // The flex fill keeps « Jouer » pinned to the bottom of the screen.
   cardsSection: {
     flex: 1,

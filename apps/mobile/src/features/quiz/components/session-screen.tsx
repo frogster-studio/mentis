@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { QuietButton } from "@/components/ui/quiet-button";
 import { ScreenContainer } from "@/components/ui/screen-container";
 import { useAuthStore } from "@/features/account/auth-store";
 import { useSessionQuestions } from "@/features/quiz/api";
@@ -42,7 +43,7 @@ import { squareChoices } from "@/features/quiz/shuffle";
 import { useStatsStore } from "@/features/quiz/stats-store";
 import { useQuizStore } from "@/features/quiz/store";
 import { TEXT } from "@/theme/text";
-import { COLORS, RADIUS } from "@/theme/tokens";
+import { COLORS, CONTROL_HEIGHT, RADIUS } from "@/theme/tokens";
 
 export function SessionScreen() {
   const { themeId, name } = useLocalSearchParams<{ themeId: string; name: string }>();
@@ -189,14 +190,12 @@ export function SessionScreen() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={styles.header}>
-          <Pressable
-            style={styles.quitButton}
-            onPress={() => setQuitVisible(true)}
+          <QuietButton
+            layout="circle"
+            icon={X}
             accessibilityLabel={QUIT_LABEL}
-            hitSlop={8}
-          >
-            <X color={COLORS.ink} size={26} />
-          </Pressable>
+            onPress={() => setQuitVisible(true)}
+          />
           <View style={styles.headerRight}>
             <View style={styles.badge}>
               <Text style={styles.badgeText}>
@@ -261,7 +260,7 @@ export function SessionScreen() {
               icon={Grid2x2}
               accessibilityLabel={SQUARE_SWITCH_LABEL}
               onPress={onSwitchToSquare}
-              theme="neutral"
+              theme="quiet"
             />
             <Button
               layout="circle"
@@ -308,11 +307,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 8,
   },
-  // The negative margin pulls the glyph flush with the gutter while keeping the touch target.
-  quitButton: {
-    padding: 4,
-    marginLeft: -4,
-  },
   headerRight: {
     flexDirection: "row",
     alignItems: "center",
@@ -350,7 +344,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     minWidth: 0,
-    height: 52,
+    height: CONTROL_HEIGHT,
     backgroundColor: COLORS.quiet,
     borderColor: COLORS.stroke,
     borderWidth: 1,

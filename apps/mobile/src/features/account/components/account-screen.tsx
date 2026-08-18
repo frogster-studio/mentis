@@ -4,6 +4,7 @@ import { ChevronLeft } from "lucide-react-native";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { QuietButton } from "@/components/ui/quiet-button";
 import { ScreenContainer } from "@/components/ui/screen-container";
 import { signOut } from "@/features/account/auth";
 import { useAuthStore } from "@/features/account/auth-store";
@@ -30,7 +31,7 @@ import { deleteAccount } from "@/features/account/delete-account";
 import { drainOutbox } from "@/features/quiz/outbox-sync";
 import { useTransferStore } from "@/features/quiz/transfer-store";
 import { TEXT } from "@/theme/text";
-import { COLORS, PRESSED, RADIUS } from "@/theme/tokens";
+import { COLORS, PRESSED } from "@/theme/tokens";
 
 export function AccountScreen() {
   const router = useRouter();
@@ -48,6 +49,7 @@ export function AccountScreen() {
     <ScreenContainer>
       <View style={styles.header}>
         <Pressable
+          style={({ pressed }) => pressed && styles.pressed}
           onPress={() => router.back()}
           accessibilityLabel={ACCOUNT_BACK_LABEL}
           hitSlop={8}
@@ -73,12 +75,7 @@ export function AccountScreen() {
             {accountDeletion.isError ? (
               <Text style={styles.error}>{DELETE_ACCOUNT_ERROR}</Text>
             ) : null}
-            <Pressable
-              style={({ pressed }) => [styles.signOutButton, pressed && styles.pressed]}
-              onPress={() => setSignOutVisible(true)}
-            >
-              <Text style={styles.signOutLabel}>{SIGN_OUT_LABEL}</Text>
-            </Pressable>
+            <QuietButton label={SIGN_OUT_LABEL} onPress={() => setSignOutVisible(true)} />
             {/* Gated behind its own confirmation (App Store guideline 5.1.1(v)). */}
             <Pressable
               style={({ pressed }) => [styles.deleteButton, pressed && styles.pressed]}
@@ -188,19 +185,7 @@ const styles = StyleSheet.create({
     color: COLORS.danger,
     textAlign: "center",
   },
-  signOutButton: {
-    backgroundColor: COLORS.quiet,
-    borderColor: COLORS.stroke,
-    borderWidth: 1,
-    borderRadius: RADIUS.base,
-    paddingVertical: 16,
-    alignItems: "center",
-  },
   pressed: PRESSED,
-  signOutLabel: {
-    ...TEXT.label,
-    color: COLORS.ink,
-  },
   // Visually secondary to sign-out, so the irreversible action never reads as the default.
   deleteButton: {
     paddingVertical: 12,

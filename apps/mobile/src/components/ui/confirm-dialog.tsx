@@ -1,7 +1,8 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { Button } from "@/components/ui/button";
 import { ModalCard } from "@/components/ui/modal-card";
-import { TEXT } from "@/theme/text";
-import { COLORS, PRESSED, RADIUS } from "@/theme/tokens";
+import { QuietButton } from "@/components/ui/quiet-button";
+import { SPACE } from "@/theme/tokens";
 
 export type ConfirmDialogProps = {
   visible: boolean;
@@ -30,19 +31,10 @@ export function ConfirmDialog({
       onRequestClose={onCancel}
       onBackdropPress={onCancel}
     >
+      {/* The destructive action takes the quiet slot, so the emphasis never invites the damage. */}
       <View style={styles.actions}>
-        <Pressable
-          style={({ pressed }) => [styles.button, styles.confirmButton, pressed && styles.pressed]}
-          onPress={onConfirm}
-        >
-          <Text style={styles.confirmLabel}>{confirmLabel}</Text>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [styles.button, styles.cancelButton, pressed && styles.pressed]}
-          onPress={onCancel}
-        >
-          <Text style={styles.cancelLabel}>{cancelLabel}</Text>
-        </Pressable>
+        <QuietButton layout="flex" label={confirmLabel} onPress={onConfirm} />
+        <Button layout="flex" label={cancelLabel} onPress={onCancel} />
       </View>
     </ModalCard>
   );
@@ -51,30 +43,8 @@ export function ConfirmDialog({
 const styles = StyleSheet.create({
   actions: {
     flexDirection: "row",
-    gap: 12,
-    marginTop: 16,
-  },
-  button: {
-    flex: 1,
-    borderRadius: RADIUS.base,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  pressed: PRESSED,
-  confirmButton: {
-    backgroundColor: COLORS.quiet,
-    borderColor: COLORS.stroke,
-    borderWidth: 1,
-  },
-  confirmLabel: {
-    ...TEXT.label,
-    color: COLORS.ink,
-  },
-  cancelButton: {
-    backgroundColor: COLORS.primary,
-  },
-  cancelLabel: {
-    ...TEXT.label,
-    color: COLORS.background,
+    alignItems: "flex-start",
+    gap: SPACE.md,
+    marginTop: SPACE.lg,
   },
 });
