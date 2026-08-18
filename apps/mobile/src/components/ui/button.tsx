@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react-native";
-import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Animated, Pressable, StyleSheet, Text, View } from "react-native";
 import { PRESS_DEPTH, usePressSink } from "@/components/ui/use-press-sink";
 import { TEXT } from "@/theme/text";
 import { COLORS, CONTROL_HEIGHT, RADIUS } from "@/theme/tokens";
@@ -31,6 +31,7 @@ type ButtonBaseProps = {
   onPress: () => void;
   theme?: "primary" | "quiet";
   disabled?: boolean;
+  pending?: boolean;
 };
 
 export type ButtonProps = ButtonBaseProps &
@@ -40,9 +41,10 @@ export type ButtonProps = ButtonBaseProps &
   );
 
 export function Button(props: ButtonProps) {
-  const { onPress, theme = "primary", disabled = false } = props;
+  const { onPress, theme = "primary", disabled = false, pending = false } = props;
   const { travel, pressIn, pressOut } = usePressSink();
-  const palette = PALETTES[disabled ? "disabled" : theme];
+  const isInert = disabled || pending;
+  const palette = PALETTES[isInert ? "disabled" : theme];
   const isCircle = props.layout === "circle";
 
   return (
@@ -50,7 +52,7 @@ export function Button(props: ButtonProps) {
       onPress={onPress}
       onPressIn={pressIn}
       onPressOut={pressOut}
-      disabled={disabled}
+      disabled={isInert}
       accessibilityRole="button"
       accessibilityLabel={props.layout === "circle" ? props.accessibilityLabel : props.label}
       style={[styles.root, styles[props.layout ?? "block"]]}
@@ -67,7 +69,9 @@ export function Button(props: ButtonProps) {
           },
         ]}
       >
-        {props.layout === "circle" ? (
+        {pending ? (
+          <ActivityIndicator size="small" color={palette.text} />
+        ) : props.layout === "circle" ? (
           <props.icon size={20} color={palette.text} />
         ) : (
           <Text style={[styles.label, { color: palette.text }]}>{props.label}</Text>

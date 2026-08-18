@@ -3,7 +3,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Check, Grid2x2, X } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   AppState,
   KeyboardAvoidingView,
   Platform,
@@ -18,6 +17,8 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { QuietButton } from "@/components/ui/quiet-button";
 import { ScreenContainer } from "@/components/ui/screen-container";
+import { ScreenError } from "@/components/ui/screen-error";
+import { ScreenLoading } from "@/components/ui/screen-loading";
 import { useAuthStore } from "@/features/account/auth-store";
 import { useSessionQuestions } from "@/features/quiz/api";
 import { CountdownRing } from "@/features/quiz/components/countdown-ring";
@@ -48,7 +49,7 @@ import { COLORS, CONTROL_HEIGHT, RADIUS } from "@/theme/tokens";
 export function SessionScreen() {
   const { themeId, name } = useLocalSearchParams<{ themeId: string; name: string }>();
   const router = useRouter();
-  const { data: questions, isPending } = useSessionQuestions(themeId);
+  const { data: questions, isPending, isFetching, refetch } = useSessionQuestions(themeId);
 
   const session = useQuizStore((state) => state.session);
   const startSession = useQuizStore((state) => state.startSession);
@@ -153,13 +154,21 @@ export function SessionScreen() {
   if (!session) {
     return (
       <ScreenContainer>
-        <View style={styles.centered}>
-          {isPending ? (
-            <ActivityIndicator color={COLORS.primary} size="large" />
-          ) : (
-            <Text style={styles.error}>{SESSION_ERROR}</Text>
-          )}
+        {/* Nothing is under way yet, so the quit control leaves straight away — no confirmation. */}
+        <View style={styles.header}>
+          <QuietButton
+            layout="circle"
+            icon={X}
+            accessibilityLabel={QUIT_LABEL}
+            onPress={() => router.dismissTo("/")}
+          />
         </View>
+        {/* A retry leaves the query in "error" until it lands, so the spinner stands in for it. */}
+        {isPending || isFetching ? (
+          <ScreenLoading />
+        ) : (
+          <ScreenError message={SESSION_ERROR} onRetry={() => void refetch()} />
+        )}
       </ScreenContainer>
     );
   }
@@ -288,17 +297,6 @@ export function SessionScreen() {
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 24,
-  },
-  error: {
-    ...TEXT.body,
-    color: COLORS.inkMuted,
-    textAlign: "center",
   },
   header: {
     flexDirection: "row",

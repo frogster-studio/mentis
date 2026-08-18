@@ -46,7 +46,7 @@ export function TransferPrompt() {
     >
       {transfer.isError ? <Text style={styles.error}>{TRANSFER_ERROR}</Text> : null}
       <View style={styles.actions}>
-        <Button label={TRANSFER_ACCEPT_LABEL} onPress={onAccept} disabled={transfer.isPending} />
+        <Button label={TRANSFER_ACCEPT_LABEL} onPress={onAccept} pending={transfer.isPending} />
         <QuietButton
           label={TRANSFER_DECLINE_LABEL}
           onPress={decline}

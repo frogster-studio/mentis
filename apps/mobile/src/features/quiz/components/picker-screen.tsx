@@ -1,7 +1,9 @@
 import { useRouter } from "expo-router";
 import { useMemo } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text } from "react-native";
 import { ScreenContainer } from "@/components/ui/screen-container";
+import { ScreenError } from "@/components/ui/screen-error";
+import { ScreenLoading } from "@/components/ui/screen-loading";
 import { useThemes } from "@/features/quiz/api";
 import { ThemeCard } from "@/features/quiz/components/theme-card";
 import { PICKER_ERROR, PICKER_TITLE } from "@/features/quiz/constants";
@@ -11,18 +13,18 @@ import { COLORS } from "@/theme/tokens";
 
 export function PickerScreen() {
   const router = useRouter();
-  const { data, isPending, isError } = useThemes();
+  const { data, isPending, isError, isFetching, refetch } = useThemes();
   // One Draw per visit: recomputed on every mount, stable while the screen stays up.
   const draw = useMemo(() => (data ? drawThemes(data, Math.random) : []), [data]);
 
   return (
     <ScreenContainer>
       <Text style={styles.title}>{PICKER_TITLE}</Text>
-      {isPending || isError ? (
-        <View style={styles.centered}>
-          {isPending ? <ActivityIndicator color={COLORS.primary} size="large" /> : null}
-          {isError ? <Text style={styles.error}>{PICKER_ERROR}</Text> : null}
-        </View>
+      {/* A retry leaves the query in "error" until it lands, so the spinner stands in for it. */}
+      {isPending || (isError && isFetching) ? (
+        <ScreenLoading />
+      ) : isError ? (
+        <ScreenError message={PICKER_ERROR} onRetry={() => void refetch()} />
       ) : (
         <ScrollView
           style={styles.flex}
@@ -58,20 +60,9 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  centered: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 24,
-  },
   list: {
     gap: 12,
     paddingHorizontal: 24,
     paddingVertical: 24,
-  },
-  error: {
-    ...TEXT.body,
-    color: COLORS.inkMuted,
-    textAlign: "center",
   },
 });

@@ -2,10 +2,11 @@ import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { ChevronLeft } from "lucide-react-native";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { QuietButton } from "@/components/ui/quiet-button";
 import { ScreenContainer } from "@/components/ui/screen-container";
+import { ScreenLoading } from "@/components/ui/screen-loading";
 import { signOut } from "@/features/account/auth";
 import { useAuthStore } from "@/features/account/auth-store";
 import { AppleSignInButton } from "@/features/account/components/apple-sign-in-button";
@@ -62,9 +63,7 @@ export function AccountScreen() {
       </View>
 
       {isLoading ? (
-        <View style={styles.centered}>
-          <ActivityIndicator color={COLORS.primary} size="large" />
-        </View>
+        <ScreenLoading />
       ) : user ? (
         <View style={styles.body}>
           {/* The provider is never shown in v1: the email is the identity. */}
@@ -149,11 +148,6 @@ const styles = StyleSheet.create({
   // Matches the back icon's tap target so the title is centered between them.
   headerSpacer: {
     width: 28,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
   },
   // The flex fill keeps the pitch / identity near the top and pins the action to the bottom.
   body: {

@@ -20,6 +20,8 @@ export const SPACE = {
   xxl: 32,
 } as const;
 
+export const GUTTER = SPACE.lg;
+
 export const RADIUS = {
   base: 16,
   round: 999,

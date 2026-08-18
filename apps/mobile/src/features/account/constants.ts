@@ -12,7 +12,7 @@ export const SIGN_OUT_MESSAGE = "Tes statistiques restent en sécurité sur ton 
 export const SIGN_OUT_CONFIRM_LABEL = "Se déconnecter";
 export const SIGN_OUT_CANCEL_LABEL = "Annuler";
 
-export const SIGN_IN_ERROR = "La connexion a échoué. Réessaie.";
+export const SIGN_IN_ERROR = "La connexion a échoué.";
 
 // A move, not a copy — declining keeps the stats on the device, re-offered at the next sign-in.
 export const TRANSFER_TITLE = "Récupère tes statistiques";
@@ -20,7 +20,7 @@ export const TRANSFER_MESSAGE =
   "Tu as déjà des statistiques sur cet appareil. Transfère-les sur ton compte pour les retrouver sur tous tes appareils. Elles quitteront cet appareil pour vivre sur ton compte.";
 export const TRANSFER_ACCEPT_LABEL = "Transférer";
 export const TRANSFER_DECLINE_LABEL = "Plus tard";
-export const TRANSFER_ERROR = "Le transfert a échoué. Réessaie.";
+export const TRANSFER_ERROR = "Le transfert a échoué.";
 
 // The shelf is empty because the stats moved to the Account, not because nothing was played.
 export const TRANSFER_DONE_HOME = "Tes statistiques sont maintenant sur ton compte.";
@@ -32,4 +32,4 @@ export const DELETE_ACCOUNT_MESSAGE =
   "Ton compte et toutes tes statistiques enregistrées seront définitivement supprimés. Cette action est irréversible.";
 export const DELETE_ACCOUNT_CONFIRM_LABEL = "Supprimer";
 export const DELETE_ACCOUNT_CANCEL_LABEL = "Annuler";
-export const DELETE_ACCOUNT_ERROR = "La suppression a échoué. Réessaie.";
+export const DELETE_ACCOUNT_ERROR = "La suppression a échoué.";
