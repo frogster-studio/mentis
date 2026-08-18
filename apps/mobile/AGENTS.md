@@ -66,7 +66,13 @@ Database migrations live in `apps/api/supabase/` (shared with the back-office; h
   ```
 - **`Card`** is the card surface — plain `View`, pressable only via its optional `onPress` (`PRESSED` baked in); card anatomy is never re-composed outside it. `ModalCard` is deliberately independent of it.
 - Pushed screens draw their own header row: `QuietButton` circle left (chevron = back, X = quit), `TEXT.screenTitle` centered, balancing spacer right. Wherever content scrolls beneath chrome — headers, CTA bands — that chrome is the blur-band recipe, never a hard clip.
+- **Overlaid chrome owns its safe-area inset.** A band pinned over content runs to the screen edge and pads its own row by the inset; the screen under it drops that edge from `ScreenContainer` and pads content by the chrome's full height.
+
+  ```tsx
+  // ✅ <ScreenContainer edges={TAB_SCREEN_EDGES}> + paddingTop: useAppHeaderHeight()
+  // ❌ an absolute band at top: 0 inside a SafeAreaView that already padded the top
+  ```
 - Feedback states are never bespoke: a pending query renders `ScreenLoading`, a failed one `ScreenError` (pass `onRetry` when a refetch can succeed) — both fill the content area while the screen's chrome stays. Error text is always `TEXT.body` in `danger`, centered. A pending mutation sets its `Button`'s `pending` flag (disables + spinner replaces the label) — never a freestanding spinner.
-- **Motion**: bespoke animation is a closed set — the Button press sink and the Countdown ring. Sanctioned stock motion: `ModalCard`'s `fade`, the tab bar's `shift`, platform-default stack pushes. Every other change is a hard cut by design. No animation libraries.
+- **Motion**: bespoke animation is a closed set — the Button press sink, the Countdown ring, and the tab carousel (a `sceneStyleInterpolator` sliding both scenes a full screen width in lockstep). Sanctioned stock motion: `ModalCard`'s `fade`, platform-default stack pushes. Every other change is a hard cut by design. No animation libraries.
 - Vitest targets pure TS logic only (matching, reducer, draw, scoring/stats, countdown math, batching) plus the API seam's core, which is logic like any other; no component rendering tests in v1. Supabase auth wiring stays untested. Randomness, time and I/O are always injectable.
 - Comments follow the repo rule ([docs/agents/conventions.md](../../docs/agents/conventions.md)): none by default — prefer a longer, precise name; business-logic "why" only; one short sentence max, never multi-line, file headers included.
