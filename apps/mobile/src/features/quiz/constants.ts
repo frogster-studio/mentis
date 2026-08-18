@@ -1,3 +1,4 @@
+export const HOME_TAB_LABEL = "Accueil";
 export const PLAY_LABEL = "Jouer";
 export const PICKER_TITLE = "Choisis un thème";
 export const PICKER_ERROR = "Impossible de charger les thèmes.";
