@@ -97,6 +97,17 @@ describe("foldAccountStats", () => {
     expect({ baselines, synced, pending }).toStrictEqual(snapshot);
   });
 
+  it("counts a still-pending session in « N parties », so the caption is right offline too", () => {
+    const baselines: StatBaseline[] = [
+      { themeId: "geo", themeName: "Géographie", totalPoints: 20, sessionCount: 1 },
+    ];
+    const synced: AccountSession[] = [{ themeId: "geo", themeName: "Géographie", points: 30 }];
+    const pending: AccountSession[] = [{ themeId: "geo", themeName: "Géographie", points: 25 }];
+    expect(homeCards(foldAccountStats(baselines, synced, pending))).toStrictEqual([
+      { id: "geo", name: "Géographie", average: 25, sessionCount: 3 },
+    ]);
+  });
+
   it("feeds the existing home shelf, keeping a Theme absent from any catalog by its captured name", () => {
     // A Theme id no catalog knows still renders: its name was captured when the session recorded.
     const synced: AccountSession[] = [
@@ -104,7 +115,7 @@ describe("foldAccountStats", () => {
       { themeId: "retired-2024", themeName: "Thème disparu", points: 30 },
     ];
     expect(homeCards(foldAccountStats([], synced, []))).toStrictEqual([
-      { id: "retired-2024", name: "Thème disparu", average: 35 },
+      { id: "retired-2024", name: "Thème disparu", average: 35, sessionCount: 2 },
     ]);
   });
 });

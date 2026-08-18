@@ -6,6 +6,9 @@ import { COLORS, CONTROL_HEIGHT, RADIUS } from "@/theme/tokens";
 
 const QUIET_SHADOW = "#CFCFCF";
 
+// The sink travels inside the layout box, so chrome around a Button clears this, not CONTROL_HEIGHT.
+export const BUTTON_BOX_HEIGHT = CONTROL_HEIGHT + PRESS_DEPTH;
+
 const PALETTES = {
   primary: {
     face: "#FBBF24",
@@ -83,7 +86,7 @@ export function Button(props: ButtonProps) {
 
 const styles = StyleSheet.create({
   // Holding the travel inside the layout box keeps everything around the button still as it sinks.
-  root: { height: CONTROL_HEIGHT + PRESS_DEPTH },
+  root: { height: BUTTON_BOX_HEIGHT },
   block: { alignSelf: "stretch" },
   flex: { flex: 1 },
   circle: { width: CONTROL_HEIGHT },

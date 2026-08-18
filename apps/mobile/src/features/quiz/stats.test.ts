@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { type DeviceStats, formatAverage, homeCards, recordSession, themeAverage } from "./stats";
+import {
+  type DeviceStats,
+  formatAverage,
+  formatSessionCount,
+  homeCards,
+  recordSession,
+  themeAverage,
+} from "./stats";
 
 describe("recordSession", () => {
   it("creates a theme entry capturing the name on the first finished session", () => {
@@ -84,6 +91,17 @@ describe("formatAverage", () => {
   });
 });
 
+describe("formatSessionCount", () => {
+  it("keeps « partie » singular at one session", () => {
+    expect(formatSessionCount(1)).toBe("1 partie");
+  });
+
+  it("pluralises beyond one, uncapped", () => {
+    expect(formatSessionCount(2)).toBe("2 parties");
+    expect(formatSessionCount(137)).toBe("137 parties");
+  });
+});
+
 describe("homeCards", () => {
   it("is empty on a fresh install (nothing played)", () => {
     expect(homeCards({})).toStrictEqual([]);
@@ -95,8 +113,8 @@ describe("homeCards", () => {
       simpson: { name: "Les Simpson", totalPoints: 35, sessionCount: 1 }, // avg 35
     };
     expect(homeCards(stats)).toStrictEqual([
-      { id: "simpson", name: "Les Simpson", average: 35 },
-      { id: "geo", name: "Géographie", average: 10 },
+      { id: "simpson", name: "Les Simpson", average: 35, sessionCount: 1 },
+      { id: "geo", name: "Géographie", average: 10, sessionCount: 2 },
     ]);
   });
 
@@ -105,13 +123,15 @@ describe("homeCards", () => {
       "marie-antoinette": { name: "Marie Antoinette", totalPoints: 40, sessionCount: 1 },
     };
     expect(homeCards(stats)).toStrictEqual([
-      { id: "marie-antoinette", name: "Marie Antoinette", average: 40 },
+      { id: "marie-antoinette", name: "Marie Antoinette", average: 40, sessionCount: 1 },
     ]);
   });
 
   it("keeps a played but zero-point theme on the shelf (average 0)", () => {
     const stats: DeviceStats = { geo: { name: "Géographie", totalPoints: 0, sessionCount: 1 } };
-    expect(homeCards(stats)).toStrictEqual([{ id: "geo", name: "Géographie", average: 0 }]);
+    expect(homeCards(stats)).toStrictEqual([
+      { id: "geo", name: "Géographie", average: 0, sessionCount: 1 },
+    ]);
   });
 
   it("omits an entry with zero sessions (never rendered as a shelf card)", () => {

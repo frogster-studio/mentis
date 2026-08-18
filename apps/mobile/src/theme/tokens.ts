@@ -27,6 +27,10 @@ export const RADIUS = {
   round: 999,
 } as const;
 
+export const SHADOW = {
+  card: "0px 3px 5px rgba(0, 0, 0, 0.02)",
+} as const;
+
 export const PRESSED = {
   opacity: 0.85,
 } as const;

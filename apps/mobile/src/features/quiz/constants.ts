@@ -1,5 +1,7 @@
 export const HOME_TAB_LABEL = "Accueil";
-export const PLAY_LABEL = "Jouer";
+export const PLAY_LABEL = "Commencer";
+export const SESSION_COUNT_SINGULAR = "partie";
+export const SESSION_COUNT_PLURAL = "parties";
 export const PICKER_TITLE = "Choisis un thème";
 export const PICKER_ERROR = "Impossible de charger les thèmes.";
 export const SESSION_ERROR = "Impossible de charger les questions.";

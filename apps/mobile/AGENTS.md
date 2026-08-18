@@ -64,6 +64,18 @@ Database migrations live in `apps/api/supabase/` (shared with the back-office; h
   // ✅ <Button label="Valider" layout="flex" />
   // ❌ <Button label="Valider" size="sm" depth={4} />
   ```
+- **A fixed slot holds its widest string and nothing more.** Where a row pairs a fixed column with a flexing one, spare width goes to the flex side, never into the slot.
+
+  ```tsx
+  // ✅ const STAT_SLOT_WIDTH = 82;  // « 37,5/50 » measures 77.4
+  // ❌ const STAT_SLOT_WIDTH = 96;  // same string, padded « to be safe »
+  ```
+- **When a size is a judgement call, take the smaller one.** Marks, numerals and fixed slots start at the low end of what still reads; the flexing content takes the width that frees.
+
+  ```tsx
+  // ✅ const WORDMARK_WIDTH = 92;   // beside a 32pt profile icon
+  // ❌ const WORDMARK_WIDTH = 140;  // mark outweighs everything in the row
+  ```
 - **`Card`** is the card surface — plain `View`, pressable only via its optional `onPress` (`PRESSED` baked in); card anatomy is never re-composed outside it. `ModalCard` is deliberately independent of it.
 - Pushed screens draw their own header row: `QuietButton` circle left (chevron = back, X = quit), `TEXT.screenTitle` centered, balancing spacer right. Wherever content scrolls beneath chrome — headers, CTA bands — that chrome is the blur-band recipe, never a hard clip.
 - **Overlaid chrome owns its safe-area inset.** A band pinned over content runs to the screen edge and pads its own row by the inset; the screen under it drops that edge from `ScreenContainer` and pads content by the chrome's full height.

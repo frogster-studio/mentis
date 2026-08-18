@@ -14,6 +14,6 @@ export const TEXT = {
   cardTitle: { fontFamily: FACES.heading, fontSize: 18, lineHeight: 24 },
   screenTitle: { fontFamily: FACES.heading, fontSize: 22, lineHeight: 28 },
   question: { fontFamily: FACES.heading, fontSize: 26, lineHeight: 34 },
-  statValue: { fontFamily: FACES.emphasis, fontSize: 32, lineHeight: 36 },
+  statValue: { fontFamily: FACES.emphasis, fontSize: 26, lineHeight: 32 },
   heroScore: { fontFamily: FACES.emphasis, fontSize: 72, lineHeight: 76 },
 } as const satisfies Record<string, TextStyle>;

@@ -1,3 +1,5 @@
+import { SESSION_COUNT_PLURAL, SESSION_COUNT_SINGULAR } from "./constants";
+
 export type ThemeStat = {
   // Captured at record time so home rendering needs no catalog query and works offline.
   name: string;
@@ -13,6 +15,7 @@ export type HomeCard = {
   id: string;
   name: string;
   average: number;
+  sessionCount: number;
 };
 
 export function recordSession(
@@ -43,11 +46,20 @@ export function formatAverage(value: number): string {
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1).replace(".", ",");
 }
 
+export function formatSessionCount(count: number): string {
+  return `${count} ${count === 1 ? SESSION_COUNT_SINGULAR : SESSION_COUNT_PLURAL}`;
+}
+
 export function homeCards(stats: DeviceStats): HomeCard[] {
   const cards: HomeCard[] = [];
   for (const [id, stat] of Object.entries(stats)) {
     if (stat.sessionCount > 0) {
-      cards.push({ id, name: stat.name, average: themeAverage(stat) });
+      cards.push({
+        id,
+        name: stat.name,
+        average: themeAverage(stat),
+        sessionCount: stat.sessionCount,
+      });
     }
   }
   cards.sort((a, b) => b.average - a.average);
