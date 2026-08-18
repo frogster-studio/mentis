@@ -13,7 +13,7 @@ The optional cross-platform identity a Player signs into with Google or Apple. I
 _Avoid_: user, profile, login
 
 **Quiz Session**:
-One run of 10 Questions drawn from a single Theme chosen by the player. It is Finished once all 10 Questions have resolved; only Finished sessions produce a score (revealed at the end) and feed Theme Averages.
+One run of 10 Questions drawn from a single Theme chosen by the player. It is Finished once all 10 Questions have resolved; only Finished sessions produce a score (revealed at the end) and feed Theme Averages. French UI label: « partie ».
 _Avoid_: game, round, quiz (alone)
 
 **Abandoned Session**:
@@ -25,7 +25,7 @@ A narrow, specific subject (« Marie Antoinette », « Les Simpson », « Chocol
 _Avoid_: category, topic, sujet
 
 **Draw**:
-The 10 Themes offered on the picker screen after « Jouer », sampled uniformly at random (no re-roll) among eligible Themes — those with at least 10 linked Questions. If fewer than 10 Themes are eligible, all of them are offered. « Rejouer » from the results page triggers a fresh Draw.
+The 10 Themes offered on the picker screen after « Commencer », sampled uniformly at random (no re-roll) among eligible Themes — those with at least 10 linked Questions. If fewer than 10 Themes are eligible, all of them are offered. No Draw happens on the results page: « Rejouer, même thème » starts a new Quiz Session on the same Theme.
 _Avoid_: random themes, selection
 
 **Theme Average**:
@@ -79,3 +79,15 @@ _Avoid_: answer validation, AI check
 
 **Answer (of the player)**:
 Whatever stands at the moment of submission: the input text (Cash) or the selected choice (Square). Submission happens at Countdown expiry, or earlier if the player explicitly confirms. Empty or wrong answers score 0 — there is no partial credit and no penalty.
+
+**Onboarding**:
+The one-time welcome screen shown on a device's first launch — Mark over Wordmark, one « Commencer » button whose press accepts the legal terms and reveals the app. Never shown again on that device.
+_Avoid_: welcome screen, splash (that's the loading gate)
+
+**Mark**:
+The Mentis starburst glyph, the brand's symbol. Rendered by `LogoMark`.
+_Avoid_: logo (alone)
+
+**Wordmark**:
+The « mentis » lettering, rendered by `LogoWordmark`. Mark and Wordmark never form a fixed lockup; each surface composes them.
+_Avoid_: logo (alone)

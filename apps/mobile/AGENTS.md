@@ -12,16 +12,17 @@
 
 ## Hard constraints
 
-- Colors **only** from `src/utils/colors.ts` (`COLORS`) — no hex literals in components (`app.json` is the one exception, static config). System font, regular and bold only.
-- All UI copy in **French**, defined in the feature's `constants.ts`.
-- No `theme/` folder (user decision: `utils/colors.ts` instead).
-- Lucide is the exclusive icon library.
-- **`Button` (`components/ui/button.tsx`) is the control for every primary action** — « Jouer », « Rejouer », « Valider », the Cash and Carré icon buttons. Secondary chrome stays a plain `Pressable`.
+- Colors **only** from the `COLORS` roles in `src/theme/tokens.ts` — a color the table lacks becomes a new role, never a local hex. Two carve-outs: `app.json` (static config) and the press-system palette (module constants in `Button`, shared by `SquareButton`).
+- Spacing, radius and shadow come off the token ladders — `SPACE`/`GUTTER`, `RADIUS`, `SHADOW` via the `boxShadow` style prop (never `elevation` or the `shadow*` triple). Screens pick ladder steps, no free integers.
+- Text styles **only** from `TEXT` (in `src/theme/`) — no `fontFamily`/`fontSize`/`fontWeight`/`lineHeight` literals in components (dev-only debug text excepted). Three faces, never more: **Lexend Bold** for content headings, **Poppins SemiBold** for numerals and UI emphasis, **Poppins Regular** for everything else — `fontWeight` is never set, the face file *is* the weight. Font files in `assets/fonts/` under their PostScript names; a missing file fails the build, a runtime load failure falls back to the system font.
+- All UI copy in **French** — feature copy in the feature's `constants.ts`, shared-ui copy a module constant beside its primitive.
+- Icons are Lucide. The only bespoke glyphs are hand-drawn `react-native-svg` components (the two tab icons, `LogoMark`, `LogoWordmark`) — an svg drawing becomes a component, never an imported file.
+- **`Button`** is the control for every primary action; **`QuietButton`** for every other faced control (dialog actions, sign-in, the quit and back circles); glyph-only and text-only taps stay a bare `Pressable` dimmed with `PRESSED` — never a third button look. Only `Button` and `SquareButton` sink, through the one shared press mechanic.
 
   ```tsx
-  // ✅ <Button layout="circle" icon={Check} accessibilityLabel={CONFIRM_LABEL} onPress={…} />
-
-  // ❌ home profile icon, session « X » quit — these stay <Pressable>
+  // ✅ <Button label="Commencer" layout="block" />
+  // ✅ <QuietButton layout="circle" icon={X} accessibilityLabel={QUIT_LABEL} />
+  // ❌ a Pressable given its own face styles — that's a third look; use QuietButton
   ```
 - Install a dependency in the issue that first uses it (keeps knip green). Add it with `bun add` in `apps/mobile`.
 
@@ -29,14 +30,17 @@
 
 ```
 src/
-  app/            # expo-router routes — thin files only (re-export/compose from features)
-  features/quiz/  # quiz play: components/, api.ts, store.ts, constants.ts
-  features/account/ # sign-in, the « Compte » screen, account deletion
-  components/     # shared composed components; components/ui/ for shared primitives
-  lib/            # api/ (the seam), query client, supabase (auth only)
-  utils/          # colors.ts, chunk.ts
-  types/quiz.ts   # canonical domain types
-assets/           # root: all static assets — images/ + expo.icon/ (app icons via app.json), logo/ (imported via the @assets/* alias)
+  app/                 # expo-router routes — thin files only (re-export/compose from features)
+  features/quiz/       # quiz play: components/, api.ts, store.ts, constants.ts
+  features/account/    # sign-in, the « Compte » screen, account deletion
+  features/onboarding/ # the once-per-device welcome gate + its store
+  features/world/      # « Monde » tab placeholder
+  components/          # shared composed components; components/ui/ for shared primitives
+  lib/                 # api/ (the seam), query client, supabase (auth only)
+  theme/               # design tokens: COLORS, SPACE, RADIUS, SHADOW, TEXT…
+  utils/               # chunk.ts
+  types/quiz.ts        # canonical domain types
+assets/                # root: all static assets — images/ + fonts/ + expo.icon/ (app icons via app.json)
 ```
 
 ## Data access
@@ -52,13 +56,17 @@ Database migrations live in `apps/api/supabase/` (shared with the back-office; h
 ## Conventions
 
 - Files kebab-case. Component `post-card.tsx` → exports `function PostCard` (+ `type PostCardProps` only if it has props). Screen `*-screen.tsx` → `function XxxScreen`. Hook `use-x.ts` → `function useX`. Store `store.ts` → `useQuizStore`. Queries `api.ts` → `useXxx`, `quizKeys`. Constants `constants.ts` → SCREAMING_SNAKE_CASE. Tests co-located `*.test.ts`.
-- Styling: `StyleSheet.create` in each component file. No shared style files.
+- Styling: `StyleSheet.create` in each component file, composing the `src/theme/` tokens — the repo's only shared style module.
 - Short files; split anything reusable into its own component. No speculative props — add a prop only when the current implementation uses it.
-- `Button`'s height, depth and press animation are module constants, never props — every button presses identically. `layout` is the only shape control (`block` | `flex` | `circle`), and `circle` takes an icon, never a label.
+- Control geometry and the press animation are shared constants (`CONTROL_HEIGHT`, the extracted press mechanic), never props — every button presses identically. `layout` is the only shape control (`block` | `flex` | `circle`), and `circle` takes an icon, never a label.
 
   ```tsx
   // ✅ <Button label="Valider" layout="flex" />
   // ❌ <Button label="Valider" size="sm" depth={4} />
   ```
+- **`Card`** is the card surface — plain `View`, pressable only via its optional `onPress` (`PRESSED` baked in); card anatomy is never re-composed outside it. `ModalCard` is deliberately independent of it.
+- Pushed screens draw their own header row: `QuietButton` circle left (chevron = back, X = quit), `TEXT.screenTitle` centered, balancing spacer right. Wherever content scrolls beneath chrome — headers, CTA bands — that chrome is the blur-band recipe, never a hard clip.
+- Feedback states are never bespoke: a pending query renders `ScreenLoading`, a failed one `ScreenError` (pass `onRetry` when a refetch can succeed) — both fill the content area while the screen's chrome stays. Error text is always `TEXT.body` in `danger`, centered. A pending mutation sets its `Button`'s `pending` flag (disables + spinner replaces the label) — never a freestanding spinner.
+- **Motion**: bespoke animation is a closed set — the Button press sink and the Countdown ring. Sanctioned stock motion: `ModalCard`'s `fade`, the tab bar's `shift`, platform-default stack pushes. Every other change is a hard cut by design. No animation libraries.
 - Vitest targets pure TS logic only (matching, reducer, draw, scoring/stats, countdown math, batching) plus the API seam's core, which is logic like any other; no component rendering tests in v1. Supabase auth wiring stays untested. Randomness, time and I/O are always injectable.
 - Comments follow the repo rule ([docs/agents/conventions.md](../../docs/agents/conventions.md)): none by default — prefer a longer, precise name; business-logic "why" only; one short sentence max, never multi-line, file headers included.
