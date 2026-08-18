@@ -10,6 +10,7 @@ import { HomeThemeCard } from "@/features/quiz/components/home-theme-card";
 import { PLAY_LABEL } from "@/features/quiz/constants";
 import { useTransferStore } from "@/features/quiz/transfer-store";
 import { useHomeCards } from "@/features/quiz/use-home-cards";
+import { TEXT } from "@/theme/text";
 import { COLORS } from "@/theme/tokens";
 
 export function HomeScreen() {
@@ -76,9 +77,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   transferredNote: {
+    ...TEXT.body,
     color: COLORS.inkMuted,
-    fontSize: 15,
-    lineHeight: 21,
     paddingHorizontal: 24,
   },
   footer: {

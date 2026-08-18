@@ -41,6 +41,7 @@ import { currentQuestion, sessionScore } from "@/features/quiz/session-reducer";
 import { squareChoices } from "@/features/quiz/shuffle";
 import { useStatsStore } from "@/features/quiz/stats-store";
 import { useQuizStore } from "@/features/quiz/store";
+import { TEXT } from "@/theme/text";
 import { COLORS, RADIUS } from "@/theme/tokens";
 
 export function SessionScreen() {
@@ -296,8 +297,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   error: {
+    ...TEXT.body,
     color: COLORS.inkMuted,
-    fontSize: 16,
     textAlign: "center",
   },
   header: {
@@ -326,19 +327,16 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   badgeText: {
+    ...TEXT.label,
     color: COLORS.ink,
-    fontSize: 16,
-    fontWeight: "bold",
   },
   questionContent: {
     paddingHorizontal: 24,
     paddingVertical: 24,
   },
   questionText: {
+    ...TEXT.question,
     color: COLORS.ink,
-    fontSize: 24,
-    fontWeight: "bold",
-    lineHeight: 32,
   },
   // Top-aligned so the input lines up with the buttons' faces, leaving their plates below it.
   footer: {
@@ -356,10 +354,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.quiet,
     borderColor: COLORS.stroke,
     borderWidth: 1,
+    ...TEXT.body,
     borderRadius: RADIUS.base,
     paddingHorizontal: 16,
     color: COLORS.ink,
-    fontSize: 18,
   },
   squareFooter: {
     gap: 12,
@@ -387,9 +385,8 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
   },
   choiceText: {
+    ...TEXT.label,
     color: COLORS.ink,
-    fontSize: 16,
-    fontWeight: "bold",
     textAlign: "center",
   },
 });

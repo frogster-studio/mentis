@@ -6,6 +6,7 @@ import { useThemes } from "@/features/quiz/api";
 import { ThemeCard } from "@/features/quiz/components/theme-card";
 import { PICKER_ERROR, PICKER_TITLE } from "@/features/quiz/constants";
 import { drawThemes } from "@/features/quiz/draw";
+import { TEXT } from "@/theme/text";
 import { COLORS } from "@/theme/tokens";
 
 export function PickerScreen() {
@@ -48,9 +49,8 @@ export function PickerScreen() {
 
 const styles = StyleSheet.create({
   title: {
+    ...TEXT.screenTitle,
     color: COLORS.ink,
-    fontSize: 22,
-    fontWeight: "bold",
     textAlign: "center",
     paddingTop: 24,
     paddingHorizontal: 24,
@@ -70,8 +70,8 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
   },
   error: {
+    ...TEXT.body,
     color: COLORS.inkMuted,
-    fontSize: 16,
     textAlign: "center",
   },
 });

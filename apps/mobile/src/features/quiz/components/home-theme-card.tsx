@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 import { MAX_SESSION_SCORE } from "@/features/quiz/constants";
 import { formatAverage } from "@/features/quiz/stats";
+import { TEXT } from "@/theme/text";
 import { COLORS, RADIUS } from "@/theme/tokens";
 
 export type HomeThemeCardProps = {
@@ -36,18 +37,15 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   value: {
+    ...TEXT.statValue,
     color: COLORS.ink,
-    fontSize: 30,
-    fontWeight: "bold",
   },
   max: {
+    ...TEXT.label,
     color: COLORS.inkMuted,
-    fontSize: 16,
-    fontWeight: "bold",
   },
   name: {
+    ...TEXT.captionStrong,
     color: COLORS.ink,
-    fontSize: 14,
-    fontWeight: "bold",
   },
 });

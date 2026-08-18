@@ -29,6 +29,7 @@ import {
 import { deleteAccount } from "@/features/account/delete-account";
 import { drainOutbox } from "@/features/quiz/outbox-sync";
 import { useTransferStore } from "@/features/quiz/transfer-store";
+import { TEXT } from "@/theme/text";
 import { COLORS, PRESSED, RADIUS } from "@/theme/tokens";
 
 export function AccountScreen() {
@@ -145,9 +146,8 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   title: {
+    ...TEXT.screenTitle,
     color: COLORS.ink,
-    fontSize: 22,
-    fontWeight: "bold",
   },
   // Matches the back icon's tap target so the title is centered between them.
   headerSpacer: {
@@ -168,25 +168,24 @@ const styles = StyleSheet.create({
     paddingTop: 32,
   },
   pitch: {
+    ...TEXT.cardTitle,
     color: COLORS.ink,
-    fontSize: 18,
-    lineHeight: 26,
   },
   identity: {
     flex: 1,
     paddingTop: 32,
   },
   email: {
+    ...TEXT.body,
     color: COLORS.ink,
-    fontSize: 17,
   },
   footer: {
     paddingBottom: 16,
     gap: 12,
   },
   error: {
+    ...TEXT.body,
     color: COLORS.danger,
-    fontSize: 14,
     textAlign: "center",
   },
   signOutButton: {
@@ -199,9 +198,8 @@ const styles = StyleSheet.create({
   },
   pressed: PRESSED,
   signOutLabel: {
+    ...TEXT.label,
     color: COLORS.ink,
-    fontSize: 16,
-    fontWeight: "bold",
   },
   // Visually secondary to sign-out, so the irreversible action never reads as the default.
   deleteButton: {
@@ -209,7 +207,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   deleteLabel: {
+    ...TEXT.body,
     color: COLORS.danger,
-    fontSize: 15,
   },
 });

@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text } from "react-native";
+import { TEXT } from "@/theme/text";
 import { COLORS, PRESSED, RADIUS } from "@/theme/tokens";
 
 export type ThemeCardProps = {
@@ -26,8 +27,7 @@ const styles = StyleSheet.create({
   },
   pressed: PRESSED,
   name: {
+    ...TEXT.cardTitle,
     color: COLORS.ink,
-    fontSize: 18,
-    fontWeight: "bold",
   },
 });

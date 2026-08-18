@@ -1,6 +1,7 @@
 import { Platform, Pressable, StyleSheet, Text } from "react-native";
 import { signInWithGoogle } from "@/features/account/auth";
 import { GOOGLE_SIGN_IN_LABEL } from "@/features/account/constants";
+import { TEXT } from "@/theme/text";
 import { COLORS, PRESSED, RADIUS } from "@/theme/tokens";
 
 export type GoogleSignInButtonProps = {
@@ -36,8 +37,7 @@ const styles = StyleSheet.create({
   },
   pressed: PRESSED,
   label: {
+    ...TEXT.label,
     color: COLORS.ink,
-    fontSize: 16,
-    fontWeight: "bold",
   },
 });

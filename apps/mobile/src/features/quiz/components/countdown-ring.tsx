@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 import Svg, { Circle } from "react-native-svg";
+import { TEXT } from "@/theme/text";
 import { COLORS } from "@/theme/tokens";
 
 export type CountdownRingProps = {
@@ -59,8 +60,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   seconds: {
+    ...TEXT.label,
     color: COLORS.ink,
-    fontSize: 16,
-    fontWeight: "bold",
   },
 });

@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ModalCard } from "@/components/ui/modal-card";
+import { TEXT } from "@/theme/text";
 import { COLORS, PRESSED, RADIUS } from "@/theme/tokens";
 
 export type ConfirmDialogProps = {
@@ -66,16 +67,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   confirmLabel: {
+    ...TEXT.label,
     color: COLORS.ink,
-    fontSize: 16,
-    fontWeight: "bold",
   },
   cancelButton: {
     backgroundColor: COLORS.primary,
   },
   cancelLabel: {
+    ...TEXT.label,
     color: COLORS.background,
-    fontSize: 16,
-    fontWeight: "bold",
   },
 });

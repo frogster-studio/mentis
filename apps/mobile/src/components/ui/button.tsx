@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react-native";
 import { useRef } from "react";
 import { Animated, Easing, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { TEXT } from "@/theme/text";
 import { RADIUS } from "@/theme/tokens";
 
 const HEIGHT = 52;
@@ -140,8 +141,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
   label: {
-    fontSize: 16,
-    fontWeight: "bold",
+    ...TEXT.label,
     userSelect: "none",
   },
 });

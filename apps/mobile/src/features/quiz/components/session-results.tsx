@@ -4,6 +4,7 @@ import { ScreenContainer } from "@/components/ui/screen-container";
 import { ResultRow } from "@/features/quiz/components/result-row";
 import { POINTS_CASH, RESULTS_HOME_LABEL, RESULTS_REPLAY_LABEL } from "@/features/quiz/constants";
 import { type SessionAnswer, sessionScore } from "@/features/quiz/session-reducer";
+import { TEXT } from "@/theme/text";
 import { COLORS } from "@/theme/tokens";
 import type { Question } from "@/types/quiz";
 
@@ -66,14 +67,12 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   score: {
+    ...TEXT.heroScore,
     color: COLORS.ink,
-    fontSize: 48,
-    fontWeight: "bold",
   },
   theme: {
+    ...TEXT.cardTitle,
     color: COLORS.inkMuted,
-    fontSize: 18,
-    fontWeight: "bold",
     textAlign: "center",
   },
   rows: {
@@ -92,8 +91,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   homeLabel: {
+    ...TEXT.label,
     color: COLORS.inkMuted,
-    fontSize: 15,
-    fontWeight: "bold",
   },
 });

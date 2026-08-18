@@ -13,6 +13,7 @@ import { useStatsStore } from "@/features/quiz/stats-store";
 import { shouldOfferTransfer } from "@/features/quiz/stats-transfer";
 import { useTransferStore } from "@/features/quiz/transfer-store";
 import { transferDeviceStats } from "@/features/quiz/transfer-sync";
+import { TEXT } from "@/theme/text";
 import { COLORS, PRESSED, RADIUS } from "@/theme/tokens";
 
 export function TransferPrompt() {
@@ -68,8 +69,8 @@ export function TransferPrompt() {
 
 const styles = StyleSheet.create({
   error: {
+    ...TEXT.body,
     color: COLORS.danger,
-    fontSize: 14,
     textAlign: "center",
   },
   actions: {
@@ -87,9 +88,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
   },
   acceptLabel: {
+    ...TEXT.label,
     color: COLORS.background,
-    fontSize: 16,
-    fontWeight: "bold",
   },
   declineButton: {
     backgroundColor: COLORS.quiet,
@@ -97,8 +97,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   declineLabel: {
+    ...TEXT.label,
     color: COLORS.ink,
-    fontSize: 16,
-    fontWeight: "bold",
   },
 });

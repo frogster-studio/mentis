@@ -2,6 +2,7 @@ import { Grid2x2, Pencil } from "lucide-react-native";
 import { StyleSheet, Text, View } from "react-native";
 import { RESULTS_CANONICAL_LABEL, RESULTS_NO_ANSWER } from "@/features/quiz/constants";
 import type { SessionAnswer } from "@/features/quiz/session-reducer";
+import { TEXT } from "@/theme/text";
 import { COLORS, RADIUS } from "@/theme/tokens";
 import type { Question } from "@/types/quiz";
 
@@ -54,11 +55,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   question: {
+    ...TEXT.cardTitle,
     flex: 1,
     color: COLORS.ink,
-    fontSize: 16,
-    fontWeight: "bold",
-    lineHeight: 22,
   },
   chip: {
     borderRadius: RADIUS.round,
@@ -74,9 +73,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.danger,
   },
   chipText: {
+    ...TEXT.captionStrong,
     color: COLORS.background,
-    fontSize: 14,
-    fontWeight: "bold",
   },
   answerRow: {
     flexDirection: "row",
@@ -84,16 +82,16 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   answer: {
+    ...TEXT.body,
     flex: 1,
     color: COLORS.ink,
-    fontSize: 15,
   },
   answerEmpty: {
     color: COLORS.inkMuted,
     fontStyle: "italic",
   },
   canonical: {
+    ...TEXT.caption,
     color: COLORS.ink,
-    fontSize: 14,
   },
 });

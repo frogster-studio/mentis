@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { TEXT } from "@/theme/text";
 import { COLORS, RADIUS } from "@/theme/tokens";
 
 export type ModalCardProps = {
@@ -61,15 +62,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   title: {
+    ...TEXT.cardTitle,
     color: COLORS.ink,
-    fontSize: 20,
-    fontWeight: "bold",
     textAlign: "center",
   },
   message: {
+    ...TEXT.body,
     color: COLORS.inkMuted,
-    fontSize: 15,
     textAlign: "center",
-    lineHeight: 21,
   },
 });
