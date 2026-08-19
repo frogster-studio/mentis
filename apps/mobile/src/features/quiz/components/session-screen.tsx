@@ -135,17 +135,20 @@ export function SessionScreen() {
     }
   }, [activeQuestion]);
 
+  // Nothing unmounts on a replay, so the record guard and the Questions are both reset by hand.
+  const onReplay = () => {
+    recordedRef.current = false;
+    clearSession();
+    void refetch();
+  };
+
   if (session?.status === "finished") {
     return (
       <SessionResults
         themeName={name}
         questions={session.questions}
         answers={session.answers}
-        onReplay={() => {
-          // dismissTo would reuse the stale picker and recycle its Draw; a fresh push re-rolls it.
-          router.dismissAll();
-          router.push("/picker");
-        }}
+        onReplay={onReplay}
         onGoHome={() => router.dismissTo("/")}
       />
     );

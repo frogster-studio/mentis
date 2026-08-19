@@ -1,97 +1,100 @@
-import { Grid2x2, Pencil } from "lucide-react-native";
-import { StyleSheet, Text, View } from "react-native";
+import { EllipsisVertical, Grid2x2, Pencil } from "lucide-react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Card } from "@/components/ui/card";
 import { RESULTS_CANONICAL_LABEL, RESULTS_NO_ANSWER } from "@/features/quiz/constants";
 import type { SessionAnswer } from "@/features/quiz/session-reducer";
 import { TEXT } from "@/theme/text";
-import { COLORS, RADIUS } from "@/theme/tokens";
+import { COLORS, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
 import type { Question } from "@/types/quiz";
 
-export type ResultRowProps = {
+const MENU_ICON_SIZE = 20;
+const MODE_ICON_SIZE = 16;
+const CHIP_SIZE = 32;
+
+export type ResultCardProps = {
   question: Question;
   answer: SessionAnswer;
 };
 
-export function ResultRow({ question, answer }: ResultRowProps) {
-  const typed = answer.input.trim();
-  const isEmpty = typed === "";
-  const playerAnswer = isEmpty ? RESULTS_NO_ANSWER : answer.input;
-  // Reveal the Canonical Answer unless verbatim, so a typo'd correct answer shows the spelling.
-  const showCanonical = typed !== question.answer;
+export function ResultCard({ question, answer }: ResultCardProps) {
+  const isEmpty = answer.input.trim() === "";
   const ModeIcon = answer.mode === "square" ? Grid2x2 : Pencil;
+  // The icon and the chip carry correctness, so the answer itself never turns red.
   const accent = answer.correct ? COLORS.success : COLORS.danger;
 
   return (
-    <View style={styles.card}>
-      <View style={styles.head}>
-        <Text style={styles.question}>{question.text}</Text>
-        <View style={[styles.chip, answer.correct ? styles.chipCorrect : styles.chipWrong]}>
-          <Text style={styles.chipText}>{answer.points > 0 ? `+${answer.points}` : "0"}</Text>
+    <Card>
+      <View style={styles.body}>
+        <View style={styles.head}>
+          <Text style={styles.question}>{question.text}</Text>
+          <Pressable style={({ pressed }) => pressed && styles.pressed} hitSlop={8}>
+            <EllipsisVertical size={MENU_ICON_SIZE} color={COLORS.inkMuted} />
+          </Pressable>
         </View>
-      </View>
-      <View style={styles.answerRow}>
-        <ModeIcon color={accent} size={18} />
-        <Text style={[styles.answer, isEmpty && styles.answerEmpty]}>{playerAnswer}</Text>
-      </View>
-      {showCanonical ? (
         <Text style={styles.canonical}>
           {RESULTS_CANONICAL_LABEL} {question.answer}
         </Text>
-      ) : null}
-    </View>
+        <View style={styles.divider} />
+        <View style={styles.answerRow}>
+          <ModeIcon size={MODE_ICON_SIZE} color={accent} />
+          <Text style={[styles.answer, isEmpty && styles.answerEmpty]}>
+            {isEmpty ? RESULTS_NO_ANSWER : answer.input}
+          </Text>
+          <View style={[styles.chip, { backgroundColor: accent }]}>
+            <Text style={styles.chipText}>{answer.points > 0 ? `+${answer.points}` : "0"}</Text>
+          </View>
+        </View>
+      </View>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: COLORS.card,
-    borderRadius: RADIUS.base,
-    padding: 16,
-    gap: 8,
+  body: {
+    gap: SPACE.xs,
   },
   head: {
     flexDirection: "row",
     alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: 12,
+    gap: SPACE.md,
   },
   question: {
-    ...TEXT.cardTitle,
+    ...TEXT.cardTitleSmall,
     flex: 1,
     color: COLORS.ink,
   },
-  chip: {
-    borderRadius: RADIUS.round,
-    minWidth: 36,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    alignItems: "center",
+  pressed: PRESSED,
+  canonical: {
+    ...TEXT.caption,
+    color: COLORS.ink,
   },
-  chipCorrect: {
-    backgroundColor: COLORS.success,
-  },
-  chipWrong: {
-    backgroundColor: COLORS.danger,
-  },
-  chipText: {
-    ...TEXT.captionStrong,
-    color: COLORS.background,
+  divider: {
+    height: 1,
+    marginVertical: SPACE.sm,
+    backgroundColor: COLORS.stroke,
   },
   answerRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: SPACE.sm,
   },
   answer: {
-    ...TEXT.body,
+    ...TEXT.caption,
     flex: 1,
     color: COLORS.ink,
   },
   answerEmpty: {
     color: COLORS.inkMuted,
-    fontStyle: "italic",
   },
-  canonical: {
-    ...TEXT.caption,
-    color: COLORS.ink,
+  chip: {
+    width: CHIP_SIZE,
+    height: CHIP_SIZE,
+    borderRadius: RADIUS.round,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  chipText: {
+    ...TEXT.label,
+    color: COLORS.card,
   },
 });

@@ -29,8 +29,9 @@ export function useSessionQuestions(themeId: string) {
   return useQuery({
     queryKey: quizKeys.sessionQuestions(themeId),
     queryFn: () => fetchSessionQuestions(themeId),
-    // Never refetched mid-session, never re-served later: a new session must re-roll its draw.
+    // Every Quiz Session fetches its own 10 Questions — never re-served, never identity-shared.
     staleTime: Number.POSITIVE_INFINITY,
     gcTime: 0,
+    structuralSharing: false,
   });
 }
