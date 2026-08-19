@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Modal, StyleSheet, Text, View } from "react-native";
 import { TEXT } from "@/theme/text";
 import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
 
@@ -8,39 +8,19 @@ export type ModalCardProps = {
   title: string;
   message: string;
   onRequestClose?: () => void;
-  onBackdropPress?: () => void;
   children: ReactNode;
 };
 
-export function ModalCard({
-  visible,
-  title,
-  message,
-  onRequestClose,
-  onBackdropPress,
-  children,
-}: ModalCardProps) {
-  const body = (
-    <>
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.message}>{message}</Text>
-      {children}
-    </>
-  );
-
+export function ModalCard({ visible, title, message, onRequestClose, children }: ModalCardProps) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onRequestClose}>
-      {onBackdropPress ? (
-        <Pressable style={styles.backdrop} onPress={onBackdropPress}>
-          <Pressable style={styles.card} onPress={() => {}}>
-            {body}
-          </Pressable>
-        </Pressable>
-      ) : (
-        <View style={styles.backdrop}>
-          <View style={styles.card}>{body}</View>
+      <View style={styles.backdrop}>
+        <View style={styles.card}>
+          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.message}>{message}</Text>
+          {children}
         </View>
-      )}
+      </View>
     </Modal>
   );
 }

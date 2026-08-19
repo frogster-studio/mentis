@@ -3,6 +3,7 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
+import { SheetProvider } from "@/components/ui/sheet";
 import { TransferPrompt } from "@/features/account/components/transfer-prompt";
 import { useOnboardingStore } from "@/features/onboarding/store";
 import { useOutboxSync } from "@/features/quiz/outbox-sync";
@@ -35,7 +36,9 @@ export default function RootLayout() {
 
   return (
     <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
-      <RootNavigator />
+      <SheetProvider>
+        <RootNavigator />
+      </SheetProvider>
     </PersistQueryClientProvider>
   );
 }

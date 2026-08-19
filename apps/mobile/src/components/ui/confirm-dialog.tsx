@@ -1,7 +1,7 @@
 import { StyleSheet, View } from "react-native";
 import { Button } from "@/components/ui/button";
-import { ModalCard } from "@/components/ui/modal-card";
 import { QuietButton } from "@/components/ui/quiet-button";
+import { Sheet } from "@/components/ui/sheet";
 import { SPACE } from "@/theme/tokens";
 
 export type ConfirmDialogProps = {
@@ -24,26 +24,18 @@ export function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   return (
-    <ModalCard
-      visible={visible}
-      title={title}
-      message={message}
-      onRequestClose={onCancel}
-      onBackdropPress={onCancel}
-    >
+    <Sheet visible={visible} title={title} message={message} onDismiss={onCancel}>
       {/* The destructive action takes the quiet slot, so the emphasis never invites the damage. */}
       <View style={styles.actions}>
-        <QuietButton layout="flex" label={confirmLabel} onPress={onConfirm} />
-        <Button layout="flex" label={cancelLabel} onPress={onCancel} />
+        <Button label={cancelLabel} onPress={onCancel} />
+        <QuietButton label={confirmLabel} onPress={onConfirm} />
       </View>
-    </ModalCard>
+    </Sheet>
   );
 }
 
 const styles = StyleSheet.create({
   actions: {
-    flexDirection: "row",
-    alignItems: "flex-start",
     gap: SPACE.md,
     marginTop: SPACE.lg,
   },
