@@ -79,7 +79,7 @@ Database migrations live in `apps/api/supabase/` (shared with the back-office; h
   // ❌ const WORDMARK_WIDTH = 140;  // mark outweighs everything in the row
   ```
 - **`Card`** is the card surface — plain `View`, pressable only via its optional `onPress` (`PRESSED` baked in); card anatomy is never re-composed outside it. `ModalCard` is deliberately independent of it.
-- **`Sheet`** is the bottom-sheet surface — `@lodev09/react-native-true-sheet` behind it, never hand-rolled, and the only module importing it. Prefer a sheet over a centered modal; `ModalCard` stays where centering reads better.
+- **`Sheet`** is the bottom-sheet surface — `@lodev09/react-native-true-sheet` behind it, never hand-rolled, and the only module importing it. Prefer it to a `Modal` wherever a sheet genuinely fits, which is most places — but modals are not banned, so reach for one where centering truly reads better.
 - Pushed screens draw their own header row: `QuietButton` circle left (chevron = back, X = quit), `TEXT.screenTitle` centered, balancing spacer right. Wherever content scrolls beneath chrome — headers, CTA bands — that chrome is the blur-band recipe, never a hard clip.
 - **Overlaid chrome owns its safe-area inset.** A band pinned over content runs to the screen edge and pads its own row by the inset; the screen under it drops that edge from `ScreenContainer` and pads content by the chrome's full height.
 

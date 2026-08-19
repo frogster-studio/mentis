@@ -1,8 +1,8 @@
 import { useMutation } from "@tanstack/react-query";
 import { StyleSheet, Text, View } from "react-native";
 import { Button } from "@/components/ui/button";
-import { ModalCard } from "@/components/ui/modal-card";
 import { QuietButton } from "@/components/ui/quiet-button";
+import { Sheet } from "@/components/ui/sheet";
 import { useAuthStore } from "@/features/account/auth-store";
 import {
   TRANSFER_ACCEPT_LABEL,
@@ -24,7 +24,7 @@ export function TransferPrompt() {
   const dormant = useTransferStore((state) => state.dormant);
   const transferred = useTransferStore((state) => state.transferred);
   const decline = useTransferStore((state) => state.decline);
-  // Success empties the device world, the predicate flips false, and this modal closes itself.
+  // Success empties the device world, the predicate flips false, and this sheet closes itself.
   const transfer = useMutation({ mutationFn: transferDeviceStats });
 
   const visible = playerId !== undefined && shouldOfferTransfer(deviceStats, dormant, transferred);
@@ -37,12 +37,13 @@ export function TransferPrompt() {
   };
 
   return (
-    <ModalCard
+    <Sheet
       visible={visible}
       title={TRANSFER_TITLE}
       message={TRANSFER_MESSAGE}
-      // Android back is a reversible decline, never a silent accept — ignored mid-push.
-      onRequestClose={transfer.isPending ? undefined : decline}
+      // Dismissing is a reversible decline, never a silent accept — and mid-push nothing dismisses.
+      dismissible={!transfer.isPending}
+      onDismiss={decline}
     >
       {transfer.isError ? <Text style={styles.error}>{TRANSFER_ERROR}</Text> : null}
       <View style={styles.actions}>
@@ -53,7 +54,7 @@ export function TransferPrompt() {
           disabled={transfer.isPending}
         />
       </View>
-    </ModalCard>
+    </Sheet>
   );
 }
 

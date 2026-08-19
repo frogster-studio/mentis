@@ -12,11 +12,12 @@ export type SheetProps = {
   visible: boolean;
   title: string;
   message: string;
+  dismissible?: boolean;
   onDismiss: () => void;
   children: ReactNode;
 };
 
-export function Sheet({ visible, title, message, onDismiss, children }: SheetProps) {
+export function Sheet({ visible, title, message, dismissible, onDismiss, children }: SheetProps) {
   const sheet = useRef<TrueSheet>(null);
   const presented = useRef(false);
   const insets = useSafeAreaInsets();
@@ -40,6 +41,7 @@ export function Sheet({ visible, title, message, onDismiss, children }: SheetPro
       detents={["auto"]}
       cornerRadius={RADIUS.base}
       backgroundColor={COLORS.card}
+      dismissible={dismissible}
       maxContentWidth={MAX_CONTENT_WIDTH}
       onDidDismiss={() => {
         // Only an interactive dismissal lands here still presented; ours already told the caller.
