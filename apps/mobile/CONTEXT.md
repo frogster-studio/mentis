@@ -13,12 +13,32 @@ The optional cross-platform identity a Player signs into with Google or Apple. I
 _Avoid_: user, profile, login
 
 **Quiz Session**:
-One run of 10 Questions drawn from a single Theme chosen by the player. It is Finished once all 10 Questions have resolved; only Finished sessions produce a score (revealed at the end) and feed Theme Averages. French UI label: « partie ».
+One practice run of 10 Questions drawn from a single Theme chosen by the player. It is Finished once all 10 Questions have resolved; only Finished sessions produce a score (revealed at the end) and feed Theme Averages. French UI label: « partie ».
 _Avoid_: game, round, quiz (alone)
 
 **Abandoned Session**:
 A Quiz Session quit (via the X, after confirmation) before all 10 Questions resolve. It leaves no trace: no score, not counted anywhere, never shown again.
 _Avoid_: paused session, saved game
+
+**Competition Session**:
+The play-through of an Attempt: 10 Questions on one server-drawn Theme, same Countdown and Cash/Square rules as practice, score revealed at the end — but judged and scored by the server, and always recorded, quit included. Requires an Account with a pseudo. French UI label: « compétition ».
+_Avoid_: ranked game, daily quiz
+
+**Attempt**:
+One server-issued competition quiz — a Theme and 10 Questions drawn for one Player and fixed at issuance — and its recorded outcome. Once issued it is consumed: finished, quit or expired, it counts. A Competition Day holds at most one initial Attempt, one Replay, one Catch-up.
+_Avoid_: try, run
+
+**Replay**:
+A premium Player's second Attempt of the same Competition Day, always with a new Theme and new Questions — never the same ones again. The day keeps the best of the two scores.
+_Avoid_: retry, same quiz again
+
+**Catch-up**:
+A premium Player's Attempt for yesterday's Competition Day, available only when yesterday holds no Attempt and both days are in the same season. Its own Theme and Questions, points attributed to yesterday, no Replay on it. French UI label: « rattrapage ».
+_Avoid_: makeup, late play
+
+**Competition Day**:
+The Europe/Paris calendar date an Attempt is attributed to. It bounds the 50-point cap, the Theme rotation and the once-per-kind rule — whatever the Player's own timezone.
+_Avoid_: day (alone)
 
 **Theme**:
 A narrow, specific subject (« Marie Antoinette », « Les Simpson », « Chocolats ») — not a broad school-style category. Every Question belongs to exactly one Theme. The pool of Themes grows over time. French UI label: « Thème ».
@@ -74,7 +94,7 @@ A pre-approved wrong spelling of the answer (« krisantème »), curated per Que
 _Avoid_: typo list, fuzzy answer
 
 **Answer Matching**:
-The deterministic decision that a Cash answer is correct: after normalization, the input matches the Canonical Answer, an Alias or a Misspelling exactly, or falls within typo tolerance of the Canonical Answer or an Alias. Numbers never get tolerance. Runs entirely on-device — no network, no AI.
+The deterministic decision that a Cash answer is correct: after normalization, the input matches the Canonical Answer, an Alias or a Misspelling exactly, or falls within typo tolerance of the Canonical Answer or an Alias. Numbers never get tolerance. Runs on-device in practice and server-side in competition — the same deterministic rules, never AI.
 _Avoid_: answer validation, AI check
 
 **Answer (of the player)**:
