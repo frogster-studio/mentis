@@ -4,6 +4,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { TransferPrompt } from "@/features/account/components/transfer-prompt";
+import { useOnboardingStore } from "@/features/onboarding/store";
 import { useOutboxSync } from "@/features/quiz/outbox-sync";
 import { persistOptions, queryClient } from "@/lib/query-client";
 import { COLORS } from "@/theme/tokens";
@@ -18,13 +19,17 @@ export default function RootLayout() {
   });
 
   // A load failure still lifts the splash — the app falls back to the system font.
+  const fontsSettled = Boolean(fontsLoaded || fontError);
+  const onboardingHydrated = useOnboardingStore((state) => state.hasHydrated);
+  const isReady = fontsSettled && onboardingHydrated;
+
   useEffect(() => {
-    if (fontsLoaded || fontError) {
+    if (isReady) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, fontError]);
+  }, [isReady]);
 
-  if (!fontsLoaded && !fontError) {
+  if (!isReady) {
     return null;
   }
 
@@ -42,7 +47,10 @@ function RootNavigator() {
     <>
       <Stack
         screenOptions={{ headerShown: false, contentStyle: { backgroundColor: COLORS.background } }}
-      />
+      >
+        {/* The gate redirects off home, so onboarding must replace it rather than slide over it. */}
+        <Stack.Screen name="onboarding" options={{ animation: "none" }} />
+      </Stack>
       <TransferPrompt />
     </>
   );
