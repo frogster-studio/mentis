@@ -1,5 +1,13 @@
 import { useRef, useState } from "react";
-import { Animated, type LayoutChangeEvent, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Animated,
+  type LayoutChangeEvent,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurBand } from "@/components/ui/blur-band";
 import { BUTTON_BOX_HEIGHT, Button } from "@/components/ui/button";
@@ -26,6 +34,8 @@ const FOOTER_BAND_HEIGHT = BUTTON_BOX_HEIGHT + HOME_LINK_HEIGHT + SPACE.md * 2;
 // The scroll the handover spans, and the half of it the band alone owns.
 const SWAP_TRAVEL = SPACE.xxl;
 const HANDOVER = SPACE.lg;
+// Web has no native animated module and warns on every mount; it falls back to JS anyway.
+const NATIVE_DRIVER = Platform.OS !== "web";
 
 export type SessionResultsProps = {
   themeName: string;
@@ -67,7 +77,7 @@ export function SessionResults({
       <Animated.ScrollView
         showsVerticalScrollIndicator={false}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
-          useNativeDriver: true,
+          useNativeDriver: NATIVE_DRIVER,
         })}
         scrollEventThrottle={16}
         contentContainerStyle={[
