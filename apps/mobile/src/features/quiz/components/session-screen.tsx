@@ -6,7 +6,6 @@ import {
   AppState,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -24,6 +23,7 @@ import { useSessionQuestions } from "@/features/quiz/api";
 import { CountdownRing } from "@/features/quiz/components/countdown-ring";
 import { DevSkipToResults } from "@/features/quiz/components/dev-skip-to-results";
 import { SessionResults } from "@/features/quiz/components/session-results";
+import { SquareButton } from "@/features/quiz/components/square-button";
 import {
   ANSWER_PLACEHOLDER,
   CONFIRM_LABEL,
@@ -44,7 +44,7 @@ import { squareChoices } from "@/features/quiz/shuffle";
 import { useStatsStore } from "@/features/quiz/stats-store";
 import { useQuizStore } from "@/features/quiz/store";
 import { TEXT } from "@/theme/text";
-import { COLORS, CONTROL_HEIGHT, RADIUS } from "@/theme/tokens";
+import { COLORS, CONTROL_HEIGHT, GUTTER, RADIUS, SPACE } from "@/theme/tokens";
 
 export function SessionScreen() {
   const { themeId, name } = useLocalSearchParams<{ themeId: string; name: string }>();
@@ -206,11 +206,10 @@ export function SessionScreen() {
             onPress={() => setQuitVisible(true)}
           />
           <View style={styles.headerRight}>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>
-                {answeredCount + 1}/{session.questions.length}
-              </Text>
-            </View>
+            <Text style={styles.progress}>
+              {answeredCount + 1}
+              <Text style={styles.progressTotal}>/{session.questions.length}</Text>
+            </Text>
             <CountdownRing
               fraction={remainingFraction(session.endsAt, now)}
               seconds={remainingSeconds(session.endsAt, now)}
@@ -224,18 +223,14 @@ export function SessionScreen() {
         {isSquare && session.choices ? (
           <View style={styles.squareFooter}>
             <View style={styles.grid}>
-              {session.choices.map((choice, index) => {
-                const selected = session.selection === index;
-                return (
-                  <Pressable
-                    key={choice}
-                    style={[styles.choiceCard, selected && styles.choiceCardSelected]}
-                    onPress={() => select(index)}
-                  >
-                    <Text style={styles.choiceText}>{choice}</Text>
-                  </Pressable>
-                );
-              })}
+              {session.choices.map((choice, index) => (
+                <SquareButton
+                  key={choice}
+                  label={choice}
+                  selected={session.selection === index}
+                  onPress={() => select(index)}
+                />
+              ))}
             </View>
             <Button
               label={CONFIRM_LABEL}
@@ -302,29 +297,26 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 24,
-    paddingTop: 8,
+    paddingHorizontal: GUTTER,
+    paddingTop: SPACE.sm,
   },
   headerRight: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: SPACE.md,
   },
-  badge: {
-    backgroundColor: COLORS.quiet,
-    borderColor: COLORS.stroke,
-    borderWidth: 1,
-    borderRadius: RADIUS.round,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-  },
-  badgeText: {
+  progress: {
     ...TEXT.label,
-    color: COLORS.ink,
+    color: COLORS.primary,
+  },
+  progressTotal: {
+    ...TEXT.caption,
+    color: COLORS.inkMuted,
   },
   questionContent: {
-    paddingHorizontal: 24,
-    paddingVertical: 24,
+    paddingHorizontal: GUTTER,
+    paddingTop: SPACE.xxl,
+    paddingBottom: SPACE.xl,
   },
   questionText: {
     ...TEXT.question,
@@ -334,9 +326,9 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 10,
-    paddingHorizontal: 24,
-    paddingBottom: 12,
+    gap: SPACE.md,
+    paddingHorizontal: GUTTER,
+    paddingBottom: SPACE.md,
   },
   // Without minWidth the web input never shrinks past min-content and pushes the buttons out.
   input: {
@@ -348,37 +340,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     ...TEXT.body,
     borderRadius: RADIUS.base,
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACE.lg,
     color: COLORS.ink,
   },
   squareFooter: {
-    gap: 12,
-    paddingHorizontal: 24,
-    paddingBottom: 12,
+    gap: SPACE.md,
+    paddingHorizontal: GUTTER,
+    paddingBottom: SPACE.md,
   },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
-  },
-  choiceCard: {
-    flexGrow: 1,
-    flexBasis: "45%",
-    minHeight: 72,
-    borderRadius: RADIUS.base,
-    borderWidth: 2,
-    borderColor: COLORS.stroke,
-    backgroundColor: COLORS.quiet,
-    paddingHorizontal: 14,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  choiceCardSelected: {
-    borderColor: COLORS.primary,
-  },
-  choiceText: {
-    ...TEXT.label,
-    color: COLORS.ink,
-    textAlign: "center",
+    gap: SPACE.md,
   },
 });

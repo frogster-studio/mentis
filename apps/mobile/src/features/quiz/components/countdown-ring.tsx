@@ -1,19 +1,23 @@
 import { StyleSheet, Text, View } from "react-native";
 import Svg, { Circle } from "react-native-svg";
+import { COUNTDOWN_DANGER_SECONDS } from "@/features/quiz/constants";
 import { TEXT } from "@/theme/text";
-import { COLORS } from "@/theme/tokens";
+import { COLORS, CONTROL_HEIGHT } from "@/theme/tokens";
 
 export type CountdownRingProps = {
   fraction: number;
   seconds: number;
 };
 
-const SIZE = 56;
-const STROKE_WIDTH = 5;
+// Twin of the quit circle it sits beside.
+const SIZE = CONTROL_HEIGHT;
+const STROKE_WIDTH = 6;
 const RADIUS = (SIZE - STROKE_WIDTH) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 export function CountdownRing({ fraction, seconds }: CountdownRingProps) {
+  const urgent = seconds <= COUNTDOWN_DANGER_SECONDS;
+
   return (
     <View style={styles.container}>
       <Svg width={SIZE} height={SIZE}>
@@ -21,7 +25,7 @@ export function CountdownRing({ fraction, seconds }: CountdownRingProps) {
           cx={SIZE / 2}
           cy={SIZE / 2}
           r={RADIUS}
-          stroke={COLORS.stroke}
+          stroke={COLORS.quiet}
           strokeWidth={STROKE_WIDTH}
           fill="none"
         />
@@ -29,7 +33,7 @@ export function CountdownRing({ fraction, seconds }: CountdownRingProps) {
           cx={SIZE / 2}
           cy={SIZE / 2}
           r={RADIUS}
-          stroke={COLORS.primary}
+          stroke={urgent ? COLORS.danger : COLORS.primary}
           strokeWidth={STROKE_WIDTH}
           strokeLinecap="round"
           fill="none"
@@ -39,7 +43,7 @@ export function CountdownRing({ fraction, seconds }: CountdownRingProps) {
         />
       </Svg>
       <View style={styles.secondsOverlay}>
-        <Text style={styles.seconds}>{seconds}</Text>
+        <Text style={[styles.seconds, urgent && styles.secondsUrgent]}>{seconds}</Text>
       </View>
     </View>
   );
@@ -62,5 +66,8 @@ const styles = StyleSheet.create({
   seconds: {
     ...TEXT.label,
     color: COLORS.ink,
+  },
+  secondsUrgent: {
+    color: COLORS.danger,
   },
 });

@@ -22,6 +22,7 @@ export const DRAW_SIZE = 10;
 export const MIN_QUESTIONS_PER_THEME = 10;
 export const COUNTDOWN_DURATION_MS = 25_000;
 export const COUNTDOWN_TICK_MS = 100;
+export const COUNTDOWN_DANGER_SECONDS = 10;
 export const POINTS_CASH = 5;
 export const POINTS_SQUARE = 2;
 export const QUESTIONS_PER_SESSION = 10;

@@ -4,10 +4,15 @@ import { PRESS_DEPTH, usePressSink } from "@/components/ui/use-press-sink";
 import { TEXT } from "@/theme/text";
 import { COLORS, CONTROL_HEIGHT, RADIUS } from "@/theme/tokens";
 
-const QUIET_SHADOW = "#CFCFCF";
-
 // The sink travels inside the layout box, so chrome around a Button clears this, not CONTROL_HEIGHT.
 export const BUTTON_BOX_HEIGHT = CONTROL_HEIGHT + PRESS_DEPTH;
+
+export const QUIET_PALETTE = {
+  face: COLORS.quiet,
+  border: COLORS.quiet,
+  shadow: "#CFCFCF",
+  text: COLORS.ink,
+} as const;
 
 const PALETTES = {
   primary: {
@@ -16,18 +21,8 @@ const PALETTES = {
     shadow: "#D97706",
     text: "#78350F",
   },
-  quiet: {
-    face: COLORS.quiet,
-    border: COLORS.quiet,
-    shadow: QUIET_SHADOW,
-    text: COLORS.ink,
-  },
-  disabled: {
-    face: COLORS.quiet,
-    border: COLORS.quiet,
-    shadow: QUIET_SHADOW,
-    text: COLORS.inkMuted,
-  },
+  quiet: QUIET_PALETTE,
+  disabled: { ...QUIET_PALETTE, text: COLORS.inkMuted },
 } as const;
 
 type ButtonBaseProps = {
