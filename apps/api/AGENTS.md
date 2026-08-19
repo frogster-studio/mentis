@@ -14,8 +14,6 @@ Deliberately **not** a bounded context, so no `CONTEXT.md` and no row in `CONTEX
 
 ## Hard constraints
 
-- **Ten third-party production dependencies, and no more** (plus the workspace `@mentis/contracts`): `@nestjs/common`, `@nestjs/core`, `@nestjs/platform-express`, `reflect-metadata`, `rxjs`, `zod`, `helmet`, `@nestjs/throttler`, `@supabase/supabase-js`, `jose`. No `@nestjs/cli`, class-validator/transformer, `@nestjs/config`/dotenv, `nestjs-zod`, swagger, passport.
-- The root Nest module is `RootModule`, never `AppModule`: "app" is reserved surface vocabulary, and `AppModule` is the `/app` surface module (`src/app/app.module.ts`). Surface directories mirror the URL namespaces (`src/admin/`, `src/app/`) as routes arrive.
 - Decorator flags live directly in `tsconfig.json` — never move them into a shared base (bun bug oven-sh/bun#6326). `tsconfig.build.json` needs an explicit `rootDir` beside `outDir` (TS 6).
 - The service client from `src/supabase.ts` is the only database path, with no per-request user-authed client. RLS owner-scoping is re-implemented as explicit owner filters.
 - **The schema lives here, in `supabase/`** — run every Supabase CLI command from `apps/api/`, the only directory where the CLI finds `supabase/config.toml` (it searches upward, never down). It is one init migration, born locked per [ADR 0003](../../docs/adr/0003-database-admits-only-the-api.md): RLS on every table, zero policies, privileges for `service_role` alone. The recreated schema carries no default privileges, so a new table or function must grant `service_role` explicitly or the API cannot reach it.

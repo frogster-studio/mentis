@@ -15,9 +15,10 @@ export const RESULTS_NO_ANSWER = "Aucune réponse";
 export const RESULTS_CANONICAL_LABEL = "Réponse exacte :";
 export const QUIT_LABEL = "Quitter la partie";
 export const QUIT_TITLE = "Quitter la partie ?";
-export const QUIT_MESSAGE = "Ta progression sera perdue.";
-export const QUIT_CANCEL_LABEL = "Continuer";
-export const QUIT_CONFIRM_LABEL = "Quitter";
+export const QUIT_MESSAGE =
+  "Ta progression sera perdue. Cette partie ne sera pas comptée dans tes statistiques.";
+export const QUIT_CANCEL_LABEL = "Ne pas quitter";
+export const QUIT_CONFIRM_LABEL = "Oui, quitter";
 
 export const DRAW_SIZE = 10;
 export const MIN_QUESTIONS_PER_THEME = 10;

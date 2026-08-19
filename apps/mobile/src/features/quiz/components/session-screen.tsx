@@ -128,12 +128,19 @@ export function SessionScreen() {
     }
   }, [session, themeId, name, owner, recordSession, enqueue]);
 
-  // Every question starts with the keyboard open — refocus after each advance.
+  // Every question starts with the keyboard open, except under the quit sheet.
   useEffect(() => {
-    if (activeQuestion) {
+    if (activeQuestion && !quitVisible) {
       inputRef.current?.focus();
     }
-  }, [activeQuestion]);
+  }, [activeQuestion, quitVisible]);
+
+  // The Countdown can Finish the session behind the open sheet — the results take it down.
+  useEffect(() => {
+    if (session?.status === "finished") {
+      setQuitVisible(false);
+    }
+  }, [session?.status]);
 
   // Nothing unmounts on a replay, so the record guard and the Questions are both reset by hand.
   const onReplay = () => {
@@ -142,37 +149,68 @@ export function SessionScreen() {
     void refetch();
   };
 
+  const onRequestQuit = () => {
+    // The keyboard drops as the sheet rises, so the field lets go before it opens.
+    inputRef.current?.blur();
+    setQuitVisible(true);
+  };
+
+  const onConfirmQuit = () => {
+    // The unmount cleanup (clearSession) wipes the store, so no trace of the session survives.
+    setQuitVisible(false);
+    router.dismissTo("/");
+  };
+
+  // Held at the same slot under the same root in every branch: unmounting it mid-present strands it.
+  const quitConfirm = (
+    <ConfirmDialog
+      visible={quitVisible}
+      title={QUIT_TITLE}
+      message={QUIT_MESSAGE}
+      confirmLabel={QUIT_CONFIRM_LABEL}
+      cancelLabel={QUIT_CANCEL_LABEL}
+      onCancel={() => setQuitVisible(false)}
+      onConfirm={onConfirmQuit}
+    />
+  );
+
   if (session?.status === "finished") {
     return (
-      <SessionResults
-        themeName={name}
-        questions={session.questions}
-        answers={session.answers}
-        onReplay={onReplay}
-        onGoHome={() => router.dismissTo("/")}
-      />
+      <>
+        <SessionResults
+          themeName={name}
+          questions={session.questions}
+          answers={session.answers}
+          onReplay={onReplay}
+          onGoHome={() => router.dismissTo("/")}
+        />
+        {quitConfirm}
+      </>
     );
   }
 
   if (!session) {
     return (
-      <ScreenContainer>
-        {/* Nothing is under way yet, so the quit control leaves straight away — no confirmation. */}
-        <View style={styles.header}>
-          <QuietButton
-            layout="circle"
-            icon={X}
-            accessibilityLabel={QUIT_LABEL}
-            onPress={() => router.dismissTo("/")}
-          />
-        </View>
-        {/* A retry leaves the query in "error" until it lands, so the spinner stands in for it. */}
-        {isPending || isFetching ? (
-          <ScreenLoading />
-        ) : (
-          <ScreenError message={SESSION_ERROR} onRetry={() => void refetch()} />
-        )}
-      </ScreenContainer>
+      <>
+        <ScreenContainer>
+          {/* Nothing is under way yet, so the quit control leaves straight away — no confirmation. */}
+          <View style={styles.header}>
+            <QuietButton
+              layout="circle"
+              icon={X}
+              accessibilityLabel={QUIT_LABEL}
+              onPress={() => router.dismissTo("/")}
+            />
+          </View>
+          {/* A retry leaves the query in "error" until it lands, so the spinner stands in for it. */}
+          {isPending || isFetching ? (
+            <ScreenLoading />
+          ) : (
+            <ScreenError message={SESSION_ERROR} onRetry={() => void refetch()} />
+          )}
+        </ScreenContainer>
+        {quitConfirm}
+      </>
     );
   }
 
@@ -189,106 +227,95 @@ export function SessionScreen() {
     switchToSquare(squareChoices(activeQuestion, Math.random));
   };
 
-  const onConfirmQuit = () => {
-    // The unmount cleanup (clearSession) wipes the store, so no trace of the session survives.
-    setQuitVisible(false);
-    router.dismissTo("/");
-  };
-
   return (
-    <ScreenContainer>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <View style={styles.header}>
-          <QuietButton
-            layout="circle"
-            icon={X}
-            accessibilityLabel={QUIT_LABEL}
-            onPress={() => setQuitVisible(true)}
-          />
-          <View style={styles.headerRight}>
-            <Text style={styles.progress}>
-              {answeredCount + 1}
-              <Text style={styles.progressTotal}>/{session.questions.length}</Text>
-            </Text>
-            <CountdownRing
-              fraction={remainingFraction(session.endsAt, now)}
-              seconds={remainingSeconds(session.endsAt, now)}
+    <>
+      <ScreenContainer>
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+          <View style={styles.header}>
+            <QuietButton
+              layout="circle"
+              icon={X}
+              accessibilityLabel={QUIT_LABEL}
+              onPress={onRequestQuit}
             />
-          </View>
-        </View>
-        <DevSkipToResults />
-        <ScrollView style={styles.flex} contentContainerStyle={styles.questionContent}>
-          <Text style={styles.questionText}>{activeQuestion?.text}</Text>
-        </ScrollView>
-        {isSquare && session.choices ? (
-          <View style={styles.squareFooter}>
-            <View style={styles.grid}>
-              {session.choices.map((choice, index) => (
-                <SquareButton
-                  key={choice}
-                  label={choice}
-                  selected={session.selection === index}
-                  onPress={() => select(index)}
-                />
-              ))}
+            <View style={styles.headerRight}>
+              <Text style={styles.progress}>
+                {answeredCount + 1}
+                <Text style={styles.progressTotal}>/{session.questions.length}</Text>
+              </Text>
+              <CountdownRing
+                fraction={remainingFraction(session.endsAt, now)}
+                seconds={remainingSeconds(session.endsAt, now)}
+              />
             </View>
-            <Button
-              label={CONFIRM_LABEL}
-              onPress={() => confirm(Date.now())}
-              disabled={confirmDisabled}
-            />
           </View>
-        ) : (
-          <View style={styles.footer}>
-            <TextInput
-              ref={inputRef}
-              style={styles.input}
-              value={session.input}
-              onChangeText={setInput}
-              // Web: Enter keeps focus (RN-web blurs on submit); native only dismisses.
-              onSubmitEditing={() =>
-                Platform.OS === "web" ? confirm(Date.now()) : inputRef.current?.blur()
-              }
-              // Both spellings: RN-web honors only blurOnSubmit, native only submitBehavior.
-              blurOnSubmit={false}
-              submitBehavior="submit"
-              placeholder={ANSWER_PLACEHOLDER}
-              placeholderTextColor={COLORS.inkMuted}
-              autoFocus
-              autoCapitalize="none"
-              autoCorrect={false}
-              returnKeyType="done"
-            />
-            <Button
-              layout="circle"
-              icon={Grid2x2}
-              accessibilityLabel={SQUARE_SWITCH_LABEL}
-              onPress={onSwitchToSquare}
-              theme="quiet"
-            />
-            <Button
-              layout="circle"
-              icon={Check}
-              accessibilityLabel={CONFIRM_LABEL}
-              onPress={() => confirm(Date.now())}
-              disabled={confirmDisabled}
-            />
-          </View>
-        )}
-      </KeyboardAvoidingView>
-      <ConfirmDialog
-        visible={quitVisible}
-        title={QUIT_TITLE}
-        message={QUIT_MESSAGE}
-        confirmLabel={QUIT_CONFIRM_LABEL}
-        cancelLabel={QUIT_CANCEL_LABEL}
-        onCancel={() => setQuitVisible(false)}
-        onConfirm={onConfirmQuit}
-      />
-    </ScreenContainer>
+          <DevSkipToResults />
+          <ScrollView style={styles.flex} contentContainerStyle={styles.questionContent}>
+            <Text style={styles.questionText}>{activeQuestion?.text}</Text>
+          </ScrollView>
+          {isSquare && session.choices ? (
+            <View style={styles.squareFooter}>
+              <View style={styles.grid}>
+                {session.choices.map((choice, index) => (
+                  <SquareButton
+                    key={choice}
+                    label={choice}
+                    selected={session.selection === index}
+                    onPress={() => select(index)}
+                  />
+                ))}
+              </View>
+              <Button
+                label={CONFIRM_LABEL}
+                onPress={() => confirm(Date.now())}
+                disabled={confirmDisabled}
+              />
+            </View>
+          ) : (
+            <View style={styles.footer}>
+              <TextInput
+                ref={inputRef}
+                style={styles.input}
+                value={session.input}
+                onChangeText={setInput}
+                // Web: Enter keeps focus (RN-web blurs on submit); native only dismisses.
+                onSubmitEditing={() =>
+                  Platform.OS === "web" ? confirm(Date.now()) : inputRef.current?.blur()
+                }
+                // Both spellings: RN-web honors only blurOnSubmit, native only submitBehavior.
+                blurOnSubmit={false}
+                submitBehavior="submit"
+                placeholder={ANSWER_PLACEHOLDER}
+                placeholderTextColor={COLORS.inkMuted}
+                // A Carré question advancing behind the sheet remounts this field, keyboard and all.
+                autoFocus={!quitVisible}
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="done"
+              />
+              <Button
+                layout="circle"
+                icon={Grid2x2}
+                accessibilityLabel={SQUARE_SWITCH_LABEL}
+                onPress={onSwitchToSquare}
+                theme="quiet"
+              />
+              <Button
+                layout="circle"
+                icon={Check}
+                accessibilityLabel={CONFIRM_LABEL}
+                onPress={() => confirm(Date.now())}
+                disabled={confirmDisabled}
+              />
+            </View>
+          )}
+        </KeyboardAvoidingView>
+      </ScreenContainer>
+      {quitConfirm}
+    </>
   );
 }
 
