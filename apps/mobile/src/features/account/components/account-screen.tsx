@@ -32,7 +32,7 @@ import { deleteAccount } from "@/features/account/delete-account";
 import { drainOutbox } from "@/features/quiz/outbox-sync";
 import { useTransferStore } from "@/features/quiz/transfer-store";
 import { TEXT } from "@/theme/text";
-import { COLORS, PRESSED } from "@/theme/tokens";
+import { COLORS, CONTROL_HEIGHT, GUTTER, PRESSED, SPACE } from "@/theme/tokens";
 
 export function AccountScreen() {
   const router = useRouter();
@@ -49,17 +49,15 @@ export function AccountScreen() {
   return (
     <ScreenContainer>
       <View style={styles.header}>
-        <Pressable
-          style={({ pressed }) => pressed && styles.pressed}
-          onPress={() => router.back()}
+        <QuietButton
+          layout="circle"
+          icon={ChevronLeft}
           accessibilityLabel={ACCOUNT_BACK_LABEL}
-          hitSlop={8}
-        >
-          <ChevronLeft size={28} color={COLORS.ink} />
-        </Pressable>
+          onPress={() => router.back()}
+        />
         <Text style={styles.title}>{ACCOUNT_TITLE}</Text>
-        {/* Balances the back button's width so the title stays optically centered. */}
-        <View style={styles.headerSpacer} />
+        {/* Balances the back circle, so the title holds the screen's centre line. */}
+        <View style={styles.spacer} />
       </View>
 
       {isLoading ? (
@@ -137,26 +135,26 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 24,
-    paddingTop: 16,
+    paddingHorizontal: GUTTER,
+    paddingVertical: SPACE.md,
   },
   title: {
     ...TEXT.screenTitle,
+    flex: 1,
     color: COLORS.ink,
+    textAlign: "center",
   },
-  // Matches the back icon's tap target so the title is centered between them.
-  headerSpacer: {
-    width: 28,
+  spacer: {
+    width: CONTROL_HEIGHT,
   },
   // The flex fill keeps the pitch / identity near the top and pins the action to the bottom.
   body: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: GUTTER,
   },
   pitchBlock: {
     flex: 1,
-    paddingTop: 32,
+    paddingTop: SPACE.xxl,
   },
   pitch: {
     ...TEXT.cardTitle,
@@ -164,15 +162,15 @@ const styles = StyleSheet.create({
   },
   identity: {
     flex: 1,
-    paddingTop: 32,
+    paddingTop: SPACE.xxl,
   },
   email: {
     ...TEXT.body,
     color: COLORS.ink,
   },
   footer: {
-    paddingBottom: 16,
-    gap: 12,
+    paddingBottom: GUTTER,
+    gap: SPACE.md,
   },
   error: {
     ...TEXT.body,
@@ -182,7 +180,7 @@ const styles = StyleSheet.create({
   pressed: PRESSED,
   // Visually secondary to sign-out, so the irreversible action never reads as the default.
   deleteButton: {
-    paddingVertical: 12,
+    paddingVertical: SPACE.md,
     alignItems: "center",
   },
   deleteLabel: {
