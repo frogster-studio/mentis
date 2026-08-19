@@ -27,7 +27,6 @@ const config: ExpoConfig = {
     adaptiveIcon: {
       backgroundColor: "#FFFFFF",
       foregroundImage: "./assets/images/android-icon-foreground.png",
-      backgroundImage: "./assets/images/android-icon-background.png",
       monochromeImage: "./assets/images/android-icon-monochrome.png",
     },
     predictiveBackGestureEnabled: false,
@@ -55,7 +54,7 @@ const config: ExpoConfig = {
       {
         backgroundColor: "#F6F6F6",
         image: "./assets/images/splash-icon.png",
-        imageWidth: 76,
+        imageWidth: 96,
       },
     ],
     ["@react-native-google-signin/google-signin", { iosUrlScheme: IOS_URL_SCHEME }],
