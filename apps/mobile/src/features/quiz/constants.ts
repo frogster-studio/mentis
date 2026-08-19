@@ -4,6 +4,7 @@ export const SESSION_COUNT_SINGULAR = "partie";
 export const SESSION_COUNT_PLURAL = "parties";
 export const PICKER_TITLE = "Choisis un thème";
 export const PICKER_ERROR = "Impossible de charger les thèmes.";
+export const PICKER_BACK_LABEL = "Retour";
 export const SESSION_ERROR = "Impossible de charger les questions.";
 export const ANSWER_PLACEHOLDER = "Ta réponse…";
 export const CONFIRM_LABEL = "Valider";

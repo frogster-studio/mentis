@@ -1,6 +1,7 @@
-import { Pressable, StyleSheet, Text } from "react-native";
+import { StyleSheet, Text } from "react-native";
+import { Card } from "@/components/ui/card";
 import { TEXT } from "@/theme/text";
-import { COLORS, PRESSED, RADIUS } from "@/theme/tokens";
+import { COLORS } from "@/theme/tokens";
 
 export type ThemeCardProps = {
   name: string;
@@ -9,25 +10,18 @@ export type ThemeCardProps = {
 
 export function ThemeCard({ name, onPress }: ThemeCardProps) {
   return (
-    <Pressable style={({ pressed }) => [styles.card, pressed && styles.pressed]} onPress={onPress}>
-      <Text style={styles.name}>{name}</Text>
-    </Pressable>
+    <Card onPress={onPress}>
+      <Text style={styles.name} numberOfLines={1}>
+        {name}
+      </Text>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: COLORS.quiet,
-    borderColor: COLORS.stroke,
-    borderRadius: RADIUS.base,
-    borderWidth: 1,
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-    alignItems: "center",
-  },
-  pressed: PRESSED,
   name: {
     ...TEXT.cardTitle,
     color: COLORS.ink,
+    textAlign: "center",
   },
 });
