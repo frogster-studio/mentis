@@ -1,17 +1,17 @@
 import { useRouter } from "expo-router";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { useAppHeaderHeight } from "@/components/app-header";
 import { BlurBand } from "@/components/ui/blur-band";
 import { BUTTON_BOX_HEIGHT, Button } from "@/components/ui/button";
 import { ScreenContainer, TAB_SCREEN_EDGES } from "@/components/ui/screen-container";
 import { useAuthStore } from "@/features/account/auth-store";
-import { TRANSFER_DONE_HOME } from "@/features/account/constants";
+import { TransferNotice } from "@/features/account/components/transfer-notice";
+import { HomeEmptyState } from "@/features/quiz/components/home-empty-state";
 import { HomeThemeCard } from "@/features/quiz/components/home-theme-card";
 import { PLAY_LABEL } from "@/features/quiz/constants";
 import { useTransferStore } from "@/features/quiz/transfer-store";
 import { useHomeCards } from "@/features/quiz/use-home-cards";
-import { TEXT } from "@/theme/text";
-import { COLORS, GUTTER, SPACE } from "@/theme/tokens";
+import { GUTTER, SPACE } from "@/theme/tokens";
 
 const CTA_BAND_HEIGHT = BUTTON_BOX_HEIGHT + SPACE.md * 2;
 
@@ -21,15 +21,24 @@ export function HomeScreen() {
   const session = useAuthStore((state) => state.session);
   const cards = useHomeCards();
   const transferred = useTransferStore((state) => state.transferred);
+  const dismissed = useTransferStore((state) => state.dismissed);
+  const isEmpty = cards.length === 0;
 
-  // The signed-out home is empty because the stats moved, not because nothing was ever played.
-  const showTransferredNote = !session && transferred && cards.length === 0;
+  // The signed-out shelf is empty because the stats moved, not because nothing was ever played.
+  const showTransferNotice = !session && transferred && isEmpty && !dismissed;
 
   return (
     <ScreenContainer edges={TAB_SCREEN_EDGES}>
-      {showTransferredNote ? (
-        <View style={[styles.note, { paddingTop: headerHeight }]}>
-          <Text style={styles.noteText}>{TRANSFER_DONE_HOME}</Text>
+      {isEmpty ? (
+        <View style={[styles.empty, { paddingTop: headerHeight }]}>
+          {showTransferNotice ? <TransferNotice /> : null}
+          {/* Scrolls only when the explainer outgrows the gap between the chrome. */}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[styles.explainer, { paddingBottom: CTA_BAND_HEIGHT }]}
+          >
+            <HomeEmptyState />
+          </ScrollView>
         </View>
       ) : (
         <ScrollView
@@ -64,12 +73,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: GUTTER,
     gap: SPACE.md,
   },
-  note: {
-    paddingHorizontal: GUTTER,
+  empty: {
+    flex: 1,
   },
-  noteText: {
-    ...TEXT.body,
-    color: COLORS.inkMuted,
+  explainer: {
+    flexGrow: 1,
+    justifyContent: "center",
   },
   cta: {
     paddingHorizontal: GUTTER,

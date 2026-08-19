@@ -16,8 +16,10 @@ type TransferStore = TransferState & {
   markTransferred: () => void;
   // Sign-out: clear dormancy so a later sign-in re-offers a still-present device world.
   signOut: () => void;
-  // Account deletion: forget both flags; the device id survives (per-install, not per-Account).
+  // Account deletion: forget every flag; the device id survives (per-install, not per-Account).
   reset: () => void;
+  // Hides the moved-stats notice for good; only a fresh transfer brings it back.
+  dismissNotice: () => void;
 };
 
 export const useTransferStore = create<TransferStore>()(
@@ -38,6 +40,7 @@ export const useTransferStore = create<TransferStore>()(
       markTransferred: () => set((state) => transferReducer(state, { type: "accept" })),
       signOut: () => set((state) => transferReducer(state, { type: "signOut" })),
       reset: () => set((state) => transferReducer(state, { type: "reset" })),
+      dismissNotice: () => set((state) => transferReducer(state, { type: "dismiss" })),
     }),
     {
       name: "mentis-transfer",

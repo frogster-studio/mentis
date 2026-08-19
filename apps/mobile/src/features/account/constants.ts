@@ -24,6 +24,7 @@ export const TRANSFER_ERROR = "Le transfert a échoué.";
 
 // The shelf is empty because the stats moved to the Account, not because nothing was played.
 export const TRANSFER_DONE_HOME = "Tes statistiques sont maintenant sur ton compte.";
+export const TRANSFER_DONE_DISMISS_LABEL = "Fermer";
 
 // App Store 5.1.1(v) / GDPR: the confirmation names what is erased and that it cannot be undone.
 export const DELETE_ACCOUNT_LABEL = "Supprimer mon compte";

@@ -76,6 +76,7 @@ describe("transferReducer — move semantics and dormancy", () => {
     expect(transferReducer(INITIAL_TRANSFER_STATE, { type: "accept" })).toStrictEqual({
       dormant: false,
       transferred: true,
+      dismissed: false,
     });
   });
 
@@ -83,6 +84,7 @@ describe("transferReducer — move semantics and dormancy", () => {
     expect(transferReducer(INITIAL_TRANSFER_STATE, { type: "decline" })).toStrictEqual({
       dormant: true,
       transferred: false,
+      dismissed: false,
     });
   });
 
@@ -91,6 +93,7 @@ describe("transferReducer — move semantics and dormancy", () => {
     expect(transferReducer(declined, { type: "signOut" })).toStrictEqual({
       dormant: false,
       transferred: false,
+      dismissed: false,
     });
   });
 
@@ -99,6 +102,7 @@ describe("transferReducer — move semantics and dormancy", () => {
     expect(transferReducer(accepted, { type: "signOut" })).toStrictEqual({
       dormant: false,
       transferred: true,
+      dismissed: false,
     });
   });
 
@@ -116,6 +120,47 @@ describe("transferReducer — move semantics and dormancy", () => {
     const snapshot = structuredClone(INITIAL_TRANSFER_STATE);
     transferReducer(INITIAL_TRANSFER_STATE, { type: "decline" });
     expect(INITIAL_TRANSFER_STATE).toStrictEqual(snapshot);
+  });
+});
+
+describe("dismiss — the moved-stats notice is read once, not re-read forever", () => {
+  const accepted = transferReducer(INITIAL_TRANSFER_STATE, { type: "accept" });
+  const dismissed = transferReducer(accepted, { type: "dismiss" });
+
+  it("dismissing marks the notice read, touching neither dormancy nor the move", () => {
+    expect(dismissed).toStrictEqual({ dormant: false, transferred: true, dismissed: true });
+  });
+
+  it("survives a sign-out — the fact it states has not changed", () => {
+    expect(transferReducer(dismissed, { type: "signOut" })).toStrictEqual({
+      dormant: false,
+      transferred: true,
+      dismissed: true,
+    });
+  });
+
+  it("survives a decline (a later sign-in that declines a fresh device world)", () => {
+    expect(transferReducer(dismissed, { type: "decline" })).toStrictEqual({
+      dormant: true,
+      transferred: true,
+      dismissed: true,
+    });
+  });
+
+  it("comes back after an account deletion, then a fresh transfer", () => {
+    const deleted = transferReducer(dismissed, { type: "reset" });
+    expect(deleted).toStrictEqual(INITIAL_TRANSFER_STATE);
+    expect(transferReducer(deleted, { type: "accept" })).toStrictEqual({
+      dormant: false,
+      transferred: true,
+      dismissed: false,
+    });
+  });
+
+  it("mutates none of its input", () => {
+    const snapshot = structuredClone(accepted);
+    transferReducer(accepted, { type: "dismiss" });
+    expect(accepted).toStrictEqual(snapshot);
   });
 });
 

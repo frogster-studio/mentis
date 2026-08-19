@@ -11,9 +11,15 @@ export type TransferState = {
   dormant: boolean;
   // Lets the signed-out home explain the moved stats.
   transferred: boolean;
+  // The Player has read that explanation, so it stops re-appearing on every signed-out home.
+  dismissed: boolean;
 };
 
-export const INITIAL_TRANSFER_STATE: TransferState = { dormant: false, transferred: false };
+export const INITIAL_TRANSFER_STATE: TransferState = {
+  dormant: false,
+  transferred: false,
+  dismissed: false,
+};
 
 type TransferAction =
   // Baselines landed: the caller empties the device world, now transferred rather than dormant.
@@ -23,19 +29,23 @@ type TransferAction =
   // Sign-out: the device world is live again, so a later sign-in re-offers a still-present world.
   | { type: "signOut" }
   // Account deletion: unlike sign-out, transferred clears too — the stats were erased, not moved.
-  | { type: "reset" };
+  | { type: "reset" }
+  // The Player closed the moved-stats notice on the home.
+  | { type: "dismiss" };
 
 // No spread: the store hands in its whole object, and the output must be exactly a TransferState.
 export function transferReducer(state: TransferState, action: TransferAction): TransferState {
   switch (action.type) {
     case "accept":
-      return { dormant: false, transferred: true };
+      return { dormant: false, transferred: true, dismissed: false };
     case "decline":
-      return { dormant: true, transferred: state.transferred };
+      return { dormant: true, transferred: state.transferred, dismissed: state.dismissed };
     case "signOut":
-      return { dormant: false, transferred: state.transferred };
+      return { dormant: false, transferred: state.transferred, dismissed: state.dismissed };
     case "reset":
-      return { dormant: false, transferred: false };
+      return { dormant: false, transferred: false, dismissed: false };
+    case "dismiss":
+      return { dormant: state.dormant, transferred: state.transferred, dismissed: true };
   }
 }
 
