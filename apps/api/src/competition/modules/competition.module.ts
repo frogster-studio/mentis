@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { CompetitionAnswerEntity } from "../../_database/entities/competition-answer.entity";
 import { CompetitionAttemptEntity } from "../../_database/entities/competition-attempt.entity";
 import { CatalogModule } from "../../catalog/modules/catalog.module";
 import { CompetitionController } from "../controllers/competition.controller";
@@ -8,7 +9,10 @@ import { CompetitionService } from "../services/competition.service";
 
 // The daily Attempt — drawn through the Catalog, never reading a Theme or Question itself.
 @Module({
-  imports: [TypeOrmModule.forFeature([CompetitionAttemptEntity]), CatalogModule],
+  imports: [
+    TypeOrmModule.forFeature([CompetitionAttemptEntity, CompetitionAnswerEntity]),
+    CatalogModule,
+  ],
   controllers: [CompetitionController],
   providers: [CompetitionRepository, CompetitionService],
 })

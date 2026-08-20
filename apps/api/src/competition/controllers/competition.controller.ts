@@ -1,7 +1,23 @@
-import type { AppCompetitionAttemptResponse } from "@mentis/contracts/app";
-import { Controller, HttpCode, HttpStatus, Post, Req, UseGuards } from "@nestjs/common";
+import {
+  type AppCompetitionAttemptResponse,
+  type AppCompetitionFinalizeInput,
+  type AppCompetitionTranscriptResponse,
+  appCompetitionAttemptIdSchema,
+  appCompetitionFinalizeInputSchema,
+} from "@mentis/contracts/app";
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from "@nestjs/common";
 import { type AuthedRequest, SupabaseUserGuard } from "../../auth/supabase-user.guard";
 import { AuthenticatedThrottlerGuard } from "../../common/rate-limit.guard";
+import { ZodValidationPipe } from "../../common/zod-validation.pipe";
 import { CompetitionService } from "../services/competition.service";
 
 @Controller("app/me/competition")
@@ -14,5 +30,17 @@ export class CompetitionController {
   @HttpCode(HttpStatus.OK)
   issueInitialAttempt(@Req() request: AuthedRequest): Promise<AppCompetitionAttemptResponse> {
     return this.competitionService.issueInitialAttempt(request.user.id);
+  }
+
+  // Idempotent, so the outbox re-sends freely: a finalized Attempt hands back the stored transcript.
+  @Post("attempts/:attemptId/finalize")
+  @HttpCode(HttpStatus.OK)
+  finalizeAttempt(
+    @Req() request: AuthedRequest,
+    @Param("attemptId", new ZodValidationPipe(appCompetitionAttemptIdSchema)) attemptId: string,
+    @Body(new ZodValidationPipe(appCompetitionFinalizeInputSchema))
+    batch: AppCompetitionFinalizeInput,
+  ): Promise<AppCompetitionTranscriptResponse> {
+    return this.competitionService.finalizeAttempt(request.user.id, attemptId, batch);
   }
 }

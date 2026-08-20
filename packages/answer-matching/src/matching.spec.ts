@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type MatchableQuestion, matchAnswer } from "./matching";
+import { judgeAnswer, type MatchableQuestion, matchAnswer } from "./matching";
 
 function question(
   answer: string,
@@ -196,5 +196,29 @@ describe("matchAnswer — rejections", () => {
   it("rejects clearly different answers", () => {
     expect(matchAnswer("chat", question("Chien"))).toBe(false);
     expect(matchAnswer("Lyon", question("Marseille"))).toBe(false);
+  });
+});
+
+describe("judgeAnswer — the rule that fired", () => {
+  const etatsUnis = question("États-Unis", ["USA", "Amérique"], ["Etats Unys"]);
+
+  it("names the canonical answer, the alias and the misspelling apart", () => {
+    expect(judgeAnswer("etats unis", etatsUnis)).toBe("canonical");
+    expect(judgeAnswer("l'Amérique", etatsUnis)).toBe("alias");
+    expect(judgeAnswer("etats unys", etatsUnis)).toBe("misspelling");
+  });
+
+  it("names a typo of the canonical answer or of an alias fuzzy", () => {
+    expect(judgeAnswer("etats unos", etatsUnis)).toBe("fuzzy");
+    expect(judgeAnswer("amerqiue", etatsUnis)).toBe("fuzzy");
+  });
+
+  it("prefers the canonical answer when a misspelling repeats it", () => {
+    expect(judgeAnswer("Paris", question("Paris", ["Paris"], ["Paris"]))).toBe("canonical");
+  });
+
+  it("returns nothing when no rule fires", () => {
+    expect(judgeAnswer("Lyon", etatsUnis)).toBe(null);
+    expect(judgeAnswer("", etatsUnis)).toBe(null);
   });
 });

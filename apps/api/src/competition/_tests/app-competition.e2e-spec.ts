@@ -1,11 +1,15 @@
-import { COMPETITION_QUESTION_COUNT } from "@mentis/contracts/app";
+import { COMPETITION_POINTS, COMPETITION_QUESTION_COUNT } from "@mentis/contracts/app";
 import { errorResponseSchema } from "@mentis/contracts/shared";
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { getDataSourceToken } from "@nestjs/typeorm";
 import { createLocalJWKSet, exportJWK, generateKeyPair, type JWTPayload, SignJWT } from "jose";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import type { CompetitionAttemptEntity } from "../../_database/entities/competition-attempt.entity";
+import type { CompetitionAnswerEntity } from "../../_database/entities/competition-answer.entity";
+import type {
+  CompetitionAttemptEntity,
+  CompetitionFinalizeReason,
+} from "../../_database/entities/competition-attempt.entity";
 import { stubDataSource, testEnv } from "../../_tests/test-env";
 import { JWKS } from "../../auth/jwks";
 import {
@@ -14,7 +18,10 @@ import {
 } from "../../catalog/repositories/catalog.repository";
 import { ENV } from "../../env";
 import { RootModule } from "../../root.module";
-import { CompetitionRepository } from "../repositories/competition.repository";
+import {
+  CompetitionRepository,
+  type FinalizedOutcome,
+} from "../repositories/competition.repository";
 import { competitionDay, daysBefore } from "../services/competition-day";
 
 const PLAYER_A = "11111111-1111-4111-8111-111111111111";
@@ -42,6 +49,38 @@ const QUESTIONS: DrawnQuestion[] = [
   // One Question short of a Competition Session, so this Theme never wins a draw.
   ...themeQuestions("maigre", "Maigre", 9),
 ];
+
+const judgedQuestion = (
+  index: number,
+  answer: string,
+  aliases: string[],
+  misspellings: string[],
+): DrawnQuestion => ({
+  id: `france-q${index}`,
+  themeId: "france",
+  themeName: "France",
+  text: `Question française ${index} ?`,
+  answer,
+  aliases,
+  misspellings,
+  wrongChoices: [`faux-a-${index}`, `faux-b-${index}`, `faux-c-${index}`],
+});
+
+// Real content shapes — the verdicts below are the practice rules, proven on the material they run on.
+const JUDGED_QUESTIONS: DrawnQuestion[] = [
+  judgedQuestion(0, "Paris", ["Ville Lumière"], ["Pari"]),
+  judgedQuestion(1, "Élysée", ["Palais de l'Élysée"], []),
+  judgedQuestion(2, "États-Unis", ["USA", "Amérique"], ["Etats Unys"]),
+  judgedQuestion(3, "Molière", ["Jean-Baptiste Poquelin"], []),
+  judgedQuestion(4, "1789", [], []),
+  judgedQuestion(5, "Vercingétorix", [], []),
+  judgedQuestion(6, "Chrysanthème", [], ["krisantème"]),
+  judgedQuestion(7, "Seine", [], []),
+  judgedQuestion(8, "Côte d'Ivoire", [], []),
+  judgedQuestion(9, "Or", [], []),
+];
+const JUDGED_IDS = JUDGED_QUESTIONS.map((question) => question.id);
+const JUDGED_ATTEMPT = attemptId(20);
 
 const THEMES = [
   { id: "alpha", name: "Alpha" },
@@ -80,6 +119,8 @@ let draws: { themeId: string | null; count: number }[] = [];
 let issuedAttempts: { owner: string; day: string; kind: string }[] = [];
 let ineligibleThemeIds: string[] = [];
 let racingAttempt: CompetitionAttemptEntity | null = null;
+let answerRows: CompetitionAnswerEntity[] = [];
+let racingFinalize: FinalizedOutcome | null = null;
 
 // Stands in for Postgres at the repository seam: the SQL itself is proven by the live smoke.
 const fakeCatalogRepository = {
@@ -99,7 +140,7 @@ const fakeCatalogRepository = {
     return QUESTIONS.filter((question) => question.themeId === themeId).slice(0, count);
   },
   async questionsByIds(ids) {
-    return QUESTIONS.filter((question) => ids.includes(question.id));
+    return [...QUESTIONS, ...JUDGED_QUESTIONS].filter((question) => ids.includes(question.id));
   },
 } satisfies Pick<
   CatalogRepository,
@@ -135,12 +176,57 @@ const fakeCompetitionRepository = {
     attemptRows.push(stored);
     return stored;
   },
-} satisfies Pick<CompetitionRepository, "findAttempt" | "themeIdsPlayedBetween" | "issue">;
+  async findOwnedAttempt(id, owner) {
+    return attemptRows.find((row) => row.id === id && row.owner === owner) ?? null;
+  },
+  async findAnswers(id) {
+    return answerRows
+      .filter((row) => row.attemptId === id)
+      .sort((left, right) => left.position - right.position);
+  },
+  async finalize(id, outcome) {
+    // The other device's finalize landed between this one's read and its own write.
+    if (racingFinalize !== null) {
+      const { reason, score, answers } = racingFinalize;
+      racingFinalize = null;
+      applyFinalize(id, reason, score, answers);
+    }
+    // Mirrors the guarded update: an Attempt already finalized is claimed by nobody else.
+    return applyFinalize(id, outcome.reason, outcome.score, outcome.answers);
+  },
+} satisfies Pick<
+  CompetitionRepository,
+  | "findAttempt"
+  | "themeIdsPlayedBetween"
+  | "issue"
+  | "findOwnedAttempt"
+  | "findAnswers"
+  | "finalize"
+>;
+
+const applyFinalize = (
+  id: string,
+  reason: CompetitionFinalizeReason,
+  score: number,
+  answers: CompetitionAnswerEntity[],
+): CompetitionAttemptEntity | null => {
+  const attempt = attemptRows.find((row) => row.id === id);
+  if (attempt === undefined || attempt.status !== "active") {
+    return null;
+  }
+  attempt.status = "finalized";
+  attempt.finalizeReason = reason;
+  attempt.score = score;
+  attempt.finalizedAt = new Date("2026-08-20T09:00:00.000Z");
+  answerRows.push(...answers);
+  return attempt;
+};
 
 describe("app competition routes e2e", () => {
   let app: INestApplication;
   let baseUrl: string;
   let tokenA: string;
+  let tokenB: string;
   const today = competitionDay(new Date());
 
   const issue = (token: string) =>
@@ -158,16 +244,18 @@ describe("app competition routes e2e", () => {
   beforeAll(async () => {
     const signingKey = await generateKeyPair("ES256", { extractable: true });
     const publicJwk = { ...(await exportJWK(signingKey.publicKey)), alg: "ES256", kid: "test-key" };
-    tokenA = await new SignJWT({
-      iss: `${testEnv.SUPABASE_URL}/auth/v1`,
-      aud: "authenticated",
-      sub: PLAYER_A,
-      role: "authenticated",
-    } satisfies JWTPayload)
-      .setProtectedHeader({ alg: "ES256", kid: "test-key" })
-      .setIssuedAt()
-      .setExpirationTime("1h")
-      .sign(signingKey.privateKey);
+    const sign = (sub: string) =>
+      new SignJWT({
+        iss: `${testEnv.SUPABASE_URL}/auth/v1`,
+        aud: "authenticated",
+        sub,
+        role: "authenticated",
+      } satisfies JWTPayload)
+        .setProtectedHeader({ alg: "ES256", kid: "test-key" })
+        .setIssuedAt()
+        .setExpirationTime("1h")
+        .sign(signingKey.privateKey);
+    [tokenA, tokenB] = await Promise.all([sign(PLAYER_A), sign(PLAYER_B)]);
 
     const moduleRef = await Test.createTestingModule({ imports: [RootModule] })
       .overrideProvider(ENV)
@@ -196,6 +284,8 @@ describe("app competition routes e2e", () => {
     issuedAttempts = [];
     ineligibleThemeIds = [];
     racingAttempt = null;
+    answerRows = [];
+    racingFinalize = null;
   });
 
   it("POST /app/me/competition/attempts without a token → 401 UNAUTHENTICATED", async () => {
@@ -333,5 +423,231 @@ describe("app competition routes e2e", () => {
       servedIds("beta"),
     );
     expect(attemptRows).toHaveLength(1);
+  });
+
+  describe("finalize", () => {
+    const played = (position: number, rawInput: string, mode: "cash" | "square" = "cash") => ({
+      questionId: JUDGED_IDS[position],
+      mode,
+      rawInput,
+      clientElapsedMs: 4200 + position,
+    });
+
+    const finalize = (token: string, answers: unknown[], id: string = JUDGED_ATTEMPT) =>
+      fetch(`${baseUrl}/app/me/competition/attempts/${id}/finalize`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ answers }),
+      });
+
+    const finalized = async (token: string, answers: unknown[], id: string = JUDGED_ATTEMPT) => {
+      const response = await finalize(token, answers, id);
+      expect(response.status).toBe(200);
+      return await response.json();
+    };
+
+    const fullBatch = () => [
+      played(0, "Paris"),
+      played(1, "Palais de l'Élysée"),
+      played(2, "USA"),
+      played(3, "maliera"),
+      played(4, "1799"),
+      played(5, "versingetorix"),
+      played(6, "krisantème"),
+      played(7, "Seine", "square"),
+      played(8, "faux-a-8", "square"),
+      played(9, "Or"),
+    ];
+
+    beforeEach(() => {
+      attemptRows.push(
+        attemptRow({
+          id: JUDGED_ATTEMPT,
+          themeId: "france",
+          themeName: "France",
+          questionIds: JUDGED_IDS,
+        }),
+      );
+    });
+
+    it("without a token → 401 UNAUTHENTICATED", async () => {
+      const response = await fetch(
+        `${baseUrl}/app/me/competition/attempts/${JUDGED_ATTEMPT}/finalize`,
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" },
+      );
+      expect(response.status).toBe(401);
+      expect(errorResponseSchema.parse(await response.json()).code).toBe("UNAUTHENTICATED");
+    });
+
+    it("carries the judged verdicts, the rules that fired and the score over the wire", async () => {
+      const body = await finalized(tokenA, fullBatch());
+
+      expect(
+        body.answers.map((answer: { matchedVia: string | null }) => answer.matchedVia),
+      ).toEqual([
+        "canonical",
+        "alias",
+        "alias",
+        "fuzzy",
+        null,
+        "fuzzy",
+        "misspelling",
+        "choice",
+        null,
+        "canonical",
+      ]);
+      expect(body.answers.map((answer: { points: number }) => answer.points)).toEqual([
+        COMPETITION_POINTS.cash,
+        COMPETITION_POINTS.cash,
+        COMPETITION_POINTS.cash,
+        COMPETITION_POINTS.cash,
+        0,
+        COMPETITION_POINTS.cash,
+        COMPETITION_POINTS.cash,
+        COMPETITION_POINTS.square,
+        0,
+        COMPETITION_POINTS.cash,
+      ]);
+      expect(body.score).toBe(COMPETITION_POINTS.cash * 7 + COMPETITION_POINTS.square);
+      expect(attemptRows[0].score).toBe(body.score);
+    });
+
+    it("reveals the Canonical Answer with the verdict — the results screen ends the Attempt", async () => {
+      const body = await finalized(tokenA, fullBatch());
+
+      expect(body.answers[0]).toMatchObject({
+        position: 0,
+        questionId: JUDGED_IDS[0],
+        questionText: JUDGED_QUESTIONS[0].text,
+        canonicalAnswer: "Paris",
+        rawInput: "Paris",
+      });
+      expect(
+        body.answers.map((answer: { canonicalAnswer: string }) => answer.canonicalAnswer),
+      ).toEqual(JUDGED_QUESTIONS.map((question) => question.answer));
+    });
+
+    it("stores the ten judged rows and marks the Attempt completed", async () => {
+      const body = await finalized(tokenA, fullBatch());
+
+      expect(body).toMatchObject({ finalizeReason: "completed", themeId: "france" });
+      expect(answerRows).toHaveLength(COMPETITION_QUESTION_COUNT);
+      expect(answerRows[7]).toMatchObject({
+        attemptId: JUDGED_ATTEMPT,
+        position: 7,
+        questionId: JUDGED_IDS[7],
+        mode: "square",
+        rawInput: "Seine",
+        matchedVia: "choice",
+        clientElapsedMs: 4207,
+      });
+      expect(attemptRows[0]).toMatchObject({ status: "finalized", finalizeReason: "completed" });
+    });
+
+    it("rejects a batch whose answer targets a Question the Attempt never served", async () => {
+      const batch = fullBatch();
+      batch[3] = { ...played(3, "Molière"), questionId: "alpha-q3" };
+
+      const response = await finalize(tokenA, batch);
+      expect(response.status).toBe(400);
+      expect(errorResponseSchema.parse(await response.json()).code).toBe("ANSWER_NOT_SERVED");
+      expect(answerRows).toEqual([]);
+      expect(attemptRows[0].status).toBe("active");
+    });
+
+    it("rejects an answer landing on the wrong served position", async () => {
+      const batch = fullBatch();
+      [batch[0], batch[1]] = [batch[1], batch[0]];
+
+      expect((await finalize(tokenA, batch)).status).toBe(400);
+      expect(attemptRows[0].status).toBe("active");
+    });
+
+    it("retrying is a no-op that returns the stored transcript", async () => {
+      const first = await finalized(tokenA, fullBatch());
+      const retry = await finalized(tokenA, fullBatch());
+      expect(retry).toEqual(first);
+
+      // Even a different batch loses to what the Attempt already stored.
+      const contradicting = await finalized(tokenA, [played(0, "Lyon")]);
+      expect(contradicting).toEqual(first);
+      expect(answerRows).toHaveLength(COMPETITION_QUESTION_COUNT);
+      expect(attemptRows[0].finalizeReason).toBe("completed");
+    });
+
+    it("a partial batch is a quit: the rest scores 0 and the Attempt is consumed", async () => {
+      const body = await finalized(tokenA, [played(0, "Paris"), played(2, "USA")].slice(0, 1));
+
+      expect(body).toMatchObject({ finalizeReason: "quit", score: COMPETITION_POINTS.cash });
+      expect(body.answers).toHaveLength(COMPETITION_QUESTION_COUNT);
+      expect(body.answers[1]).toMatchObject({
+        position: 1,
+        questionId: JUDGED_IDS[1],
+        mode: "none",
+        rawInput: null,
+        correct: false,
+        points: 0,
+        matchedVia: null,
+      });
+      expect(attemptRows[0]).toMatchObject({ status: "finalized", finalizeReason: "quit" });
+    });
+
+    it("an empty batch zero-fills the whole Attempt and still consumes it", async () => {
+      const body = await finalized(tokenA, []);
+
+      expect(body).toMatchObject({ finalizeReason: "quit", score: 0 });
+      expect(body.answers.every((answer: { mode: string }) => answer.mode === "none")).toBe(true);
+      expect(attemptRows[0].status).toBe("finalized");
+    });
+
+    it("another Player's Attempt is not found", async () => {
+      const response = await finalize(tokenB, fullBatch());
+      expect(response.status).toBe(404);
+      expect(errorResponseSchema.parse(await response.json()).code).toBe("NOT_FOUND");
+      expect(attemptRows[0].status).toBe("active");
+    });
+
+    it("an unknown Attempt is not found, and an id that is not one is refused", async () => {
+      expect((await finalize(tokenA, fullBatch(), attemptId(77))).status).toBe(404);
+      expect((await finalize(tokenA, fullBatch(), "not-a-uuid")).status).toBe(400);
+    });
+
+    it("two devices finalizing at once share the transcript the first one stored", async () => {
+      // The other device quit after one answer, and that is the Attempt's whole transcript.
+      racingFinalize = {
+        reason: "quit",
+        score: COMPETITION_POINTS.cash,
+        answers: JUDGED_IDS.map((questionId, position) =>
+          position === 0
+            ? {
+                attemptId: JUDGED_ATTEMPT,
+                position,
+                questionId,
+                mode: "cash",
+                rawInput: "Ville Lumière",
+                correct: true,
+                points: COMPETITION_POINTS.cash,
+                matchedVia: "alias",
+                clientElapsedMs: 1000,
+              }
+            : {
+                attemptId: JUDGED_ATTEMPT,
+                position,
+                questionId,
+                mode: "none",
+                rawInput: null,
+                correct: false,
+                points: 0,
+                matchedVia: null,
+                clientElapsedMs: null,
+              },
+        ),
+      };
+
+      const body = await finalized(tokenA, fullBatch());
+      expect(body).toMatchObject({ finalizeReason: "quit", score: COMPETITION_POINTS.cash });
+      expect(body.answers[0]).toMatchObject({ rawInput: "Ville Lumière", matchedVia: "alias" });
+      expect(answerRows).toHaveLength(COMPETITION_QUESTION_COUNT);
+    });
   });
 });

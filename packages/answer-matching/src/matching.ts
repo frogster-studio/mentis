@@ -9,19 +9,34 @@ export type MatchableQuestion = {
 // « le/la/les/l'/un/une/des » — after punctuation stripping, « l' » surfaces as a bare « l » token.
 const LEADING_ARTICLES = new Set(["le", "la", "les", "l", "un", "une", "des"]);
 
+export type MatchedVia = "canonical" | "alias" | "misspelling" | "fuzzy";
+
 export function matchAnswer(input: string, question: MatchableQuestion): boolean {
+  return judgeAnswer(input, question) !== null;
+}
+
+// Competition stores the rule that fired; practice only ever asks whether one did.
+export function judgeAnswer(input: string, question: MatchableQuestion): MatchedVia | null {
   const normalizedInput = normalize(input);
   if (normalizedInput === "") {
-    return false;
+    return null;
   }
 
-  const exactTargets = [question.answer, ...question.aliases, ...question.misspellings];
-  if (exactTargets.some((target) => normalize(target) === normalizedInput)) {
-    return true;
+  const matchesExactly = (target: string) => normalize(target) === normalizedInput;
+  if (matchesExactly(question.answer)) {
+    return "canonical";
+  }
+  if (question.aliases.some(matchesExactly)) {
+    return "alias";
+  }
+  if (question.misspellings.some(matchesExactly)) {
+    return "misspelling";
   }
 
   const fuzzyTargets = [question.answer, ...question.aliases];
-  return fuzzyTargets.some((target) => withinTypoTolerance(normalizedInput, normalize(target)));
+  return fuzzyTargets.some((target) => withinTypoTolerance(normalizedInput, normalize(target)))
+    ? "fuzzy"
+    : null;
 }
 
 function normalize(raw: string): string {

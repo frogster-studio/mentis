@@ -32,7 +32,7 @@ src/
   cards/          # /admin/cards + /admin/card-images: Card curation, EditorGuard-bound
     modules/ controllers/ services/ repositories/ mappers/ _tests/   # the layers of every feature
   catalog/        # /app/themes + /app/questions: public Quiz play reads
-  competition/    # /app/me/competition: Attempt issuance
+  competition/    # /app/me/competition: Attempt issuance and the judged finalize
   player/         # /app/me: stats, idempotent pushes, account deletion
   _database/      # TypeORM: the module, the datasource options, entities/ — the schema mirror
   _tests/         # the shared harness plus the specs no feature owns (env, the bootstrap spine)

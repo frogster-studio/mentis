@@ -1,16 +1,20 @@
 import {
   type AppCompetitionAttemptResponse,
+  type AppCompetitionFinalizeInput,
+  type AppCompetitionTranscriptResponse,
   COMPETITION_QUESTION_COUNT,
 } from "@mentis/contracts/app";
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import type { CompetitionAttemptEntity } from "../../_database/entities/competition-attempt.entity";
+import type { DrawnQuestion } from "../../catalog/repositories/catalog.repository";
 import { CatalogService } from "../../catalog/services/catalog.service";
 import {
-  type ServedQuestion,
   toAppCompetitionAttemptResponse,
+  toAppCompetitionTranscriptResponse,
 } from "../mappers/competition.mapper";
 import { CompetitionRepository } from "../repositories/competition.repository";
 import { competitionDay, daysBefore } from "./competition-day";
+import { attemptScore, judgeAttempt } from "./judge-attempt";
 
 const ROTATION_LOOKBACK_DAYS = 2;
 
@@ -52,24 +56,66 @@ export class CompetitionService {
     return this.serveExistingAttempt(winner);
   }
 
+  async finalizeAttempt(
+    owner: string,
+    attemptId: string,
+    batch: AppCompetitionFinalizeInput,
+  ): Promise<AppCompetitionTranscriptResponse> {
+    const attempt = await this.ownedAttempt(attemptId, owner);
+    if (attempt.status === "finalized") {
+      return this.storedTranscript(attempt);
+    }
+
+    const questions = await this.servedQuestions(attempt);
+    const answers = judgeAttempt(attempt.id, questions, batch);
+    const finalized = await this.competitionRepository.finalize(attempt.id, {
+      // Positions the batch never reached are the Attempt the Player walked out of.
+      reason: batch.answers.length === COMPETITION_QUESTION_COUNT ? "completed" : "quit",
+      score: attemptScore(answers),
+      answers,
+    });
+    if (finalized === null) {
+      // Another device's finalize landed first, and the transcript it stored is the one that counts.
+      return this.storedTranscript(await this.ownedAttempt(attemptId, owner));
+    }
+    return toAppCompetitionTranscriptResponse(finalized, answers, questions);
+  }
+
+  private async ownedAttempt(attemptId: string, owner: string): Promise<CompetitionAttemptEntity> {
+    const attempt = await this.competitionRepository.findOwnedAttempt(attemptId, owner);
+    if (attempt === null) {
+      throw new NotFoundException({ message: `Unknown attempt: ${attemptId}` });
+    }
+    return attempt;
+  }
+
+  private async storedTranscript(
+    attempt: CompetitionAttemptEntity,
+  ): Promise<AppCompetitionTranscriptResponse> {
+    const [questions, answers] = await Promise.all([
+      this.servedQuestions(attempt),
+      this.competitionRepository.findAnswers(attempt.id),
+    ]);
+    return toAppCompetitionTranscriptResponse(attempt, answers, questions);
+  }
+
   private async serveExistingAttempt(
     attempt: CompetitionAttemptEntity,
   ): Promise<AppCompetitionAttemptResponse> {
+    return toAppCompetitionAttemptResponse(attempt, await this.servedQuestions(attempt));
+  }
+
+  // An Attempt is fixed at issuance, so the stored ids replay it in the order it was served.
+  private async servedQuestions(attempt: CompetitionAttemptEntity): Promise<DrawnQuestion[]> {
     const drawn = await this.catalogService.questionsByIds(attempt.questionIds);
-    const served = new Map<string, ServedQuestion>(
-      drawn.map((question) => [question.id, question]),
-    );
-    // An Attempt is fixed at issuance, so the stored ids replay it in the order it was served.
-    return toAppCompetitionAttemptResponse(
-      attempt,
-      attempt.questionIds.map((id) => {
-        const question = served.get(id);
-        if (question === undefined) {
-          throw new Error(`attempt ${attempt.id} lost its served question ${id}`);
-        }
-        return question;
-      }),
-    );
+    const served = new Map(drawn.map((question) => [question.id, question]));
+    return attempt.questionIds.map((id) => {
+      const question = served.get(id);
+      if (question === undefined) {
+        throw new Error(`attempt ${attempt.id} lost its served question ${id}`);
+      }
+      return question;
+    });
   }
 
   private async drawTheme(owner: string, day: string): Promise<DrawnTheme> {
