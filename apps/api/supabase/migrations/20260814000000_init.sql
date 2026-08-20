@@ -63,7 +63,7 @@ create table public.questions (
 create index questions_theme_id_idx on public.questions (theme_id);
 
 -- One append-only row per finished Quiz Session, keyed by a client-generated id so a retried push
--- upserts and never double-counts. Both player tables capture the Theme name at record time, so
+-- is ignored and never double-counts. Both player tables capture the Theme name at record time, so
 -- replacing the hosted content leaves a Player's history intact.
 create table public.quiz_sessions (
   id uuid primary key,

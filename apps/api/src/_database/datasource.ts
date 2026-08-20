@@ -21,5 +21,7 @@ export const dataSourceOptions = (env: Env): DataSourceOptions => ({
     CompetitionAttemptEntity,
     CompetitionAnswerEntity,
   ],
+  // Supabase signs Postgres with a private CA, so the link is encrypted but unverified.
+  ssl: { rejectUnauthorized: false },
   synchronize: false,
 });
