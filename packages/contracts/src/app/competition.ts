@@ -27,6 +27,14 @@ export const appCompetitionAttemptResponseSchema = z.object({
 });
 export type AppCompetitionAttemptResponse = z.infer<typeof appCompetitionAttemptResponseSchema>;
 
+// No active Attempt is an ordinary answer: the phone asks on every launch, crash or not.
+export const appCompetitionActiveAttemptResponseSchema = z.object({
+  attempt: appCompetitionAttemptResponseSchema.nullable(),
+});
+export type AppCompetitionActiveAttemptResponse = z.infer<
+  typeof appCompetitionActiveAttemptResponseSchema
+>;
+
 const competitionAnswerInputSchema = z.object({
   questionId: z.string(),
   mode: competitionPlayedModeSchema,

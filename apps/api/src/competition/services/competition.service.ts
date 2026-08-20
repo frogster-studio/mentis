@@ -1,20 +1,23 @@
 import {
+  type AppCompetitionActiveAttemptResponse,
   type AppCompetitionAttemptResponse,
   type AppCompetitionFinalizeInput,
   type AppCompetitionTranscriptResponse,
   COMPETITION_QUESTION_COUNT,
 } from "@mentis/contracts/app";
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { ConflictException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import type { CompetitionAttemptEntity } from "../../_database/entities/competition-attempt.entity";
 import type { DrawnQuestion } from "../../catalog/repositories/catalog.repository";
 import { CatalogService } from "../../catalog/services/catalog.service";
 import {
+  toAppCompetitionActiveAttemptResponse,
   toAppCompetitionAttemptResponse,
   toAppCompetitionTranscriptResponse,
 } from "../mappers/competition.mapper";
 import { CompetitionRepository } from "../repositories/competition.repository";
+import { CLOCK, type Clock } from "./clock";
 import { competitionDay, daysBefore } from "./competition-day";
-import { attemptScore, judgeAttempt } from "./judge-attempt";
+import { attemptScore, judgeAttempt, unresolvedAnswer } from "./judge-attempt";
 
 const ROTATION_LOOKBACK_DAYS = 2;
 
@@ -25,10 +28,12 @@ export class CompetitionService {
   constructor(
     private readonly competitionRepository: CompetitionRepository,
     private readonly catalogService: CatalogService,
+    @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
   async issueInitialAttempt(owner: string): Promise<AppCompetitionAttemptResponse> {
-    const day = competitionDay(new Date());
+    const day = this.today();
+    await this.attemptsStillInPlay(owner, day);
     const existing = await this.competitionRepository.findAttempt(owner, day, "initial");
     if (existing !== null) {
       return this.serveExistingAttempt(existing);
@@ -56,12 +61,25 @@ export class CompetitionService {
     return this.serveExistingAttempt(winner);
   }
 
+  async readActiveAttempt(owner: string): Promise<AppCompetitionActiveAttemptResponse> {
+    const [current] = await this.attemptsStillInPlay(owner, this.today());
+    if (current === undefined) {
+      return toAppCompetitionActiveAttemptResponse(null);
+    }
+    return toAppCompetitionActiveAttemptResponse({
+      attempt: current,
+      questions: await this.servedQuestions(current),
+    });
+  }
+
   async finalizeAttempt(
     owner: string,
     attemptId: string,
     batch: AppCompetitionFinalizeInput,
   ): Promise<AppCompetitionTranscriptResponse> {
+    await this.attemptsStillInPlay(owner, this.today());
     const attempt = await this.ownedAttempt(attemptId, owner);
+    this.refuseExpired(attempt);
     if (attempt.status === "finalized") {
       return this.storedTranscript(attempt);
     }
@@ -76,9 +94,49 @@ export class CompetitionService {
     });
     if (finalized === null) {
       // Another device's finalize landed first, and the transcript it stored is the one that counts.
-      return this.storedTranscript(await this.ownedAttempt(attemptId, owner));
+      const stored = await this.ownedAttempt(attemptId, owner);
+      this.refuseExpired(stored);
+      return this.storedTranscript(stored);
     }
     return toAppCompetitionTranscriptResponse(finalized, answers, questions);
+  }
+
+  private today(): string {
+    return competitionDay(this.clock());
+  }
+
+  // No sweep and no cron: a Player's dead days are buried wherever they next touch Competition.
+  private async attemptsStillInPlay(
+    owner: string,
+    day: string,
+  ): Promise<CompetitionAttemptEntity[]> {
+    const active = await this.competitionRepository.findActiveAttempts(owner);
+    await Promise.all(
+      active.filter((attempt) => attempt.day < day).map((attempt) => this.zeroFinalize(attempt)),
+    );
+    return active.filter((attempt) => attempt.day >= day);
+  }
+
+  // Zeros need no answer material, so a Question the Catalog dropped can never block a burial.
+  private async zeroFinalize(attempt: CompetitionAttemptEntity): Promise<void> {
+    const answers = attempt.questionIds.map((questionId, position) =>
+      unresolvedAnswer(attempt.id, position, questionId),
+    );
+    await this.competitionRepository.finalize(attempt.id, {
+      reason: "expired",
+      score: attemptScore(answers),
+      answers,
+    });
+  }
+
+  // The zeros a dead day stored are final: a late batch is refused, never allowed to overwrite them.
+  private refuseExpired(attempt: CompetitionAttemptEntity): void {
+    if (attempt.finalizeReason === "expired") {
+      throw new ConflictException({
+        code: "ATTEMPT_EXPIRED",
+        message: `Attempt ${attempt.id} died with its Competition Day`,
+      });
+    }
   }
 
   private async ownedAttempt(attemptId: string, owner: string): Promise<CompetitionAttemptEntity> {

@@ -7,7 +7,7 @@
     "seed": "bun scripts/seed.ts",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
-    "typeorm": "bun node_modules/typeorm/cli.js -d src/_database/typeorm.client.ts",
+    "typeorm": "bun node_modules/typeorm/cli.js -d src/_database/datasource.cli.ts",
     "migration:generate": "bun run typeorm migration:generate src/_database/migrations/migration",
     "migration:run": "bun run typeorm migration:run",
     "migration:revert": "bun run typeorm migration:revert",

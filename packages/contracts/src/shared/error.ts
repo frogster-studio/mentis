@@ -7,6 +7,7 @@ export const errorCodeSchema = z.enum([
   "NOT_FOUND",
   "THEME_NOT_FOUND",
   "ANSWER_NOT_SERVED",
+  "ATTEMPT_EXPIRED",
   "ACCOUNT_GONE",
   "PAYLOAD_TOO_LARGE",
   "RATE_LIMITED",

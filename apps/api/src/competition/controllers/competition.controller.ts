@@ -1,4 +1,5 @@
 import {
+  type AppCompetitionActiveAttemptResponse,
   type AppCompetitionAttemptResponse,
   type AppCompetitionFinalizeInput,
   type AppCompetitionTranscriptResponse,
@@ -8,6 +9,7 @@ import {
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -30,6 +32,12 @@ export class CompetitionController {
   @HttpCode(HttpStatus.OK)
   issueInitialAttempt(@Req() request: AuthedRequest): Promise<AppCompetitionAttemptResponse> {
     return this.competitionService.issueInitialAttempt(request.user.id);
+  }
+
+  // A crashed session resumes here: the Questions as issued, none of the answers played.
+  @Get("attempts/active")
+  readActiveAttempt(@Req() request: AuthedRequest): Promise<AppCompetitionActiveAttemptResponse> {
+    return this.competitionService.readActiveAttempt(request.user.id);
   }
 
   // Idempotent, so the outbox re-sends freely: a finalized Attempt hands back the stored transcript.

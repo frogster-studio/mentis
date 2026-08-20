@@ -22,6 +22,7 @@ import {
   CompetitionRepository,
   type FinalizedOutcome,
 } from "../repositories/competition.repository";
+import { CLOCK } from "../services/clock";
 import { competitionDay, daysBefore } from "../services/competition-day";
 
 const PLAYER_A = "11111111-1111-4111-8111-111111111111";
@@ -114,6 +115,8 @@ const attemptRow = (
   ...overrides,
 });
 
+const PARIS_AFTERNOON = new Date("2026-08-20T12:00:00.000Z");
+let now = PARIS_AFTERNOON;
 let attemptRows: CompetitionAttemptEntity[] = [];
 let draws: { themeId: string | null; count: number }[] = [];
 let issuedAttempts: { owner: string; day: string; kind: string }[] = [];
@@ -179,6 +182,11 @@ const fakeCompetitionRepository = {
   async findOwnedAttempt(id, owner) {
     return attemptRows.find((row) => row.id === id && row.owner === owner) ?? null;
   },
+  async findActiveAttempts(owner) {
+    return attemptRows
+      .filter((row) => row.owner === owner && row.status === "active")
+      .sort((left, right) => right.issuedAt.getTime() - left.issuedAt.getTime());
+  },
   async findAnswers(id) {
     return answerRows
       .filter((row) => row.attemptId === id)
@@ -200,6 +208,7 @@ const fakeCompetitionRepository = {
   | "themeIdsPlayedBetween"
   | "issue"
   | "findOwnedAttempt"
+  | "findActiveAttempts"
   | "findAnswers"
   | "finalize"
 >;
@@ -227,7 +236,7 @@ describe("app competition routes e2e", () => {
   let baseUrl: string;
   let tokenA: string;
   let tokenB: string;
-  const today = competitionDay(new Date());
+  const today = competitionDay(PARIS_AFTERNOON);
 
   const issue = (token: string) =>
     fetch(`${baseUrl}/app/me/competition/attempts`, {
@@ -240,6 +249,24 @@ describe("app competition routes e2e", () => {
     expect(response.status).toBe(200);
     return await response.json();
   };
+
+  const readActive = (token: string) =>
+    fetch(`${baseUrl}/app/me/competition/attempts/active`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+  const readActiveBody = async (token: string) => {
+    const response = await readActive(token);
+    expect(response.status).toBe(200);
+    return await response.json();
+  };
+
+  const finalize = (token: string, answers: unknown[], id: string = JUDGED_ATTEMPT) =>
+    fetch(`${baseUrl}/app/me/competition/attempts/${id}/finalize`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ answers }),
+    });
 
   beforeAll(async () => {
     const signingKey = await generateKeyPair("ES256", { extractable: true });
@@ -266,6 +293,8 @@ describe("app competition routes e2e", () => {
       .useValue(fakeCatalogRepository)
       .overrideProvider(CompetitionRepository)
       .useValue(fakeCompetitionRepository)
+      .overrideProvider(CLOCK)
+      .useValue(() => now)
       .overrideProvider(JWKS)
       .useValue(createLocalJWKSet({ keys: [publicJwk] }))
       .compile();
@@ -279,6 +308,7 @@ describe("app competition routes e2e", () => {
   });
 
   beforeEach(() => {
+    now = PARIS_AFTERNOON;
     attemptRows = [];
     draws = [];
     issuedAttempts = [];
@@ -425,6 +455,167 @@ describe("app competition routes e2e", () => {
     expect(attemptRows).toHaveLength(1);
   });
 
+  describe("active Attempt read", () => {
+    it("without a token → 401 UNAUTHENTICATED", async () => {
+      const response = await fetch(`${baseUrl}/app/me/competition/attempts/active`);
+      expect(response.status).toBe(401);
+      expect(errorResponseSchema.parse(await response.json()).code).toBe("UNAUTHENTICATED");
+    });
+
+    it("answers no Attempt when the Player has none in play", async () => {
+      expect(await readActiveBody(tokenA)).toEqual({ attempt: null });
+    });
+
+    it("re-serves the Attempt exactly as it was issued, so a crashed session resumes", async () => {
+      const first = await issued(tokenA);
+      draws = [];
+
+      const body = await readActiveBody(tokenA);
+      expect(body.attempt).toEqual(first);
+      expect(draws).toEqual([]);
+    });
+
+    it("carries the Questions blank — no answer material, no answer the Player gave", async () => {
+      await issued(tokenA);
+      const body = await readActiveBody(tokenA);
+      const wire = JSON.stringify(body);
+
+      for (const question of body.attempt.questions as { id: string }[]) {
+        expect(Object.keys(question)).toEqual(["id", "text", "squareChoices"]);
+      }
+      for (const source of QUESTIONS) {
+        expect(wire).not.toContain(source.aliases[0]);
+        expect(wire).not.toContain(source.misspellings[0]);
+      }
+    });
+
+    it("a finalized Attempt is over, not in play", async () => {
+      attemptRows.push(attemptRow({ status: "finalized", finalizeReason: "completed", score: 12 }));
+
+      expect(await readActiveBody(tokenA)).toEqual({ attempt: null });
+    });
+
+    it("another Player's Attempt is never the one in play here", async () => {
+      attemptRows.push(attemptRow({ owner: PLAYER_B }));
+
+      expect(await readActiveBody(tokenA)).toEqual({ attempt: null });
+    });
+  });
+
+  describe("lazy expiry", () => {
+    const abandoned = (overrides: Partial<CompetitionAttemptEntity> = {}) =>
+      attemptRow({
+        id: JUDGED_ATTEMPT,
+        day: daysBefore(today, 1),
+        themeId: "france",
+        themeName: "France",
+        questionIds: JUDGED_IDS,
+        ...overrides,
+      });
+
+    const expectZeroFinalized = () => {
+      expect(attemptRows[0]).toMatchObject({
+        status: "finalized",
+        finalizeReason: "expired",
+        score: 0,
+      });
+      expect(answerRows).toHaveLength(COMPETITION_QUESTION_COUNT);
+      expect(
+        answerRows.every(
+          (answer) =>
+            answer.mode === "none" &&
+            answer.points === 0 &&
+            answer.rawInput === null &&
+            answer.correct === false,
+        ),
+      ).toBe(true);
+    };
+
+    it("the read buries a past-day Attempt before it answers", async () => {
+      attemptRows.push(abandoned());
+
+      expect(await readActiveBody(tokenA)).toEqual({ attempt: null });
+      expectZeroFinalized();
+    });
+
+    it("issuing today's Attempt buries the day the Player went silent on", async () => {
+      attemptRows.push(abandoned());
+
+      expect((await issued(tokenA)).day).toBe(today);
+      expectZeroFinalized();
+    });
+
+    it("an Attempt lives to the Europe/Paris midnight, not the UTC one", async () => {
+      attemptRows.push(abandoned({ day: today }));
+
+      now = new Date("2026-08-20T21:59:59.000Z");
+      expect((await readActiveBody(tokenA)).attempt).toMatchObject({ id: JUDGED_ATTEMPT });
+      expect(attemptRows[0].status).toBe("active");
+
+      now = new Date("2026-08-20T22:00:00.000Z");
+      expect(await readActiveBody(tokenA)).toEqual({ attempt: null });
+      expectZeroFinalized();
+    });
+
+    it("finalizing a dead day is refused, and the zeros it stored stand", async () => {
+      attemptRows.push(abandoned());
+
+      const response = await finalize(tokenA, []);
+      expect(response.status).toBe(409);
+      expect(errorResponseSchema.parse(await response.json()).code).toBe("ATTEMPT_EXPIRED");
+      expectZeroFinalized();
+    });
+
+    it("buries a dead day even when the Catalog has since dropped one of its Questions", async () => {
+      attemptRows.push(abandoned({ questionIds: ["disparue-q0", ...JUDGED_IDS.slice(1)] }));
+
+      expect(await readActiveBody(tokenA)).toEqual({ attempt: null });
+      expectZeroFinalized();
+    });
+
+    it("another Player's dead day is not this Player's to bury", async () => {
+      attemptRows.push(abandoned({ id: attemptId(30), owner: PLAYER_B }));
+
+      expect(await readActiveBody(tokenA)).toEqual({ attempt: null });
+      expect(attemptRows[0].status).toBe("active");
+      expect(answerRows).toEqual([]);
+    });
+
+    it("a finalize the burial beat is refused, never answered with the zeros", async () => {
+      attemptRows.push(abandoned({ day: today }));
+      // The Player crossed the Paris midnight mid-request, and the other device buried the day first.
+      racingFinalize = {
+        reason: "expired",
+        score: 0,
+        answers: JUDGED_IDS.map((questionId, position) => ({
+          attemptId: JUDGED_ATTEMPT,
+          position,
+          questionId,
+          mode: "none",
+          rawInput: null,
+          correct: false,
+          points: 0,
+          matchedVia: null,
+          clientElapsedMs: null,
+        })),
+      };
+
+      const response = await finalize(tokenA, []);
+      expect(response.status).toBe(409);
+      expect(errorResponseSchema.parse(await response.json()).code).toBe("ATTEMPT_EXPIRED");
+      expectZeroFinalized();
+    });
+
+    it("retrying that finalize is refused again — an expired Attempt hands back nothing", async () => {
+      attemptRows.push(abandoned({ status: "finalized", finalizeReason: "expired", score: 0 }));
+
+      const response = await finalize(tokenA, []);
+      expect(response.status).toBe(409);
+      expect(errorResponseSchema.parse(await response.json()).code).toBe("ATTEMPT_EXPIRED");
+      expect(answerRows).toEqual([]);
+    });
+  });
+
   describe("finalize", () => {
     const played = (position: number, rawInput: string, mode: "cash" | "square" = "cash") => ({
       questionId: JUDGED_IDS[position],
@@ -432,13 +623,6 @@ describe("app competition routes e2e", () => {
       rawInput,
       clientElapsedMs: 4200 + position,
     });
-
-    const finalize = (token: string, answers: unknown[], id: string = JUDGED_ATTEMPT) =>
-      fetch(`${baseUrl}/app/me/competition/attempts/${id}/finalize`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ answers }),
-      });
 
     const finalized = async (token: string, answers: unknown[], id: string = JUDGED_ATTEMPT) => {
       const response = await finalize(token, answers, id);

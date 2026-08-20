@@ -6,6 +6,7 @@ import { CompetitionAttemptEntity } from "../../_database/entities/competition-a
 import { CatalogModule } from "../../catalog/modules/catalog.module";
 import { CompetitionController } from "../controllers/competition.controller";
 import { CompetitionRepository } from "../repositories/competition.repository";
+import { CLOCK, systemClock } from "../services/clock";
 import { CompetitionService } from "../services/competition.service";
 
 // The daily Attempt — drawn through the Catalog, never reading a Theme or Question itself.
@@ -16,6 +17,6 @@ import { CompetitionService } from "../services/competition.service";
     CatalogModule,
   ],
   controllers: [CompetitionController],
-  providers: [CompetitionRepository, CompetitionService],
+  providers: [CompetitionRepository, CompetitionService, { provide: CLOCK, useValue: systemClock }],
 })
 export class CompetitionModule {}

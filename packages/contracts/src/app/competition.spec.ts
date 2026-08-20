@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  appCompetitionActiveAttemptResponseSchema,
   appCompetitionAttemptResponseSchema,
   appCompetitionFinalizeInputSchema,
   appCompetitionTranscriptResponseSchema,
@@ -67,6 +68,26 @@ describe("appCompetitionAttemptResponseSchema", () => {
     expect(
       appCompetitionAttemptResponseSchema.safeParse(attempt({ day: "2026-08-20T00:00:00.000Z" }))
         .success,
+    ).toBe(false);
+  });
+});
+
+describe("appCompetitionActiveAttemptResponseSchema", () => {
+  it("carries no Attempt at all — the Player has none in play", () => {
+    expect(appCompetitionActiveAttemptResponseSchema.parse({ attempt: null }).attempt).toBeNull();
+  });
+
+  it("carries the issued Attempt whole, so the phone resumes on what it was served", () => {
+    const parsed = appCompetitionActiveAttemptResponseSchema.parse({ attempt: attempt() });
+    expect(parsed.attempt?.questions).toHaveLength(COMPETITION_QUESTION_COUNT);
+    expect(parsed.attempt?.status).toBe("active");
+  });
+
+  it("rejects an Attempt that is not one", () => {
+    expect(
+      appCompetitionActiveAttemptResponseSchema.safeParse({
+        attempt: attempt({ questions: [] }),
+      }).success,
     ).toBe(false);
   });
 });

@@ -12,6 +12,22 @@ export type JudgeableQuestion = {
   misspellings: string[];
 };
 
+export const unresolvedAnswer = (
+  attemptId: string,
+  position: number,
+  questionId: string,
+): CompetitionAnswerEntity => ({
+  attemptId,
+  position,
+  questionId,
+  mode: "none",
+  rawInput: null,
+  correct: false,
+  points: 0,
+  matchedVia: null,
+  clientElapsedMs: null,
+});
+
 export const judgeAttempt = (
   attemptId: string,
   questions: JudgeableQuestion[],
@@ -20,17 +36,7 @@ export const judgeAttempt = (
   questions.map((question, position) => {
     const submitted = batch.answers[position];
     if (submitted === undefined) {
-      return {
-        attemptId,
-        position,
-        questionId: question.id,
-        mode: "none",
-        rawInput: null,
-        correct: false,
-        points: 0,
-        matchedVia: null,
-        clientElapsedMs: null,
-      };
+      return unresolvedAnswer(attemptId, position, question.id);
     }
     if (submitted.questionId !== question.id) {
       throw new BadRequestException({

@@ -10,8 +10,8 @@
       "ignoreDependencies": ["expo-updates"]
     },
     "apps/api": {
-      "entry": ["src/main.ts", "src/_database/datasource.cli.ts"],
-      "project": ["src/**/*.ts", "scripts/**/*.ts"]
+      "entry": ["src/main.ts", "src/_database/datasource.cli.ts", "src/_database/migrations/*.ts"],
+      "project": ["src/**/*.ts"]
     },
     "packages/answer-matching": {
       "project": ["src/**/*.ts"]
