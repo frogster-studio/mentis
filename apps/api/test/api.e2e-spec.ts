@@ -4,10 +4,10 @@ import { Test } from "@nestjs/testing";
 import { getDataSourceToken } from "@nestjs/typeorm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
+import { stubDataSource, testEnv } from "../src/_tests/test-env";
 import { ZodValidationPipe } from "../src/common/zod-validation.pipe";
 import { ENV } from "../src/env";
 import { RootModule } from "../src/root.module";
-import { stubDataSource, testEnv } from "./test-env";
 
 const probeQuerySchema = z.object({ page: z.coerce.number().int().min(1).default(1) });
 type ProbeQuery = z.infer<typeof probeQuerySchema>;

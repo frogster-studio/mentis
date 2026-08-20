@@ -1,5 +1,5 @@
 import type { DataSource } from "typeorm";
-import type { Env } from "../src/env";
+import type { Env } from "../env";
 
 export const testEnv: Env = {
   PORT: 0,
@@ -10,4 +10,9 @@ export const testEnv: Env = {
 };
 
 // Stands in for Postgres the way the stub clients do: repositories are overridden per suite.
-export const stubDataSource = { isInitialized: false } as unknown as DataSource;
+export const stubDataSource = {
+  isInitialized: false,
+  entityMetadatas: [],
+  options: { type: "postgres" },
+  getRepository: () => ({}),
+} as unknown as DataSource;

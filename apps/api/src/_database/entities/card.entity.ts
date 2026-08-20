@@ -18,7 +18,7 @@ export class CardEntity {
   tags!: string[];
 
   @Column("jsonb")
-  payload!: Record<string, unknown>;
+  payload!: object;
 
   @Column("jsonb")
   images!: { path: string }[];

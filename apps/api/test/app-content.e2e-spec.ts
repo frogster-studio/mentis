@@ -3,10 +3,10 @@ import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { getDataSourceToken } from "@nestjs/typeorm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { stubDataSource, testEnv } from "../src/_tests/test-env";
 import { ENV } from "../src/env";
 import { RootModule } from "../src/root.module";
 import { SUPABASE } from "../src/supabase";
-import { stubDataSource, testEnv } from "./test-env";
 
 const themes = [
   { id: "les-simpson", name: "Les Simpson", questionCount: 2 },

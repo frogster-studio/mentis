@@ -1,6 +1,6 @@
 import { exportJWK, generateKeyPair } from "jose";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { testEnv } from "../../test/test-env";
+import { testEnv } from "../_tests/test-env";
 import { createProjectJwks } from "./jwks";
 
 afterEach(() => {

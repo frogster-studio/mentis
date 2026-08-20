@@ -5,12 +5,12 @@ import { Test } from "@nestjs/testing";
 import { getDataSourceToken } from "@nestjs/typeorm";
 import { createLocalJWKSet, exportJWK, generateKeyPair, type JWTPayload, SignJWT } from "jose";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { stubDataSource, testEnv } from "../src/_tests/test-env";
 import { competitionDay, daysBefore } from "../src/app/competition-day";
 import { JWKS } from "../src/auth/jwks";
 import { ENV } from "../src/env";
 import { RootModule } from "../src/root.module";
 import { SUPABASE } from "../src/supabase";
-import { stubDataSource, testEnv } from "./test-env";
 
 const PLAYER_A = "11111111-1111-4111-8111-111111111111";
 const PLAYER_B = "22222222-2222-4222-8222-222222222222";

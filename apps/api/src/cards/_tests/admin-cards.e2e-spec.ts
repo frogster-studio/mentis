@@ -12,26 +12,16 @@ import {
   SignJWT,
 } from "jose";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { CARD_LIST_PAGE_SIZE } from "../src/admin/cards.controller";
-import { JWKS } from "../src/auth/jwks";
-import { ENV } from "../src/env";
-import { RootModule } from "../src/root.module";
-import { SUPABASE } from "../src/supabase";
-import { stubDataSource, testEnv } from "./test-env";
+import type { CardEntity } from "../../_database/entities/card.entity";
+import { stubDataSource, testEnv } from "../../_tests/test-env";
+import { JWKS } from "../../auth/jwks";
+import { ENV } from "../../env";
+import { RootModule } from "../../root.module";
+import { SUPABASE } from "../../supabase";
+import { type CardContent, CardsRepository } from "../repositories/cards.repository";
+import { CARD_LIST_PAGE_SIZE } from "../services/cards.service";
 
 type CardImage = { path: string; order: number; caption?: string };
-
-type CardRow = {
-  id: string;
-  type: string;
-  title: string;
-  tags: string[];
-  payload: unknown;
-  images: CardImage[];
-  posted_on: string[];
-  created_at: string;
-  updated_at: string;
-};
 
 type Removal = { bucket: string; paths: string[]; storedIds: string[] };
 
@@ -50,186 +40,102 @@ const mint = (claims: JWTPayload): Promise<string> =>
     .setExpirationTime("1h")
     .sign(signingKey.privateKey);
 
-let cardRows: CardRow[] = [];
+let rows: CardEntity[] = [];
 let removals: Removal[] = [];
 let signedPaths: string[] = [];
 let removeFails = false;
 let tick = 0;
 
-const nextTimestamp = (): string => {
+const nextTimestamp = (): Date => {
   tick += 1;
-  return new Date(Date.UTC(2026, 7, 11, 12, 0, tick)).toISOString();
+  return new Date(Date.UTC(2026, 7, 11, 12, 0, tick));
 };
 
-// PostgREST ILIKE semantics: % and _ are wildcards, a backslash escapes them, matching is case-insensitive.
-const ilikeToRegExp = (pattern: string): RegExp => {
-  const escapeForRegExp = (char: string) => char.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  let source = "";
-  for (let index = 0; index < pattern.length; index += 1) {
-    const char = pattern[index];
-    if (char === "\\" && index + 1 < pattern.length) {
-      index += 1;
-      source += escapeForRegExp(pattern[index]);
-    } else if (char === "%") {
-      source += ".*";
-    } else if (char === "_") {
-      source += ".";
-    } else {
-      source += escapeForRegExp(char);
+const findRow = (id: string): CardEntity | null => rows.find((row) => row.id === id) ?? null;
+
+const CONTENT_KEYS = ["type", "title", "tags", "payload", "images"] as const;
+
+const contentChanged = (row: CardEntity, content: CardContent): boolean =>
+  CONTENT_KEYS.some((key) => JSON.stringify(row[key]) !== JSON.stringify(content[key]));
+
+// Stands in for Postgres at the repository seam: the SQL itself is proven by the live smoke.
+const fakeCardsRepository = {
+  async list(filters, page, pageSize) {
+    let subset = rows;
+    if (filters.search !== undefined) {
+      const needle = filters.search.toLowerCase();
+      subset = subset.filter((row) => row.title.toLowerCase().includes(needle));
     }
-  }
-  return new RegExp(`^${source}$`, "is");
-};
-
-// Stands in for PostgREST: the aliased camelCase select strings are proven by the live smoke, not here.
-const project = (row: CardRow, columns: string) =>
-  columns === "images"
-    ? { images: row.images }
-    : {
-        id: row.id,
-        type: row.type,
-        title: row.title,
-        tags: row.tags,
-        payload: row.payload,
-        images: row.images,
-        postedOn: row.posted_on,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
-      };
-
-const CONTENT_COLUMNS = ["type", "title", "tags", "payload", "images"] as const;
-
-// Mirrors the cards_set_updated_at trigger: only a content change moves the stamp.
-const applyUpdate = (row: CardRow, values: Record<string, unknown>) => {
-  const contentChanged = CONTENT_COLUMNS.some(
-    (column) => column in values && JSON.stringify(values[column]) !== JSON.stringify(row[column]),
-  );
-  Object.assign(row, values, contentChanged ? { updated_at: nextTimestamp() } : {});
-  return row;
-};
-
-const createSelectQuery = (columns: string) => {
-  const filters: ((row: CardRow) => boolean)[] = [];
-  let ordering: { column: string; ascending: boolean } | null = null;
-  let bounds: { from: number; to: number } | null = null;
-  const matching = () => cardRows.filter((row) => filters.every((filter) => filter(row)));
-
-  const builder = {
-    ilike(column: string, pattern: string) {
-      const regex = ilikeToRegExp(pattern);
-      filters.push((row) => regex.test(String(row[column as keyof CardRow])));
-      return builder;
-    },
-    eq(column: string, value: unknown) {
-      filters.push((row) => row[column as keyof CardRow] === value);
-      return builder;
-    },
-    contains(column: string, values: unknown[]) {
-      filters.push((row) =>
-        values.every((value) => (row[column as keyof CardRow] as unknown[]).includes(value)),
-      );
-      return builder;
-    },
-    order(column: string, options: { ascending: boolean }) {
-      ordering = { column, ascending: options.ascending };
-      return builder;
-    },
-    range(from: number, to: number) {
-      bounds = { from, to };
-      return builder;
-    },
-    maybeSingle() {
-      const row = matching()[0];
-      return Promise.resolve({
-        data: row === undefined ? null : project(row, columns),
-        error: null,
-      });
-    },
-    // biome-ignore lint/suspicious/noThenProperty: the real Supabase query builder is a thenable; the fake must be too.
-    then(resolve: (result: { data: unknown[]; count: number; error: null }) => void) {
-      let subset = matching();
-      if (ordering !== null) {
-        const { column, ascending } = ordering;
-        const direction = ascending ? 1 : -1;
-        subset = [...subset].sort(
-          (left, right) =>
-            direction *
-            String(left[column as keyof CardRow]).localeCompare(
-              String(right[column as keyof CardRow]),
-            ),
-        );
-      }
-      const count = subset.length;
-      if (bounds !== null) {
-        subset = subset.slice(bounds.from, bounds.to + 1);
-      }
-      resolve({ data: subset.map((row) => project(row, columns)), count, error: null });
-    },
-  };
-  return builder;
-};
+    if (filters.type !== undefined) {
+      subset = subset.filter((row) => row.type === filters.type);
+    }
+    if (filters.tag !== undefined) {
+      subset = subset.filter((row) => row.tags.includes(filters.tag as string));
+    }
+    const sorted = [...subset].sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    const offset = (page - 1) * pageSize;
+    return { items: sorted.slice(offset, offset + pageSize), total: sorted.length };
+  },
+  async findById(id) {
+    return findRow(id);
+  },
+  async create(content) {
+    const now = nextTimestamp();
+    const row: CardEntity = {
+      id: randomUUID(),
+      ...content,
+      postedOn: [],
+      createdAt: now,
+      updatedAt: now,
+    };
+    rows.push(row);
+    return row;
+  },
+  async replace(id, content) {
+    const row = findRow(id);
+    if (row === null) {
+      return null;
+    }
+    // Mirrors the cards_set_updated_at trigger: only a content change moves the stamp.
+    if (contentChanged(row, content)) {
+      row.updatedAt = nextTimestamp();
+    }
+    Object.assign(row, content);
+    return row;
+  },
+  async setPosted(id, postedOn) {
+    const row = findRow(id);
+    if (row === null) {
+      return null;
+    }
+    row.postedOn = postedOn;
+    return row;
+  },
+  async imagePaths(id) {
+    const row = findRow(id);
+    return row === null ? null : row.images.map((image) => image.path);
+  },
+  async remove(id) {
+    const index = rows.findIndex((row) => row.id === id);
+    if (index === -1) {
+      return null;
+    }
+    const [gone] = rows.splice(index, 1);
+    return { imagePaths: gone.images.map((image) => image.path) };
+  },
+} satisfies Pick<
+  CardsRepository,
+  "list" | "findById" | "create" | "replace" | "setPosted" | "imagePaths" | "remove"
+>;
 
 const stubSupabase = {
-  from: (table: string) => {
-    if (table !== "cards") {
-      throw new Error(`unexpected table ${table}`);
-    }
-    return {
-      select: (columns: string, _options?: { count?: string }) => createSelectQuery(columns),
-      insert: (values: Record<string, unknown>) => ({
-        select: (columns: string) => ({
-          single: () => {
-            const timestamp = nextTimestamp();
-            const row: CardRow = {
-              id: randomUUID(),
-              type: String(values.type),
-              title: String(values.title),
-              tags: values.tags as string[],
-              payload: values.payload,
-              images: values.images as CardImage[],
-              posted_on: [],
-              created_at: timestamp,
-              updated_at: timestamp,
-            };
-            cardRows.push(row);
-            return Promise.resolve({ data: project(row, columns), error: null });
-          },
-        }),
-      }),
-      update: (values: Record<string, unknown>) => ({
-        eq: (column: string, value: unknown) => ({
-          select: (columns: string) => ({
-            maybeSingle: () => {
-              const row = cardRows.find((stored) => stored[column as keyof CardRow] === value);
-              return Promise.resolve({
-                data: row === undefined ? null : project(applyUpdate(row, values), columns),
-                error: null,
-              });
-            },
-          }),
-        }),
-      }),
-      delete: () => ({
-        eq: (column: string, value: unknown) => ({
-          select: (columns: string) => ({
-            // biome-ignore lint/suspicious/noThenProperty: the real Supabase query builder is a thenable; the fake must be too.
-            then(resolve: (result: { data: unknown[]; error: null }) => void) {
-              const index = cardRows.findIndex((row) => row[column as keyof CardRow] === value);
-              const deleted = index === -1 ? [] : cardRows.splice(index, 1);
-              resolve({ data: deleted.map((row) => project(row, columns)), error: null });
-            },
-          }),
-        }),
-      }),
-    };
-  },
   storage: {
     from: (bucket: string) => ({
       remove: (paths: string[]) => {
         if (removeFails) {
           return Promise.resolve({ data: null, error: { message: "boom" } });
         }
-        removals.push({ bucket, paths, storedIds: cardRows.map((row) => row.id) });
+        removals.push({ bucket, paths, storedIds: rows.map((row) => row.id) });
         return Promise.resolve({ data: [], error: null });
       },
       createSignedUploadUrl: (path: string) => {
@@ -357,6 +263,8 @@ describe("admin card routes e2e", () => {
       .useValue(testEnv)
       .overrideProvider(getDataSourceToken())
       .useValue(stubDataSource)
+      .overrideProvider(CardsRepository)
+      .useValue(fakeCardsRepository)
       .overrideProvider(SUPABASE)
       .useValue(stubSupabase)
       .overrideProvider(JWKS)
@@ -372,7 +280,7 @@ describe("admin card routes e2e", () => {
   });
 
   beforeEach(async () => {
-    cardRows = [];
+    rows = [];
     removals = [];
     signedPaths = [];
     removeFails = false;
@@ -454,7 +362,7 @@ describe("admin card routes e2e", () => {
     });
     expect(created.images.map((image: CardImage) => image.path)).toEqual(["a.webp", "b.webp"]);
     expect(created.createdAt).toBe(created.updatedAt);
-    expect(cardRows[0].tags).toEqual(["histoire", "révolution"]);
+    expect(rows[0].tags).toEqual(["histoire", "révolution"]);
   });
 
   it.each([
@@ -474,7 +382,7 @@ describe("admin card routes e2e", () => {
     const response = await send(editorToken, "POST", "/admin/cards", body);
     expect(response.status).toBe(400);
     expect(errorResponseSchema.parse(await response.json()).code).toBe("VALIDATION_FAILED");
-    expect(cardRows).toEqual([]);
+    expect(rows).toEqual([]);
   });
 
   it("GET /admin/cards pages at 20 server-side, newest first, with the exact total", async () => {
@@ -606,7 +514,7 @@ describe("admin card routes e2e", () => {
     });
     expect(response.status).toBe(200);
     expect((await response.json()).title).toBe("Après");
-    expect(cardRows[0].title).toBe("Après");
+    expect(rows[0].title).toBe("Après");
   });
 
   it.each(roundTrips)(
@@ -732,7 +640,7 @@ describe("admin card routes e2e", () => {
     const response = await send(editorToken, "PATCH", `/admin/cards/${created.id}/posted`, body);
     expect(response.status).toBe(400);
     expect(errorResponseSchema.parse(await response.json()).code).toBe("VALIDATION_FAILED");
-    expect(cardRows[0].posted_on).toEqual(["x"]);
+    expect(rows[0].postedOn).toEqual(["x"]);
   });
 
   it("DELETE /admin/cards/:id removes the row first, then its storage objects", async () => {
@@ -748,7 +656,7 @@ describe("admin card routes e2e", () => {
 
     const response = await call(editorToken, `/admin/cards/${doomed.id}`, { method: "DELETE" });
     expect(response.status).toBe(204);
-    expect(cardRows.map((row) => row.id)).toEqual([kept.id]);
+    expect(rows.map((row) => row.id)).toEqual([kept.id]);
     expect(removals).toEqual([
       { bucket: "card-images", paths: ["a.webp", "b.webp"], storedIds: [kept.id] },
     ]);
@@ -762,7 +670,7 @@ describe("admin card routes e2e", () => {
 
     const response = await call(editorToken, `/admin/cards/${doomed.id}`, { method: "DELETE" });
     expect(response.status).toBe(500);
-    expect(cardRows).toEqual([]);
+    expect(rows).toEqual([]);
   });
 
   it("DELETE /admin/cards/:id makes no storage request for a Card without Images", async () => {

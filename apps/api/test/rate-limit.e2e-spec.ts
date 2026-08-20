@@ -7,8 +7,10 @@ import { SkipThrottle } from "@nestjs/throttler";
 import { getDataSourceToken } from "@nestjs/typeorm";
 import { createLocalJWKSet, exportJWK, generateKeyPair, type JWTPayload, SignJWT } from "jose";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { stubDataSource, testEnv } from "../src/_tests/test-env";
 import { JWKS } from "../src/auth/jwks";
 import { configureApp, NEST_OPTIONS } from "../src/bootstrap";
+import { CardsRepository } from "../src/cards/repositories/cards.repository";
 import {
   AUTHENTICATED_TIER,
   DRAW_TIER,
@@ -19,7 +21,6 @@ import {
 import { ENV } from "../src/env";
 import { RootModule } from "../src/root.module";
 import { SUPABASE } from "../src/supabase";
-import { stubDataSource, testEnv } from "./test-env";
 
 const EMPTY = { data: [], count: 0, error: null };
 
@@ -38,6 +39,10 @@ const stubSupabase = {
   }),
   rpc: () => ({ select: () => Promise.resolve({ data: [], error: null }) }),
 };
+
+const emptyCardsRepository = {
+  list: () => Promise.resolve({ items: [], total: 0 }),
+} as unknown as CardsRepository;
 
 const pushedSession = (index: number) => ({
   id: `10000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
@@ -127,6 +132,8 @@ describe("rate limiting e2e", () => {
       .useValue(testEnv)
       .overrideProvider(getDataSourceToken())
       .useValue(stubDataSource)
+      .overrideProvider(CardsRepository)
+      .useValue(emptyCardsRepository)
       .overrideProvider(SUPABASE)
       .useValue(stubSupabase)
       .overrideProvider(JWKS)
