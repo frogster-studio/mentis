@@ -5,6 +5,7 @@ import { loadEnv } from "./env";
 const configured = {
   SUPABASE_URL: "https://stub.supabase.co",
   SUPABASE_SECRET_KEY: "sb_secret_stub",
+  DATABASE_URL: "postgresql://stub:stub@127.0.0.1:5432/stub",
 };
 
 describe("loadEnv", () => {

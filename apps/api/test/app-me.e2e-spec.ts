@@ -2,13 +2,14 @@ import { MAX_PUSH_BATCH } from "@mentis/contracts/app";
 import { errorResponseSchema } from "@mentis/contracts/shared";
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
+import { getDataSourceToken } from "@nestjs/typeorm";
 import { createLocalJWKSet, exportJWK, generateKeyPair, type JWTPayload, SignJWT } from "jose";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { JWKS } from "../src/auth/jwks";
 import { ENV } from "../src/env";
 import { RootModule } from "../src/root.module";
 import { SUPABASE } from "../src/supabase";
-import { testEnv } from "./test-env";
+import { stubDataSource, testEnv } from "./test-env";
 
 const PLAYER_A = "11111111-1111-4111-8111-111111111111";
 const PLAYER_B = "22222222-2222-4222-8222-222222222222";
@@ -236,6 +237,8 @@ describe("app me routes e2e", () => {
     const moduleRef = await Test.createTestingModule({ imports: [RootModule] })
       .overrideProvider(ENV)
       .useValue(testEnv)
+      .overrideProvider(getDataSourceToken())
+      .useValue(stubDataSource)
       .overrideProvider(SUPABASE)
       .useValue(stubSupabase)
       .overrideProvider(JWKS)

@@ -1,11 +1,12 @@
 import { errorResponseSchema } from "@mentis/contracts/shared";
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
+import { getDataSourceToken } from "@nestjs/typeorm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { ENV } from "../src/env";
 import { RootModule } from "../src/root.module";
 import { SUPABASE } from "../src/supabase";
-import { testEnv } from "./test-env";
+import { stubDataSource, testEnv } from "./test-env";
 
 const themes = [
   { id: "les-simpson", name: "Les Simpson", questionCount: 2 },
@@ -79,6 +80,8 @@ describe("app content routes e2e", () => {
     const moduleRef = await Test.createTestingModule({ imports: [RootModule] })
       .overrideProvider(ENV)
       .useValue(testEnv)
+      .overrideProvider(getDataSourceToken())
+      .useValue(stubDataSource)
       .overrideProvider(SUPABASE)
       .useValue(stubSupabase)
       .compile();

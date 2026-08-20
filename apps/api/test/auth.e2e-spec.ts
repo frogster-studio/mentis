@@ -1,6 +1,7 @@
 import { errorResponseSchema } from "@mentis/contracts/shared";
 import { Controller, Get, type INestApplication, Req, UseGuards } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
+import { getDataSourceToken } from "@nestjs/typeorm";
 import {
   createLocalJWKSet,
   exportJWK,
@@ -19,7 +20,7 @@ import {
 } from "../src/auth/supabase-user.guard";
 import { ENV } from "../src/env";
 import { RootModule } from "../src/root.module";
-import { testEnv } from "./test-env";
+import { stubDataSource, testEnv } from "./test-env";
 
 const ISSUER = `${testEnv.SUPABASE_URL}/auth/v1`;
 const PLAYER_ID = "11111111-1111-4111-8111-111111111111";
@@ -140,6 +141,8 @@ describe("auth guards e2e", () => {
     })
       .overrideProvider(ENV)
       .useValue(testEnv)
+      .overrideProvider(getDataSourceToken())
+      .useValue(stubDataSource)
       .overrideProvider(JWKS)
       .useValue(createLocalJWKSet({ keys: [publicJwk] }))
       .compile();

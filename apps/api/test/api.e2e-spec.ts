@@ -1,12 +1,13 @@
 import { errorResponseSchema } from "@mentis/contracts/shared";
 import { Controller, Get, type INestApplication, Query } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
+import { getDataSourceToken } from "@nestjs/typeorm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { ZodValidationPipe } from "../src/common/zod-validation.pipe";
 import { ENV } from "../src/env";
 import { RootModule } from "../src/root.module";
-import { testEnv } from "./test-env";
+import { stubDataSource, testEnv } from "./test-env";
 
 const probeQuerySchema = z.object({ page: z.coerce.number().int().min(1).default(1) });
 type ProbeQuery = z.infer<typeof probeQuerySchema>;
@@ -31,6 +32,8 @@ describe("api spine e2e", () => {
     })
       .overrideProvider(ENV)
       .useValue(testEnv)
+      .overrideProvider(getDataSourceToken())
+      .useValue(stubDataSource)
       .compile();
     app = moduleRef.createNestApplication();
     await app.listen(0);

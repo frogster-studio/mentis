@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { errorResponseSchema } from "@mentis/contracts/shared";
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
+import { getDataSourceToken } from "@nestjs/typeorm";
 import {
   createLocalJWKSet,
   exportJWK,
@@ -16,7 +17,7 @@ import { JWKS } from "../src/auth/jwks";
 import { ENV } from "../src/env";
 import { RootModule } from "../src/root.module";
 import { SUPABASE } from "../src/supabase";
-import { testEnv } from "./test-env";
+import { stubDataSource, testEnv } from "./test-env";
 
 type CardImage = { path: string; order: number; caption?: string };
 
@@ -354,6 +355,8 @@ describe("admin card routes e2e", () => {
     const moduleRef = await Test.createTestingModule({ imports: [RootModule] })
       .overrideProvider(ENV)
       .useValue(testEnv)
+      .overrideProvider(getDataSourceToken())
+      .useValue(stubDataSource)
       .overrideProvider(SUPABASE)
       .useValue(stubSupabase)
       .overrideProvider(JWKS)

@@ -5,6 +5,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().default(3001),
   SUPABASE_URL: z.url(),
   SUPABASE_SECRET_KEY: z.string().min(1),
+  DATABASE_URL: z.url(),
   CORS_ORIGINS: z
     .string()
     .default("")

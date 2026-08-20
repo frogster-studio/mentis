@@ -4,6 +4,7 @@ import { Controller, Get, UseGuards } from "@nestjs/common";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import { Test } from "@nestjs/testing";
 import { SkipThrottle } from "@nestjs/throttler";
+import { getDataSourceToken } from "@nestjs/typeorm";
 import { createLocalJWKSet, exportJWK, generateKeyPair, type JWTPayload, SignJWT } from "jose";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { JWKS } from "../src/auth/jwks";
@@ -18,7 +19,7 @@ import {
 import { ENV } from "../src/env";
 import { RootModule } from "../src/root.module";
 import { SUPABASE } from "../src/supabase";
-import { testEnv } from "./test-env";
+import { stubDataSource, testEnv } from "./test-env";
 
 const EMPTY = { data: [], count: 0, error: null };
 
@@ -124,6 +125,8 @@ describe("rate limiting e2e", () => {
     })
       .overrideProvider(ENV)
       .useValue(testEnv)
+      .overrideProvider(getDataSourceToken())
+      .useValue(stubDataSource)
       .overrideProvider(SUPABASE)
       .useValue(stubSupabase)
       .overrideProvider(JWKS)

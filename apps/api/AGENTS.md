@@ -6,7 +6,7 @@ Deliberately **not** a bounded context, so no `CONTEXT.md` and no row in `CONTEX
 
 ## Commands (run in `apps/api`)
 
-- `bun run dev` — watch mode (bun auto-loads `.env`; `cp .env.example .env` then fill the one secret)
+- `bun run dev` — watch mode (bun auto-loads `.env`; `cp .env.example .env` then fill the two secrets)
 - `bun run typecheck` — `tsc --noEmit`
 - `bun run test` — vitest, via SWC (esbuild cannot emit decorator metadata)
 - `bun run build` — `tsc` emit to `dist/`; node runs that output in prod, bun never transpiles prod code
@@ -47,7 +47,26 @@ supabase/         # the shared schema: the init migration + the CLI link
 ## Conventions
 
 - Files kebab-case, Nest suffixes kept (`*.controller.ts`, `*.module.ts`, `*.guard.ts`, `*.pipe.ts`, `*.filter.ts`).
-- Tests are `*.spec.ts` co-located in `src/`, e2e is `test/*.e2e-spec.ts` — the two globs vitest includes.
+- **Features are folders of layers.** Each `src/<feature>/` splits by layer — `modules/`, `controllers/`, `services/`, `repositories/`, `mappers/` — and a new file joins its layer folder, never the feature root.
+
+  ```
+  ✅ src/cards/controllers/admin-cards.controller.ts
+  ❌ src/cards/admin-cards.controller.ts
+  ```
+
+- **`src/_database/` owns TypeORM wholesale.** Every entity lives in `_database/entities/` as the single hand-written mirror of the SQL schema, beside the datasource config and shared database logic — a feature folder never defines one.
+
+  ```
+  ✅ src/_database/entities/card.entity.ts
+  ❌ src/cards/card.entity.ts
+  ```
+
+- **Every test lives in a `_tests/` folder.** Unit specs and e2e sit together per feature in `src/<feature>/_tests/`, shared harness and transversal e2e in `src/_tests/` — the `src/**/_tests/` globs are all vitest includes and the build excludes.
+
+  ```
+  ✅ src/competition/_tests/seeded-rng.spec.ts
+  ❌ src/competition/seeded-rng.spec.ts · test/app-competition.e2e-spec.ts
+  ```
 - Request/response schemas live in `@mentis/contracts`, never here; the API validates requests *and* parses its own responses through them.
 - The workspace packages (`@mentis/contracts`, `@mentis/answer-matching` — the judge shared with the phone) are **source-first**: the `bun` export condition (plus tsc `customConditions` and the vitest alias) serves `src/`. `dist/` is built only inside the Docker image, so `bun run check` never builds anything and stays order-independent.
 - e2e tests build their app through `bootstrap.ts` when the express-level config is part of what they prove (body cap, `X-Forwarded-For` buckets), so the suite can never drift from `main.ts`.
@@ -55,4 +74,4 @@ supabase/         # the shared schema: the init migration + the CLI link
 
 ## Environment
 
-`env.ts` is the whole config surface: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `CORS_ORIGINS` (comma-separated, default `""`, parsed to a list), `PORT` (default 3001 — dodges `next dev` on 3000). `NODE_ENV` is deliberately absent; the Dockerfile sets it for dependency perf paths and nothing in our code reads it. `.env.example` carries real public values, so `cp .env.example .env` plus one secret is a full local setup. Any commit that changes env consumption updates `.env.example` in the same commit.
+`env.ts` is the whole config surface: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `DATABASE_URL` (the session-pooler Postgres URL TypeORM connects through — the second secret), `CORS_ORIGINS` (comma-separated, default `""`, parsed to a list), `PORT` (default 3001 — dodges `next dev` on 3000). `NODE_ENV` is deliberately absent; the Dockerfile sets it for dependency perf paths and nothing in our code reads it. `.env.example` carries real public values, so `cp .env.example .env` plus one secret is a full local setup. Any commit that changes env consumption updates `.env.example` in the same commit.
