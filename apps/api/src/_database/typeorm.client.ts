@@ -9,4 +9,6 @@ export const dataSourceClient = (env: Env): DataSourceOptions => ({
   migrations: [path.join(__dirname, "migrations", "*.{ts,js}")],
   ssl: { rejectUnauthorized: false },
   synchronize: false,
+  // Postgres ships gen_random_uuid() in core; the uuid-ossp default would need an extension Supabase does not enable.
+  uuidExtension: "pgcrypto",
 });

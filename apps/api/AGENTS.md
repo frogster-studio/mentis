@@ -9,15 +9,17 @@ Deliberately **not** a bounded context, so no `CONTEXT.md` and no row in `CONTEX
 - `bun run dev` — watch mode (bun auto-loads `.env`; `cp .env.example .env` then fill the two secrets)
 - `bun run typecheck` — `tsc --noEmit`
 - `bun run test` — vitest, via SWC (esbuild cannot emit decorator metadata)
+- `bun run migration:generate` / `migration:run` / `migration:revert` — TypeORM CLI against `DATABASE_URL`; generate diffs the entities against the live schema, so it needs a reachable database — **Hugo runs these, never an agent**
 - `bun run build` — `tsc` emit to `dist/`; node runs that output in prod, bun never transpiles prod code
 - From the repo root: `bun run check` (typecheck + test + knip + format, all workspaces); **every issue must end with `check` green**
 
 ## Hard constraints
 
 - Decorator flags live directly in `tsconfig.json` — never move them into a shared base (bun bug oven-sh/bun#6326). `tsconfig.build.json` needs an explicit `rootDir` beside `outDir` (TS 6).
-- **Every row travels through TypeORM** ([ADR 0005](../../docs/adr/0005-the-api-reaches-its-data-through-typeorm.md)): one long-lived `DataSource` on the session pooler, `synchronize: false`, entities hand-mirrored from the migration. The service client in `src/supabase.ts` never touches data — it serves `auth.admin.deleteUser` and the Card Images bucket, nothing else (the dev `scripts/seed.ts` keeps a PostgREST client of its own). There is still no per-request user-authed client, so owner scoping is explicit owner filters in the repository.
+- **Every row travels through TypeORM** ([ADR 0005](../../docs/adr/0005-the-api-reaches-its-data-through-typeorm.md)): one long-lived `DataSource` on the session pooler, `synchronize: false`, migrations generated from the entities. The service client in `src/supabase.ts` never touches data — it serves `auth.admin.deleteUser` and the Card Images bucket, nothing else. There is still no per-request user-authed client, so owner scoping is explicit owner filters in the repository.
 - **`ConfigModule` is imported, never `@Global()`** — every module that needs `ENV`, `SUPABASE` or `JWKS` lists it, `TypeOrmModule.forRootAsync({ imports: [ConfigModule] })` included: a dynamic module resolves in its own scope, not the root's.
-- **The schema lives here, in `supabase/`** — run every Supabase CLI command from `apps/api/`, the only directory where the CLI finds `supabase/config.toml` (it searches upward, never down). It is one init migration, born locked per [ADR 0003](../../docs/adr/0003-database-admits-only-the-api.md): RLS on every table, zero policies, privileges for `service_role` alone. The recreated schema carries no default privileges, so a new table or function must grant `service_role` explicitly or the API cannot reach it.
+- **The schema lives in `src/_database/migrations/`, generated from the entities** — there is no Supabase CLI and no `supabase/` directory. `migration:generate` emits only what entity metadata carries, and it *drops* any index, check, unique or foreign key it finds in the database but not on an entity — so every one of those belongs on the entity (`@Index`, `@Check`, `@Unique`, a relation with `onDelete`), including the cascade to `auth.users`, which `auth-user.entity.ts` mirrors read-only for exactly that reason.
+- **Migrations are generated output, and Hugo runs the generator.** An agent edits the entities and stops there — `bun run migration:generate` is Hugo's command, never an agent's, and a migration is never authored, renamed or edited by hand. What generation cannot emit (RLS, grants, triggers, bucket rows) stays out of the repo: hand it over as SQL snippets for the Supabase dashboard editor, one plain-English comment per statement. The schema is still born locked per [ADR 0003](../../docs/adr/0003-database-admits-only-the-api.md) — RLS everywhere, zero policies, `service_role` alone — but that lock now lives outside the repo, so a new table or function is unreachable until its grant is run by hand.
 - Supabase Auth signs access tokens with ES256 asymmetric keys, so JWT verification is local — `jose` against the project JWKS with `iss`/`aud`/`alg` pinned, never a per-request Auth-server call and never the legacy JWT secret. The namespace prefix is the auth boundary: `EditorGuard` on `/admin/*`, `SupabaseUserGuard` on `/app/me/*`, no auth guard on public `/app` reads.
 - Every non-2xx body is the `ErrorResponse` envelope from `@mentis/contracts/shared`, emitted by `HttpErrorFilter` and nowhere else.
 - Wire casing is camelCase, carried by `@Column({ name })` on the entities and the zod contracts — never a hand-aliased select string.
@@ -35,7 +37,7 @@ src/
   catalog/        # /app/themes + /app/questions: public Quiz play reads
   competition/    # /app/me/competition: Attempt issuance, resume and the judged finalize
   player/         # /app/me: stats, idempotent pushes, account deletion
-  _database/      # TypeORM: the module, the datasource options, entities/ — the schema mirror
+  _database/      # TypeORM: the module, the datasource options, entities/ — the schema source — and migrations/
   _tests/         # the shared harness plus the specs no feature owns (the bootstrap spine)
   auth/           # SupabaseUserGuard (401) and EditorGuard (403), plus the project JWKS
   common/         # ZodValidationPipe, HttpErrorFilter, the rate-limit tiers
@@ -44,7 +46,6 @@ src/
   bootstrap.ts    # helmet, CORS allowlist, trust proxy, json body cap — shared with the e2e suite
   main.ts         # boot: create, configure, shutdown hooks, listen
   app.module.ts   # root module: feature imports, APP_FILTER
-supabase/         # the shared schema: the init migration + the CLI link
 ```
 
 Only those four are features. Everything below them is transversal spine — no layer subfolders there, just a `_tests/` where it has tests.
@@ -59,7 +60,7 @@ Only those four are features. Everything below them is transversal spine — no 
   ❌ src/cards/admin-cards.controller.ts
   ```
 
-- **`src/_database/` owns TypeORM wholesale.** Every entity lives in `_database/entities/` as the single hand-written mirror of the SQL schema, beside the datasource config and shared database logic — a feature folder never defines one.
+- **`src/_database/` owns TypeORM wholesale.** Every entity lives in `_database/entities/` as the schema's source of truth, beside the datasource config, the migrations and shared database logic — a feature folder never defines one.
 
   ```
   ✅ src/_database/entities/card.entity.ts

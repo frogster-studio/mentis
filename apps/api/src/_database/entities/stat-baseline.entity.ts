@@ -1,9 +1,14 @@
-import { Column, Entity, PrimaryColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from "typeorm";
+import { AuthUserEntity } from "./auth-user.entity";
 
 @Entity("stat_baselines")
 export class StatBaselineEntity {
   @PrimaryColumn("uuid")
   owner!: string;
+
+  @ManyToOne(() => AuthUserEntity, { nullable: false, onDelete: "CASCADE" })
+  @JoinColumn({ name: "owner" })
+  ownerUser?: AuthUserEntity;
 
   @PrimaryColumn("uuid")
   device!: string;

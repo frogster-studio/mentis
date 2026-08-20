@@ -1,9 +1,30 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import {
+  Check,
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  Unique,
+} from "typeorm";
+import { AuthUserEntity } from "./auth-user.entity";
 
 export type CompetitionAttemptKind = "initial" | "replay" | "catchup";
 export type CompetitionAttemptStatus = "active" | "finalized";
 export type CompetitionFinalizeReason = "completed" | "quit" | "expired";
 
+@Index("competition_attempts_owner_day_idx", ["owner", "day"])
+@Index("competition_attempts_day_idx", ["day"])
+// A Competition Day holds at most one Attempt per kind, so a repeated ask returns the first.
+@Unique("competition_attempts_one_per_kind", ["owner", "day", "kind"])
+@Check("competition_attempts_kind_known", "kind in ('initial', 'replay', 'catchup')")
+@Check("competition_attempts_status_known", "status in ('active', 'finalized')")
+@Check(
+  "competition_attempts_finalize_reason_known",
+  "finalize_reason in ('completed', 'quit', 'expired')",
+)
+@Check("competition_attempts_ten_questions", "cardinality(question_ids) = 10")
 @Entity("competition_attempts")
 export class CompetitionAttemptEntity {
   @PrimaryGeneratedColumn("uuid")
@@ -11,6 +32,10 @@ export class CompetitionAttemptEntity {
 
   @Column("uuid")
   owner!: string;
+
+  @ManyToOne(() => AuthUserEntity, { nullable: false, onDelete: "CASCADE" })
+  @JoinColumn({ name: "owner" })
+  ownerUser?: AuthUserEntity;
 
   @Column("date")
   day!: string;
@@ -27,7 +52,7 @@ export class CompetitionAttemptEntity {
   @Column("text", { name: "question_ids", array: true })
   questionIds!: string[];
 
-  @Column("text")
+  @Column("text", { default: "active" })
   status!: CompetitionAttemptStatus;
 
   @Column("text", { name: "finalize_reason", nullable: true })
@@ -36,7 +61,13 @@ export class CompetitionAttemptEntity {
   @Column("integer", { nullable: true })
   score!: number | null;
 
-  @Column({ type: "timestamptz", name: "issued_at", insert: false, update: false })
+  @Column({
+    type: "timestamptz",
+    name: "issued_at",
+    default: () => "now()",
+    insert: false,
+    update: false,
+  })
   issuedAt!: Date;
 
   @Column("timestamptz", { name: "finalized_at", nullable: true })
