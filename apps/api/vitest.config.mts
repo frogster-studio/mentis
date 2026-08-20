@@ -9,7 +9,7 @@ const contractsSrc = fileURLToPath(new URL("../../packages/contracts/src", impor
 
 export default defineConfig({
   test: {
-    include: ["src/**/*.spec.ts", "src/**/_tests/*.e2e-spec.ts", "test/**/*.e2e-spec.ts"],
+    include: ["src/**/*.spec.ts", "src/**/_tests/*.e2e-spec.ts"],
   },
   resolve: {
     alias: [

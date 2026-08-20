@@ -11,16 +11,12 @@ import {
   SignJWT,
 } from "jose";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { stubDataSource, testEnv } from "../src/_tests/test-env";
-import { EditorGuard } from "../src/auth/editor.guard";
-import { JWKS } from "../src/auth/jwks";
-import {
-  type AuthedRequest,
-  type AuthedUser,
-  SupabaseUserGuard,
-} from "../src/auth/supabase-user.guard";
-import { ENV } from "../src/env";
-import { RootModule } from "../src/root.module";
+import { stubDataSource, testEnv } from "../../_tests/test-env";
+import { ENV } from "../../env";
+import { RootModule } from "../../root.module";
+import { EditorGuard } from "../editor.guard";
+import { JWKS } from "../jwks";
+import { type AuthedRequest, type AuthedUser, SupabaseUserGuard } from "../supabase-user.guard";
 
 const ISSUER = `${testEnv.SUPABASE_URL}/auth/v1`;
 const PLAYER_ID = "11111111-1111-4111-8111-111111111111";

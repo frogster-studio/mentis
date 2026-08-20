@@ -4,15 +4,15 @@ import { Test } from "@nestjs/testing";
 import { getDataSourceToken } from "@nestjs/typeorm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
-import { stubDataSource, testEnv } from "../src/_tests/test-env";
-import { ZodValidationPipe } from "../src/common/zod-validation.pipe";
-import { ENV } from "../src/env";
-import { RootModule } from "../src/root.module";
+import { ZodValidationPipe } from "../common/zod-validation.pipe";
+import { ENV } from "../env";
+import { RootModule } from "../root.module";
+import { stubDataSource, testEnv } from "./test-env";
 
 const probeQuerySchema = z.object({ page: z.coerce.number().int().min(1).default(1) });
 type ProbeQuery = z.infer<typeof probeQuerySchema>;
 
-// No business routes exist yet, so proving pipe -> filter over real HTTP needs a test-only route.
+// A test-only route proves pipe -> filter over real HTTP without leaning on any feature's routes.
 @Controller("probe")
 class ProbeController {
   @Get()

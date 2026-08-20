@@ -7,22 +7,22 @@ import { SkipThrottle } from "@nestjs/throttler";
 import { getDataSourceToken } from "@nestjs/typeorm";
 import { createLocalJWKSet, exportJWK, generateKeyPair, type JWTPayload, SignJWT } from "jose";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { stubDataSource, testEnv } from "../src/_tests/test-env";
-import { JWKS } from "../src/auth/jwks";
-import { configureApp, NEST_OPTIONS } from "../src/bootstrap";
-import { CardsRepository } from "../src/cards/repositories/cards.repository";
-import { CatalogRepository } from "../src/catalog/repositories/catalog.repository";
+import { stubDataSource, testEnv } from "../../_tests/test-env";
+import { JWKS } from "../../auth/jwks";
+import { configureApp, NEST_OPTIONS } from "../../bootstrap";
+import { CardsRepository } from "../../cards/repositories/cards.repository";
+import { CatalogRepository } from "../../catalog/repositories/catalog.repository";
+import { ENV } from "../../env";
+import { PlayerRepository } from "../../player/repositories/player.repository";
+import { RootModule } from "../../root.module";
+import { SUPABASE } from "../../supabase";
 import {
   AUTHENTICATED_TIER,
   DRAW_TIER,
   DrawThrottlerGuard,
   EVERY_TIER,
   PUBLIC_TIER,
-} from "../src/common/rate-limit.guard";
-import { ENV } from "../src/env";
-import { PlayerRepository } from "../src/player/repositories/player.repository";
-import { RootModule } from "../src/root.module";
-import { SUPABASE } from "../src/supabase";
+} from "../rate-limit.guard";
 
 // Empty everywhere: this suite is about the guards in front of the routes, not their reads.
 const emptyCardsRepository = {

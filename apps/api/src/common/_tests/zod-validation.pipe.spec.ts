@@ -1,7 +1,7 @@
 import { BadRequestException } from "@nestjs/common";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { ZodValidationPipe } from "./zod-validation.pipe";
+import { ZodValidationPipe } from "../zod-validation.pipe";
 
 const schema = z.object({ page: z.coerce.number().int().min(1).default(1) });
 

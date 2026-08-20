@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ZodError } from "zod";
-import { loadEnv } from "./env";
+import { loadEnv } from "../env";
 
 const configured = {
   SUPABASE_URL: "https://stub.supabase.co",

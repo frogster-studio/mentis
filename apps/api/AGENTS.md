@@ -15,11 +15,11 @@ Deliberately **not** a bounded context, so no `CONTEXT.md` and no row in `CONTEX
 ## Hard constraints
 
 - Decorator flags live directly in `tsconfig.json` — never move them into a shared base (bun bug oven-sh/bun#6326). `tsconfig.build.json` needs an explicit `rootDir` beside `outDir` (TS 6).
-- The service client from `src/supabase.ts` is the only database path, with no per-request user-authed client. RLS owner-scoping is re-implemented as explicit owner filters.
+- **Every row travels through TypeORM** ([ADR 0005](../../docs/adr/0005-the-api-reaches-its-data-through-typeorm.md)): one long-lived `DataSource` on the session pooler, `synchronize: false`, entities hand-mirrored from the migration. The service client in `src/supabase.ts` never touches data — it serves `auth.admin.deleteUser` and the Card Images bucket, nothing else (the dev `scripts/seed.ts` keeps a PostgREST client of its own). There is still no per-request user-authed client, so owner scoping is explicit owner filters in the repository.
 - **The schema lives here, in `supabase/`** — run every Supabase CLI command from `apps/api/`, the only directory where the CLI finds `supabase/config.toml` (it searches upward, never down). It is one init migration, born locked per [ADR 0003](../../docs/adr/0003-database-admits-only-the-api.md): RLS on every table, zero policies, privileges for `service_role` alone. The recreated schema carries no default privileges, so a new table or function must grant `service_role` explicitly or the API cannot reach it.
 - Supabase Auth signs access tokens with ES256 asymmetric keys, so JWT verification is local — `jose` against the project JWKS with `iss`/`aud`/`alg` pinned, never a per-request Auth-server call and never the legacy JWT secret. The namespace prefix is the auth boundary: `EditorGuard` on `/admin/*`, `SupabaseUserGuard` on `/app/me/*`, no auth guard on public `/app` reads.
 - Every non-2xx body is the `ErrorResponse` envelope from `@mentis/contracts/shared`, emitted by `HttpErrorFilter` and nowhere else.
-- Wire casing is camelCase — one aliased select string per endpoint, no ORM.
+- Wire casing is camelCase, carried by `@Column({ name })` on the entities and the zod contracts — never a hand-aliased select string.
 - Throttling is per-surface guards ordered **after** auth, never a global `APP_GUARD`: only a guard that runs after verification can key a bucket on the JWT `sub`. One bucket per tier per caller — public reads and the draw key on `req.ip` (hence `trust proxy 2` — Railway fronts the container with two hops, and trusting one reads the edge's own address), `/admin/*` and `/app/me/*` share one `sub`-keyed bucket.
 - `GET /health` stays unguarded and unthrottled: Railway restarts the container on a failed poll.
 - The API speaks **JSON only**: `NEST_OPTIONS` turns off Nest's parsers wholesale and `bootstrap.ts` registers json alone, capped at 64 kb against the `.max(200)` push batch caps. Never create the app without `NEST_OPTIONS` — that silently restores Express's unchosen 100 kb wall. A non-JSON body reaches the pipe as `undefined` and 400s; nothing sends one (admin parses FormData locally, image bytes never touch the API — ADR 0001).
@@ -29,20 +29,26 @@ Deliberately **not** a bounded context, so no `CONTEXT.md` and no row in `CONTEX
 
 ```
 src/
-  admin/          # the /admin surface: Card curation, EditorGuard-bound
-  app/            # the /app surface: public Quiz play reads
+  cards/          # /admin/cards + /admin/card-images: Card curation, EditorGuard-bound
+    modules/ controllers/ services/ repositories/ mappers/ _tests/   # the layers of every feature
+  catalog/        # /app/themes + /app/questions: public Quiz play reads
+  competition/    # /app/me/competition: Attempt issuance
+  player/         # /app/me: stats, idempotent pushes, account deletion
+  _database/      # TypeORM: the module, the datasource options, entities/ — the schema mirror
+  _tests/         # the shared harness plus the specs no feature owns (env, the bootstrap spine)
   auth/           # SupabaseUserGuard (401) and EditorGuard (403), plus the project JWKS
-  common/         # cross-cutting spine: ZodValidationPipe, HttpErrorFilter, the rate-limit tiers
+  common/         # ZodValidationPipe, HttpErrorFilter, the rate-limit tiers
   health/         # GET /health
   bootstrap.ts    # helmet, CORS allowlist, trust proxy, json body cap — shared with the e2e suite
   core.module.ts  # global providers: ENV, SUPABASE, JWKS
   env.ts          # zod-validated config, parsed once at boot
-  supabase.ts     # the service client — the only database path
+  supabase.ts     # the service client — auth admin and the Card Images bucket, never data
   main.ts         # boot: create, configure, shutdown hooks, listen
   root.module.ts
-test/             # fetch-based e2e (no supertest)
 supabase/         # the shared schema: the init migration + the CLI link
 ```
+
+Only those four are features. Everything below them is transversal spine — no layer subfolders there, just a `_tests/` where it has tests.
 
 ## Conventions
 
@@ -61,11 +67,11 @@ supabase/         # the shared schema: the init migration + the CLI link
   ❌ src/cards/card.entity.ts
   ```
 
-- **Every test lives in a `_tests/` folder.** Unit specs and e2e sit together per feature in `src/<feature>/_tests/`, shared harness and transversal e2e in `src/_tests/` — the `src/**/_tests/` globs are all vitest includes and the build excludes.
+- **Every test lives in a `_tests/` folder**, beside the code it proves — `src/<feature>/_tests/` per feature, `src/auth/_tests/` and `src/common/_tests/` for the spine, `src/_tests/` for the shared harness and what no feature owns. There is no top-level `test/` — vitest looks inside `src/` only, and `tsconfig.build.json` keeps every `_tests/` out of the emit.
 
   ```
-  ✅ src/competition/_tests/seeded-rng.spec.ts
-  ❌ src/competition/seeded-rng.spec.ts · test/app-competition.e2e-spec.ts
+  ✅ src/competition/_tests/seeded-rng.spec.ts · src/auth/_tests/auth.e2e-spec.ts
+  ❌ src/competition/seeded-rng.spec.ts · test/auth.e2e-spec.ts
   ```
 - Request/response schemas live in `@mentis/contracts`, never here; the API validates requests *and* parses its own responses through them.
 - The workspace packages (`@mentis/contracts`, `@mentis/answer-matching` — the judge shared with the phone) are **source-first**: the `bun` export condition (plus tsc `customConditions` and the vitest alias) serves `src/`. `dist/` is built only inside the Docker image, so `bun run check` never builds anything and stays order-independent.
@@ -74,4 +80,4 @@ supabase/         # the shared schema: the init migration + the CLI link
 
 ## Environment
 
-`env.ts` is the whole config surface: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `DATABASE_URL` (the session-pooler Postgres URL TypeORM connects through — the second secret), `CORS_ORIGINS` (comma-separated, default `""`, parsed to a list), `PORT` (default 3001 — dodges `next dev` on 3000). `NODE_ENV` is deliberately absent; the Dockerfile sets it for dependency perf paths and nothing in our code reads it. `.env.example` carries real public values, so `cp .env.example .env` plus one secret is a full local setup. Any commit that changes env consumption updates `.env.example` in the same commit.
+`env.ts` is the whole config surface: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `DATABASE_URL` (the session-pooler Postgres URL TypeORM connects through — the second secret), `CORS_ORIGINS` (comma-separated, default `""`, parsed to a list), `PORT` (default 3001 — dodges `next dev` on 3000). `NODE_ENV` is deliberately absent; the Dockerfile sets it for dependency perf paths and nothing in our code reads it. `.env.example` carries real public values, so `cp .env.example .env` plus the two secrets is a full local setup. Any commit that changes env consumption updates `.env.example` in the same commit.

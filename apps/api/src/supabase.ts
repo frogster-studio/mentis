@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Env } from "./env";
 
-// The service client is the API's only database path, so RLS owner-scoping becomes explicit filters.
+// Auth admin and the Card Images bucket only — never a row.
 export const SUPABASE = Symbol("SUPABASE");
 
 export const createServiceClient = (env: Env): SupabaseClient =>
