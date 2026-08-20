@@ -2,13 +2,13 @@ import { Module } from "@nestjs/common";
 import { APP_FILTER } from "@nestjs/core";
 import { ThrottlerModule } from "@nestjs/throttler";
 import { DatabaseModule } from "./_database/database.module";
-import { AppModule } from "./app/app.module";
 import { CardsModule } from "./cards/modules/cards.module";
 import { CatalogModule } from "./catalog/modules/catalog.module";
 import { HttpErrorFilter } from "./common/http-error.filter";
 import { CompetitionModule } from "./competition/modules/competition.module";
 import { CoreModule } from "./core.module";
 import { HealthController } from "./health/health.controller";
+import { PlayerModule } from "./player/modules/player.module";
 
 // Named RootModule: "app" is reserved vocabulary for the mobile surface here.
 @Module({
@@ -20,7 +20,7 @@ import { HealthController } from "./health/health.controller";
     CardsModule,
     CatalogModule,
     CompetitionModule,
-    AppModule,
+    PlayerModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_FILTER, useClass: HttpErrorFilter }],

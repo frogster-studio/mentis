@@ -5,11 +5,14 @@ import { Test } from "@nestjs/testing";
 import { getDataSourceToken } from "@nestjs/typeorm";
 import { createLocalJWKSet, exportJWK, generateKeyPair, type JWTPayload, SignJWT } from "jose";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { stubDataSource, testEnv } from "../src/_tests/test-env";
-import { JWKS } from "../src/auth/jwks";
-import { ENV } from "../src/env";
-import { RootModule } from "../src/root.module";
-import { SUPABASE } from "../src/supabase";
+import type { QuizSessionEntity } from "../../_database/entities/quiz-session.entity";
+import type { StatBaselineEntity } from "../../_database/entities/stat-baseline.entity";
+import { stubDataSource, testEnv } from "../../_tests/test-env";
+import { JWKS } from "../../auth/jwks";
+import { ENV } from "../../env";
+import { RootModule } from "../../root.module";
+import { SUPABASE } from "../../supabase";
+import { AccountGoneError, PlayerRepository } from "../repositories/player.repository";
 
 const PLAYER_A = "11111111-1111-4111-8111-111111111111";
 const PLAYER_B = "22222222-2222-4222-8222-222222222222";
@@ -19,152 +22,88 @@ const SESSION_1 = "10000000-0000-4000-8000-000000000001";
 const SESSION_2 = "10000000-0000-4000-8000-000000000002";
 const SESSION_3 = "10000000-0000-4000-8000-000000000003";
 
-type SessionRow = {
-  id: string;
-  owner: string;
-  theme_id: string;
-  theme_name: string;
-  points: number;
-  finished_at: string;
-};
-
-type BaselineRow = {
-  owner: string;
-  device: string;
-  theme_id: string;
-  theme_name: string;
-  total_points: number;
-  session_count: number;
-};
-
-type UpsertOptions = { onConflict?: string; ignoreDuplicates?: boolean };
-
-let sessionRows: SessionRow[] = [];
-let baselineRows: BaselineRow[] = [];
+let sessionRows: QuizSessionEntity[] = [];
+let baselineRows: StatBaselineEntity[] = [];
 let liveOwners = new Set<string>();
-let upserts: (UpsertOptions & { table: string })[] = [];
-
-const OWNER_GONE_ERROR = {
-  code: "23503",
-  message: 'insert violates foreign key constraint "quiz_sessions_owner_fkey"',
-  details: "",
-  hint: "",
-};
+let inserts: string[] = [];
 
 const sessionRow = (
   id: string,
   owner: string,
-  overrides: Partial<SessionRow> = {},
-): SessionRow => ({
+  overrides: Partial<QuizSessionEntity> = {},
+): QuizSessionEntity => ({
   id,
   owner,
-  theme_id: "geo",
-  theme_name: "Géographie",
+  themeId: "geo",
+  themeName: "Géographie",
   points: 30,
-  finished_at: "2026-08-11T10:00:00.000Z",
+  finishedAt: new Date("2026-08-11T10:00:00.000Z"),
   ...overrides,
 });
 
-const baselineRow = (owner: string, overrides: Partial<BaselineRow> = {}): BaselineRow => ({
+const baselineRow = (
+  owner: string,
+  overrides: Partial<StatBaselineEntity> = {},
+): StatBaselineEntity => ({
   owner,
   device: DEVICE_A,
-  theme_id: "geo",
-  theme_name: "Géographie",
-  total_points: 120,
-  session_count: 4,
+  themeId: "geo",
+  themeName: "Géographie",
+  totalPoints: 120,
+  sessionCount: 4,
   ...overrides,
 });
 
-// The aliased camelCase select strings are proven by the live smoke, so the stub projects by hand.
-const projectSessions = (rows: SessionRow[]) =>
-  rows.map((row) => ({
-    id: row.id,
-    themeId: row.theme_id,
-    themeName: row.theme_name,
-    points: row.points,
-  }));
-
-const projectBaselines = (rows: BaselineRow[]) =>
-  rows.map((row) => ({
-    themeId: row.theme_id,
-    themeName: row.theme_name,
-    totalPoints: row.total_points,
-    sessionCount: row.session_count,
-  }));
-
-// on-conflict-do-nothing over the in-memory table, and the owner FK that rejects a deleted Account.
-const upsertInto = <Row extends { owner: string }>(
+// ON CONFLICT DO NOTHING and the owner FK, in memory: the SQL itself is proven by the live smoke.
+const insertIfAbsent = <Row extends { owner: string }>(
   table: string,
   stored: Row[],
   rows: Row[],
-  options: UpsertOptions,
   clashes: (existing: Row, row: Row) => boolean,
-) => {
-  upserts.push({ table, ...options });
+): void => {
+  inserts.push(table);
   if (rows.some((row) => !liveOwners.has(row.owner))) {
-    return Promise.resolve({ data: null, error: OWNER_GONE_ERROR });
+    throw new AccountGoneError();
   }
   for (const row of rows) {
-    const clash = stored.findIndex((existing) => clashes(existing, row));
-    if (clash === -1) {
+    if (!stored.some((existing) => clashes(existing, row))) {
       stored.push(row);
-    } else if (options.ignoreDuplicates !== true) {
-      stored[clash] = row;
     }
   }
-  return Promise.resolve({ data: null, error: null });
 };
 
-// Stands in for PostgREST: owner filtering, ordering and on-conflict-do-nothing with real semantics.
-const stubSupabase = {
-  from: (table: string) => {
-    if (table === "quiz_sessions") {
-      return {
-        select: () => ({
-          eq: (_column: string, owner: string) => {
-            const rows = sessionRows.filter((row) => row.owner === owner);
-            return Object.assign(Promise.resolve({ data: projectSessions(rows), error: null }), {
-              order: (column: string, options: { ascending: boolean }) => {
-                if (column !== "finished_at") {
-                  throw new Error(`unexpected order column ${column}`);
-                }
-                const direction = options.ascending ? 1 : -1;
-                const sorted = [...rows].sort(
-                  (left, right) => direction * left.finished_at.localeCompare(right.finished_at),
-                );
-                return Promise.resolve({ data: projectSessions(sorted), error: null });
-              },
-            });
-          },
-        }),
-        upsert: (rows: SessionRow[], options: UpsertOptions) =>
-          upsertInto(table, sessionRows, rows, options, (existing, row) => existing.id === row.id),
-      };
-    }
-    if (table === "stat_baselines") {
-      return {
-        select: () => ({
-          eq: (_column: string, owner: string) =>
-            Promise.resolve({
-              data: projectBaselines(baselineRows.filter((row) => row.owner === owner)),
-              error: null,
-            }),
-        }),
-        upsert: (rows: BaselineRow[], options: UpsertOptions) =>
-          upsertInto(
-            table,
-            baselineRows,
-            rows,
-            options,
-            (existing, row) =>
-              existing.owner === row.owner &&
-              existing.device === row.device &&
-              existing.theme_id === row.theme_id,
-          ),
-      };
-    }
-    throw new Error(`unexpected table ${table}`);
+const fakePlayerRepository = {
+  async findQuizSessions(owner) {
+    return sessionRows
+      .filter((row) => row.owner === owner)
+      .sort((left, right) => left.finishedAt.getTime() - right.finishedAt.getTime());
   },
+  async findStatBaselines(owner) {
+    return baselineRows.filter((row) => row.owner === owner);
+  },
+  async insertQuizSessionsIfAbsent(rows) {
+    insertIfAbsent("quiz_sessions", sessionRows, rows, (existing, row) => existing.id === row.id);
+  },
+  async insertStatBaselinesIfAbsent(rows) {
+    insertIfAbsent(
+      "stat_baselines",
+      baselineRows,
+      rows,
+      (existing, row) =>
+        existing.owner === row.owner &&
+        existing.device === row.device &&
+        existing.themeId === row.themeId,
+    );
+  },
+} satisfies Pick<
+  PlayerRepository,
+  | "findQuizSessions"
+  | "findStatBaselines"
+  | "insertQuizSessionsIfAbsent"
+  | "insertStatBaselinesIfAbsent"
+>;
+
+const stubSupabase = {
   auth: {
     admin: {
       // The owner FK cascade, in memory.
@@ -239,6 +178,8 @@ describe("app me routes e2e", () => {
       .useValue(testEnv)
       .overrideProvider(getDataSourceToken())
       .useValue(stubDataSource)
+      .overrideProvider(PlayerRepository)
+      .useValue(fakePlayerRepository)
       .overrideProvider(SUPABASE)
       .useValue(stubSupabase)
       .overrideProvider(JWKS)
@@ -257,7 +198,7 @@ describe("app me routes e2e", () => {
     sessionRows = [];
     baselineRows = [];
     liveOwners = new Set([PLAYER_A, PLAYER_B]);
-    upserts = [];
+    inserts = [];
   });
 
   it.each([
@@ -273,9 +214,18 @@ describe("app me routes e2e", () => {
 
   it("GET /app/me/stats returns the owner's world, sessions finishedAt asc, owner off the wire", async () => {
     sessionRows.push(
-      sessionRow(SESSION_2, PLAYER_A, { finished_at: "2026-08-11T12:00:00.000Z", points: 20 }),
-      sessionRow(SESSION_1, PLAYER_A, { finished_at: "2026-08-11T09:00:00.000Z", points: 10 }),
-      sessionRow(SESSION_3, PLAYER_A, { finished_at: "2026-08-11T15:00:00.000Z", points: 30 }),
+      sessionRow(SESSION_2, PLAYER_A, {
+        finishedAt: new Date("2026-08-11T12:00:00.000Z"),
+        points: 20,
+      }),
+      sessionRow(SESSION_1, PLAYER_A, {
+        finishedAt: new Date("2026-08-11T09:00:00.000Z"),
+        points: 10,
+      }),
+      sessionRow(SESSION_3, PLAYER_A, {
+        finishedAt: new Date("2026-08-11T15:00:00.000Z"),
+        points: 30,
+      }),
     );
     baselineRows.push(baselineRow(PLAYER_A));
 
@@ -297,6 +247,7 @@ describe("app me routes e2e", () => {
       { themeId: "geo", themeName: "Géographie", totalPoints: 120, sessionCount: 4 },
     ]);
     expect(JSON.stringify(body)).not.toContain("owner");
+    expect(JSON.stringify(body)).not.toContain("finishedAt");
   });
 
   it("GET /app/me/stats never returns another Player's rows", async () => {
@@ -314,7 +265,7 @@ describe("app me routes e2e", () => {
     ]);
     expect(response.status).toBe(204);
     expect(sessionRows).toEqual([sessionRow(SESSION_1, PLAYER_A)]);
-    expect(upserts).toEqual([{ table: "quiz_sessions", onConflict: "id", ignoreDuplicates: true }]);
+    expect(inserts).toEqual(["quiz_sessions"]);
   });
 
   it("re-pushing an accepted Quiz Session is a no-op success", async () => {
@@ -354,13 +305,9 @@ describe("app me routes e2e", () => {
     expect(again.status).toBe(204);
     expect(baselineRows).toEqual([
       baselineRow(PLAYER_A),
-      baselineRow(PLAYER_A, { device: DEVICE_B, total_points: 60 }),
+      baselineRow(PLAYER_A, { device: DEVICE_B, totalPoints: 60 }),
     ]);
-    expect(upserts.at(-1)).toEqual({
-      table: "stat_baselines",
-      onConflict: "owner,device,theme_id",
-      ignoreDuplicates: true,
-    });
+    expect(inserts).toEqual(["stat_baselines", "stat_baselines"]);
   });
 
   it.each([
@@ -393,7 +340,7 @@ describe("app me routes e2e", () => {
     const response = await push(tokenA, path, oversized);
     expect(response.status).toBe(400);
     expect(errorResponseSchema.parse(await response.json()).code).toBe("VALIDATION_FAILED");
-    expect(upserts).toEqual([]);
+    expect(inserts).toEqual([]);
   });
 
   it.each(["/app/me/quiz-sessions", "/app/me/stat-baselines"])(
@@ -401,7 +348,7 @@ describe("app me routes e2e", () => {
     async (path) => {
       const response = await push(tokenA, path, []);
       expect(response.status).toBe(204);
-      expect(upserts).toEqual([]);
+      expect(inserts).toEqual([]);
     },
   );
 

@@ -20,26 +20,11 @@ import {
   PUBLIC_TIER,
 } from "../src/common/rate-limit.guard";
 import { ENV } from "../src/env";
+import { PlayerRepository } from "../src/player/repositories/player.repository";
 import { RootModule } from "../src/root.module";
 import { SUPABASE } from "../src/supabase";
 
-const EMPTY = { data: [], count: 0, error: null };
-
-// Every route answers empty here: this suite is about the guards in front of them, not their reads.
-const emptyBuilder = (): Promise<typeof EMPTY> =>
-  Object.assign(Promise.resolve(EMPTY), {
-    eq: () => emptyBuilder(),
-    order: () => emptyBuilder(),
-    range: () => Promise.resolve(EMPTY),
-  });
-
-const stubSupabase = {
-  from: () => ({
-    select: () => emptyBuilder(),
-    upsert: () => Promise.resolve({ data: null, error: null }),
-  }),
-};
-
+// Empty everywhere: this suite is about the guards in front of the routes, not their reads.
 const emptyCardsRepository = {
   list: () => Promise.resolve({ items: [], total: 0 }),
 } as unknown as CardsRepository;
@@ -48,6 +33,16 @@ const emptyCatalogRepository = {
   themesWithQuestionCounts: () => Promise.resolve([]),
   drawRandomQuestions: () => Promise.resolve([]),
 } as unknown as CatalogRepository;
+
+const emptyPlayerRepository = {
+  findQuizSessions: () => Promise.resolve([]),
+  findStatBaselines: () => Promise.resolve([]),
+  insertQuizSessionsIfAbsent: () => Promise.resolve(),
+  insertStatBaselinesIfAbsent: () => Promise.resolve(),
+} as unknown as PlayerRepository;
+
+// Nothing here should reach Supabase, so a call that appears must crash rather than dial out.
+const stubSupabase = {};
 
 const pushedSession = (index: number) => ({
   id: `10000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
@@ -141,6 +136,8 @@ describe("rate limiting e2e", () => {
       .useValue(emptyCardsRepository)
       .overrideProvider(CatalogRepository)
       .useValue(emptyCatalogRepository)
+      .overrideProvider(PlayerRepository)
+      .useValue(emptyPlayerRepository)
       .overrideProvider(SUPABASE)
       .useValue(stubSupabase)
       .overrideProvider(JWKS)
