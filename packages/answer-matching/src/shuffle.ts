@@ -1,6 +1,7 @@
-import type { Question } from "@/types/quiz";
-
-export type ShuffleableQuestion = Pick<Question, "answer" | "wrongChoices">;
+export type ShuffleableQuestion = {
+  answer: string;
+  wrongChoices: string[];
+};
 
 // rng is in [0, 1) like Math.random; uniform Fisher–Yates, matching the Draw's idiom.
 export function squareChoices(question: ShuffleableQuestion, rng: () => number): string[] {

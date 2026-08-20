@@ -13,6 +13,9 @@
       "entry": ["src/main.ts", "scripts/seed.ts"],
       "project": ["src/**/*.ts", "test/**/*.ts", "scripts/**/*.ts"]
     },
+    "packages/answer-matching": {
+      "project": ["src/**/*.ts"]
+    },
     "packages/contracts": {
       "project": ["src/**/*.ts"]
     }

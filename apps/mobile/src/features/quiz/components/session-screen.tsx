@@ -1,3 +1,4 @@
+import { squareChoices } from "@mentis/answer-matching";
 import { randomUUID } from "expo-crypto";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Check, Grid2x2, X } from "lucide-react-native";
@@ -40,7 +41,6 @@ import { isExpired, remainingFraction, remainingSeconds } from "@/features/quiz/
 import { useOutboxStore } from "@/features/quiz/outbox-store";
 import { drainOutbox } from "@/features/quiz/outbox-sync";
 import { currentQuestion, sessionScore } from "@/features/quiz/session-reducer";
-import { squareChoices } from "@/features/quiz/shuffle";
 import { useStatsStore } from "@/features/quiz/stats-store";
 import { useQuizStore } from "@/features/quiz/store";
 import { TEXT } from "@/theme/text";

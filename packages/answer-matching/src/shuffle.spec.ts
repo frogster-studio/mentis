@@ -1,11 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { Question } from "@/types/quiz";
-import { squareChoices } from "./shuffle";
+import { type ShuffleableQuestion, squareChoices } from "./shuffle";
 
-function question(
-  answer: string,
-  wrongChoices: string[],
-): Pick<Question, "answer" | "wrongChoices"> {
+function question(answer: string, wrongChoices: string[]): ShuffleableQuestion {
   return { answer, wrongChoices };
 }
 

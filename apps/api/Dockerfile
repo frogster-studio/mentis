@@ -8,20 +8,23 @@ COPY package.json bun.lock ./
 COPY apps/api/package.json apps/api/
 COPY apps/admin/package.json apps/admin/
 COPY apps/mobile/package.json apps/mobile/
+COPY packages/answer-matching/package.json packages/answer-matching/
 COPY packages/contracts/package.json packages/contracts/
 
-# ---- build: bun installs the workspace, tsc emits contracts then api ----
+# ---- build: bun installs the workspace, tsc emits the packages then api ----
 FROM manifests AS build
-RUN bun install --frozen-lockfile --filter @mentis/api --filter @mentis/contracts
+RUN bun install --frozen-lockfile --filter @mentis/api --filter @mentis/contracts --filter @mentis/answer-matching
+COPY packages/answer-matching packages/answer-matching
 COPY packages/contracts packages/contracts
 COPY apps/api apps/api
 # node runs tsc-compiled output only; bun's transpiler never touches prod code
+RUN cd packages/answer-matching && bun --bun run build
 RUN cd packages/contracts && bun --bun run build
 RUN cd apps/api && bun --bun run build
 
 # ---- prod-deps: production dependency tree only ----
 FROM manifests AS prod-deps
-RUN bun install --frozen-lockfile --production --filter @mentis/api --filter @mentis/contracts
+RUN bun install --frozen-lockfile --production --filter @mentis/api --filter @mentis/contracts --filter @mentis/answer-matching
 
 # ---- runtime: node LTS, non-root, dist + prod deps only ----
 FROM node:24-alpine
@@ -31,6 +34,8 @@ WORKDIR /repo
 COPY --from=prod-deps --chown=node:node /repo/node_modules ./node_modules
 COPY --from=prod-deps --chown=node:node /repo/apps/api/node_modules ./apps/api/node_modules
 COPY --from=prod-deps --chown=node:node /repo/packages/contracts/node_modules ./packages/contracts/node_modules
+COPY --from=build --chown=node:node /repo/packages/answer-matching/dist ./packages/answer-matching/dist
+COPY --from=build --chown=node:node /repo/packages/answer-matching/package.json ./packages/answer-matching/
 COPY --from=build --chown=node:node /repo/packages/contracts/dist ./packages/contracts/dist
 COPY --from=build --chown=node:node /repo/packages/contracts/package.json ./packages/contracts/
 COPY --from=build --chown=node:node /repo/apps/api/dist ./apps/api/dist

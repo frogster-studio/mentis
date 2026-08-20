@@ -41,6 +41,7 @@
       "name": "@mentis/api",
       "version": "0.1.0",
       "dependencies": {
+        "@mentis/answer-matching": "workspace:*",
         "@mentis/contracts": "workspace:*",
         "@nestjs/common": "^11.1.28",
         "@nestjs/core": "^11.1.28",
@@ -68,6 +69,7 @@
       "version": "1.0.0",
       "dependencies": {
         "@lodev09/react-native-true-sheet": "^3.11.12",
+        "@mentis/answer-matching": "workspace:*",
         "@mentis/contracts": "workspace:*",
         "@radix-ui/react-dialog": "^1.1.23",
         "@radix-ui/react-presence": "^1.1.10",
@@ -105,6 +107,14 @@
         "@resvg/resvg-js": "^2.6.2",
         "@types/node": "^22.20.1",
         "@types/react": "~19.2.2",
+        "typescript": "~6.0.3",
+        "vitest": "^4.1.10",
+      },
+    },
+    "packages/answer-matching": {
+      "name": "@mentis/answer-matching",
+      "version": "0.1.0",
+      "devDependencies": {
         "typescript": "~6.0.3",
         "vitest": "^4.1.10",
       },
@@ -451,6 +461,8 @@
     "@lukeed/csprng": ["@lukeed/csprng@1.1.0", "", {}, "sha512-Z7C/xXCiGWsg0KuKsHTKJxbWhpI3Vs5GwLfOean7MGyVFGqdRgBbAjOCh6u4bbjPc/8MJ2pZmK/0DLdCbivLDA=="],
 
     "@mentis/admin": ["@mentis/admin@workspace:apps/admin"],
+
+    "@mentis/answer-matching": ["@mentis/answer-matching@workspace:packages/answer-matching"],
 
     "@mentis/api": ["@mentis/api@workspace:apps/api"],
 

@@ -1,8 +1,10 @@
-// Normalize → exact match → bounded Levenshtein (never over Misspellings); on-device per ADR 0001.
+// Normalize → exact match → bounded Levenshtein (never over Misspellings); mobile ADR 0001.
 
-import type { Question } from "@/types/quiz";
-
-export type MatchableQuestion = Pick<Question, "answer" | "aliases" | "misspellings">;
+export type MatchableQuestion = {
+  answer: string;
+  aliases: string[];
+  misspellings: string[];
+};
 
 // « le/la/les/l'/un/une/des » — after punctuation stripping, « l' » surfaces as a bare « l » token.
 const LEADING_ARTICLES = new Set(["le", "la", "les", "l", "un", "une", "des"]);

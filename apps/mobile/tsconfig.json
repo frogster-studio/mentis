@@ -5,7 +5,8 @@
     "types": ["node"],
     "paths": {
       "@/*": ["./src/*"],
-      // Web drops the `react-native` export condition, which would leave it resolving built dist.
+      // Web drops the `react-native` export condition, which would leave these resolving built dist.
+      "@mentis/answer-matching": ["../../packages/answer-matching/src/index.ts"],
       "@mentis/contracts/*": ["../../packages/contracts/src/*/index.ts"]
     }
   },

@@ -25,6 +25,7 @@
   // ✅ <QuietButton layout="circle" icon={X} accessibilityLabel={QUIT_LABEL} />
   // ❌ a Pressable given its own face styles — that's a third look; use QuietButton
   ```
+- Answer judging and the Carré shuffle come from `@mentis/answer-matching` (source-first like contracts), never re-implemented here — the API judges competition with the same code.
 - Install a dependency in the issue that first uses it (keeps knip green). Add it with `bun add` in `apps/mobile`.
 
 ## Structure

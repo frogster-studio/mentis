@@ -1,9 +1,9 @@
 // Time and the Carré shuffle only arrive through action payloads, so transitions stay pure.
 
+import { matchAnswer } from "@mentis/answer-matching";
 import type { Question, QuizMode } from "@/types/quiz";
 import { POINTS_CASH, POINTS_SQUARE } from "./constants";
 import { endTimestamp, isExpired } from "./countdown";
-import { matchAnswer } from "./matching";
 
 export type SessionAnswer = {
   input: string;
