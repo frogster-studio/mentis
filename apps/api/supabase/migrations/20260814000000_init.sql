@@ -113,11 +113,49 @@ create table public.stat_baselines (
   primary key (owner, device, theme_id)
 );
 
+-- One row per issued Attempt: its Theme and Questions fixed at issuance, consumed either way.
+create table public.competition_attempts (
+  id uuid primary key default gen_random_uuid(),
+  owner uuid not null references auth.users (id) on delete cascade,
+  day date not null,
+  kind text not null check (kind in ('initial', 'replay', 'catchup')),
+  theme_id text not null,
+  theme_name text not null,
+  question_ids text[] not null,
+  status text not null default 'active' check (status in ('active', 'finalized')),
+  finalize_reason text check (finalize_reason in ('completed', 'quit', 'expired')),
+  score integer,
+  issued_at timestamptz not null default now(),
+  finalized_at timestamptz,
+  constraint competition_attempts_ten_questions check (cardinality(question_ids) = 10),
+  -- A Competition Day holds at most one Attempt per kind, so a repeated ask returns the first.
+  constraint competition_attempts_one_per_kind unique (owner, day, kind)
+);
+
+create index competition_attempts_owner_day_idx on public.competition_attempts (owner, day);
+create index competition_attempts_day_idx on public.competition_attempts (day);
+
+-- The judged transcript, written at finalize; client_elapsed_ms is the phone's untrusted claim.
+create table public.competition_answers (
+  attempt_id uuid not null references public.competition_attempts (id) on delete cascade,
+  position smallint not null,
+  question_id text not null,
+  mode text not null check (mode in ('cash', 'square', 'none')),
+  raw_input text,
+  correct boolean not null,
+  points smallint not null,
+  matched_via text check (matched_via in ('canonical', 'alias', 'misspelling', 'fuzzy', 'choice')),
+  client_elapsed_ms integer,
+  primary key (attempt_id, position)
+);
+
 alter table public.cards enable row level security;
 alter table public.themes enable row level security;
 alter table public.questions enable row level security;
 alter table public.quiz_sessions enable row level security;
 alter table public.stat_baselines enable row level security;
+alter table public.competition_attempts enable row level security;
+alter table public.competition_answers enable row level security;
 
 grant usage on schema public to service_role;
 grant all on all tables in schema public to service_role;
