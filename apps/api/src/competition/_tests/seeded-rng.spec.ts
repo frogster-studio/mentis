@@ -1,6 +1,6 @@
 import { squareChoices } from "@mentis/answer-matching";
 import { describe, expect, it } from "vitest";
-import { seededRng } from "./seeded-rng";
+import { seededRng } from "../services/seeded-rng";
 
 const draw = (seed: string, count: number) => {
   const rng = seededRng(seed);

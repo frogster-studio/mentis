@@ -3,17 +3,17 @@ import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { getDataSourceToken } from "@nestjs/typeorm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { stubDataSource, testEnv } from "../src/_tests/test-env";
-import { ENV } from "../src/env";
-import { RootModule } from "../src/root.module";
-import { SUPABASE } from "../src/supabase";
+import { stubDataSource, testEnv } from "../../_tests/test-env";
+import { ENV } from "../../env";
+import { RootModule } from "../../root.module";
+import { CatalogRepository, type DrawnQuestion } from "../repositories/catalog.repository";
 
 const themes = [
   { id: "les-simpson", name: "Les Simpson", questionCount: 2 },
   { id: "marie-antoinette", name: "Marie-Antoinette", questionCount: 1 },
 ];
 
-const question = (id: string, themeId: string, themeName: string) => ({
+const question = (id: string, themeId: string, themeName: string): DrawnQuestion => ({
   id,
   themeId,
   themeName,
@@ -30,47 +30,29 @@ const questions = [
   question("q3", "marie-antoinette", "Marie-Antoinette"),
 ];
 
-type DrawArgs = { theme_slug: string | null; n: number };
+type Draw = { themeId: string | null; count: number };
 
-let drawArgs: DrawArgs[] = [];
+let draws: Draw[] = [];
 
-const themeRows = () =>
-  themes.map(({ id, name, questionCount }) => ({
-    id,
-    name,
-    questions: [{ count: questionCount }],
-  }));
-
-// Stands in for PostgREST: the aliased select strings are proven by the live smoke, not here.
-const stubSupabase = {
-  from: (table: string) => {
-    if (table !== "themes") {
-      throw new Error(`unexpected table ${table}`);
-    }
-    return {
-      select: () =>
-        Object.assign(Promise.resolve({ data: themeRows(), error: null }), {
-          eq: (_column: string, value: string) => ({
-            maybeSingle: () =>
-              Promise.resolve({
-                data: themes.find((theme) => theme.id === value) ?? null,
-                error: null,
-              }),
-          }),
-        }),
-    };
+// Stands in for Postgres at the repository seam: the SQL itself is proven by the live smoke.
+const fakeCatalogRepository = {
+  async themesWithQuestionCounts() {
+    return themes;
   },
-  rpc: (fn: string, args: DrawArgs) => {
-    if (fn !== "get_random_questions") {
-      throw new Error(`unexpected function ${fn}`);
-    }
-    drawArgs.push(args);
-    const drawn = questions
-      .filter((row) => args.theme_slug === null || row.themeId === args.theme_slug)
-      .slice(0, args.n);
-    return { select: () => Promise.resolve({ data: drawn, error: null }) };
+  async themeExists(id) {
+    return themes.some((theme) => theme.id === id);
   },
-};
+  async drawRandomQuestions(themeId, count) {
+    draws.push({ themeId, count });
+    return questions.filter((row) => themeId === null || row.themeId === themeId).slice(0, count);
+  },
+  async questionsByIds(ids) {
+    return questions.filter((row) => ids.includes(row.id));
+  },
+} satisfies Pick<
+  CatalogRepository,
+  "themesWithQuestionCounts" | "themeExists" | "drawRandomQuestions" | "questionsByIds"
+>;
 
 describe("app content routes e2e", () => {
   let app: INestApplication;
@@ -82,8 +64,8 @@ describe("app content routes e2e", () => {
       .useValue(testEnv)
       .overrideProvider(getDataSourceToken())
       .useValue(stubDataSource)
-      .overrideProvider(SUPABASE)
-      .useValue(stubSupabase)
+      .overrideProvider(CatalogRepository)
+      .useValue(fakeCatalogRepository)
       .compile();
     app = moduleRef.createNestApplication();
     await app.listen(0);
@@ -95,7 +77,7 @@ describe("app content routes e2e", () => {
   });
 
   beforeEach(() => {
-    drawArgs = [];
+    draws = [];
   });
 
   it("GET /app/themes returns camelCase Themes with their Question count", async () => {
@@ -110,7 +92,7 @@ describe("app content routes e2e", () => {
   it("GET /app/questions draws 10 across every Theme by default", async () => {
     const response = await fetch(`${baseUrl}/app/questions`);
     expect(response.status).toBe(200);
-    expect(drawArgs).toEqual([{ theme_slug: null, n: 10 }]);
+    expect(draws).toEqual([{ themeId: null, count: 10 }]);
     const body = await response.json();
     expect(body).toHaveLength(3);
     expect(body[0]).toMatchObject({ id: "q1", themeId: "les-simpson", themeName: "Les Simpson" });
@@ -122,7 +104,7 @@ describe("app content routes e2e", () => {
   it("GET /app/questions?theme= draws from that Theme only", async () => {
     const response = await fetch(`${baseUrl}/app/questions?theme=les-simpson&n=2`);
     expect(response.status).toBe(200);
-    expect(drawArgs).toEqual([{ theme_slug: "les-simpson", n: 2 }]);
+    expect(draws).toEqual([{ themeId: "les-simpson", count: 2 }]);
     const body = await response.json();
     expect(body.map((row: { id: string }) => row.id)).toEqual(["q1", "q2"]);
   });
@@ -132,7 +114,7 @@ describe("app content routes e2e", () => {
     expect(response.status).toBe(404);
     const body = errorResponseSchema.parse(await response.json());
     expect(body.code).toBe("THEME_NOT_FOUND");
-    expect(drawArgs).toEqual([]);
+    expect(draws).toEqual([]);
   });
 
   it.each(["0", "51", "1.5", "many"])(
@@ -142,7 +124,7 @@ describe("app content routes e2e", () => {
       expect(response.status).toBe(400);
       const body = errorResponseSchema.parse(await response.json());
       expect(body.code).toBe("VALIDATION_FAILED");
-      expect(drawArgs).toEqual([]);
+      expect(draws).toEqual([]);
     },
   );
 

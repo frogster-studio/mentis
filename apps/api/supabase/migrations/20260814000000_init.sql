@@ -62,31 +62,6 @@ create table public.questions (
 
 create index questions_theme_id_idx on public.questions (theme_id);
 
--- An RPC because PostgREST cannot express `order by random()`; a null Theme draws across every
--- Theme, so each row carries its own to stay attributable.
-create function public.get_random_questions(theme_slug text default null, n integer default 10)
-returns table (
-  id text,
-  theme_id text,
-  theme_name text,
-  text text,
-  answer text,
-  aliases text[],
-  misspellings text[],
-  wrong_choices text[]
-)
-language sql
-security invoker
-set search_path = ''
-as $$
-  select q.id, q.theme_id, t.name, q.text, q.answer, q.aliases, q.misspellings, q.wrong_choices
-  from public.questions q
-  join public.themes t on t.id = q.theme_id
-  where theme_slug is null or q.theme_id = theme_slug
-  order by random()
-  limit n;
-$$;
-
 -- One append-only row per finished Quiz Session, keyed by a client-generated id so a retried push
 -- upserts and never double-counts. Both player tables capture the Theme name at record time, so
 -- replacing the hosted content leaves a Player's history intact.

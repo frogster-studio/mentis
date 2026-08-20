@@ -11,6 +11,7 @@ import { stubDataSource, testEnv } from "../src/_tests/test-env";
 import { JWKS } from "../src/auth/jwks";
 import { configureApp, NEST_OPTIONS } from "../src/bootstrap";
 import { CardsRepository } from "../src/cards/repositories/cards.repository";
+import { CatalogRepository } from "../src/catalog/repositories/catalog.repository";
 import {
   AUTHENTICATED_TIER,
   DRAW_TIER,
@@ -37,12 +38,16 @@ const stubSupabase = {
     select: () => emptyBuilder(),
     upsert: () => Promise.resolve({ data: null, error: null }),
   }),
-  rpc: () => ({ select: () => Promise.resolve({ data: [], error: null }) }),
 };
 
 const emptyCardsRepository = {
   list: () => Promise.resolve({ items: [], total: 0 }),
 } as unknown as CardsRepository;
+
+const emptyCatalogRepository = {
+  themesWithQuestionCounts: () => Promise.resolve([]),
+  drawRandomQuestions: () => Promise.resolve([]),
+} as unknown as CatalogRepository;
 
 const pushedSession = (index: number) => ({
   id: `10000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
@@ -134,6 +139,8 @@ describe("rate limiting e2e", () => {
       .useValue(stubDataSource)
       .overrideProvider(CardsRepository)
       .useValue(emptyCardsRepository)
+      .overrideProvider(CatalogRepository)
+      .useValue(emptyCatalogRepository)
       .overrideProvider(SUPABASE)
       .useValue(stubSupabase)
       .overrideProvider(JWKS)

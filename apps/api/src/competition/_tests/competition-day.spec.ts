@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { competitionDay, daysBefore } from "./competition-day";
+import { competitionDay, daysBefore } from "../services/competition-day";
 
 describe("competitionDay", () => {
   it("reads the Europe/Paris date, not the server's", () => {
