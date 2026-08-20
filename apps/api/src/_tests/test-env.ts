@@ -1,5 +1,5 @@
 import type { DataSource } from "typeorm";
-import type { Env } from "../env";
+import type { Env } from "../_config/env.config";
 
 export const testEnv: Env = {
   PORT: 0,

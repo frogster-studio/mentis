@@ -1,10 +1,9 @@
-import { Global, Module } from "@nestjs/common";
-import { createProjectJwks, JWKS } from "./auth/jwks";
-import { ENV, loadEnv } from "./env";
-import { createServiceClient, SUPABASE } from "./supabase";
+import { Module } from "@nestjs/common";
+import { createProjectJwks, JWKS } from "../auth/jwks";
+import { ENV, loadEnv } from "./env.config";
+import { createServiceClient, SUPABASE } from "./supabase.config";
 
 // ENV, SUPABASE and JWKS are providers so tests override them through DI, not process.env.
-@Global()
 @Module({
   providers: [
     { provide: ENV, useFactory: loadEnv },
@@ -13,4 +12,4 @@ import { createServiceClient, SUPABASE } from "./supabase";
   ],
   exports: [ENV, SUPABASE, JWKS],
 })
-export class CoreModule {}
+export class ConfigModule {}

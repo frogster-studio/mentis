@@ -5,13 +5,13 @@ import { Test } from "@nestjs/testing";
 import { getDataSourceToken } from "@nestjs/typeorm";
 import { createLocalJWKSet, exportJWK, generateKeyPair, type JWTPayload, SignJWT } from "jose";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { ENV } from "../../_config/env.config";
+import { SUPABASE } from "../../_config/supabase.config";
 import type { QuizSessionEntity } from "../../_database/entities/quiz-session.entity";
 import type { StatBaselineEntity } from "../../_database/entities/stat-baseline.entity";
 import { stubDataSource, testEnv } from "../../_tests/test-env";
+import { AppModule } from "../../app.module";
 import { JWKS } from "../../auth/jwks";
-import { ENV } from "../../env";
-import { RootModule } from "../../root.module";
-import { SUPABASE } from "../../supabase";
 import { AccountGoneError, PlayerRepository } from "../repositories/player.repository";
 
 const PLAYER_A = "11111111-1111-4111-8111-111111111111";
@@ -173,7 +173,7 @@ describe("app me routes e2e", () => {
     tokenA = await mint(PLAYER_A);
     tokenB = await mint(PLAYER_B);
 
-    const moduleRef = await Test.createTestingModule({ imports: [RootModule] })
+    const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(ENV)
       .useValue(testEnv)
       .overrideProvider(getDataSourceToken())

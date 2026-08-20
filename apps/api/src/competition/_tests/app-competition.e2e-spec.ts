@@ -5,19 +5,19 @@ import { Test } from "@nestjs/testing";
 import { getDataSourceToken } from "@nestjs/typeorm";
 import { createLocalJWKSet, exportJWK, generateKeyPair, type JWTPayload, SignJWT } from "jose";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { ENV } from "../../_config/env.config";
 import type { CompetitionAnswerEntity } from "../../_database/entities/competition-answer.entity";
 import type {
   CompetitionAttemptEntity,
   CompetitionFinalizeReason,
 } from "../../_database/entities/competition-attempt.entity";
 import { stubDataSource, testEnv } from "../../_tests/test-env";
+import { AppModule } from "../../app.module";
 import { JWKS } from "../../auth/jwks";
 import {
   CatalogRepository,
   type DrawnQuestion,
 } from "../../catalog/repositories/catalog.repository";
-import { ENV } from "../../env";
-import { RootModule } from "../../root.module";
 import {
   CompetitionRepository,
   type FinalizedOutcome,
@@ -257,7 +257,7 @@ describe("app competition routes e2e", () => {
         .sign(signingKey.privateKey);
     [tokenA, tokenB] = await Promise.all([sign(PLAYER_A), sign(PLAYER_B)]);
 
-    const moduleRef = await Test.createTestingModule({ imports: [RootModule] })
+    const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(ENV)
       .useValue(testEnv)
       .overrideProvider(getDataSourceToken())

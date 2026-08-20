@@ -1,5 +1,5 @@
 import { createRemoteJWKSet, type JWTVerifyGetKey } from "jose";
-import type { Env } from "../env";
+import type { Env } from "../_config/env.config";
 
 export const JWKS = Symbol("JWKS");
 

@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { type AdminUploadUrlResponse, adminUploadUrlResponseSchema } from "@mentis/contracts/admin";
 import { Inject, Injectable } from "@nestjs/common";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { SUPABASE } from "../../supabase";
+import { SUPABASE } from "../../_config/supabase.config";
 
 export const CARD_IMAGES_BUCKET = "card-images";
 

@@ -3,9 +3,9 @@ import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { getDataSourceToken } from "@nestjs/typeorm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { ENV } from "../../_config/env.config";
 import { stubDataSource, testEnv } from "../../_tests/test-env";
-import { ENV } from "../../env";
-import { RootModule } from "../../root.module";
+import { AppModule } from "../../app.module";
 import { CatalogRepository, type DrawnQuestion } from "../repositories/catalog.repository";
 
 const themes = [
@@ -59,7 +59,7 @@ describe("app content routes e2e", () => {
   let baseUrl: string;
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({ imports: [RootModule] })
+    const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(ENV)
       .useValue(testEnv)
       .overrideProvider(getDataSourceToken())

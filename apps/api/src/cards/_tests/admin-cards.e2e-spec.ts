@@ -12,12 +12,12 @@ import {
   SignJWT,
 } from "jose";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { ENV } from "../../_config/env.config";
+import { SUPABASE } from "../../_config/supabase.config";
 import type { CardEntity } from "../../_database/entities/card.entity";
 import { stubDataSource, testEnv } from "../../_tests/test-env";
+import { AppModule } from "../../app.module";
 import { JWKS } from "../../auth/jwks";
-import { ENV } from "../../env";
-import { RootModule } from "../../root.module";
-import { SUPABASE } from "../../supabase";
 import { type CardContent, CardsRepository } from "../repositories/cards.repository";
 import { CARD_LIST_PAGE_SIZE } from "../services/cards.service";
 
@@ -258,7 +258,7 @@ describe("admin card routes e2e", () => {
     const publicJwk = { ...(await exportJWK(signingKey.publicKey)), alg: "ES256", kid: "test-key" };
     playerToken = await mint({ app_metadata: { provider: "google" } });
 
-    const moduleRef = await Test.createTestingModule({ imports: [RootModule] })
+    const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(ENV)
       .useValue(testEnv)
       .overrideProvider(getDataSourceToken())

@@ -5,7 +5,7 @@ import type {
 } from "@mentis/contracts/app";
 import { GoneException, Inject, Injectable } from "@nestjs/common";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { SUPABASE } from "../../supabase";
+import { SUPABASE } from "../../_config/supabase.config";
 import { toAppAccountStatsResponse } from "../mappers/player.mapper";
 import { AccountGoneError, PlayerRepository } from "../repositories/player.repository";
 

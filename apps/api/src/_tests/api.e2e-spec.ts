@@ -4,9 +4,9 @@ import { Test } from "@nestjs/testing";
 import { getDataSourceToken } from "@nestjs/typeorm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
+import { ENV } from "../_config/env.config";
+import { AppModule } from "../app.module";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
-import { ENV } from "../env";
-import { RootModule } from "../root.module";
 import { stubDataSource, testEnv } from "./test-env";
 
 const probeQuerySchema = z.object({ page: z.coerce.number().int().min(1).default(1) });
@@ -27,7 +27,7 @@ describe("api spine e2e", () => {
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [RootModule],
+      imports: [AppModule],
       controllers: [ProbeController],
     })
       .overrideProvider(ENV)

@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { ConfigModule } from "../../_config/config.module";
 import { CardEntity } from "../../_database/entities/card.entity";
 import { AdminCardImagesController } from "../controllers/admin-card-images.controller";
 import { AdminCardsController } from "../controllers/admin-cards.controller";
@@ -9,7 +10,7 @@ import { CardsService } from "../services/cards.service";
 
 // Card curation — the /admin surface, EditorGuard-bound on every route.
 @Module({
-  imports: [TypeOrmModule.forFeature([CardEntity])],
+  imports: [ConfigModule, TypeOrmModule.forFeature([CardEntity])],
   controllers: [AdminCardImagesController, AdminCardsController],
   providers: [CardImageStorage, CardsRepository, CardsService],
 })

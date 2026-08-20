@@ -16,6 +16,7 @@ Deliberately **not** a bounded context, so no `CONTEXT.md` and no row in `CONTEX
 
 - Decorator flags live directly in `tsconfig.json` — never move them into a shared base (bun bug oven-sh/bun#6326). `tsconfig.build.json` needs an explicit `rootDir` beside `outDir` (TS 6).
 - **Every row travels through TypeORM** ([ADR 0005](../../docs/adr/0005-the-api-reaches-its-data-through-typeorm.md)): one long-lived `DataSource` on the session pooler, `synchronize: false`, entities hand-mirrored from the migration. The service client in `src/supabase.ts` never touches data — it serves `auth.admin.deleteUser` and the Card Images bucket, nothing else (the dev `scripts/seed.ts` keeps a PostgREST client of its own). There is still no per-request user-authed client, so owner scoping is explicit owner filters in the repository.
+- **`ConfigModule` is imported, never `@Global()`** — every module that needs `ENV`, `SUPABASE` or `JWKS` lists it, `TypeOrmModule.forRootAsync({ imports: [ConfigModule] })` included: a dynamic module resolves in its own scope, not the root's.
 - **The schema lives here, in `supabase/`** — run every Supabase CLI command from `apps/api/`, the only directory where the CLI finds `supabase/config.toml` (it searches upward, never down). It is one init migration, born locked per [ADR 0003](../../docs/adr/0003-database-admits-only-the-api.md): RLS on every table, zero policies, privileges for `service_role` alone. The recreated schema carries no default privileges, so a new table or function must grant `service_role` explicitly or the API cannot reach it.
 - Supabase Auth signs access tokens with ES256 asymmetric keys, so JWT verification is local — `jose` against the project JWKS with `iss`/`aud`/`alg` pinned, never a per-request Auth-server call and never the legacy JWT secret. The namespace prefix is the auth boundary: `EditorGuard` on `/admin/*`, `SupabaseUserGuard` on `/app/me/*`, no auth guard on public `/app` reads.
 - Every non-2xx body is the `ErrorResponse` envelope from `@mentis/contracts/shared`, emitted by `HttpErrorFilter` and nowhere else.
@@ -35,16 +36,14 @@ src/
   competition/    # /app/me/competition: Attempt issuance and the judged finalize
   player/         # /app/me: stats, idempotent pushes, account deletion
   _database/      # TypeORM: the module, the datasource options, entities/ — the schema mirror
-  _tests/         # the shared harness plus the specs no feature owns (env, the bootstrap spine)
+  _tests/         # the shared harness plus the specs no feature owns (the bootstrap spine)
   auth/           # SupabaseUserGuard (401) and EditorGuard (403), plus the project JWKS
   common/         # ZodValidationPipe, HttpErrorFilter, the rate-limit tiers
   health/         # GET /health
+  _config/        # ConfigModule and its providers: ENV (zod-validated, parsed once at boot), SUPABASE (auth admin + Card Images bucket, never data), JWKS
   bootstrap.ts    # helmet, CORS allowlist, trust proxy, json body cap — shared with the e2e suite
-  core.module.ts  # global providers: ENV, SUPABASE, JWKS
-  env.ts          # zod-validated config, parsed once at boot
-  supabase.ts     # the service client — auth admin and the Card Images bucket, never data
   main.ts         # boot: create, configure, shutdown hooks, listen
-  root.module.ts
+  app.module.ts   # root module: feature imports, APP_FILTER
 supabase/         # the shared schema: the init migration + the CLI link
 ```
 
@@ -80,4 +79,4 @@ Only those four are features. Everything below them is transversal spine — no 
 
 ## Environment
 
-`env.ts` is the whole config surface: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `DATABASE_URL` (the session-pooler Postgres URL TypeORM connects through — the second secret), `CORS_ORIGINS` (comma-separated, default `""`, parsed to a list), `PORT` (default 3001 — dodges `next dev` on 3000). `NODE_ENV` is deliberately absent; the Dockerfile sets it for dependency perf paths and nothing in our code reads it. `.env.example` carries real public values, so `cp .env.example .env` plus the two secrets is a full local setup. Any commit that changes env consumption updates `.env.example` in the same commit.
+`_config/env.config.ts` is the whole config surface: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `DATABASE_URL` (the session-pooler Postgres URL TypeORM connects through — the second secret), `CORS_ORIGINS` (comma-separated, default `""`, parsed to a list), `PORT` (default 3001 — dodges `next dev` on 3000). `NODE_ENV` is deliberately absent; the Dockerfile sets it for dependency perf paths and nothing in our code reads it. `.env.example` carries real public values, so `cp .env.example .env` plus the two secrets is a full local setup. Any commit that changes env consumption updates `.env.example` in the same commit.

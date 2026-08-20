@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import type { Request } from "express";
 import { type JWTPayload, type JWTVerifyGetKey, jwtVerify } from "jose";
-import { ENV, type Env } from "../env";
+import { ENV, type Env } from "../_config/env.config";
 import { JWKS } from "./jwks";
 
 export interface AuthedUser {

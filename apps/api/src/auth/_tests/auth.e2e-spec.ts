@@ -11,9 +11,10 @@ import {
   SignJWT,
 } from "jose";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { ConfigModule } from "../../_config/config.module";
+import { ENV } from "../../_config/env.config";
 import { stubDataSource, testEnv } from "../../_tests/test-env";
-import { ENV } from "../../env";
-import { RootModule } from "../../root.module";
+import { AppModule } from "../../app.module";
 import { EditorGuard } from "../editor.guard";
 import { JWKS } from "../jwks";
 import { type AuthedRequest, type AuthedUser, SupabaseUserGuard } from "../supabase-user.guard";
@@ -132,7 +133,7 @@ describe("auth guards e2e", () => {
     };
 
     const moduleRef = await Test.createTestingModule({
-      imports: [RootModule],
+      imports: [AppModule, ConfigModule],
       controllers: [GuardedMeController, GuardedEditorController],
     })
       .overrideProvider(ENV)
