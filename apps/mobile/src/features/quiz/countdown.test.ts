@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { COUNTDOWN_DURATION_MS } from "./constants";
 import {
+  elapsedMs,
   endTimestamp,
   isExpired,
   remainingFraction,
@@ -70,5 +71,24 @@ describe("isExpired", () => {
     expect(isExpired(ENDS_AT, ENDS_AT - 1)).toBe(false);
     expect(isExpired(ENDS_AT, ENDS_AT)).toBe(true);
     expect(isExpired(ENDS_AT, ENDS_AT + 1)).toBe(true);
+  });
+});
+
+describe("elapsedMs", () => {
+  it("is 0 the instant the question is shown", () => {
+    expect(elapsedMs(ENDS_AT, T0)).toBe(0);
+  });
+
+  it("stamps how long the Question stood before the answer", () => {
+    expect(elapsedMs(ENDS_AT, T0 + 9_000)).toBe(9_000);
+  });
+
+  it("caps at the full duration, however late the expiry is noticed", () => {
+    expect(elapsedMs(ENDS_AT, ENDS_AT)).toBe(COUNTDOWN_DURATION_MS);
+    expect(elapsedMs(ENDS_AT, ENDS_AT + 60_000)).toBe(COUNTDOWN_DURATION_MS);
+  });
+
+  it("never goes negative when the wall clock jumps backwards", () => {
+    expect(elapsedMs(ENDS_AT, T0 - 5_000)).toBe(0);
   });
 });

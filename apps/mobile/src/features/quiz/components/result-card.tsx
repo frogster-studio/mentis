@@ -2,46 +2,57 @@ import { EllipsisVertical, Grid2x2, Pencil } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Card } from "@/components/ui/card";
 import { RESULTS_CANONICAL_LABEL, RESULTS_NO_ANSWER } from "@/features/quiz/constants";
-import type { SessionAnswer } from "@/features/quiz/session-reducer";
 import { TEXT } from "@/theme/text";
 import { COLORS, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
-import type { Question } from "@/types/quiz";
+import type { QuizMode } from "@/types/quiz";
 
 const MENU_ICON_SIZE = 20;
 const MODE_ICON_SIZE = 16;
 const CHIP_SIZE = 32;
 
 export type ResultCardProps = {
-  question: Question;
-  answer: SessionAnswer;
+  questionText: string;
+  canonicalAnswer: string;
+  answerText: string;
+  // A competition position the Countdown ran out on resolved in neither mode.
+  mode: QuizMode | "none";
+  correct: boolean;
+  points: number;
 };
 
-export function ResultCard({ question, answer }: ResultCardProps) {
-  const isEmpty = answer.input.trim() === "";
-  const ModeIcon = answer.mode === "square" ? Grid2x2 : Pencil;
+export function ResultCard({
+  questionText,
+  canonicalAnswer,
+  answerText,
+  mode,
+  correct,
+  points,
+}: ResultCardProps) {
+  const isEmpty = answerText.trim() === "";
+  const ModeIcon = mode === "square" ? Grid2x2 : Pencil;
   // The icon and the chip carry correctness, so the answer itself never turns red.
-  const accent = answer.correct ? COLORS.success : COLORS.danger;
+  const accent = correct ? COLORS.success : COLORS.danger;
 
   return (
     <Card>
       <View style={styles.body}>
         <View style={styles.head}>
-          <Text style={styles.question}>{question.text}</Text>
+          <Text style={styles.question}>{questionText}</Text>
           <Pressable style={({ pressed }) => pressed && styles.pressed} hitSlop={8}>
             <EllipsisVertical size={MENU_ICON_SIZE} color={COLORS.inkMuted} />
           </Pressable>
         </View>
         <Text style={styles.canonical}>
-          {RESULTS_CANONICAL_LABEL} {question.answer}
+          {RESULTS_CANONICAL_LABEL} {canonicalAnswer}
         </Text>
         <View style={styles.divider} />
         <View style={styles.answerRow}>
           <ModeIcon size={MODE_ICON_SIZE} color={accent} />
           <Text style={[styles.answer, isEmpty && styles.answerEmpty]}>
-            {isEmpty ? RESULTS_NO_ANSWER : answer.input}
+            {isEmpty ? RESULTS_NO_ANSWER : answerText}
           </Text>
           <View style={[styles.chip, { backgroundColor: accent }]}>
-            <Text style={styles.chipText}>{answer.points > 0 ? `+${answer.points}` : "0"}</Text>
+            <Text style={styles.chipText}>{points > 0 ? `+${points}` : "0"}</Text>
           </View>
         </View>
       </View>

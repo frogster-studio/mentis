@@ -1,0 +1,12 @@
+export const COMPETITION_TITLE = "Compétition du jour";
+export const COMPETITION_TEASER = "Un thème imposé, un seul essai";
+export const COMPETITION_ERROR = "Impossible de lancer la compétition.";
+export const COMPETITION_JUDGE_ERROR = "Impossible d'envoyer tes réponses.";
+export const COMPETITION_EXPIRED_ERROR = "Cette compétition appartient à un jour passé.";
+export const COMPETITION_QUIT_LABEL = "Quitter la compétition";
+export const COMPETITION_QUIT_TITLE = "Quitter la compétition ?";
+export const COMPETITION_QUIT_MESSAGE =
+  "Les questions restantes compteront 0. Ton score sera enregistré et cet essai sera consommé.";
+export const COMPETITION_QUIT_CANCEL_LABEL = "Ne pas quitter";
+export const COMPETITION_QUIT_CONFIRM_LABEL = "Oui, quitter";
+export const COMPETITION_RESULTS_HOME_LABEL = "Retour à l'accueil";

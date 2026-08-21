@@ -1,0 +1,241 @@
+import { Redirect, useRouter } from "expo-router";
+import { X } from "lucide-react-native";
+import { type ReactNode, useEffect, useRef, useState } from "react";
+import { StyleSheet, type TextInput, View } from "react-native";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { QuietButton } from "@/components/ui/quiet-button";
+import { ScreenContainer } from "@/components/ui/screen-container";
+import { ScreenError } from "@/components/ui/screen-error";
+import { ScreenLoading } from "@/components/ui/screen-loading";
+import { useAuthStore } from "@/features/account/auth-store";
+import { useTodayAttempt, useTranscript } from "@/features/competition/api";
+import { currentAttemptQuestion } from "@/features/competition/attempt-reducer";
+import { CompetitionResults } from "@/features/competition/components/competition-results";
+import {
+  COMPETITION_ERROR,
+  COMPETITION_EXPIRED_ERROR,
+  COMPETITION_JUDGE_ERROR,
+  COMPETITION_QUIT_CANCEL_LABEL,
+  COMPETITION_QUIT_CONFIRM_LABEL,
+  COMPETITION_QUIT_LABEL,
+  COMPETITION_QUIT_MESSAGE,
+  COMPETITION_QUIT_TITLE,
+} from "@/features/competition/constants";
+import { queuedFinalize } from "@/features/competition/finalize-outbox";
+import { useFinalizeOutboxStore } from "@/features/competition/finalize-outbox-store";
+import { drainFinalizeOutbox } from "@/features/competition/finalize-sync";
+import { useCompetitionStore } from "@/features/competition/store";
+import { AnswerFooter } from "@/features/quiz/components/answer-footer";
+import { PlayHeader } from "@/features/quiz/components/play-header";
+import { PlayScreen } from "@/features/quiz/components/play-screen";
+import { usePlayClock } from "@/features/quiz/use-play-clock";
+import { isApiError } from "@/lib/api/client";
+import { GUTTER, SPACE } from "@/theme/tokens";
+
+export function CompetitionScreen() {
+  const router = useRouter();
+  const owner = useAuthStore((state) => state.session?.user.id);
+  const isAuthLoading = useAuthStore((state) => state.isLoading);
+  const { data: attempt, isError, refetch } = useTodayAttempt(owner);
+
+  const play = useCompetitionStore((state) => state.attempt);
+  const startAttempt = useCompetitionStore((state) => state.startAttempt);
+  const setInput = useCompetitionStore((state) => state.setInput);
+  const switchToSquare = useCompetitionStore((state) => state.switchToSquare);
+  const select = useCompetitionStore((state) => state.select);
+  const confirm = useCompetitionStore((state) => state.confirm);
+  const expire = useCompetitionStore((state) => state.expire);
+  const clearAttempt = useCompetitionStore((state) => state.clearAttempt);
+  const enqueue = useFinalizeOutboxStore((state) => state.enqueue);
+  const queued = useFinalizeOutboxStore((state) =>
+    attempt === undefined ? undefined : queuedFinalize(state.entries, attempt.id),
+  );
+
+  const inputRef = useRef<TextInput>(null);
+  const enqueuedRef = useRef(false);
+  const [quitVisible, setQuitVisible] = useState(false);
+
+  const isActive = play?.status === "active";
+  // An empty batch is only ever safe once the server holds the answers: never before it is queued.
+  const isJudgeable = attempt?.status === "finalized" || queued !== undefined;
+  const now = usePlayClock(play?.endsAt ?? 0, isActive, expire);
+  const transcript = useTranscript(owner, attempt?.id, isJudgeable);
+  // The queue is acked the moment the batch lands, so the transcript itself holds the screen after.
+  const showResults = isJudgeable || transcript.data !== undefined;
+
+  useEffect(() => {
+    // A batch still owed owns the Attempt — replaying it would race its own answers.
+    const stillQueued = queuedFinalize(
+      useFinalizeOutboxStore.getState().entries,
+      attempt?.id ?? "",
+    );
+    if (attempt?.status === "active" && stillQueued === undefined) {
+      startAttempt(attempt, Date.now());
+    }
+  }, [attempt, startAttempt]);
+
+  // Leaving the screen abandons the local play only: the Attempt stays active and resumes blank.
+  useEffect(() => clearAttempt, [clearAttempt]);
+
+  // The ref guards re-renders, so the finalize batch is queued exactly once.
+  useEffect(() => {
+    if (play?.status === "finished" && owner !== undefined && !enqueuedRef.current) {
+      enqueuedRef.current = true;
+      enqueue({ attemptId: play.id, owner, answers: play.answers });
+    }
+  }, [play, owner, enqueue]);
+
+  // Every question starts with the keyboard open, except under the quit sheet.
+  useEffect(() => {
+    if (isActive && !quitVisible) {
+      inputRef.current?.focus();
+    }
+  }, [isActive, quitVisible]);
+
+  // The Countdown can finish the Attempt behind the open sheet — the results take it down.
+  useEffect(() => {
+    if (play?.status === "finished") {
+      setQuitVisible(false);
+    }
+  }, [play?.status]);
+
+  const goHome = () => router.dismissTo("/");
+
+  const onRequestQuit = () => {
+    // The keyboard drops as the sheet rises, so the field lets go before it opens.
+    inputRef.current?.blur();
+    setQuitVisible(true);
+  };
+
+  const onConfirmQuit = () => {
+    setQuitVisible(false);
+    if (play && owner !== undefined) {
+      // The positions never reached stay out of the batch: the API zero-fills them.
+      enqueuedRef.current = true;
+      enqueue({ attemptId: play.id, owner, answers: play.answers });
+      void drainFinalizeOutbox(owner);
+    }
+    goHome();
+  };
+
+  // Held at the same slot under the same root in every branch: unmounting it mid-present strands it.
+  const quitConfirm = (
+    <ConfirmDialog
+      visible={quitVisible}
+      title={COMPETITION_QUIT_TITLE}
+      message={COMPETITION_QUIT_MESSAGE}
+      confirmLabel={COMPETITION_QUIT_CONFIRM_LABEL}
+      cancelLabel={COMPETITION_QUIT_CANCEL_LABEL}
+      onCancel={() => setQuitVisible(false)}
+      onConfirm={onConfirmQuit}
+    />
+  );
+
+  // Nothing is under way yet, so the quit control leaves straight away — no confirmation.
+  const framed = (body: ReactNode) => (
+    <ScreenContainer>
+      <View style={styles.header}>
+        <QuietButton
+          layout="circle"
+          icon={X}
+          accessibilityLabel={COMPETITION_QUIT_LABEL}
+          onPress={goHome}
+        />
+      </View>
+      {body}
+    </ScreenContainer>
+  );
+
+  if (owner === undefined) {
+    return isAuthLoading ? framed(<ScreenLoading />) : <Redirect href="/" />;
+  }
+
+  if (showResults) {
+    if (transcript.data) {
+      return (
+        <>
+          <CompetitionResults transcript={transcript.data} onGoHome={goHome} />
+          {quitConfirm}
+        </>
+      );
+    }
+    const expired = isApiError(transcript.error, "ATTEMPT_EXPIRED");
+    return (
+      <>
+        {framed(
+          transcript.isError ? (
+            <ScreenError
+              message={expired ? COMPETITION_EXPIRED_ERROR : COMPETITION_JUDGE_ERROR}
+              onRetry={expired ? undefined : () => void transcript.refetch()}
+            />
+          ) : (
+            <ScreenLoading />
+          ),
+        )}
+        {quitConfirm}
+      </>
+    );
+  }
+
+  if (isError) {
+    return (
+      <>
+        {framed(<ScreenError message={COMPETITION_ERROR} onRetry={() => void refetch()} />)}
+        {quitConfirm}
+      </>
+    );
+  }
+
+  // A just-finished Attempt holds here for the commit its batch takes to reach the queue.
+  if (!play || play.status === "finished") {
+    return (
+      <>
+        {framed(<ScreenLoading />)}
+        {quitConfirm}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <PlayScreen
+        questionText={currentAttemptQuestion(play).text}
+        header={
+          <PlayHeader
+            position={play.answers.length + 1}
+            total={play.questions.length}
+            endsAt={play.endsAt}
+            now={now}
+            quitLabel={COMPETITION_QUIT_LABEL}
+            onQuit={onRequestQuit}
+          />
+        }
+        footer={
+          <AnswerFooter
+            play={play}
+            inputRef={inputRef}
+            autoFocus={!quitVisible}
+            onInputChange={setInput}
+            onSwitchToSquare={() => {
+              inputRef.current?.blur();
+              switchToSquare();
+            }}
+            onSelect={select}
+            onConfirm={() => confirm(Date.now())}
+          />
+        }
+      />
+      {quitConfirm}
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: GUTTER,
+    paddingTop: SPACE.sm,
+  },
+});

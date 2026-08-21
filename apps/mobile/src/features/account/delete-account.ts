@@ -1,6 +1,7 @@
 // The GDPR / App Store 5.1.1(v) erasure path: the server call runs first, while the token is live.
 
 import { accountKeys } from "@/features/account/api";
+import { useFinalizeOutboxStore } from "@/features/competition/finalize-outbox-store";
 import { useOutboxStore } from "@/features/quiz/outbox-store";
 import { useTransferStore } from "@/features/quiz/transfer-store";
 import { api } from "@/lib/api";
@@ -11,8 +12,9 @@ import { supabase } from "@/lib/supabase";
 export async function deleteAccount(playerId: string): Promise<void> {
   await api.requestNoContent({ method: "DELETE", path: "/app/me/account" });
 
-  // Both wipes are scoped by id, so another Account's retained state stays untouched.
+  // Every wipe is scoped by id, so another Account's retained state stays untouched.
   useOutboxStore.getState().discardOwner(playerId);
+  useFinalizeOutboxStore.getState().discardOwner(playerId);
   queryClient.removeQueries({ queryKey: accountKeys.stats(playerId) });
 
   // Otherwise the signed-out home still claims the stats live on an Account that no longer exists.

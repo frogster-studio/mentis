@@ -32,18 +32,19 @@
 
 ```
 src/
-  app/                 # expo-router routes — thin files only (re-export/compose from features)
-  features/quiz/       # quiz play: components/, api.ts, store.ts, constants.ts
-  features/account/    # sign-in, the « Compte » screen, account deletion
-  features/onboarding/ # the once-per-device welcome gate + its store
-  features/world/      # « Monde » tab placeholder
-  components/          # shared composed components; components/ui/ for shared primitives
-  lib/                 # api/ (the seam), query client, supabase (auth only)
-  theme/               # design tokens: COLORS, SPACE, RADIUS, SHADOW, TEXT…
-  utils/               # chunk.ts
-  types/quiz.ts        # canonical domain types
-assets/                # root: all static assets — images/ + fonts/ + expo.icon/ (app icons via app.json)
-scripts/               # generate-icons.ts — every icon surface, rendered from the Mark
+  app/                  # expo-router routes — thin files only (re-export/compose from features)
+  features/quiz/        # practice play, and the Countdown/Carré mechanics competition reuses
+  features/competition/ # the daily Attempt: issuance, play, the finalize outbox
+  features/account/     # sign-in, the « Compte » screen, account deletion
+  features/onboarding/  # the once-per-device welcome gate + its store
+  features/world/       # « Monde » tab placeholder
+  components/           # shared composed components; components/ui/ for shared primitives
+  lib/                  # api/ (the seam), query client, supabase (auth only)
+  theme/                # design tokens: COLORS, SPACE, RADIUS, SHADOW, TEXT…
+  utils/                # chunk.ts
+  types/quiz.ts         # canonical domain types
+assets/                 # root: all static assets — images/ + fonts/ + expo.icon/ (app icons via app.json)
+scripts/                # generate-icons.ts — every icon surface, rendered from the Mark
 ```
 
 ## Data access

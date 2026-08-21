@@ -1,41 +1,14 @@
-import { useRef, useState } from "react";
-import {
-  Animated,
-  type LayoutChangeEvent,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { BlurBand } from "@/components/ui/blur-band";
-import { BUTTON_BOX_HEIGHT, Button } from "@/components/ui/button";
-import { ScreenContainer } from "@/components/ui/screen-container";
+import { Pressable, StyleSheet, Text } from "react-native";
+import { Button } from "@/components/ui/button";
 import { ResultCard } from "@/features/quiz/components/result-card";
-import {
-  ResultsHeaderBand,
-  useResultsBandHeight,
-} from "@/features/quiz/components/results-header-band";
-import {
-  RESULTS_HOME_LABEL,
-  RESULTS_REPLAY_LABEL,
-  RESULTS_SCORE_MAX_LABEL,
-} from "@/features/quiz/constants";
+import { ResultsScreen } from "@/features/quiz/components/results-screen";
+import { RESULTS_HOME_LABEL, RESULTS_REPLAY_LABEL } from "@/features/quiz/constants";
 import { type SessionAnswer, sessionScore } from "@/features/quiz/session-reducer";
 import { TEXT } from "@/theme/text";
-import { COLORS, GUTTER, PRESSED, SPACE } from "@/theme/tokens";
+import { COLORS, PRESSED, SPACE } from "@/theme/tokens";
 import type { Question } from "@/types/quiz";
 
-// Both bands pad their own inset, so the screen under them must not spend either one twice.
-const RESULTS_EDGES = ["left", "right"] as const;
 const HOME_LINK_HEIGHT = TEXT.label.lineHeight + SPACE.md * 2;
-const FOOTER_BAND_HEIGHT = BUTTON_BOX_HEIGHT + HOME_LINK_HEIGHT + SPACE.md * 2;
-// The scroll the handover spans, and the half of it the band alone owns.
-const SWAP_TRAVEL = SPACE.xxl;
-const HANDOVER = SPACE.lg;
-// Web has no native animated module and warns on every mount; it falls back to JS anyway.
-const NATIVE_DRIVER = Platform.OS !== "web";
 
 export type SessionResultsProps = {
   themeName: string;
@@ -52,59 +25,12 @@ export function SessionResults({
   onReplay,
   onGoHome,
 }: SessionResultsProps) {
-  const insets = useSafeAreaInsets();
-  const bandHeight = useResultsBandHeight();
-  const scrollY = useRef(new Animated.Value(0)).current;
-  const [headerHeight, setHeaderHeight] = useState(0);
-  const score = sessionScore(answers);
-
-  // The band takes over exactly as the block it replaces reaches it.
-  const swapAt = Math.max(headerHeight - bandHeight, SWAP_TRAVEL + 1);
-  // The block clears out before the band arrives, so the Theme is never drawn twice at once.
-  const headerOpacity = scrollY.interpolate({
-    inputRange: [swapAt - SWAP_TRAVEL, swapAt - HANDOVER],
-    outputRange: [1, 0],
-    extrapolate: "clamp",
-  });
-  const bandOpacity = scrollY.interpolate({
-    inputRange: [swapAt - HANDOVER, swapAt],
-    outputRange: [0, 1],
-    extrapolate: "clamp",
-  });
-
   return (
-    <ScreenContainer edges={RESULTS_EDGES}>
-      <Animated.ScrollView
-        showsVerticalScrollIndicator={false}
-        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
-          useNativeDriver: NATIVE_DRIVER,
-        })}
-        scrollEventThrottle={16}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: FOOTER_BAND_HEIGHT + insets.bottom },
-        ]}
-      >
-        <Animated.View
-          style={[styles.header, { paddingTop: insets.top + SPACE.xl, opacity: headerOpacity }]}
-          onLayout={(event: LayoutChangeEvent) => setHeaderHeight(event.nativeEvent.layout.height)}
-        >
-          <View style={styles.scoreBlock}>
-            <Text style={styles.score}>{score}</Text>
-            <Text style={styles.scoreMax}>{RESULTS_SCORE_MAX_LABEL}</Text>
-          </View>
-          <Text style={styles.theme}>{themeName}</Text>
-        </Animated.View>
-        {questions.map((question, index) => (
-          <ResultCard key={question.id} question={question} answer={answers[index]} />
-        ))}
-      </Animated.ScrollView>
-      {/* After the list in JSX: expo-blur only blurs what mounted before it. */}
-      <Animated.View style={[styles.bandLayer, { opacity: bandOpacity }]} pointerEvents="box-none">
-        <ResultsHeaderBand score={score} themeName={themeName} />
-      </Animated.View>
-      <BlurBand edge="bottom">
-        <View style={[styles.footer, { paddingBottom: SPACE.md + insets.bottom }]}>
+    <ResultsScreen
+      score={sessionScore(answers)}
+      themeName={themeName}
+      footer={
+        <>
           <Button label={RESULTS_REPLAY_LABEL} onPress={onReplay} />
           <Pressable
             style={({ pressed }) => [styles.homeLink, pressed && styles.pressed]}
@@ -112,51 +38,25 @@ export function SessionResults({
           >
             <Text style={styles.homeLabel}>{RESULTS_HOME_LABEL}</Text>
           </Pressable>
-        </View>
-      </BlurBand>
-    </ScreenContainer>
+        </>
+      }
+    >
+      {questions.map((question, index) => (
+        <ResultCard
+          key={question.id}
+          questionText={question.text}
+          canonicalAnswer={question.answer}
+          answerText={answers[index].input}
+          mode={answers[index].mode}
+          correct={answers[index].correct}
+          points={answers[index].points}
+        />
+      ))}
+    </ResultsScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    paddingHorizontal: GUTTER,
-    gap: SPACE.md,
-  },
-  header: {
-    alignItems: "center",
-    gap: SPACE.md,
-    paddingBottom: SPACE.xl,
-  },
-  scoreBlock: {
-    alignItems: "center",
-  },
-  score: {
-    ...TEXT.heroScore,
-    color: COLORS.primary,
-  },
-  // The numeral reserves descent space no digit ever uses, so the ceiling climbs back into it.
-  scoreMax: {
-    ...TEXT.caption,
-    marginTop: -SPACE.xl,
-    color: COLORS.inkMuted,
-  },
-  theme: {
-    ...TEXT.screenTitle,
-    color: COLORS.inkMuted,
-    textAlign: "center",
-  },
-  // The band draws its own absolute frame, so this layer only carries the fade.
-  bandLayer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-  },
-  footer: {
-    paddingHorizontal: GUTTER,
-    paddingTop: SPACE.md,
-  },
   homeLink: {
     height: HOME_LINK_HEIGHT,
     alignItems: "center",

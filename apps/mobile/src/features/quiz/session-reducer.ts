@@ -3,7 +3,17 @@
 import { matchAnswer } from "@mentis/answer-matching";
 import type { Question, QuizMode } from "@/types/quiz";
 import { POINTS_CASH, POINTS_SQUARE } from "./constants";
-import { endTimestamp, isExpired } from "./countdown";
+import { isExpired } from "./countdown";
+import {
+  advanceQuestionPlay,
+  hasStandingAnswer,
+  type QuestionPlay,
+  revealChoices,
+  selectChoice,
+  standingAnswer,
+  startQuestionPlay,
+  typeAnswer,
+} from "./question-play";
 
 export type SessionAnswer = {
   input: string;
@@ -12,15 +22,9 @@ export type SessionAnswer = {
   mode: QuizMode;
 };
 
-export type SessionState = {
+export type SessionState = QuestionPlay & {
   questions: Question[];
   answers: SessionAnswer[];
-  input: string;
-  // Per current question: Cash until a one-way switch to Carré reveals the choices.
-  mode: QuizMode;
-  choices: string[] | null;
-  selection: number | null;
-  endsAt: number;
   status: "active" | "finished";
 };
 
@@ -34,16 +38,7 @@ export type SessionAction =
 
 // Precondition: at least one question (the picker only offers eligible Themes).
 export function createSession(questions: Question[], now: number): SessionState {
-  return {
-    questions,
-    answers: [],
-    input: "",
-    mode: "cash",
-    choices: null,
-    selection: null,
-    endsAt: endTimestamp(now),
-    status: "active",
-  };
+  return { ...startQuestionPlay(now), questions, answers: [], status: "active" };
 }
 
 // Only meaningful while the session is active.
@@ -61,53 +56,36 @@ export function sessionReducer(state: SessionState, action: SessionAction): Sess
   }
   switch (action.type) {
     case "setInput":
-      // Once in Carré the input is gone for good — the field is no longer shown.
-      return state.mode === "square" ? state : { ...state, input: action.value };
+      return typeAnswer(state, action.value);
     case "switchToSquare":
-      // One-way, and only from Cash: keyboard input discarded, Countdown untouched.
-      return state.mode === "square"
-        ? state
-        : { ...state, mode: "square", input: "", choices: action.choices, selection: null };
+      return revealChoices(state, action.choices);
     case "select":
-      // Selection changes freely until submission; a no-op outside Carré.
-      return state.mode === "square" ? { ...state, selection: action.index } : state;
+      return selectChoice(state, action.index);
     case "confirm":
-      // Early confirmation requires a standing answer: text in Cash, a selection in Carré.
-      return canConfirm(state) ? submit(state, action.now) : state;
+      return hasStandingAnswer(state) ? submit(state, action.now) : state;
     case "expire":
       // Guarded by the wall clock, not the caller: stray or duplicate ticks are harmless.
       return isExpired(state.endsAt, action.now) ? submit(state, action.now) : state;
   }
 }
 
-function canConfirm(state: SessionState): boolean {
-  return state.mode === "square" ? state.selection !== null : state.input.trim() !== "";
-}
-
 // Takes whatever stands — even empty on expiry — then advances instantly with a fresh Countdown.
 function submit(state: SessionState, now: number): SessionState {
-  const answers = [...state.answers, resolveAnswer(state)];
+  const answers = [...state.answers, judgeStandingAnswer(state)];
   const finished = answers.length === state.questions.length;
-  return {
-    ...state,
-    answers,
-    input: "",
-    mode: "cash",
-    choices: null,
-    selection: null,
-    status: finished ? "finished" : "active",
-    endsAt: finished ? state.endsAt : endTimestamp(now),
-  };
+  // A finished session shows no Question, so its Countdown must not restart behind the results.
+  const advanced = finished ? state : advanceQuestionPlay(state, now);
+  return { ...advanced, answers, status: finished ? "finished" : "active" };
 }
 
-function resolveAnswer(state: SessionState): SessionAnswer {
+function judgeStandingAnswer(state: SessionState): SessionAnswer {
   const question = currentQuestion(state);
+  const input = standingAnswer(state);
   if (state.mode === "square") {
     // The Canonical Answer sits among the choices, so an exact match is the whole verdict.
-    const chosen = state.selection === null ? "" : (state.choices?.[state.selection] ?? "");
-    const correct = chosen !== "" && chosen === question.answer;
-    return { input: chosen, correct, points: correct ? POINTS_SQUARE : 0, mode: "square" };
+    const correct = input !== "" && input === question.answer;
+    return { input, correct, points: correct ? POINTS_SQUARE : 0, mode: "square" };
   }
-  const correct = matchAnswer(state.input, question);
-  return { input: state.input, correct, points: correct ? POINTS_CASH : 0, mode: "cash" };
+  const correct = matchAnswer(input, question);
+  return { input, correct, points: correct ? POINTS_CASH : 0, mode: "cash" };
 }

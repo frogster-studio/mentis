@@ -1,19 +1,9 @@
 import { squareChoices } from "@mentis/answer-matching";
 import { randomUUID } from "expo-crypto";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Check, Grid2x2, X } from "lucide-react-native";
+import { X } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
-import {
-  AppState,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
-import { Button } from "@/components/ui/button";
+import { StyleSheet, type TextInput, View } from "react-native";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { QuietButton } from "@/components/ui/quiet-button";
 import { ScreenContainer } from "@/components/ui/screen-container";
@@ -21,30 +11,26 @@ import { ScreenError } from "@/components/ui/screen-error";
 import { ScreenLoading } from "@/components/ui/screen-loading";
 import { useAuthStore } from "@/features/account/auth-store";
 import { useSessionQuestions } from "@/features/quiz/api";
-import { CountdownRing } from "@/features/quiz/components/countdown-ring";
+import { AnswerFooter } from "@/features/quiz/components/answer-footer";
 import { DevSkipToResults } from "@/features/quiz/components/dev-skip-to-results";
+import { PlayHeader } from "@/features/quiz/components/play-header";
+import { PlayScreen } from "@/features/quiz/components/play-screen";
 import { SessionResults } from "@/features/quiz/components/session-results";
-import { SquareButton } from "@/features/quiz/components/square-button";
 import {
-  ANSWER_PLACEHOLDER,
-  CONFIRM_LABEL,
-  COUNTDOWN_TICK_MS,
   QUIT_CANCEL_LABEL,
   QUIT_CONFIRM_LABEL,
   QUIT_LABEL,
   QUIT_MESSAGE,
   QUIT_TITLE,
   SESSION_ERROR,
-  SQUARE_SWITCH_LABEL,
 } from "@/features/quiz/constants";
-import { isExpired, remainingFraction, remainingSeconds } from "@/features/quiz/countdown";
 import { useOutboxStore } from "@/features/quiz/outbox-store";
 import { drainOutbox } from "@/features/quiz/outbox-sync";
 import { currentQuestion, sessionScore } from "@/features/quiz/session-reducer";
 import { useStatsStore } from "@/features/quiz/stats-store";
 import { useQuizStore } from "@/features/quiz/store";
-import { TEXT } from "@/theme/text";
-import { COLORS, CONTROL_HEIGHT, GUTTER, RADIUS, SPACE } from "@/theme/tokens";
+import { usePlayClock } from "@/features/quiz/use-play-clock";
+import { GUTTER, SPACE } from "@/theme/tokens";
 
 export function SessionScreen() {
   const { themeId, name } = useLocalSearchParams<{ themeId: string; name: string }>();
@@ -65,13 +51,13 @@ export function SessionScreen() {
 
   const inputRef = useRef<TextInput>(null);
   const recordedRef = useRef(false);
-  const [now, setNow] = useState(() => Date.now());
   const [quitVisible, setQuitVisible] = useState(false);
 
   const isActive = session?.status === "active";
   const answeredCount = session?.answers.length ?? 0;
   // Stable per question (same array element), changes identity on each advance.
   const activeQuestion = session && isActive ? currentQuestion(session) : null;
+  const now = usePlayClock(session?.endsAt ?? 0, isActive, expire);
 
   useEffect(() => {
     if (questions && questions.length > 0) {
@@ -81,31 +67,6 @@ export function SessionScreen() {
 
   // An abandoned screen (back gesture, web back) must not leak a stale session.
   useEffect(() => clearSession, [clearSession]);
-
-  useEffect(() => {
-    if (!isActive) {
-      return;
-    }
-    setNow(Date.now());
-    const tick = setInterval(() => setNow(Date.now()), COUNTDOWN_TICK_MS);
-    return () => clearInterval(tick);
-  }, [isActive]);
-
-  // On foreground, sync to the wall clock so a question that expired while away resolves now.
-  useEffect(() => {
-    const subscription = AppState.addEventListener("change", (next) => {
-      if (next === "active") {
-        setNow(Date.now());
-      }
-    });
-    return () => subscription.remove();
-  }, []);
-
-  useEffect(() => {
-    if (session?.status === "active" && isExpired(session.endsAt, now)) {
-      expire(now);
-    }
-  }, [session, now, expire]);
 
   // The ref guards re-renders, so a finished session is recorded into its world exactly once.
   useEffect(() => {
@@ -214,10 +175,6 @@ export function SessionScreen() {
     );
   }
 
-  const isSquare = session.mode === "square";
-  // One guard for both modes: a standing text answer in Cash, a highlighted choice in Carré.
-  const confirmDisabled = isSquare ? session.selection === null : session.input.trim() === "";
-
   const onSwitchToSquare = () => {
     if (!activeQuestion) {
       return;
@@ -229,158 +186,44 @@ export function SessionScreen() {
 
   return (
     <>
-      <ScreenContainer>
-        <KeyboardAvoidingView
-          style={styles.flex}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-        >
-          <View style={styles.header}>
-            <QuietButton
-              layout="circle"
-              icon={X}
-              accessibilityLabel={QUIT_LABEL}
-              onPress={onRequestQuit}
+      <PlayScreen
+        questionText={activeQuestion?.text ?? ""}
+        header={
+          <>
+            <PlayHeader
+              position={answeredCount + 1}
+              total={session.questions.length}
+              endsAt={session.endsAt}
+              now={now}
+              quitLabel={QUIT_LABEL}
+              onQuit={onRequestQuit}
             />
-            <View style={styles.headerRight}>
-              <Text style={styles.progress}>
-                {answeredCount + 1}
-                <Text style={styles.progressTotal}>/{session.questions.length}</Text>
-              </Text>
-              <CountdownRing
-                fraction={remainingFraction(session.endsAt, now)}
-                seconds={remainingSeconds(session.endsAt, now)}
-              />
-            </View>
-          </View>
-          <DevSkipToResults />
-          <ScrollView style={styles.flex} contentContainerStyle={styles.questionContent}>
-            <Text style={styles.questionText}>{activeQuestion?.text}</Text>
-          </ScrollView>
-          {isSquare && session.choices ? (
-            <View style={styles.squareFooter}>
-              <View style={styles.grid}>
-                {session.choices.map((choice, index) => (
-                  <SquareButton
-                    key={choice}
-                    label={choice}
-                    selected={session.selection === index}
-                    onPress={() => select(index)}
-                  />
-                ))}
-              </View>
-              <Button
-                label={CONFIRM_LABEL}
-                onPress={() => confirm(Date.now())}
-                disabled={confirmDisabled}
-              />
-            </View>
-          ) : (
-            <View style={styles.footer}>
-              <TextInput
-                ref={inputRef}
-                style={styles.input}
-                value={session.input}
-                onChangeText={setInput}
-                // Web: Enter keeps focus (RN-web blurs on submit); native only dismisses.
-                onSubmitEditing={() =>
-                  Platform.OS === "web" ? confirm(Date.now()) : inputRef.current?.blur()
-                }
-                // Both spellings: RN-web honors only blurOnSubmit, native only submitBehavior.
-                blurOnSubmit={false}
-                submitBehavior="submit"
-                placeholder={ANSWER_PLACEHOLDER}
-                placeholderTextColor={COLORS.inkMuted}
-                // A Carré question advancing behind the sheet remounts this field, keyboard and all.
-                autoFocus={!quitVisible}
-                autoCapitalize="none"
-                autoCorrect={false}
-                returnKeyType="done"
-              />
-              <Button
-                layout="circle"
-                icon={Grid2x2}
-                accessibilityLabel={SQUARE_SWITCH_LABEL}
-                onPress={onSwitchToSquare}
-                theme="quiet"
-              />
-              <Button
-                layout="circle"
-                icon={Check}
-                accessibilityLabel={CONFIRM_LABEL}
-                onPress={() => confirm(Date.now())}
-                disabled={confirmDisabled}
-              />
-            </View>
-          )}
-        </KeyboardAvoidingView>
-      </ScreenContainer>
+            <DevSkipToResults />
+          </>
+        }
+        footer={
+          <AnswerFooter
+            play={session}
+            inputRef={inputRef}
+            autoFocus={!quitVisible}
+            onInputChange={setInput}
+            onSwitchToSquare={onSwitchToSquare}
+            onSelect={select}
+            onConfirm={() => confirm(Date.now())}
+          />
+        }
+      />
       {quitConfirm}
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: GUTTER,
     paddingTop: SPACE.sm,
-  },
-  headerRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACE.md,
-  },
-  progress: {
-    ...TEXT.label,
-    color: COLORS.primary,
-  },
-  progressTotal: {
-    ...TEXT.caption,
-    color: COLORS.inkMuted,
-  },
-  questionContent: {
-    paddingHorizontal: GUTTER,
-    paddingTop: SPACE.xxl,
-    paddingBottom: SPACE.xl,
-  },
-  questionText: {
-    ...TEXT.question,
-    color: COLORS.ink,
-  },
-  // Top-aligned so the input lines up with the buttons' faces, leaving their plates below it.
-  footer: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: SPACE.md,
-    paddingHorizontal: GUTTER,
-    paddingBottom: SPACE.md,
-  },
-  // Without minWidth the web input never shrinks past min-content and pushes the buttons out.
-  input: {
-    flex: 1,
-    minWidth: 0,
-    height: CONTROL_HEIGHT,
-    backgroundColor: COLORS.quiet,
-    borderColor: COLORS.stroke,
-    borderWidth: 1,
-    ...TEXT.body,
-    borderRadius: RADIUS.base,
-    paddingHorizontal: SPACE.lg,
-    color: COLORS.ink,
-  },
-  squareFooter: {
-    gap: SPACE.md,
-    paddingHorizontal: GUTTER,
-    paddingBottom: SPACE.md,
-  },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: SPACE.md,
   },
 });

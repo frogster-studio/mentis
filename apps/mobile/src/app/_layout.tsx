@@ -5,6 +5,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { SheetProvider } from "@/components/ui/sheet";
 import { TransferPrompt } from "@/features/account/components/transfer-prompt";
+import { useCompetitionSync } from "@/features/competition/finalize-sync";
 import { useOnboardingStore } from "@/features/onboarding/store";
 import { useOutboxSync } from "@/features/quiz/outbox-sync";
 import { persistOptions, queryClient } from "@/lib/query-client";
@@ -45,6 +46,7 @@ export default function RootLayout() {
 
 function RootNavigator() {
   useOutboxSync();
+  useCompetitionSync();
 
   return (
     <>

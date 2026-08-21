@@ -23,3 +23,8 @@ export function remainingFraction(endsAt: number, now: number): number {
 export function isExpired(endsAt: number, now: number): boolean {
   return now >= endsAt;
 }
+
+// How long the Question stood before the answer — the stamp a competition batch carries.
+export function elapsedMs(endsAt: number, now: number): number {
+  return Math.max(0, COUNTDOWN_DURATION_MS - remainingMs(endsAt, now));
+}
