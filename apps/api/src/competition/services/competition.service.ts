@@ -2,6 +2,7 @@ import {
   type AppCompetitionActiveAttemptResponse,
   type AppCompetitionAttemptResponse,
   type AppCompetitionFinalizeInput,
+  type AppCompetitionStandingResponse,
   type AppCompetitionTranscriptResponse,
   COMPETITION_QUESTION_COUNT,
 } from "@mentis/contracts/app";
@@ -12,16 +13,22 @@ import { CatalogService } from "../../catalog/services/catalog.service";
 import {
   toAppCompetitionActiveAttemptResponse,
   toAppCompetitionAttemptResponse,
+  toAppCompetitionStandingResponse,
   toAppCompetitionTranscriptResponse,
 } from "../mappers/competition.mapper";
 import { CompetitionRepository } from "../repositories/competition.repository";
-import { CLOCK, type Clock } from "./clock";
-import { competitionDay, daysBefore } from "./competition-day";
-import { attemptScore, judgeAttempt, unresolvedAnswer } from "./judge-attempt";
+import type { Clock } from "../types/clock";
+import type { DrawnTheme } from "../types/drawn-theme";
+import { CLOCK } from "../utils/clock";
+import {
+  bestScorePerDay,
+  competitionDay,
+  daysBefore,
+  seasonBounds,
+} from "../utils/competition-day";
+import { attemptScore, judgeAttempt, unresolvedAnswer } from "../utils/judge-attempt";
 
 const ROTATION_LOOKBACK_DAYS = 2;
-
-type DrawnTheme = { id: string; name: string };
 
 @Injectable()
 export class CompetitionService {
@@ -99,6 +106,23 @@ export class CompetitionService {
       return this.storedTranscript(stored);
     }
     return toAppCompetitionTranscriptResponse(finalized, answers, questions);
+  }
+
+  async readStanding(owner: string): Promise<AppCompetitionStandingResponse> {
+    const today = this.today();
+
+    await this.attemptsStillInPlay(owner, today);
+
+    const { season, from, to } = seasonBounds(today);
+    const scores = await this.competitionRepository.findFinalizedDayScores(owner, from, to);
+
+    const days = bestScorePerDay(scores);
+
+    return toAppCompetitionStandingResponse(
+      season,
+      days.reduce((total, day) => total + day.score, 0),
+      days,
+    );
   }
 
   private today(): string {

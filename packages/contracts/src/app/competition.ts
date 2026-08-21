@@ -5,6 +5,7 @@ export const COMPETITION_QUESTION_COUNT = 10;
 export const COMPETITION_POINTS = { cash: 5, square: 2 } as const;
 
 const MAX_SCORE = COMPETITION_QUESTION_COUNT * COMPETITION_POINTS.cash;
+const MAX_SEASON_SCORE = MAX_SCORE * 31;
 
 const competitionAttemptKindSchema = z.enum(["initial", "replay", "catchup"]);
 const competitionPlayedModeSchema = z.enum(["cash", "square"]);
@@ -80,3 +81,13 @@ export const appCompetitionTranscriptResponseSchema = z.object({
 export type AppCompetitionTranscriptResponse = z.infer<
   typeof appCompetitionTranscriptResponseSchema
 >;
+
+// A season is the Europe/Paris calendar month an Attempt's Competition Day falls in.
+const competitionSeasonSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
+
+export const appCompetitionStandingResponseSchema = z.object({
+  season: competitionSeasonSchema,
+  seasonTotal: z.number().int().min(0).max(MAX_SEASON_SCORE),
+  days: z.array(z.object({ day: z.iso.date(), score: z.number().int().min(0).max(MAX_SCORE) })),
+});
+export type AppCompetitionStandingResponse = z.infer<typeof appCompetitionStandingResponseSchema>;

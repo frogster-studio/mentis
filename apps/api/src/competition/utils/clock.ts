@@ -1,4 +1,4 @@
-export type Clock = () => Date;
+import type { Clock } from "../types/clock";
 
 export const CLOCK = Symbol("CLOCK");
 

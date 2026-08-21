@@ -5,23 +5,10 @@ import { CompetitionAnswerEntity } from "../../_database/entities/competition-an
 import {
   CompetitionAttemptEntity,
   type CompetitionAttemptKind,
-  type CompetitionFinalizeReason,
 } from "../../_database/entities/competition-attempt.entity";
-
-export type NewAttempt = {
-  owner: string;
-  day: string;
-  kind: CompetitionAttemptKind;
-  themeId: string;
-  themeName: string;
-  questionIds: string[];
-};
-
-export type FinalizedOutcome = {
-  reason: CompetitionFinalizeReason;
-  score: number;
-  answers: CompetitionAnswerEntity[];
-};
+import type { DayScore } from "../types/day-score";
+import type { FinalizedOutcome } from "../types/finalized-outcome";
+import type { NewAttempt } from "../types/new-attempt";
 
 @Injectable()
 export class CompetitionRepository {
@@ -59,6 +46,15 @@ export class CompetitionRepository {
       select: { themeId: true },
     });
     return rows.map((row) => row.themeId);
+  }
+
+  // A day scores its best Attempt, so every finalized row the season holds is a candidate.
+  async findFinalizedDayScores(owner: string, from: string, to: string): Promise<DayScore[]> {
+    const rows = await this.attempts.find({
+      where: { owner, status: "finalized", day: Between(from, to) },
+      select: { day: true, score: true },
+    });
+    return rows.map((row) => ({ day: row.day, score: row.score ?? 0 }));
   }
 
   // ON CONFLICT DO NOTHING: an empty return means another device won the day's single Attempt.

@@ -6,8 +6,8 @@ import { CompetitionAttemptEntity } from "../../_database/entities/competition-a
 import { CatalogModule } from "../../catalog/modules/catalog.module";
 import { CompetitionController } from "../controllers/competition.controller";
 import { CompetitionRepository } from "../repositories/competition.repository";
-import { CLOCK, systemClock } from "../services/clock";
 import { CompetitionService } from "../services/competition.service";
+import { CLOCK, systemClock } from "../utils/clock";
 
 // The daily Attempt — drawn through the Catalog, never reading a Theme or Question itself.
 @Module({

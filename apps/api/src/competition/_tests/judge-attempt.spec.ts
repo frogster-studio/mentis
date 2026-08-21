@@ -1,6 +1,7 @@
 import { COMPETITION_POINTS, COMPETITION_QUESTION_COUNT } from "@mentis/contracts/app";
 import { describe, expect, it } from "vitest";
-import { attemptScore, type JudgeableQuestion, judgeAttempt } from "../services/judge-attempt";
+import type { JudgeableQuestion } from "../types/judgeable-question";
+import { attemptScore, judgeAttempt } from "../utils/judge-attempt";
 
 const ATTEMPT = "30000000-0000-4000-8000-000000000020";
 

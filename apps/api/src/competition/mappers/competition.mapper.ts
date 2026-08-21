@@ -2,23 +2,19 @@ import { squareChoices } from "@mentis/answer-matching";
 import {
   type AppCompetitionActiveAttemptResponse,
   type AppCompetitionAttemptResponse,
+  type AppCompetitionStandingResponse,
   type AppCompetitionTranscriptResponse,
   appCompetitionActiveAttemptResponseSchema,
   appCompetitionAttemptResponseSchema,
+  appCompetitionStandingResponseSchema,
   appCompetitionTranscriptResponseSchema,
 } from "@mentis/contracts/app";
 import type { CompetitionAnswerEntity } from "../../_database/entities/competition-answer.entity";
 import type { CompetitionAttemptEntity } from "../../_database/entities/competition-attempt.entity";
-import { seededRng } from "../services/seeded-rng";
-
-export type ServedQuestion = {
-  id: string;
-  text: string;
-  answer: string;
-  wrongChoices: string[];
-};
-
-export type ServedAttempt = { attempt: CompetitionAttemptEntity; questions: ServedQuestion[] };
+import type { DayScore } from "../types/day-score";
+import type { ServedAttempt } from "../types/served-attempt";
+import type { ServedQuestion } from "../types/served-question";
+import { seededRng } from "../utils/seeded-rng";
 
 const servedPayload = ({ attempt, questions }: ServedAttempt) => ({
   id: attempt.id,
@@ -80,3 +76,10 @@ export const toAppCompetitionTranscriptResponse = (
       };
     }),
   });
+
+export const toAppCompetitionStandingResponse = (
+  season: string,
+  seasonTotal: number,
+  days: DayScore[],
+): AppCompetitionStandingResponse =>
+  appCompetitionStandingResponseSchema.parse({ season, seasonTotal, days });

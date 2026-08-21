@@ -2,15 +2,9 @@ import { judgeAnswer } from "@mentis/answer-matching";
 import { type AppCompetitionFinalizeInput, COMPETITION_POINTS } from "@mentis/contracts/app";
 import { BadRequestException } from "@nestjs/common";
 import type { CompetitionAnswerEntity } from "../../_database/entities/competition-answer.entity";
+import type { JudgeableQuestion } from "../types/judgeable-question";
 
 type PlayedAnswer = AppCompetitionFinalizeInput["answers"][number];
-
-export type JudgeableQuestion = {
-  id: string;
-  answer: string;
-  aliases: string[];
-  misspellings: string[];
-};
 
 export const unresolvedAnswer = (
   attemptId: string,

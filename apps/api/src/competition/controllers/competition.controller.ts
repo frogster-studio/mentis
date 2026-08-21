@@ -2,6 +2,7 @@ import {
   type AppCompetitionActiveAttemptResponse,
   type AppCompetitionAttemptResponse,
   type AppCompetitionFinalizeInput,
+  type AppCompetitionStandingResponse,
   type AppCompetitionTranscriptResponse,
   appCompetitionAttemptIdSchema,
   appCompetitionFinalizeInputSchema,
@@ -38,6 +39,12 @@ export class CompetitionController {
   @Get("attempts/active")
   readActiveAttempt(@Req() request: AuthedRequest): Promise<AppCompetitionActiveAttemptResponse> {
     return this.competitionService.readActiveAttempt(request.user.id);
+  }
+
+  // Derived from the Attempts on every read — no day score or season total is ever stored.
+  @Get("standing")
+  readStanding(@Req() request: AuthedRequest): Promise<AppCompetitionStandingResponse> {
+    return this.competitionService.readStanding(request.user.id);
   }
 
   // Idempotent, so the outbox re-sends freely: a finalized Attempt hands back the stored transcript.
