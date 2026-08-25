@@ -31,8 +31,6 @@ const config: ExpoConfig = {
     },
     predictiveBackGestureEnabled: false,
     package: BUNDLE_IDENTIFIER,
-    // Play Console only accepts subscription setup once an upload declares billing; redundant after react-native-purchases lands.
-    permissions: ["com.android.vending.BILLING"],
   },
   web: {
     output: "static",
