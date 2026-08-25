@@ -1,5 +1,6 @@
 // Dev-only: forges a finished session so the results screen is one tap away, recorded like a real one.
 
+import { QuizAnswerModeEnum } from "@mentis/contracts/enums";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { POINTS_CASH } from "@/features/quiz/constants";
@@ -63,8 +64,18 @@ function forgeAnswers(questions: Question[], correctCount: number): SessionAnswe
   const correct = new Set(indexes.slice(0, size));
   return questions.map((question, index) =>
     correct.has(index)
-      ? { input: question.answer, correct: true, points: POINTS_CASH, mode: "cash" }
-      : { input: question.wrongChoices[0] ?? "", correct: false, points: 0, mode: "cash" },
+      ? {
+          input: question.answer,
+          correct: true,
+          points: POINTS_CASH,
+          mode: QuizAnswerModeEnum.CASH,
+        }
+      : {
+          input: question.wrongChoices[0] ?? "",
+          correct: false,
+          points: 0,
+          mode: QuizAnswerModeEnum.CASH,
+        },
   );
 }
 

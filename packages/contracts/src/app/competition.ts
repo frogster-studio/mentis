@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { QuizAnswerModeEnum, UserAnswerMatchedViaEnum } from "../enums";
 
 export const COMPETITION_QUESTION_COUNT = 10;
 // The self-reported mode alone prices a correct answer.
@@ -8,7 +9,6 @@ const MAX_SCORE = COMPETITION_QUESTION_COUNT * COMPETITION_POINTS.cash;
 const MAX_SEASON_SCORE = MAX_SCORE * 31;
 
 const competitionAttemptKindSchema = z.enum(["initial", "replay", "catchup"]);
-const competitionPlayedModeSchema = z.enum(["cash", "square"]);
 
 const competitionQuestionSchema = z.object({
   id: z.string(),
@@ -38,7 +38,7 @@ export type AppCompetitionActiveAttemptResponse = z.infer<
 
 const competitionAnswerInputSchema = z.object({
   questionId: z.string(),
-  mode: competitionPlayedModeSchema,
+  mode: z.enum(QuizAnswerModeEnum).exclude([QuizAnswerModeEnum.NONE]),
   rawInput: z.string(),
   clientElapsedMs: z.number().int().min(0),
 });
@@ -61,11 +61,11 @@ const competitionVerdictSchema = z.object({
   questionText: z.string(),
   // Revealed here and nowhere earlier: the results screen ends the Attempt that hid it.
   canonicalAnswer: z.string(),
-  mode: z.enum([...competitionPlayedModeSchema.options, "none"]),
+  mode: z.enum(QuizAnswerModeEnum),
   rawInput: z.string().nullable(),
   correct: z.boolean(),
   points: z.number().int().min(0).max(COMPETITION_POINTS.cash),
-  matchedVia: z.enum(["canonical", "alias", "misspelling", "fuzzy", "choice"]).nullable(),
+  matchedVia: z.enum(UserAnswerMatchedViaEnum).nullable(),
 });
 
 export const appCompetitionTranscriptResponseSchema = z.object({

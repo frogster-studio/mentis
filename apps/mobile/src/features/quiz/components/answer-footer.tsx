@@ -1,3 +1,4 @@
+import { QuizAnswerModeEnum } from "@mentis/contracts/enums";
 import type { RefObject } from "react";
 import { Platform, StyleSheet, TextInput, View } from "react-native";
 import { Button } from "@/components/ui/button";
@@ -29,7 +30,7 @@ export function AnswerFooter({
 }: AnswerFooterProps) {
   const disabled = !hasStandingAnswer(play);
 
-  if (play.mode === "square" && play.choices) {
+  if (play.mode === QuizAnswerModeEnum.SQUARE && play.choices) {
     return (
       <View style={styles.squareFooter}>
         <View style={styles.grid}>

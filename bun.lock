@@ -118,6 +118,9 @@
     "packages/answer-matching": {
       "name": "@mentis/answer-matching",
       "version": "0.1.0",
+      "dependencies": {
+        "@mentis/contracts": "workspace:*",
+      },
       "devDependencies": {
         "typescript": "~6.0.3",
         "vitest": "^4.1.10",

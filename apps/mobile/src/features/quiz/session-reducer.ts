@@ -1,7 +1,8 @@
 // Time and the Carré shuffle only arrive through action payloads, so transitions stay pure.
 
 import { matchAnswer } from "@mentis/answer-matching";
-import type { Question, QuizMode } from "@/types/quiz";
+import { QuizAnswerModeEnum } from "@mentis/contracts/enums";
+import type { Question } from "@/types/quiz";
 import { POINTS_CASH, POINTS_SQUARE } from "./constants";
 import { isExpired } from "./countdown";
 import {
@@ -19,7 +20,7 @@ export type SessionAnswer = {
   input: string;
   correct: boolean;
   points: number;
-  mode: QuizMode;
+  mode: QuizAnswerModeEnum;
 };
 
 export type SessionState = QuestionPlay & {
@@ -81,11 +82,13 @@ function submit(state: SessionState, now: number): SessionState {
 function judgeStandingAnswer(state: SessionState): SessionAnswer {
   const question = currentQuestion(state);
   const input = standingAnswer(state);
-  if (state.mode === "square") {
+
+  if (state.mode === QuizAnswerModeEnum.SQUARE) {
     // The Canonical Answer sits among the choices, so an exact match is the whole verdict.
     const correct = input !== "" && input === question.answer;
-    return { input, correct, points: correct ? POINTS_SQUARE : 0, mode: "square" };
+    return { input, correct, points: correct ? POINTS_SQUARE : 0, mode: QuizAnswerModeEnum.SQUARE };
   }
+
   const correct = matchAnswer(input, question);
-  return { input, correct, points: correct ? POINTS_CASH : 0, mode: "cash" };
+  return { input, correct, points: correct ? POINTS_CASH : 0, mode: QuizAnswerModeEnum.CASH };
 }

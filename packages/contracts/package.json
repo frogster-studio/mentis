@@ -20,6 +20,12 @@
       "react-native": "./src/shared/index.ts",
       "types": "./dist/shared/index.d.ts",
       "default": "./dist/shared/index.js"
+    },
+    "./enums": {
+      "bun": "./src/enums/index.ts",
+      "react-native": "./src/enums/index.ts",
+      "types": "./dist/enums/index.d.ts",
+      "default": "./dist/enums/index.js"
     }
   },
   "scripts": {

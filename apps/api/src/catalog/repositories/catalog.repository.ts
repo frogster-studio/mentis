@@ -4,7 +4,13 @@ import { Repository, type SelectQueryBuilder } from "typeorm";
 import { QuestionEntity } from "../../_database/entities/question.entity";
 import { ThemeEntity } from "../../_database/entities/theme.entity";
 
-export type ThemeWithQuestionCount = { id: string; name: string; questionCount: number };
+export type ThemeWithQuestionCount = {
+  id: string;
+  name: string;
+  image: string;
+  questionCount: number;
+  category: { id: string; name: string; color: string; icon: string };
+};
 
 export type DrawnQuestion = {
   id: string;
@@ -27,18 +33,45 @@ export class CatalogRepository {
   async themesWithQuestionCounts(): Promise<ThemeWithQuestionCount[]> {
     const rows = await this.themes
       .createQueryBuilder("theme")
+      .innerJoin("theme.category", "category")
       .leftJoin(QuestionEntity, "question", "question.themeId = theme.id")
       .select("theme.id", "id")
       .addSelect("theme.name", "name")
+      .addSelect("theme.image", "image")
+      .addSelect("category.id", "categoryId")
+      .addSelect("category.name", "categoryName")
+      .addSelect("category.color", "categoryColor")
+      .addSelect("category.icon", "categoryIcon")
       .addSelect("count(question.id)", "questionCount")
       .groupBy("theme.id")
       .addGroupBy("theme.name")
+      .addGroupBy("theme.image")
+      .addGroupBy("category.id")
+      .addGroupBy("category.name")
+      .addGroupBy("category.color")
+      .addGroupBy("category.icon")
       .orderBy("theme.name")
-      .getRawMany<{ id: string; name: string; questionCount: string }>();
-    return rows.map(({ id, name, questionCount }) => ({
-      id,
-      name,
-      questionCount: Number(questionCount),
+      .getRawMany<{
+        id: string;
+        name: string;
+        image: string;
+        categoryId: string;
+        categoryName: string;
+        categoryColor: string;
+        categoryIcon: string;
+        questionCount: string;
+      }>();
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      image: row.image,
+      questionCount: Number(row.questionCount),
+      category: {
+        id: row.categoryId,
+        name: row.categoryName,
+        color: row.categoryColor,
+        icon: row.categoryIcon,
+      },
     }));
   }
 

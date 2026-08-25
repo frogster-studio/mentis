@@ -1,35 +1,40 @@
-import { Check, Column, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
-
-export type CardType = "quiz" | "true-false" | "anecdote" | "did-you-know" | "riddle";
-export type CardNetwork = "x" | "linkedin" | "facebook" | "tiktok" | "youtube" | "instagram";
+import { CARD_TYPES, type CardType, SOCIALS, type Social } from "@mentis/contracts/admin";
+import { BaseEntity, Column, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
 
 // The list is always sorted by last update descending.
 @Index("cards_updated_at_idx", ["updatedAt"])
-@Check("cards_type_known", "type in ('quiz', 'true-false', 'anecdote', 'did-you-know', 'riddle')")
-@Check("cards_title_not_blank", "length(trim(title)) > 0")
-@Check(
-  "cards_posted_on_known_networks",
-  "posted_on <@ array['x', 'linkedin', 'facebook', 'tiktok', 'youtube', 'instagram']::text[]",
-)
 @Entity("cards")
-export class CardEntity {
+export class CardEntity extends BaseEntity {
   @PrimaryGeneratedColumn("uuid")
-  id!: string;
+  id: string;
 
-  @Column("text")
-  type!: CardType;
+  @Column({ type: "enum", enum: [...CARD_TYPES] })
+  type: CardType;
 
-  @Column("text")
-  title!: string;
+  @Column({ type: "varchar", length: 255 })
+  title: string;
 
-  @Column("text", { array: true, default: () => "'{}'" })
-  tags!: string[];
+  @Column({ type: "varchar", length: 255, array: true, default: [] })
+  tags: string[];
 
-  @Column("jsonb", { default: () => "'{}'" })
-  payload!: object;
+  @Column({ type: "jsonb", default: {} })
+  payload: object;
 
-  @Column("jsonb", { default: () => "'[]'" })
-  images!: { path: string }[];
+  @Column({ type: "jsonb", default: [] })
+  images: { path: string }[];
+
+  @Column({ type: "enum", enum: [...SOCIALS], array: true, name: "posted_on", default: [] })
+  postedOn: Social[];
+
+  // The set_updated_at trigger owns this column, so marking a Card posted never reorders the library.
+  @Column({
+    type: "timestamptz",
+    name: "updated_at",
+    default: () => "now()",
+    insert: false,
+    update: false,
+  })
+  updatedAt: Date;
 
   @Column({
     type: "timestamptz",
@@ -38,17 +43,5 @@ export class CardEntity {
     insert: false,
     update: false,
   })
-  createdAt!: Date;
-
-  @Column({
-    type: "timestamptz",
-    name: "updated_at",
-    default: () => "now()",
-    insert: false,
-    update: false,
-  })
-  updatedAt!: Date;
-
-  @Column("text", { name: "posted_on", array: true, default: () => "'{}'" })
-  postedOn!: CardNetwork[];
+  createdAt: Date;
 }

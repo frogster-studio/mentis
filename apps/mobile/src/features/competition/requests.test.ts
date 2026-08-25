@@ -3,6 +3,7 @@ import {
   appCompetitionAttemptResponseSchema,
   appCompetitionTranscriptResponseSchema,
 } from "@mentis/contracts/app";
+import { QuizAnswerModeEnum } from "@mentis/contracts/enums";
 import { describe, expect, it, vi } from "vitest";
 import { type ApiClient, createApiClient } from "@/lib/api/client";
 import type { PlayedAnswer } from "./attempt-reducer";
@@ -52,8 +53,18 @@ const ISSUED_BODY = {
 };
 
 const PLAYED: PlayedAnswer[] = [
-  { questionId: "q1", mode: "cash", rawInput: "Charlemagne", clientElapsedMs: 9_120 },
-  { questionId: "q2", mode: "square", rawInput: "bonne réponse 2", clientElapsedMs: 25_000 },
+  {
+    questionId: "q1",
+    mode: QuizAnswerModeEnum.CASH,
+    rawInput: "Charlemagne",
+    clientElapsedMs: 9_120,
+  },
+  {
+    questionId: "q2",
+    mode: QuizAnswerModeEnum.SQUARE,
+    rawInput: "bonne réponse 2",
+    clientElapsedMs: 25_000,
+  },
 ];
 
 describe("the competition paths", () => {
@@ -97,7 +108,7 @@ describe("the finalize payload", () => {
         questionId: `q${position + 1}`,
         questionText: `Question ${position + 1} ?`,
         canonicalAnswer: `bonne réponse ${position + 1}`,
-        mode: "none",
+        mode: QuizAnswerModeEnum.NONE,
         rawInput: null,
         correct: false,
         points: 0,
@@ -112,8 +123,18 @@ describe("the finalize payload", () => {
 
     expect(JSON.parse(String(calls[0].init.body))).toStrictEqual({
       answers: [
-        { questionId: "q1", mode: "cash", rawInput: "Charlemagne", clientElapsedMs: 9_120 },
-        { questionId: "q2", mode: "square", rawInput: "bonne réponse 2", clientElapsedMs: 25_000 },
+        {
+          questionId: "q1",
+          mode: QuizAnswerModeEnum.CASH,
+          rawInput: "Charlemagne",
+          clientElapsedMs: 9_120,
+        },
+        {
+          questionId: "q2",
+          mode: QuizAnswerModeEnum.SQUARE,
+          rawInput: "bonne réponse 2",
+          clientElapsedMs: 25_000,
+        },
       ],
     });
   });

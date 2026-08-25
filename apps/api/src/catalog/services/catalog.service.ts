@@ -3,7 +3,8 @@ import type {
   AppQuestionDrawResponse,
   AppThemeListResponse,
 } from "@mentis/contracts/app";
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { ENV, type Env } from "../../_config/env.config";
 import { toAppQuestionDrawResponse, toAppThemeListResponse } from "../mappers/catalog.mapper";
 import {
   CatalogRepository,
@@ -13,10 +14,16 @@ import {
 
 @Injectable()
 export class CatalogService {
-  constructor(private readonly catalogRepository: CatalogRepository) {}
+  constructor(
+    private readonly catalogRepository: CatalogRepository,
+    @Inject(ENV) private readonly env: Env,
+  ) {}
 
   async listThemes(): Promise<AppThemeListResponse> {
-    return toAppThemeListResponse(await this.catalogRepository.themesWithQuestionCounts());
+    return toAppThemeListResponse(
+      await this.catalogRepository.themesWithQuestionCounts(),
+      this.env.SUPABASE_URL,
+    );
   }
 
   async drawQuestions(query: AppQuestionDrawQuery): Promise<AppQuestionDrawResponse> {

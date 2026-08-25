@@ -1,5 +1,7 @@
 // Normalize → exact match → bounded Levenshtein (never over Misspellings); mobile ADR 0001.
 
+import { UserAnswerMatchedViaEnum } from "@mentis/contracts/enums";
+
 export type MatchableQuestion = {
   answer: string;
   aliases: string[];
@@ -9,14 +11,15 @@ export type MatchableQuestion = {
 // « le/la/les/l'/un/une/des » — after punctuation stripping, « l' » surfaces as a bare « l » token.
 const LEADING_ARTICLES = new Set(["le", "la", "les", "l", "un", "une", "des"]);
 
-export type MatchedVia = "canonical" | "alias" | "misspelling" | "fuzzy";
-
 export function matchAnswer(input: string, question: MatchableQuestion): boolean {
   return judgeAnswer(input, question) !== null;
 }
 
 // Competition stores the rule that fired; practice only ever asks whether one did.
-export function judgeAnswer(input: string, question: MatchableQuestion): MatchedVia | null {
+export function judgeAnswer(
+  input: string,
+  question: MatchableQuestion,
+): UserAnswerMatchedViaEnum | null {
   const normalizedInput = normalize(input);
   if (normalizedInput === "") {
     return null;
@@ -24,18 +27,18 @@ export function judgeAnswer(input: string, question: MatchableQuestion): Matched
 
   const matchesExactly = (target: string) => normalize(target) === normalizedInput;
   if (matchesExactly(question.answer)) {
-    return "canonical";
+    return UserAnswerMatchedViaEnum.CANONICAL;
   }
   if (question.aliases.some(matchesExactly)) {
-    return "alias";
+    return UserAnswerMatchedViaEnum.ALIAS;
   }
   if (question.misspellings.some(matchesExactly)) {
-    return "misspelling";
+    return UserAnswerMatchedViaEnum.MISSPELLING;
   }
 
   const fuzzyTargets = [question.answer, ...question.aliases];
   return fuzzyTargets.some((target) => withinTypoTolerance(normalizedInput, normalize(target)))
-    ? "fuzzy"
+    ? UserAnswerMatchedViaEnum.FUZZY
     : null;
 }
 

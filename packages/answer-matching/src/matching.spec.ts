@@ -1,3 +1,4 @@
+import { UserAnswerMatchedViaEnum } from "@mentis/contracts/enums";
 import { describe, expect, it } from "vitest";
 import { judgeAnswer, type MatchableQuestion, matchAnswer } from "./matching";
 
@@ -203,18 +204,20 @@ describe("judgeAnswer — the rule that fired", () => {
   const etatsUnis = question("États-Unis", ["USA", "Amérique"], ["Etats Unys"]);
 
   it("names the canonical answer, the alias and the misspelling apart", () => {
-    expect(judgeAnswer("etats unis", etatsUnis)).toBe("canonical");
-    expect(judgeAnswer("l'Amérique", etatsUnis)).toBe("alias");
-    expect(judgeAnswer("etats unys", etatsUnis)).toBe("misspelling");
+    expect(judgeAnswer("etats unis", etatsUnis)).toBe(UserAnswerMatchedViaEnum.CANONICAL);
+    expect(judgeAnswer("l'Amérique", etatsUnis)).toBe(UserAnswerMatchedViaEnum.ALIAS);
+    expect(judgeAnswer("etats unys", etatsUnis)).toBe(UserAnswerMatchedViaEnum.MISSPELLING);
   });
 
   it("names a typo of the canonical answer or of an alias fuzzy", () => {
-    expect(judgeAnswer("etats unos", etatsUnis)).toBe("fuzzy");
-    expect(judgeAnswer("amerqiue", etatsUnis)).toBe("fuzzy");
+    expect(judgeAnswer("etats unos", etatsUnis)).toBe(UserAnswerMatchedViaEnum.FUZZY);
+    expect(judgeAnswer("amerqiue", etatsUnis)).toBe(UserAnswerMatchedViaEnum.FUZZY);
   });
 
   it("prefers the canonical answer when a misspelling repeats it", () => {
-    expect(judgeAnswer("Paris", question("Paris", ["Paris"], ["Paris"]))).toBe("canonical");
+    expect(judgeAnswer("Paris", question("Paris", ["Paris"], ["Paris"]))).toBe(
+      UserAnswerMatchedViaEnum.CANONICAL,
+    );
   });
 
   it("returns nothing when no rule fires", () => {

@@ -1,3 +1,4 @@
+import { QuizAnswerModeEnum } from "@mentis/contracts/enums";
 import { describe, expect, it } from "vitest";
 import type { Question } from "@/types/quiz";
 import { COUNTDOWN_DURATION_MS, POINTS_CASH, POINTS_SQUARE } from "./constants";
@@ -43,7 +44,7 @@ describe("createSession", () => {
     expect(state.status).toBe("active");
     expect(state.answers).toStrictEqual([]);
     expect(state.input).toBe("");
-    expect(state.mode).toBe("cash");
+    expect(state.mode).toBe(QuizAnswerModeEnum.CASH);
     expect(state.choices).toBeNull();
     expect(state.selection).toBeNull();
     expect(state.endsAt).toBe(T0 + COUNTDOWN_DURATION_MS);
@@ -73,7 +74,12 @@ describe("confirm", () => {
     const typed = sessionReducer(activeSession(), { type: "setInput", value: "bonne réponse 1" });
     const state = sessionReducer(typed, { type: "confirm", now: T0 + 9_000 });
     expect(state.answers).toStrictEqual([
-      { input: "bonne réponse 1", correct: true, points: POINTS_CASH, mode: "cash" },
+      {
+        input: "bonne réponse 1",
+        correct: true,
+        points: POINTS_CASH,
+        mode: QuizAnswerModeEnum.CASH,
+      },
     ]);
     expect(state.input).toBe("");
     expect(state.status).toBe("active");
@@ -114,7 +120,9 @@ describe("expire", () => {
   it("submits an empty Answer when nothing stands", () => {
     const state = activeSession();
     const expired = sessionReducer(state, { type: "expire", now: state.endsAt + 40 });
-    expect(expired.answers).toStrictEqual([{ input: "", correct: false, points: 0, mode: "cash" }]);
+    expect(expired.answers).toStrictEqual([
+      { input: "", correct: false, points: 0, mode: QuizAnswerModeEnum.CASH },
+    ]);
     expect(expired.endsAt).toBe(state.endsAt + 40 + COUNTDOWN_DURATION_MS);
   });
 });
@@ -141,7 +149,9 @@ describe("interruption — expiry while backgrounded", () => {
     const returnedAt = activeSession().endsAt + COUNTDOWN_DURATION_MS * 5;
     const state = sessionReducer(activeSession(), { type: "expire", now: returnedAt });
 
-    expect(state.answers).toStrictEqual([{ input: "", correct: false, points: 0, mode: "cash" }]);
+    expect(state.answers).toStrictEqual([
+      { input: "", correct: false, points: 0, mode: QuizAnswerModeEnum.CASH },
+    ]);
     expect(state.status).toBe("active");
     expect(currentQuestion(state)).toBe(QUESTIONS[1]);
     expect(isExpired(state.endsAt, returnedAt)).toBe(false);
@@ -152,7 +162,7 @@ describe("switchToSquare", () => {
   it("reveals the choices, wipes typed input, and leaves the Countdown running", () => {
     const typed = sessionReducer(activeSession(), { type: "setInput", value: "à moitié tapé" });
     const state = sessionReducer(typed, { type: "switchToSquare", choices: squareGrid(1) });
-    expect(state.mode).toBe("square");
+    expect(state.mode).toBe(QuizAnswerModeEnum.SQUARE);
     expect(state.input).toBe("");
     expect(state.choices).toStrictEqual(squareGrid(1));
     expect(state.selection).toBeNull();
@@ -208,7 +218,12 @@ describe("Carré confirmation and expiry", () => {
     const selected = sessionReducer(squareSession(), { type: "select", index: 1 });
     const state = sessionReducer(selected, { type: "confirm", now: T0 + 4_000 });
     expect(state.answers).toStrictEqual([
-      { input: "bonne réponse 1", correct: true, points: POINTS_SQUARE, mode: "square" },
+      {
+        input: "bonne réponse 1",
+        correct: true,
+        points: POINTS_SQUARE,
+        mode: QuizAnswerModeEnum.SQUARE,
+      },
     ]);
     expect(state.endsAt).toBe(T0 + 4_000 + COUNTDOWN_DURATION_MS);
   });
@@ -220,7 +235,7 @@ describe("Carré confirmation and expiry", () => {
       input: "faux un",
       correct: false,
       points: 0,
-      mode: "square",
+      mode: QuizAnswerModeEnum.SQUARE,
     });
   });
 
@@ -230,7 +245,7 @@ describe("Carré confirmation and expiry", () => {
     expect(state.answers[0]).toMatchObject({
       correct: true,
       points: POINTS_SQUARE,
-      mode: "square",
+      mode: QuizAnswerModeEnum.SQUARE,
     });
   });
 
@@ -241,14 +256,14 @@ describe("Carré confirmation and expiry", () => {
       input: "",
       correct: false,
       points: 0,
-      mode: "square",
+      mode: QuizAnswerModeEnum.SQUARE,
     });
   });
 
   it("restarts the next question in Cash with the choices cleared", () => {
     const selected = sessionReducer(squareSession(), { type: "select", index: 1 });
     const state = sessionReducer(selected, { type: "confirm", now: T0 + 4_000 });
-    expect(state.mode).toBe("cash");
+    expect(state.mode).toBe(QuizAnswerModeEnum.CASH);
     expect(state.choices).toBeNull();
     expect(state.selection).toBeNull();
     expect(currentQuestion(state)).toBe(QUESTIONS[1]);
@@ -293,9 +308,9 @@ describe("sessionScore", () => {
   it("sums the points of every answer", () => {
     expect(
       sessionScore([
-        { input: "a", correct: true, points: POINTS_CASH, mode: "cash" },
-        { input: "", correct: false, points: 0, mode: "cash" },
-        { input: "b", correct: true, points: POINTS_SQUARE, mode: "square" },
+        { input: "a", correct: true, points: POINTS_CASH, mode: QuizAnswerModeEnum.CASH },
+        { input: "", correct: false, points: 0, mode: QuizAnswerModeEnum.CASH },
+        { input: "b", correct: true, points: POINTS_SQUARE, mode: QuizAnswerModeEnum.SQUARE },
       ]),
     ).toBe(POINTS_CASH + POINTS_SQUARE);
   });
@@ -316,7 +331,7 @@ describe("mixed Cash/Carré session", () => {
       state = sessionReducer(state, { type: "confirm", now: T0 + (i + 1) * 10_000 });
     }
     expect(state.status).toBe("finished");
-    expect(state.answers.filter((a) => a.mode === "square")).toHaveLength(5);
+    expect(state.answers.filter((a) => a.mode === QuizAnswerModeEnum.SQUARE)).toHaveLength(5);
     expect(sessionScore(state.answers)).toBe(5 * POINTS_CASH + 5 * POINTS_SQUARE);
   });
 });

@@ -9,9 +9,9 @@ import {
   appCompetitionStandingResponseSchema,
   appCompetitionTranscriptResponseSchema,
 } from "@mentis/contracts/app";
-import type { CompetitionAnswerEntity } from "../../_database/entities/competition-answer.entity";
 import type { CompetitionAttemptEntity } from "../../_database/entities/competition-attempt.entity";
 import type { DayScore } from "../types/day-score";
+import type { NewCompetitionAnswer } from "../types/new-competition-answer";
 import type { ServedAttempt } from "../types/served-attempt";
 import type { ServedQuestion } from "../types/served-question";
 import { seededRng } from "../utils/seeded-rng";
@@ -47,7 +47,7 @@ export const toAppCompetitionActiveAttemptResponse = (
 
 export const toAppCompetitionTranscriptResponse = (
   attempt: CompetitionAttemptEntity,
-  answers: CompetitionAnswerEntity[],
+  answers: NewCompetitionAnswer[],
   questions: ServedQuestion[],
 ): AppCompetitionTranscriptResponse =>
   appCompetitionTranscriptResponseSchema.parse({

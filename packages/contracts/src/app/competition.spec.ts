@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { QuizAnswerModeEnum, UserAnswerMatchedViaEnum } from "../enums";
 import {
   appCompetitionActiveAttemptResponseSchema,
   appCompetitionAttemptResponseSchema,
@@ -98,11 +99,11 @@ const verdict = (index: number, overrides: Record<string, unknown> = {}) => ({
   questionId: `q${index}`,
   questionText: `Question ${index} ?`,
   canonicalAnswer: "Paris",
-  mode: "cash",
+  mode: QuizAnswerModeEnum.CASH,
   rawInput: "paris",
   correct: true,
   points: COMPETITION_POINTS.cash,
-  matchedVia: "canonical",
+  matchedVia: UserAnswerMatchedViaEnum.CANONICAL,
   ...overrides,
 });
 
@@ -121,7 +122,7 @@ const transcript = (overrides: Record<string, unknown> = {}) => ({
 describe("appCompetitionFinalizeInputSchema", () => {
   const answer = (index: number, overrides: Record<string, unknown> = {}) => ({
     questionId: `q${index}`,
-    mode: "cash",
+    mode: QuizAnswerModeEnum.CASH,
     rawInput: "paris",
     clientElapsedMs: 4200,
     ...overrides,
@@ -142,8 +143,9 @@ describe("appCompetitionFinalizeInputSchema", () => {
 
   it("rejects a mode the phone cannot have played", () => {
     expect(
-      appCompetitionFinalizeInputSchema.safeParse({ answers: [answer(0, { mode: "none" })] })
-        .success,
+      appCompetitionFinalizeInputSchema.safeParse({
+        answers: [answer(0, { mode: QuizAnswerModeEnum.NONE })],
+      }).success,
     ).toBe(false);
   });
 
@@ -153,7 +155,7 @@ describe("appCompetitionFinalizeInputSchema", () => {
     });
     expect(parsed.answers[0]).toEqual({
       questionId: "q0",
-      mode: "cash",
+      mode: QuizAnswerModeEnum.CASH,
       rawInput: "paris",
       clientElapsedMs: 4200,
     });
@@ -165,7 +167,7 @@ describe("appCompetitionTranscriptResponseSchema", () => {
     const parsed = appCompetitionTranscriptResponseSchema.parse(transcript());
     expect(parsed.answers[0]).toMatchObject({
       canonicalAnswer: "Paris",
-      matchedVia: "canonical",
+      matchedVia: UserAnswerMatchedViaEnum.CANONICAL,
       points: COMPETITION_POINTS.cash,
     });
   });
@@ -177,7 +179,7 @@ describe("appCompetitionTranscriptResponseSchema", () => {
         score: 0,
         answers: Array.from({ length: COMPETITION_QUESTION_COUNT }, (_, index) =>
           verdict(index, {
-            mode: "none",
+            mode: QuizAnswerModeEnum.NONE,
             rawInput: null,
             correct: false,
             points: 0,
@@ -186,7 +188,7 @@ describe("appCompetitionTranscriptResponseSchema", () => {
         ),
       }),
     );
-    expect(parsed.answers[0].mode).toBe("none");
+    expect(parsed.answers[0].mode).toBe(QuizAnswerModeEnum.NONE);
   });
 
   it("holds a verdict for every served position and nothing above the Cash ceiling", () => {

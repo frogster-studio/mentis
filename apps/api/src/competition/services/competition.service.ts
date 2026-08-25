@@ -6,6 +6,7 @@ import {
   type AppCompetitionTranscriptResponse,
   COMPETITION_QUESTION_COUNT,
 } from "@mentis/contracts/app";
+import { QuizAnswerModeEnum } from "@mentis/contracts/enums";
 import { ConflictException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import type { CompetitionAttemptEntity } from "../../_database/entities/competition-attempt.entity";
 import type { DrawnQuestion } from "../../catalog/repositories/catalog.repository";
@@ -19,6 +20,7 @@ import {
 import { CompetitionRepository } from "../repositories/competition.repository";
 import type { Clock } from "../types/clock";
 import type { DrawnTheme } from "../types/drawn-theme";
+import type { NewCompetitionAnswer } from "../types/new-competition-answer";
 import { CLOCK } from "../utils/clock";
 import {
   bestScorePerDay,
@@ -26,7 +28,7 @@ import {
   daysBefore,
   seasonBounds,
 } from "../utils/competition-day";
-import { attemptScore, judgeAttempt, unresolvedAnswer } from "../utils/judge-attempt";
+import { judgeAttempt } from "../utils/judge-attempt";
 
 const ROTATION_LOOKBACK_DAYS = 2;
 
@@ -96,7 +98,7 @@ export class CompetitionService {
     const finalized = await this.competitionRepository.finalize(attempt.id, {
       // Positions the batch never reached are the Attempt the Player walked out of.
       reason: batch.answers.length === COMPETITION_QUESTION_COUNT ? "completed" : "quit",
-      score: attemptScore(answers),
+      score: answers.reduce((total, answer) => total + answer.points, 0),
       answers,
     });
     if (finalized === null) {
@@ -143,12 +145,22 @@ export class CompetitionService {
 
   // Zeros need no answer material, so a Question the Catalog dropped can never block a burial.
   private async zeroFinalize(attempt: CompetitionAttemptEntity): Promise<void> {
-    const answers = attempt.questionIds.map((questionId, position) =>
-      unresolvedAnswer(attempt.id, position, questionId),
+    const answers = attempt.questionIds.map(
+      (questionId, position): NewCompetitionAnswer => ({
+        attemptId: attempt.id,
+        position,
+        questionId,
+        mode: QuizAnswerModeEnum.NONE,
+        rawInput: null,
+        correct: false,
+        points: 0,
+        matchedVia: null,
+        clientElapsedMs: null,
+      }),
     );
     await this.competitionRepository.finalize(attempt.id, {
       reason: "expired",
-      score: attemptScore(answers),
+      score: 0,
       answers,
     });
   }

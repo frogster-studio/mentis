@@ -1,10 +1,10 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { QuizAnswerModeEnum } from "@mentis/contracts/enums";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Card } from "@/components/ui/card";
 import { RESULTS_CANONICAL_LABEL, RESULTS_NO_ANSWER } from "@/features/quiz/constants";
 import { TEXT } from "@/theme/text";
 import { COLORS, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
-import type { QuizMode } from "@/types/quiz";
 
 const MENU_ICON_SIZE = 20;
 const MODE_ICON_SIZE = 16;
@@ -14,8 +14,7 @@ export type ResultCardProps = {
   questionText: string;
   canonicalAnswer: string;
   answerText: string;
-  // A competition position the Countdown ran out on resolved in neither mode.
-  mode: QuizMode | "none";
+  mode: QuizAnswerModeEnum;
   correct: boolean;
   points: number;
 };
@@ -29,8 +28,7 @@ export function ResultCard({
   points,
 }: ResultCardProps) {
   const isEmpty = answerText.trim() === "";
-  const modeGlyph = mode === "square" ? "grid-view" : "edit";
-  // The icon and the chip carry correctness, so the answer itself never turns red.
+  const modeGlyph = mode === QuizAnswerModeEnum.SQUARE ? "grid-view" : "edit";
   const accent = correct ? COLORS.success : COLORS.danger;
 
   return (

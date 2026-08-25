@@ -1,3 +1,4 @@
+import { QuizAnswerModeEnum } from "@mentis/contracts/enums";
 import type { ErrorResponse } from "@mentis/contracts/shared";
 import { describe, expect, it } from "vitest";
 import { ApiError } from "@/lib/api/client";
@@ -17,7 +18,7 @@ const OTHER = "owner-b";
 function answers(count: number): PlayedAnswer[] {
   return Array.from({ length: count }, (_, index) => ({
     questionId: `q${index + 1}`,
-    mode: "cash" as const,
+    mode: QuizAnswerModeEnum.CASH,
     rawInput: `réponse ${index + 1}`,
     clientElapsedMs: 1_000,
   }));
