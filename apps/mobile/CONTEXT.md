@@ -12,6 +12,10 @@ _Avoid_: user
 The optional cross-platform identity a Player signs into with Google or Apple. It exists to carry stats across devices and to ground future social features (leaderboards, battles); solo play never requires one. French UI label: « Compte ».
 _Avoid_: user, profile, login
 
+**Premium**:
+The paid tier of an Account — one auto-renewable monthly subscription (€2.99, no trial) bought through the stores, never available to an anonymous Player. Requires only a signed-in Account, no pseudo. Eligibility is evaluated at the moment of the action against the entitlement's expiry: lapsed means free tier immediately, but never mid-session; store grace periods count as active. French UI label: « Premium ».
+_Avoid_: subscriber, pro, VIP
+
 **Quiz Session**:
 One practice run of 10 Questions drawn from a single Theme chosen by the player. It is Finished once all 10 Questions have resolved; only Finished sessions produce a score (revealed at the end) and feed Theme Averages. French UI label: « partie ».
 _Avoid_: game, round, quiz (alone)
