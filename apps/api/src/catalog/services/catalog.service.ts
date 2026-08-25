@@ -9,8 +9,11 @@ import { toAppQuestionDrawResponse, toAppThemeListResponse } from "../mappers/ca
 import {
   CatalogRepository,
   type DrawnQuestion,
-  type ThemeWithQuestionCount,
+  type StoredThemeVisuals,
 } from "../repositories/catalog.repository";
+import type { ThemeVisuals } from "../types/theme-visuals";
+import type { ThemeWithQuestionCount } from "../types/theme-with-question-count";
+import { themeImageUrl } from "../utils/theme-image-url";
 
 @Injectable()
 export class CatalogService {
@@ -20,10 +23,7 @@ export class CatalogService {
   ) {}
 
   async listThemes(): Promise<AppThemeListResponse> {
-    return toAppThemeListResponse(
-      await this.catalogRepository.themesWithQuestionCounts(),
-      this.env.SUPABASE_URL,
-    );
+    return toAppThemeListResponse(await this.themesWithQuestionCounts());
   }
 
   async drawQuestions(query: AppQuestionDrawQuery): Promise<AppQuestionDrawResponse> {
@@ -39,9 +39,15 @@ export class CatalogService {
     );
   }
 
-  // Competition draws through these three, so a Theme or Question row stays this feature's alone.
-  themesWithQuestionCounts(): Promise<ThemeWithQuestionCount[]> {
-    return this.catalogRepository.themesWithQuestionCounts();
+  // Competition draws through these four, so a Theme or Question row stays this feature's alone.
+  async themesWithQuestionCounts(): Promise<ThemeWithQuestionCount[]> {
+    const themes = await this.catalogRepository.themesWithQuestionCounts();
+    return themes.map(({ id, name, questionCount, ...stored }) => ({
+      id,
+      name,
+      questionCount,
+      ...this.visuals(stored),
+    }));
   }
 
   drawFromTheme(themeId: string, count: number): Promise<DrawnQuestion[]> {
@@ -50,5 +56,15 @@ export class CatalogService {
 
   questionsByIds(ids: string[]): Promise<DrawnQuestion[]> {
     return this.catalogRepository.questionsByIds(ids);
+  }
+
+  async themeVisuals(themeId: string): Promise<ThemeVisuals | null> {
+    const stored = await this.catalogRepository.themeVisualsById(themeId);
+    return stored === null ? null : this.visuals(stored);
+  }
+
+  // The bucket path is stored, the URL is not: composing it here keeps storage out of every mapper.
+  private visuals({ image, category }: StoredThemeVisuals): ThemeVisuals {
+    return { imageUrl: themeImageUrl(this.env.SUPABASE_URL, image), category };
   }
 }

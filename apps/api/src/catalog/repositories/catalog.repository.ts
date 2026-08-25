@@ -3,13 +3,14 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, type SelectQueryBuilder } from "typeorm";
 import { QuestionEntity } from "../../_database/entities/question.entity";
 import { ThemeEntity } from "../../_database/entities/theme.entity";
+import type { ThemeVisuals } from "../types/theme-visuals";
+import type { ThemeWithQuestionCount } from "../types/theme-with-question-count";
 
-export type ThemeWithQuestionCount = {
-  id: string;
-  name: string;
+// The row holds a bucket path where the served shape holds the URL the API composes from it.
+export type StoredThemeVisuals = Omit<ThemeVisuals, "imageUrl"> & { image: string };
+
+export type StoredThemeWithQuestionCount = Omit<ThemeWithQuestionCount, "imageUrl"> & {
   image: string;
-  questionCount: number;
-  category: { id: string; name: string; color: string; icon: string };
 };
 
 export type DrawnQuestion = {
@@ -30,7 +31,7 @@ export class CatalogRepository {
     @InjectRepository(QuestionEntity) private readonly questions: Repository<QuestionEntity>,
   ) {}
 
-  async themesWithQuestionCounts(): Promise<ThemeWithQuestionCount[]> {
+  async themesWithQuestionCounts(): Promise<StoredThemeWithQuestionCount[]> {
     const rows = await this.themes
       .createQueryBuilder("theme")
       .innerJoin("theme.category", "category")
@@ -77,6 +78,23 @@ export class CatalogRepository {
 
   themeExists(id: string): Promise<boolean> {
     return this.themes.existsBy({ id });
+  }
+
+  async themeVisualsById(id: string): Promise<StoredThemeVisuals | null> {
+    const theme = await this.themes.findOne({ where: { id }, relations: { category: true } });
+    if (theme === null) {
+      return null;
+    }
+    const { image, category } = theme;
+    return {
+      image,
+      category: {
+        id: category.id,
+        name: category.name,
+        color: category.color,
+        icon: category.icon,
+      },
+    };
   }
 
   drawRandomQuestions(themeId: string | null, count: number): Promise<DrawnQuestion[]> {

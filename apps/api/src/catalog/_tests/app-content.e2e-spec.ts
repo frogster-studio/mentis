@@ -6,8 +6,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { ENV } from "../../_config/env.config";
 import { stubDataSource, testEnv } from "../../_tests/test-env";
 import { AppModule } from "../../app.module";
-import { THEME_IMAGES_BUCKET } from "../mappers/theme-image-url";
 import { CatalogRepository, type DrawnQuestion } from "../repositories/catalog.repository";
+import { THEME_IMAGES_BUCKET } from "../utils/theme-image-url";
 
 const television = { id: "television", name: "Télévision", color: "#8e24aa", icon: "tv" };
 const histoire = { id: "histoire", name: "Histoire", color: "#6d4c41", icon: "history-edu" };

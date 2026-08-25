@@ -19,6 +19,7 @@ import {
   CatalogRepository,
   type DrawnQuestion,
 } from "../../catalog/repositories/catalog.repository";
+import { THEME_IMAGES_BUCKET } from "../../catalog/utils/theme-image-url";
 import { CompetitionRepository } from "../repositories/competition.repository";
 import type { FinalizedOutcome } from "../types/finalized-outcome";
 import type { NewCompetitionAnswer } from "../types/new-competition-answer";
@@ -85,13 +86,20 @@ const JUDGED_ATTEMPT = attemptId(20);
 
 const CATEGORY = { id: "nature", name: "Nature", color: "#2e7d32", icon: "park" };
 
-const THEMES = ["Alpha", "Beta", "Gamma", "Delta", "Maigre"].map((name) => ({
+const themeRow = (name: string) => ({
   id: name.toLowerCase(),
   name,
   image: `${name.toLowerCase()}.webp`,
   category: CATEGORY,
-}));
+});
+
+const THEMES = ["Alpha", "Beta", "Gamma", "Delta", "Maigre"].map(themeRow);
+// The judged Attempt's Theme sits outside the draw pool, yet its visuals still travel.
+const JUDGED_THEME = themeRow("France");
 const ELIGIBLE_THEME_IDS = ["alpha", "beta", "gamma", "delta"];
+
+const expectedImageUrl = (themeId: string) =>
+  `${testEnv.SUPABASE_URL}/storage/v1/object/public/${THEME_IMAGES_BUCKET}/${themeId}.webp`;
 
 const servedIds = (themeId: string) =>
   QUESTIONS.filter((question) => question.themeId === themeId)
@@ -138,6 +146,10 @@ const fakeCatalogRepository = {
   async themeExists(id) {
     return THEMES.some((theme) => theme.id === id);
   },
+  async themeVisualsById(id) {
+    const theme = [...THEMES, JUDGED_THEME].find((row) => row.id === id);
+    return theme === undefined ? null : { image: theme.image, category: theme.category };
+  },
   async drawRandomQuestions(themeId, count) {
     draws.push({ themeId, count });
     return QUESTIONS.filter((question) => question.themeId === themeId).slice(0, count);
@@ -147,7 +159,11 @@ const fakeCatalogRepository = {
   },
 } satisfies Pick<
   CatalogRepository,
-  "themesWithQuestionCounts" | "themeExists" | "drawRandomQuestions" | "questionsByIds"
+  | "themesWithQuestionCounts"
+  | "themeExists"
+  | "themeVisualsById"
+  | "drawRandomQuestions"
+  | "questionsByIds"
 >;
 
 const fakeCompetitionRepository = {
@@ -353,6 +369,25 @@ describe("app competition routes e2e", () => {
     expect(attemptRows[0].questionIds).toEqual(
       body.questions.map((question: { id: string }) => question.id),
     );
+  });
+
+  it("carries the drawn Theme's image and Category, so no cached theme list is joined", async () => {
+    const body = await issued(tokenA);
+
+    expect(body).toMatchObject({
+      imageUrl: expectedImageUrl(body.themeId),
+      category: CATEGORY,
+    });
+  });
+
+  it("serves the same Theme visuals to the Attempt a crashed phone resumes", async () => {
+    const issuance = await issued(tokenA);
+
+    const { attempt } = await readActiveBody(tokenA);
+    expect(attempt).toMatchObject({
+      imageUrl: issuance.imageUrl,
+      category: CATEGORY,
+    });
   });
 
   it("serves every Question with its 4 pre-shuffled Square choices", async () => {
@@ -731,6 +766,16 @@ describe("app competition routes e2e", () => {
       expect(
         body.answers.map((answer: { canonicalAnswer: string }) => answer.canonicalAnswer),
       ).toEqual(JUDGED_QUESTIONS.map((question) => question.answer));
+    });
+
+    it("carries the Theme visuals the Attempt was issued with", async () => {
+      const body = await finalized(tokenA, fullBatch());
+
+      expect(body).toMatchObject({
+        themeName: "France",
+        imageUrl: expectedImageUrl("france"),
+        category: CATEGORY,
+      });
     });
 
     it("stores the ten judged rows and marks the Attempt completed", async () => {

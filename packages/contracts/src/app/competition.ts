@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { QuizAnswerModeEnum, UserAnswerMatchedViaEnum } from "../enums";
+import { appCategorySchema } from "./theme";
 
 export const COMPETITION_QUESTION_COUNT = 10;
 // The self-reported mode alone prices a correct answer.
@@ -16,13 +17,20 @@ const competitionQuestionSchema = z.object({
   squareChoices: z.array(z.string()).length(4),
 });
 
+const competitionThemeSchema = z.object({
+  themeId: z.string(),
+  themeName: z.string(),
+  // Denormalized: a server-drawn Theme may be newer than any theme list the phone holds.
+  imageUrl: z.url(),
+  category: appCategorySchema,
+});
+
 export const appCompetitionAttemptResponseSchema = z.object({
   id: z.uuid(),
   day: z.iso.date(),
   kind: competitionAttemptKindSchema,
   status: z.enum(["active", "finalized"]),
-  themeId: z.string(),
-  themeName: z.string(),
+  ...competitionThemeSchema.shape,
   // Served order — a finalize batch answers by position into this list.
   questions: z.array(competitionQuestionSchema).length(COMPETITION_QUESTION_COUNT),
 });
@@ -72,8 +80,7 @@ export const appCompetitionTranscriptResponseSchema = z.object({
   id: z.uuid(),
   day: z.iso.date(),
   kind: competitionAttemptKindSchema,
-  themeId: z.string(),
-  themeName: z.string(),
+  ...competitionThemeSchema.shape,
   finalizeReason: z.enum(["completed", "quit", "expired"]),
   score: z.number().int().min(0).max(MAX_SCORE),
   answers: z.array(competitionVerdictSchema).length(COMPETITION_QUESTION_COUNT),

@@ -17,6 +17,9 @@ const question = (index: number, overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
+const CATEGORY = { id: "nature", name: "Nature", color: "#2e7d32", icon: "park" };
+const IMAGE_URL = "https://cdn.example.com/storage/v1/object/public/theme-images/geo.webp";
+
 const attempt = (overrides: Record<string, unknown> = {}) => ({
   id: "3f2b1c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
   day: "2026-08-20",
@@ -24,6 +27,8 @@ const attempt = (overrides: Record<string, unknown> = {}) => ({
   status: "active",
   themeId: "geo",
   themeName: "Géographie",
+  imageUrl: IMAGE_URL,
+  category: CATEGORY,
   questions: Array.from({ length: COMPETITION_QUESTION_COUNT }, (_, index) => question(index)),
   ...overrides,
 });
@@ -64,6 +69,20 @@ describe("appCompetitionAttemptResponseSchema", () => {
         }),
       ).success,
     ).toBe(false);
+  });
+
+  it("carries the drawn Theme's visuals, so the phone never joins on its cached list", () => {
+    const parsed = appCompetitionAttemptResponseSchema.parse(attempt());
+    expect(parsed.imageUrl).toBe(IMAGE_URL);
+    expect(parsed.category).toEqual(CATEGORY);
+  });
+
+  it("rejects an Attempt whose Theme carries no visuals", () => {
+    expect(
+      appCompetitionAttemptResponseSchema.safeParse(attempt({ imageUrl: "geo.webp" })).success,
+    ).toBe(false);
+    const { category: _dropped, ...withoutCategory } = attempt();
+    expect(appCompetitionAttemptResponseSchema.safeParse(withoutCategory).success).toBe(false);
   });
 
   it("rejects a Competition Day that is not a plain Europe/Paris date", () => {
@@ -113,6 +132,8 @@ const transcript = (overrides: Record<string, unknown> = {}) => ({
   kind: "initial",
   themeId: "geo",
   themeName: "Géographie",
+  imageUrl: IMAGE_URL,
+  category: CATEGORY,
   finalizeReason: "completed",
   score: COMPETITION_QUESTION_COUNT * COMPETITION_POINTS.cash,
   answers: Array.from({ length: COMPETITION_QUESTION_COUNT }, (_, index) => verdict(index)),
@@ -170,6 +191,12 @@ describe("appCompetitionTranscriptResponseSchema", () => {
       matchedVia: UserAnswerMatchedViaEnum.CANONICAL,
       points: COMPETITION_POINTS.cash,
     });
+  });
+
+  it("carries the same Theme visuals the issuance served", () => {
+    const parsed = appCompetitionTranscriptResponseSchema.parse(transcript());
+    expect(parsed.imageUrl).toBe(IMAGE_URL);
+    expect(parsed.category).toEqual(CATEGORY);
   });
 
   it("accepts an unresolved position — no mode, no input, no rule", () => {

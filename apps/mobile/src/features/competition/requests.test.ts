@@ -42,6 +42,9 @@ function issuedQuestion(position: number) {
   };
 }
 
+const CATEGORY = { id: "culture", name: "Culture", color: "#6a1b9a", icon: "menu-book" };
+const IMAGE_URL = "https://stub.supabase.co/storage/v1/object/public/theme-images/histoire.webp";
+
 const ISSUED_BODY = {
   id: ATTEMPT_ID,
   day: "2026-08-21",
@@ -49,6 +52,8 @@ const ISSUED_BODY = {
   status: "active",
   themeId: "histoire",
   themeName: "Histoire",
+  imageUrl: IMAGE_URL,
+  category: CATEGORY,
   questions: Array.from({ length: 10 }, (_, index) => issuedQuestion(index + 1)),
 };
 
@@ -101,6 +106,8 @@ describe("the finalize payload", () => {
       kind: "initial",
       themeId: "histoire",
       themeName: "Histoire",
+      imageUrl: IMAGE_URL,
+      category: CATEGORY,
       finalizeReason: "quit",
       score: 5,
       answers: Array.from({ length: 10 }, (_, position) => ({

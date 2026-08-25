@@ -9,33 +9,36 @@ import {
   appCompetitionStandingResponseSchema,
   appCompetitionTranscriptResponseSchema,
 } from "@mentis/contracts/app";
-import type { CompetitionAttemptEntity } from "../../_database/entities/competition-attempt.entity";
 import type { DayScore } from "../types/day-score";
 import type { NewCompetitionAnswer } from "../types/new-competition-answer";
 import type { ServedAttempt } from "../types/served-attempt";
-import type { ServedQuestion } from "../types/served-question";
 import { seededRng } from "../utils/seeded-rng";
 
-const servedPayload = ({ attempt, questions }: ServedAttempt) => ({
-  id: attempt.id,
-  day: attempt.day,
-  kind: attempt.kind,
-  status: attempt.status,
+const themePayload = ({ attempt, theme }: ServedAttempt) => ({
   themeId: attempt.themeId,
   themeName: attempt.themeName,
-  questions: questions.map((question) => ({
+  imageUrl: theme.imageUrl,
+  category: theme.category,
+});
+
+const servedPayload = (served: ServedAttempt) => ({
+  id: served.attempt.id,
+  day: served.attempt.day,
+  kind: served.attempt.kind,
+  status: served.attempt.status,
+  ...themePayload(served),
+  questions: served.questions.map((question) => ({
     id: question.id,
     text: question.text,
-    squareChoices: squareChoices(question, seededRng(`${attempt.id}:${question.id}`)),
+    squareChoices: squareChoices(question, seededRng(`${served.attempt.id}:${question.id}`)),
   })),
 });
 
 // Parsing through the contract is what keeps the answer material off the wire.
 export const toAppCompetitionAttemptResponse = (
-  attempt: CompetitionAttemptEntity,
-  questions: ServedQuestion[],
+  served: ServedAttempt,
 ): AppCompetitionAttemptResponse =>
-  appCompetitionAttemptResponseSchema.parse(servedPayload({ attempt, questions }));
+  appCompetitionAttemptResponseSchema.parse(servedPayload(served));
 
 // The same payload the issuance served, so a crashed session resumes on the Questions it left.
 export const toAppCompetitionActiveAttemptResponse = (
@@ -46,16 +49,15 @@ export const toAppCompetitionActiveAttemptResponse = (
   });
 
 export const toAppCompetitionTranscriptResponse = (
-  attempt: CompetitionAttemptEntity,
+  served: ServedAttempt,
   answers: NewCompetitionAnswer[],
-  questions: ServedQuestion[],
-): AppCompetitionTranscriptResponse =>
-  appCompetitionTranscriptResponseSchema.parse({
+): AppCompetitionTranscriptResponse => {
+  const { attempt, questions } = served;
+  return appCompetitionTranscriptResponseSchema.parse({
     id: attempt.id,
     day: attempt.day,
     kind: attempt.kind,
-    themeId: attempt.themeId,
-    themeName: attempt.themeName,
+    ...themePayload(served),
     finalizeReason: attempt.finalizeReason,
     score: attempt.score,
     answers: answers.map((answer) => {
@@ -76,6 +78,7 @@ export const toAppCompetitionTranscriptResponse = (
       };
     }),
   });
+};
 
 export const toAppCompetitionStandingResponse = (
   season: string,
