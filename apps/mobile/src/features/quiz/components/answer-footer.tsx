@@ -1,4 +1,3 @@
-import { Check, Grid2x2 } from "lucide-react-native";
 import type { RefObject } from "react";
 import { Platform, StyleSheet, TextInput, View } from "react-native";
 import { Button } from "@/components/ui/button";
@@ -70,14 +69,14 @@ export function AnswerFooter({
       />
       <Button
         layout="circle"
-        icon={Grid2x2}
+        icon="grid-view"
         accessibilityLabel={SQUARE_SWITCH_LABEL}
         onPress={onSwitchToSquare}
         theme="quiet"
       />
       <Button
         layout="circle"
-        icon={Check}
+        icon="check"
         accessibilityLabel={CONFIRM_LABEL}
         onPress={onConfirm}
         disabled={disabled}

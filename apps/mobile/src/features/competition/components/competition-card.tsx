@@ -1,5 +1,5 @@
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRouter } from "expo-router";
-import { ChevronRight, Trophy } from "lucide-react-native";
 import { StyleSheet, Text, View } from "react-native";
 import { Card } from "@/components/ui/card";
 import { COMPETITION_TEASER, COMPETITION_TITLE } from "@/features/competition/constants";
@@ -15,12 +15,12 @@ export function CompetitionCard() {
   return (
     <Card onPress={() => router.push("/competition")}>
       <View style={styles.row}>
-        <Trophy size={TROPHY_SIZE} color={COLORS.primary} />
+        <MaterialIcons name="emoji-events" size={TROPHY_SIZE} color={COLORS.primary} />
         <View style={styles.titleSlot}>
           <Text style={styles.name}>{COMPETITION_TITLE}</Text>
           <Text style={styles.teaser}>{COMPETITION_TEASER}</Text>
         </View>
-        <ChevronRight size={CHEVRON_SIZE} color={COLORS.inkMuted} />
+        <MaterialIcons name="chevron-right" size={CHEVRON_SIZE} color={COLORS.inkMuted} />
       </View>
     </Card>
   );

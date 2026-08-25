@@ -1,5 +1,4 @@
 import { useRouter } from "expo-router";
-import { ChevronLeft } from "lucide-react-native";
 import { useMemo } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -63,7 +62,7 @@ export function PickerScreen() {
         <View style={[styles.header, { height: headerHeight, paddingTop: insets.top + SPACE.md }]}>
           <QuietButton
             layout="circle"
-            icon={ChevronLeft}
+            icon="chevron-left"
             accessibilityLabel={PICKER_BACK_LABEL}
             onPress={() => router.back()}
           />

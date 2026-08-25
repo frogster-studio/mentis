@@ -17,12 +17,12 @@
 - Spacing, radius and shadow come off the token ladders — `SPACE`/`GUTTER`, `RADIUS`, `SHADOW` via the `boxShadow` style prop (never `elevation` or the `shadow*` triple). Screens pick ladder steps, no free integers.
 - Text styles **only** from `TEXT` (in `src/theme/`) — no `fontFamily`/`fontSize`/`fontWeight`/`lineHeight` literals in components (dev-only debug text excepted). Three faces, never more: **Lexend Bold** for content headings, **Poppins SemiBold** for numerals and UI emphasis, **Poppins Regular** for everything else — `fontWeight` is never set, the face file *is* the weight. Font files in `assets/fonts/` under their PostScript names; a missing file fails the build, a runtime load failure falls back to the system font.
 - All UI copy in **French** — feature copy in the feature's `constants.ts`, shared-ui copy a module constant beside its primitive.
-- Icons are Lucide. The only bespoke glyphs are hand-drawn `react-native-svg` components (the two tab icons, `LogoMark`, `LogoWordmark`) — an svg drawing becomes a component, never an imported file.
+- Icons are MaterialIcons from `@expo/vector-icons` — a component taking an icon takes its glyph name (`IconName`), never an icon component. The only bespoke glyphs are hand-drawn `react-native-svg` components (the two tab icons, `LogoMark`, `LogoWordmark`) — an svg drawing becomes a component, never an imported file.
 - **`Button`** is the control for every primary action; **`QuietButton`** for every other faced control (dialog actions, sign-in, the quit and back circles); glyph-only and text-only taps stay a bare `Pressable` dimmed with `PRESSED` — never a third button look. Only `Button` and `SquareButton` sink, through the one shared press mechanic.
 
   ```tsx
   // ✅ <Button label="Commencer" layout="block" />
-  // ✅ <QuietButton layout="circle" icon={X} accessibilityLabel={QUIT_LABEL} />
+  // ✅ <QuietButton layout="circle" icon="close" accessibilityLabel={QUIT_LABEL} />
   // ❌ a Pressable given its own face styles — that's a third look; use QuietButton
   ```
 - Answer judging and the Carré shuffle come from `@mentis/answer-matching` (source-first like contracts), never re-implemented here — the API judges competition with the same code.

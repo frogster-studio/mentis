@@ -1,6 +1,7 @@
-import type { LucideIcon } from "lucide-react-native";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { StyleSheet, Text, View } from "react-native";
 import { Card } from "@/components/ui/card";
+import type { IconName } from "@/components/ui/icon-name";
 import { POINTS_UNIT } from "@/features/quiz/constants";
 import { TEXT } from "@/theme/text";
 import { COLORS, SPACE } from "@/theme/tokens";
@@ -13,10 +14,10 @@ export type HomeModeCardProps = {
   points: number;
   name: string;
   how: string;
-  icon: LucideIcon;
+  icon: IconName;
 };
 
-export function HomeModeCard({ points, name, how, icon: ModeIcon }: HomeModeCardProps) {
+export function HomeModeCard({ points, name, how, icon }: HomeModeCardProps) {
   return (
     <Card>
       <View style={styles.row}>
@@ -26,7 +27,7 @@ export function HomeModeCard({ points, name, how, icon: ModeIcon }: HomeModeCard
         </Text>
         <View style={styles.titleSlot}>
           <View style={styles.nameRow}>
-            <ModeIcon size={MODE_ICON_SIZE} color={COLORS.inkMuted} />
+            <MaterialIcons name={icon} size={MODE_ICON_SIZE} color={COLORS.inkMuted} />
             <Text style={styles.name}>{name}</Text>
           </View>
           <Text style={styles.how}>{how}</Text>

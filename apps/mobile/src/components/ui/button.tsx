@@ -1,8 +1,9 @@
-import type { LucideIcon } from "lucide-react-native";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ActivityIndicator, Animated, Pressable, StyleSheet, Text, View } from "react-native";
+import type { IconName } from "@/components/ui/icon-name";
 import { PRESS_DEPTH, usePressSink } from "@/components/ui/use-press-sink";
 import { TEXT } from "@/theme/text";
-import { COLORS, CONTROL_HEIGHT, RADIUS } from "@/theme/tokens";
+import { COLORS, CONTROL_HEIGHT, CONTROL_ICON_SIZE, RADIUS } from "@/theme/tokens";
 
 // The sink travels inside the layout box, so chrome around a Button clears this, not CONTROL_HEIGHT.
 export const BUTTON_BOX_HEIGHT = CONTROL_HEIGHT + PRESS_DEPTH;
@@ -35,7 +36,7 @@ type ButtonBaseProps = {
 export type ButtonProps = ButtonBaseProps &
   (
     | { layout?: "block" | "flex"; label: string }
-    | { layout: "circle"; icon: LucideIcon; accessibilityLabel: string }
+    | { layout: "circle"; icon: IconName; accessibilityLabel: string }
   );
 
 export function Button(props: ButtonProps) {
@@ -70,7 +71,7 @@ export function Button(props: ButtonProps) {
         {pending ? (
           <ActivityIndicator size="small" color={palette.text} />
         ) : props.layout === "circle" ? (
-          <props.icon size={20} color={palette.text} />
+          <MaterialIcons name={props.icon} size={CONTROL_ICON_SIZE} color={palette.text} />
         ) : (
           <Text style={[styles.label, { color: palette.text }]}>{props.label}</Text>
         )}

@@ -1,5 +1,5 @@
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRouter } from "expo-router";
-import { CircleUser } from "lucide-react-native";
 import { Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LogoWordmark } from "@/components/logo-wordmark";
@@ -34,7 +34,11 @@ export function AppHeader() {
           accessibilityLabel={ACCOUNT_TITLE}
           hitSlop={8}
         >
-          <CircleUser size={PROFILE_ICON_SIZE} color={session ? COLORS.primary : COLORS.ink} />
+          <MaterialIcons
+            name="account-circle"
+            size={PROFILE_ICON_SIZE}
+            color={session ? COLORS.primary : COLORS.ink}
+          />
         </Pressable>
       </View>
     </BlurBand>

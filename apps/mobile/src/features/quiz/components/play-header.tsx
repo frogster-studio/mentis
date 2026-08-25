@@ -1,4 +1,3 @@
-import { X } from "lucide-react-native";
 import { StyleSheet, Text, View } from "react-native";
 import { QuietButton } from "@/components/ui/quiet-button";
 import { CountdownRing } from "@/features/quiz/components/countdown-ring";
@@ -18,7 +17,7 @@ export type PlayHeaderProps = {
 export function PlayHeader({ position, total, endsAt, now, quitLabel, onQuit }: PlayHeaderProps) {
   return (
     <View style={styles.header}>
-      <QuietButton layout="circle" icon={X} accessibilityLabel={quitLabel} onPress={onQuit} />
+      <QuietButton layout="circle" icon="close" accessibilityLabel={quitLabel} onPress={onQuit} />
       <View style={styles.headerRight}>
         <Text style={styles.progress}>
           {position}

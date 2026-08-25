@@ -36,3 +36,5 @@ export const PRESSED = {
 } as const;
 
 export const CONTROL_HEIGHT = 52;
+
+export const CONTROL_ICON_SIZE = 20;

@@ -1,6 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { ChevronLeft } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -51,7 +50,7 @@ export function AccountScreen() {
       <View style={styles.header}>
         <QuietButton
           layout="circle"
-          icon={ChevronLeft}
+          icon="chevron-left"
           accessibilityLabel={ACCOUNT_BACK_LABEL}
           onPress={() => router.back()}
         />

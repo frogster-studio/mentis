@@ -1,5 +1,4 @@
 import { Redirect, useRouter } from "expo-router";
-import { X } from "lucide-react-native";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { StyleSheet, type TextInput, View } from "react-native";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -137,7 +136,7 @@ export function CompetitionScreen() {
       <View style={styles.header}>
         <QuietButton
           layout="circle"
-          icon={X}
+          icon="close"
           accessibilityLabel={COMPETITION_QUIT_LABEL}
           onPress={goHome}
         />
