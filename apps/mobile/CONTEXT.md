@@ -41,8 +41,12 @@ The Europe/Paris calendar date an Attempt is attributed to. It bounds the 50-poi
 _Avoid_: day (alone)
 
 **Theme**:
-A narrow, specific subject (« Marie Antoinette », « Les Simpson », « Chocolats ») — not a broad school-style category. Every Question belongs to exactly one Theme. The pool of Themes grows over time. French UI label: « Thème ».
-_Avoid_: category, topic, sujet
+A narrow, specific subject (« Marie Antoinette », « Les Simpson », « Chocolats ») — never as broad as its Category. Every Question belongs to exactly one Theme; every Theme belongs to exactly one Category and has exactly one image. The pool of Themes grows over time. French UI label: « Thème ».
+_Avoid_: topic, sujet
+
+**Category**:
+A broad grouping of Themes (« nature », « histoire »). Every Theme belongs to exactly one Category. A Category has a color and an icon; it organizes and colors the catalog but is never played directly — Players play Themes, not Categories. French UI label: « Catégorie ».
+_Avoid_: tag, group, family
 
 **Draw**:
 The 10 Themes offered on the picker screen after « Commencer », sampled uniformly at random (no re-roll) among eligible Themes — those with at least 10 linked Questions. If fewer than 10 Themes are eligible, all of them are offered. No Draw happens on the results page: « Rejouer, même thème » starts a new Quiz Session on the same Theme.
@@ -80,6 +84,10 @@ _Avoid_: QCM, multiple choice
 
 **Countdown**:
 The 25-second timer per Question, anchored to wall-clock time. Starts when the Question is shown; never pauses or resets — not on mode switch, not when the app is backgrounded. On expiry it submits the current answer state.
+
+**Theme Reveal**:
+The fixed 3-second full-screen moment between a Theme being fixed (Player pick in practice, server draw in competition) and the first Question. It shows the Theme's image, name and Category; it cannot be skipped and offers no quit. The first Countdown starts only when the Reveal ends. In competition the Attempt is already consumed while the Reveal plays — dying there counts like any quit.
+_Avoid_: countdown (that's the per-Question timer), splash, intro
 
 **Canonical Answer**:
 The single official correct answer of a Question — the form displayed on the results page.
