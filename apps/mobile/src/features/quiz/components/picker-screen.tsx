@@ -47,6 +47,7 @@ export function PickerScreen() {
             <ThemeCard
               key={theme.id}
               name={theme.name}
+              category={theme.category}
               onPress={() =>
                 router.push({
                   pathname: "/session/[themeId]",

@@ -1,3 +1,4 @@
+import type { Category, ThemeWithCount } from "@/types/quiz";
 import { SESSION_COUNT_PLURAL, SESSION_COUNT_SINGULAR } from "./constants";
 
 export type ThemeStat = {
@@ -16,6 +17,7 @@ export type HomeCard = {
   name: string;
   average: number;
   sessionCount: number;
+  category?: Category;
 };
 
 export function recordSession(
@@ -64,4 +66,9 @@ export function homeCards(stats: DeviceStats): HomeCard[] {
   }
   cards.sort((a, b) => b.average - a.average);
   return cards;
+}
+
+export function attachCategories(cards: HomeCard[], themes: ThemeWithCount[]): HomeCard[] {
+  const categories = new Map(themes.map((theme) => [theme.id, theme.category]));
+  return cards.map((card) => ({ ...card, category: categories.get(card.id) }));
 }

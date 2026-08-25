@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
+import type { ThemeWithCount } from "@/types/quiz";
 import {
+  attachCategories,
   type DeviceStats,
   formatAverage,
   formatSessionCount,
+  type HomeCard,
   homeCards,
   recordSession,
   themeAverage,
@@ -137,5 +140,25 @@ describe("homeCards", () => {
   it("omits an entry with zero sessions (never rendered as a shelf card)", () => {
     const stats: DeviceStats = { geo: { name: "Géographie", totalPoints: 0, sessionCount: 0 } };
     expect(homeCards(stats)).toStrictEqual([]);
+  });
+});
+
+describe("attachCategories", () => {
+  const NATURE = { id: "nature", name: "Nature", color: "#2e7d32", icon: "park" };
+  const card: HomeCard = { id: "geo", name: "Géographie", average: 10, sessionCount: 2 };
+  const theme: ThemeWithCount = {
+    id: "geo",
+    name: "Géographie",
+    imageUrl: "https://cdn.example.com/geo.webp",
+    questionCount: 20,
+    category: NATURE,
+  };
+
+  it("gives each card the category its theme carries in the catalog", () => {
+    expect(attachCategories([card], [theme])).toStrictEqual([{ ...card, category: NATURE }]);
+  });
+
+  it("leaves a card whose theme left the catalog without a category", () => {
+    expect(attachCategories([card], [])).toStrictEqual([{ ...card, category: undefined }]);
   });
 });

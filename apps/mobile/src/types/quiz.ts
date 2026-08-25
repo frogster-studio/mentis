@@ -8,6 +8,8 @@ import type {
 
 export type ThemeWithCount = AppThemeListResponse[number];
 
+export type Category = ThemeWithCount["category"];
+
 export type Question = AppQuestionDrawResponse[number];
 
 // Issuance withholds every answer form, so this shape is all the phone ever holds in competition.

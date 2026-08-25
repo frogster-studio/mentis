@@ -54,6 +54,7 @@ export function HomeScreen() {
               name={card.name}
               average={card.average}
               sessionCount={card.sessionCount}
+              category={card.category}
             />
           ))}
         </ScrollView>
