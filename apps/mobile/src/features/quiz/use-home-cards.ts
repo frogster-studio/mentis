@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useAccountStats } from "@/features/account/api";
 import { useAuthStore } from "@/features/account/auth-store";
 import { foldAccountStats } from "./account-stats";
-import { useThemes } from "./api";
+import { useCachedThemes } from "./api";
 import { overlaySessions } from "./outbox";
 import { useOutboxStore } from "./outbox-store";
 import { attachCategories, type HomeCard, homeCards } from "./stats";
@@ -14,7 +14,7 @@ export function useHomeCards(): HomeCard[] {
   const deviceStats = useStatsStore((state) => state.stats);
   const accountStats = useAccountStats(owner).data;
   const outbox = useOutboxStore((state) => state.entries);
-  const themes = useThemes().data;
+  const themes = useCachedThemes().data;
 
   return useMemo(() => {
     const withCategories = (cards: HomeCard[]) =>

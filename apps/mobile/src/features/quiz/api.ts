@@ -17,6 +17,11 @@ export function useThemes() {
   return useQuery({ queryKey: quizKeys.themes, queryFn: fetchThemes });
 }
 
+// Cache-only observer: decorates with the catalog the picker already fetched, never hits the wire.
+export function useCachedThemes() {
+  return useQuery({ queryKey: quizKeys.themes, queryFn: fetchThemes, enabled: false });
+}
+
 // n stays off the wire — the API's default of 10 is the session size.
 function fetchSessionQuestions(themeId: string): Promise<Question[]> {
   return api.requestJson(

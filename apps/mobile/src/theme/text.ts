@@ -15,7 +15,7 @@ export const TEXT = {
   cardTitle: { fontFamily: FACES.heading, fontSize: 18, lineHeight: 24 },
   rowTitle: { fontFamily: FACES.heading, fontSize: 25, lineHeight: 30, letterSpacing: -1 },
   screenTitle: { fontFamily: FACES.heading, fontSize: 22, lineHeight: 28 },
-  question: { fontFamily: FACES.heading, fontSize: 26, lineHeight: 34 },
+  question: { fontFamily: FACES.heading, fontSize: 30, lineHeight: 35, letterSpacing: -1.2 },
   sectionTitle: { fontFamily: FACES.heading, fontSize: 35, letterSpacing: -1.4 },
   display: { fontFamily: FACES.heading, fontSize: 50, lineHeight: 49, letterSpacing: -2 },
   statValue: { fontFamily: FACES.emphasis, fontSize: 26, lineHeight: 32 },

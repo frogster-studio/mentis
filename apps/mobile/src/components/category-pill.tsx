@@ -19,7 +19,7 @@ export function CategoryPill({ icon }: { icon: CommunityIconName }) {
   return (
     <Squircle radius={RADIUS.sm} color={COLORS.primarySunken} style={styles.pill}>
       <Squircle radius={BADGE_SIZE / 3} color={COLORS.primary} style={styles.badge}>
-        <MaterialCommunityIcons name={icon} size={ICON_SIZE} color={COLORS.inkFaint} />
+        <MaterialCommunityIcons name={icon} size={ICON_SIZE} color={COLORS.inkMuted} />
       </Squircle>
       <View style={styles.bar} />
     </Squircle>

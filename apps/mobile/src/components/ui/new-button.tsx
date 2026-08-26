@@ -12,13 +12,15 @@ const PADDING_HORIZONTAL = SPACE.xl;
 
 const PALETTES = {
   default: { face: COLORS.face, edge: COLORS.ink, content: COLORS.ink },
-  disabled: { face: COLORS.face, edge: COLORS.inkFaint, content: COLORS.inkFaint },
+  primary: { face: COLORS.primary, edge: COLORS.ink, content: COLORS.ink },
+  disabled: { face: COLORS.face, edge: COLORS.inkMuted, content: COLORS.inkMuted },
 } as const;
 
 type NewButtonBaseProps = {
   onPress: () => void;
   layout?: "block" | "hug";
   shape?: "rounded" | "full";
+  tone?: "default" | "primary";
   disabled?: boolean;
   pending?: boolean;
 };
@@ -30,10 +32,17 @@ export type NewButtonProps = NewButtonBaseProps &
   );
 
 export function NewButton(props: NewButtonProps) {
-  const { onPress, layout = "block", shape = "rounded", disabled = false, pending = false } = props;
+  const {
+    onPress,
+    layout = "block",
+    shape = "rounded",
+    tone = "default",
+    disabled = false,
+    pending = false,
+  } = props;
   const { travel, pressIn, pressOut } = usePressSink();
   const isInert = disabled || pending;
-  const palette = PALETTES[isInert ? "disabled" : "default"];
+  const palette = PALETTES[isInert ? "disabled" : tone];
   const isIconOnly = props.label === undefined;
   const radius = shape === "full" ? RADIUS.lg : 26;
 

@@ -1,12 +1,14 @@
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { QuizAnswerModeEnum } from "@mentis/contracts/enums";
 import type { RefObject } from "react";
 import { Platform, StyleSheet, TextInput, View } from "react-native";
-import { Button } from "@/components/ui/button";
+import { NewButton } from "@/components/ui/new-button";
+import { Squircle } from "@/components/ui/squircle";
 import { SquareButton } from "@/features/quiz/components/square-button";
 import { ANSWER_PLACEHOLDER, CONFIRM_LABEL, SQUARE_SWITCH_LABEL } from "@/features/quiz/constants";
 import { hasStandingAnswer, type QuestionPlay } from "@/features/quiz/question-play";
 import { TEXT } from "@/theme/text";
-import { COLORS, CONTROL_HEIGHT, GUTTER, RADIUS, SPACE } from "@/theme/tokens";
+import { COLORS, CONTROL_HEIGHT, CONTROL_ICON_SIZE, GUTTER, RADIUS, SPACE } from "@/theme/tokens";
 
 export type AnswerFooterProps = {
   play: QuestionPlay;
@@ -43,41 +45,60 @@ export function AnswerFooter({
             />
           ))}
         </View>
-        <Button label={CONFIRM_LABEL} onPress={onConfirm} disabled={disabled} />
+        <View style={styles.confirmSlot}>
+          <NewButton
+            shape="full"
+            icon="arrow-right"
+            label={CONFIRM_LABEL}
+            onPress={onConfirm}
+            disabled={disabled}
+          />
+        </View>
       </View>
     );
   }
 
   return (
     <View style={styles.footer}>
-      <TextInput
-        ref={inputRef}
-        style={styles.input}
-        value={play.input}
-        onChangeText={onInputChange}
-        // Web: Enter keeps focus (RN-web blurs on submit); native only dismisses.
-        onSubmitEditing={() => (Platform.OS === "web" ? onConfirm() : inputRef.current?.blur())}
-        // Both spellings: RN-web honors only blurOnSubmit, native only submitBehavior.
-        blurOnSubmit={false}
-        submitBehavior="submit"
-        placeholder={ANSWER_PLACEHOLDER}
-        placeholderTextColor={COLORS.inkMuted}
-        // A Carré question advancing behind the sheet remounts this field, keyboard and all.
-        autoFocus={autoFocus}
-        autoCapitalize="none"
-        autoCorrect={false}
-        returnKeyType="done"
-      />
-      <Button
-        layout="circle"
-        icon="grid-view"
+      <Squircle
+        radius={RADIUS.base}
+        color={COLORS.face}
+        borderColor={COLORS.ink}
+        borderWidth={1}
+        style={styles.inputShell}
+      >
+        <TextInput
+          ref={inputRef}
+          style={styles.input}
+          value={play.input}
+          onChangeText={onInputChange}
+          onSubmitEditing={() => (Platform.OS === "web" ? onConfirm() : inputRef.current?.blur())}
+          blurOnSubmit={false}
+          submitBehavior="submit"
+          placeholder={ANSWER_PLACEHOLDER}
+          placeholderTextColor={COLORS.inkMuted}
+          autoFocus={autoFocus}
+          autoCapitalize="none"
+          autoCorrect={false}
+          returnKeyType="done"
+        />
+        <MaterialCommunityIcons
+          name="microphone-outline"
+          size={CONTROL_ICON_SIZE}
+          color={COLORS.ink}
+          style={styles.mic}
+        />
+      </Squircle>
+      <NewButton
+        layout="hug"
+        icon="grid-large"
         accessibilityLabel={SQUARE_SWITCH_LABEL}
         onPress={onSwitchToSquare}
-        theme="quiet"
       />
-      <Button
-        layout="circle"
-        icon="check"
+      <NewButton
+        layout="hug"
+        tone="primary"
+        icon="arrow-right"
         accessibilityLabel={CONFIRM_LABEL}
         onPress={onConfirm}
         disabled={disabled}
@@ -87,7 +108,6 @@ export function AnswerFooter({
 }
 
 const styles = StyleSheet.create({
-  // Top-aligned so the input lines up with the buttons' faces, leaving their plates below it.
   footer: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -95,18 +115,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: GUTTER,
     paddingBottom: SPACE.md,
   },
-  // Without minWidth the web input never shrinks past min-content and pushes the buttons out.
-  input: {
+  inputShell: {
     flex: 1,
     minWidth: 0,
     height: CONTROL_HEIGHT,
-    backgroundColor: COLORS.quiet,
-    borderColor: COLORS.stroke,
-    borderWidth: 1,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  input: {
+    flex: 1,
+    minWidth: 0,
+    height: "100%",
+    paddingLeft: SPACE.lg,
     ...TEXT.body,
-    borderRadius: RADIUS.base,
-    paddingHorizontal: SPACE.lg,
     color: COLORS.ink,
+  },
+  mic: {
+    marginHorizontal: SPACE.md,
   },
   squareFooter: {
     gap: SPACE.md,
@@ -117,5 +142,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: SPACE.md,
+  },
+  confirmSlot: {
+    paddingHorizontal: SPACE.lg,
   },
 });

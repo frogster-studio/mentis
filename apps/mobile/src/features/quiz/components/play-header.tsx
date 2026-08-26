@@ -1,56 +1,50 @@
-import { StyleSheet, Text, View } from "react-native";
-import { QuietButton } from "@/components/ui/quiet-button";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { StyleSheet, View } from "react-native";
+import { NewButton } from "@/components/ui/new-button";
 import { CountdownRing } from "@/features/quiz/components/countdown-ring";
 import { remainingFraction, remainingSeconds } from "@/features/quiz/countdown";
-import { TEXT } from "@/theme/text";
-import { COLORS, GUTTER, SPACE } from "@/theme/tokens";
+import { COLORS, CONTROL_ICON_SIZE, SPACE } from "@/theme/tokens";
 
 export type PlayHeaderProps = {
-  position: number;
-  total: number;
+  showCrown: boolean;
   endsAt: number;
   now: number;
   quitLabel: string;
   onQuit: () => void;
 };
 
-export function PlayHeader({ position, total, endsAt, now, quitLabel, onQuit }: PlayHeaderProps) {
+export function PlayHeader({ showCrown, endsAt, now, quitLabel, onQuit }: PlayHeaderProps) {
   return (
-    <View style={styles.header}>
-      <QuietButton layout="circle" icon="close" accessibilityLabel={quitLabel} onPress={onQuit} />
-      <View style={styles.headerRight}>
-        <Text style={styles.progress}>
-          {position}
-          <Text style={styles.progressTotal}>/{total}</Text>
-        </Text>
+    <View style={styles.row}>
+      {showCrown ? (
+        <MaterialCommunityIcons
+          name="crown-outline"
+          size={CONTROL_ICON_SIZE}
+          color={COLORS.primary}
+        />
+      ) : null}
+      <View style={styles.right}>
         <CountdownRing
           fraction={remainingFraction(endsAt, now)}
           seconds={remainingSeconds(endsAt, now)}
         />
+        <NewButton layout="hug" icon="close" accessibilityLabel={quitLabel} onPress={onQuit} />
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
+  row: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: GUTTER,
-    paddingTop: SPACE.sm,
+    paddingHorizontal: SPACE.lg,
+    paddingTop: SPACE.lg,
   },
-  headerRight: {
+  right: {
+    marginLeft: "auto",
     flexDirection: "row",
     alignItems: "center",
     gap: SPACE.md,
-  },
-  progress: {
-    ...TEXT.label,
-    color: COLORS.primary,
-  },
-  progressTotal: {
-    ...TEXT.caption,
-    color: COLORS.inkMuted,
   },
 });

@@ -221,11 +221,13 @@ export function SessionScreen() {
     <>
       <PlayScreen
         questionText={activeQuestion?.text ?? ""}
+        position={answeredCount + 1}
+        total={session.questions.length}
+        categoryColor={categoryColor}
         header={
           <>
             <PlayHeader
-              position={answeredCount + 1}
-              total={session.questions.length}
+              showCrown={false}
               endsAt={session.endsAt}
               now={now}
               quitLabel={QUIT_LABEL}

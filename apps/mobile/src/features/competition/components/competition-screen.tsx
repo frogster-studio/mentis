@@ -204,7 +204,7 @@ export function CompetitionScreen() {
   }
 
   // A just-finished Attempt holds here for the commit its batch takes to reach the queue.
-  if (!play || play.status === "finished") {
+  if (!play || !attempt || play.status === "finished") {
     return (
       <>
         {framed(<ScreenLoading />)}
@@ -217,10 +217,12 @@ export function CompetitionScreen() {
     <>
       <PlayScreen
         questionText={currentAttemptQuestion(play).text}
+        position={play.answers.length + 1}
+        total={play.questions.length}
+        categoryColor={attempt.category.color}
         header={
           <PlayHeader
-            position={play.answers.length + 1}
-            total={play.questions.length}
+            showCrown={true}
             endsAt={play.endsAt}
             now={now}
             quitLabel={COMPETITION_QUIT_LABEL}

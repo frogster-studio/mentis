@@ -18,12 +18,14 @@
 - Text styles **only** from `TEXT` (in `src/theme/`) — no `fontFamily`/`fontSize`/`fontWeight`/`lineHeight` literals in components (dev-only debug text excepted). Three faces, never more: **Epunda Slab Regular** for content headings, **Inter Tight SemiBold** for numerals and UI emphasis, **Inter Tight Regular** for everything else — `fontWeight` is never set, the face file *is* the weight. Font files in `assets/fonts/` under their PostScript names; a missing file fails the build, a runtime load failure falls back to the system font.
 - All UI copy in **French** — feature copy in the feature's `constants.ts`, shared-ui copy a module constant beside its primitive.
 - Icons come from `@expo/vector-icons`: MaterialIcons for controls (`IconName`), MaterialCommunityIcons where only its outline set has the glyph (`CommunityIconName`). A component taking an icon takes its glyph name, never an icon component. The only bespoke glyphs are hand-drawn `react-native-svg` components (`LogoMark`, `LogoWordmark`) — an svg drawing becomes a component, never an imported file.
-- **`NewButton`** is the control of the current visual direction — white squircle face, ink border, ink sink edge; `layout` (`block` | `hug`) and `shape` (`rounded` | `full`) are its only shape controls, and it takes a label, an icon, or both. **`Button`** / **`QuietButton`** are the pages that direction has not reached yet; glyph-only and text-only taps stay a bare `Pressable` dimmed with `PRESSED` — never a fourth button look. Only the sinking controls animate, through the one shared press mechanic.
+- **`NewButton`** is the control of the current visual direction — white squircle face, ink border, ink sink edge; `layout` (`block` | `hug`) and `shape` (`rounded` | `full`) are its only shape controls, and it takes a label, an icon, or both. **`Button`** / **`QuietButton`** are the pages that direction has not reached yet; glyph-only and text-only taps stay a bare `Pressable` dimmed with `PRESSED` — never a fourth button look. Only the sinking controls animate, through the one shared press mechanic; a state swap elsewhere (selected, dimmed) lands as static styles, never an Animated fade.
 
   ```tsx
   // ✅ <NewButton label={PRACTICE_CTA_LABEL} icon="play-circle-outline" />
   // ✅ <NewButton layout="hug" shape="full" icon="menu" accessibilityLabel={ACCOUNT_TITLE} />
   // ❌ a Pressable given its own face styles — that's a fourth look; use QuietButton
+  // ✅ style={[styles.row, isSelected && { backgroundColor: color }, dimmed && { opacity: 0.6 }]}
+  // ❌ Animated.timing on a row face's opacity when the selection changes
   ```
 - Answer judging and the Carré shuffle come from `@mentis/answer-matching` (source-first like contracts), never re-implemented here — the API judges competition with the same code.
 - Install a dependency in the issue that first uses it (keeps knip green). Add it with `bun add` in `apps/mobile`.
@@ -62,6 +64,12 @@ Database migrations live in `apps/api/src/_database/migrations/` (shared with th
 - Files kebab-case. Component `post-card.tsx` → exports `function PostCard` (+ `type PostCardProps` only if it has props). Screen `*-screen.tsx` → `function XxxScreen`. Hook `use-x.ts` → `function useX`. Store `store.ts` → `useQuizStore`. Queries `api.ts` → `useXxx`, `quizKeys`. Constants `constants.ts` → SCREAMING_SNAKE_CASE. Tests co-located `*.test.ts`.
 - Styling: `StyleSheet.create` in each component file, composing the `src/theme/` tokens — the repo's only shared style module.
 - Short files; split anything reusable into its own component. No speculative props — add a prop only when the current implementation uses it.
+- State props are plain booleans the caller computes (`isSelected`, `noSelection`), never an enum the component decodes.
+
+  ```tsx
+  // ✅ <ThemeCard isSelected={theme.id === selected?.id} noSelection={!selected} />
+  // ❌ <ThemeCard state={stateOf(theme, selected)} />  // "rest" | "selected" | "dimmed"
+  ```
 - Control geometry and the press animation are shared constants (`CONTROL_HEIGHT` for labelled controls, `CONTROL_SQUARE_SIZE` for icon-only ones, the extracted press mechanic), never props — every button presses identically, at one `PRESS_DEPTH`.
 
   ```tsx
