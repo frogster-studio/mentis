@@ -38,6 +38,7 @@ const config: ExpoConfig = {
   },
   plugins: [
     "expo-router",
+    "expo-image",
     "expo-web-browser",
     [
       "expo-font",

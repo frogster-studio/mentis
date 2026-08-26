@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurBand } from "@/components/ui/blur-band";
@@ -11,12 +11,9 @@ import { useThemes } from "@/features/quiz/api";
 import { ThemeCard } from "@/features/quiz/components/theme-card";
 import { PICKER_BACK_LABEL, PICKER_ERROR, PICKER_TITLE } from "@/features/quiz/constants";
 import { drawThemes } from "@/features/quiz/draw";
+import { prefetchThemeImages } from "@/features/quiz/theme-image-cache";
 import { TEXT } from "@/theme/text";
 import { COLORS, CONTROL_HEIGHT, GUTTER, SPACE } from "@/theme/tokens";
-
-// The band pads its own top inset, so the screen under it must not spend it twice.
-const PICKER_EDGES = ["left", "right", "bottom"] as const;
-const HEADER_ROW_HEIGHT = CONTROL_HEIGHT + SPACE.md * 2;
 
 export function PickerScreen() {
   const router = useRouter();
@@ -24,7 +21,13 @@ export function PickerScreen() {
   const { data, isPending, isError, isFetching, refetch } = useThemes();
   // One Draw per visit: recomputed on every mount, stable while the screen stays up.
   const draw = useMemo(() => (data ? drawThemes(data, Math.random) : []), [data]);
-  const headerHeight = insets.top + HEADER_ROW_HEIGHT;
+  const headerHeight = insets.top + (CONTROL_HEIGHT + SPACE.md * 2);
+
+  // The Draw warms the image cache as it renders, so the Reveal of whichever Theme wins is instant.
+  useEffect(() => {
+    const imageUrls = draw.map((theme) => theme.imageUrl);
+    prefetchThemeImages(imageUrls);
+  }, [draw]);
 
   // A retry leaves the query in "error" until it lands, so the spinner stands in for it.
   const feedback =
@@ -35,7 +38,7 @@ export function PickerScreen() {
     ) : null;
 
   return (
-    <ScreenContainer edges={PICKER_EDGES}>
+    <ScreenContainer edges={["left", "right", "bottom"]}>
       {feedback ? (
         <View style={[styles.feedback, { paddingTop: headerHeight }]}>{feedback}</View>
       ) : (
@@ -51,7 +54,15 @@ export function PickerScreen() {
               onPress={() =>
                 router.push({
                   pathname: "/session/[themeId]",
-                  params: { themeId: theme.id, name: theme.name },
+                  params: {
+                    themeId: theme.id,
+                    name: theme.name,
+                    imageUrl: theme.imageUrl,
+                    categoryId: theme.category.id,
+                    categoryName: theme.category.name,
+                    categoryColor: theme.category.color,
+                    categoryIcon: theme.category.icon,
+                  },
                 })
               }
             />
