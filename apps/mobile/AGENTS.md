@@ -13,17 +13,17 @@
 
 ## Hard constraints
 
-- Colors **only** from the `COLORS` roles in `src/theme/tokens.ts` — a color the table lacks becomes a new role, never a local hex. Two carve-outs: `app.json` (static config) and the press-system palette (module constants in `Button`, shared by `SquareButton`).
-- Spacing, radius and shadow come off the token ladders — `SPACE`/`GUTTER`, `RADIUS`, `SHADOW` via the `boxShadow` style prop (never `elevation` or the `shadow*` triple). Screens pick ladder steps, no free integers.
+- Colors **only** from the `COLORS` roles in `src/theme/tokens.ts` — a color the table lacks becomes a new role, never a local hex. Two carve-outs: `app.json` (static config) and the press-system palettes (module constants in `NewButton`, and in `Button` shared by `SquareButton`).
+- Spacing and radius come off the token ladders — `SPACE`/`GUTTER`, `RADIUS`. Screens pick ladder steps, no free integers. Depth is only ever the sink edge under a control — never a blur (`boxShadow`, `elevation`, the `shadow*` triple).
 - Text styles **only** from `TEXT` (in `src/theme/`) — no `fontFamily`/`fontSize`/`fontWeight`/`lineHeight` literals in components (dev-only debug text excepted). Three faces, never more: **Epunda Slab Regular** for content headings, **Inter Tight SemiBold** for numerals and UI emphasis, **Inter Tight Regular** for everything else — `fontWeight` is never set, the face file *is* the weight. Font files in `assets/fonts/` under their PostScript names; a missing file fails the build, a runtime load failure falls back to the system font.
 - All UI copy in **French** — feature copy in the feature's `constants.ts`, shared-ui copy a module constant beside its primitive.
-- Icons are MaterialIcons from `@expo/vector-icons` — a component taking an icon takes its glyph name (`IconName`), never an icon component. The only bespoke glyphs are hand-drawn `react-native-svg` components (the two tab icons, `LogoMark`, `LogoWordmark`) — an svg drawing becomes a component, never an imported file.
-- **`Button`** is the control for every primary action; **`QuietButton`** for every other faced control (dialog actions, sign-in, the quit and back circles); glyph-only and text-only taps stay a bare `Pressable` dimmed with `PRESSED` — never a third button look. Only `Button` and `SquareButton` sink, through the one shared press mechanic.
+- Icons come from `@expo/vector-icons`: MaterialIcons for controls (`IconName`), MaterialCommunityIcons where only its outline set has the glyph (`CommunityIconName`). A component taking an icon takes its glyph name, never an icon component. The only bespoke glyphs are hand-drawn `react-native-svg` components (`LogoMark`, `LogoWordmark`) — an svg drawing becomes a component, never an imported file.
+- **`NewButton`** is the control of the current visual direction — white squircle face, ink border, ink sink edge; `layout` (`block` | `hug`) and `shape` (`rounded` | `full`) are its only shape controls, and it takes a label, an icon, or both. **`Button`** / **`QuietButton`** are the pages that direction has not reached yet; glyph-only and text-only taps stay a bare `Pressable` dimmed with `PRESSED` — never a fourth button look. Only the sinking controls animate, through the one shared press mechanic.
 
   ```tsx
-  // ✅ <Button label="Commencer" layout="block" />
-  // ✅ <QuietButton layout="circle" icon="close" accessibilityLabel={QUIT_LABEL} />
-  // ❌ a Pressable given its own face styles — that's a third look; use QuietButton
+  // ✅ <NewButton label={PRACTICE_CTA_LABEL} icon="play-circle-outline" />
+  // ✅ <NewButton layout="hug" shape="full" icon="menu" accessibilityLabel={ACCOUNT_TITLE} />
+  // ❌ a Pressable given its own face styles — that's a fourth look; use QuietButton
   ```
 - Answer judging and the Carré shuffle come from `@mentis/answer-matching` (source-first like contracts), never re-implemented here — the API judges competition with the same code.
 - Install a dependency in the issue that first uses it (keeps knip green). Add it with `bun add` in `apps/mobile`.
@@ -40,7 +40,7 @@ src/
   features/world/       # « Monde » tab placeholder
   components/           # shared composed components; components/ui/ for shared primitives
   lib/                  # api/ (the seam), query client, supabase (auth only)
-  theme/                # design tokens: COLORS, SPACE, RADIUS, SHADOW, TEXT…
+  theme/                # design tokens: COLORS, SPACE, RADIUS, TEXT…
   utils/                # chunk.ts
   types/quiz.ts         # canonical domain types
 assets/                 # root: all static assets — images/ + fonts/ + expo.icon/ (app icons via app.json)
@@ -62,7 +62,7 @@ Database migrations live in `apps/api/src/_database/migrations/` (shared with th
 - Files kebab-case. Component `post-card.tsx` → exports `function PostCard` (+ `type PostCardProps` only if it has props). Screen `*-screen.tsx` → `function XxxScreen`. Hook `use-x.ts` → `function useX`. Store `store.ts` → `useQuizStore`. Queries `api.ts` → `useXxx`, `quizKeys`. Constants `constants.ts` → SCREAMING_SNAKE_CASE. Tests co-located `*.test.ts`.
 - Styling: `StyleSheet.create` in each component file, composing the `src/theme/` tokens — the repo's only shared style module.
 - Short files; split anything reusable into its own component. No speculative props — add a prop only when the current implementation uses it.
-- Control geometry and the press animation are shared constants (`CONTROL_HEIGHT`, the extracted press mechanic), never props — every button presses identically. `layout` is the only shape control (`block` | `flex` | `circle`), and `circle` takes an icon, never a label.
+- Control geometry and the press animation are shared constants (`CONTROL_HEIGHT` for labelled controls, `CONTROL_SQUARE_SIZE` for icon-only ones, the extracted press mechanic), never props — every button presses identically, at one `PRESS_DEPTH`.
 
   ```tsx
   // ✅ <Button label="Valider" layout="flex" />
@@ -80,8 +80,9 @@ Database migrations live in `apps/api/src/_database/migrations/` (shared with th
   // ✅ const WORDMARK_WIDTH = 92;   // beside a 32pt profile icon
   // ❌ const WORDMARK_WIDTH = 140;  // mark outweighs everything in the row
   ```
-- **`Card`** is the card surface — plain `View`, pressable only via its optional `onPress` (`PRESSED` baked in); card anatomy is never re-composed outside it. `ModalCard` is deliberately independent of it.
+- Every rounded surface is a **`Squircle`** (Figma corner smoothing via `expo-squircle-view`, with a plain-radius fallback on web) — a bare `borderRadius` is only for true circles. **`Card`** is the card surface, pressable only via its optional `onPress` (`PRESSED` baked in); card anatomy is never re-composed outside it. `ModalCard` is deliberately independent of it.
 - **`Sheet`** is the bottom-sheet surface — `@lodev09/react-native-true-sheet` behind it, never hand-rolled, and the only module importing it. Prefer it to a `Modal` wherever a sheet genuinely fits, which is most places — but modals are not banned, so reach for one where centering truly reads better.
+- Tab screens wear one card split in two: **`AppHeader`** (fixed chrome — profile mark, greeting, menu) is its top half, and each screen's own **`ScreenTitleCard`** is the bottom half, so the title rides the carousel and the greeting row never does. Every screen sits on `ScreenContainer`'s grid paper.
 - Pushed screens draw their own header row: `QuietButton` circle left (chevron = back, X = quit), `TEXT.screenTitle` centered, balancing spacer right. Wherever content scrolls beneath chrome — headers, CTA bands — that chrome is the blur-band recipe, never a hard clip.
 - **Overlaid chrome owns its safe-area inset.** A band pinned over content runs to the screen edge and pads its own row by the inset; the screen under it drops that edge from `ScreenContainer` and pads content by the chrome's full height.
 

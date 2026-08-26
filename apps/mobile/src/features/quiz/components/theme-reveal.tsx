@@ -4,7 +4,7 @@ import { CategoryChip, categoryWash } from "@/components/category-chip";
 import { ScreenContainer } from "@/components/ui/screen-container";
 import { THEME_IMAGE_CACHE_POLICY } from "@/features/quiz/theme-image-cache";
 import { TEXT } from "@/theme/text";
-import { COLORS, GUTTER, RADIUS, SHADOW, SPACE } from "@/theme/tokens";
+import { COLORS, GUTTER, RADIUS, SPACE } from "@/theme/tokens";
 import type { Category } from "@/types/quiz";
 
 const IMAGE_ASPECT_RATIO = 0.62;
@@ -65,7 +65,6 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.base,
     borderCurve: "continuous",
     backgroundColor: COLORS.quiet,
-    boxShadow: SHADOW.card,
   },
   countLayer: { alignItems: "center", justifyContent: "center" },
   count: { ...TEXT.revealCount, color: COLORS.card },

@@ -1,40 +1,50 @@
 export const COLORS = {
-  background: "#F6F6F6",
-  card: "#FFFFFF",
-  primary: "#F59E0B",
-  ink: "#000000",
-  inkMuted: "rgba(0, 0, 0, 0.4)",
-  quiet: "#ECECEC",
+  background: "#F5EBE2",
+  grid: "rgba(0, 0, 0, 0.03)",
+  card: "#FFFDFB",
+  face: "#FFFFFF",
+  ink: "#250313",
+  inkMuted: "rgba(37, 3, 19, 0.8)",
+  inkFaint: "rgba(37, 3, 19, 0.5)",
+  primary: "#FFB15E",
+  primarySunken: "#E09250",
+  primaryPlaceholder: "rgba(160, 101, 62, 0.4)",
+  quiet: "#F1DBC6",
+  neutral: "#C4BDB8",
+  divider: "#F5EBE2",
   success: "#22C55E",
   danger: "#EF4444",
-  scrim: "rgba(0, 0, 0, 0.4)",
-  stroke: "rgba(0, 0, 0, 0.1)",
+  scrim: "rgba(37, 3, 19, 0.4)",
+  stroke: "rgba(37, 3, 19, 0.1)",
 } as const;
 
 export const SPACE = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 24,
-  xxl: 32,
+  xxs: 3,
+  xs: 6,
+  sm: 10,
+  md: 14,
+  lg: 20,
+  xl: 26,
+  xxl: 40,
 } as const;
 
-export const GUTTER = SPACE.lg;
+export const GUTTER = SPACE.sm;
 
 export const RADIUS = {
-  base: 16,
+  sm: 10,
+  base: 20,
+  lg: 30,
+  xl: 40,
   round: 999,
-} as const;
-
-export const SHADOW = {
-  card: "0px 3px 5px rgba(0, 0, 0, 0.02)",
 } as const;
 
 export const PRESSED = {
   opacity: 0.85,
 } as const;
 
-export const CONTROL_HEIGHT = 52;
+export const CONTROL_HEIGHT = 64;
 
-export const CONTROL_ICON_SIZE = 20;
+// Icon-only controls are square, and the profile mark matches them.
+export const CONTROL_SQUARE_SIZE = 60;
+
+export const CONTROL_ICON_SIZE = 24;

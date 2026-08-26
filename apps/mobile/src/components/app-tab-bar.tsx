@@ -1,23 +1,39 @@
 import type { BottomTabBarProps } from "expo-router/js-tabs";
-import { Pressable, StyleSheet, View } from "react-native";
-import { MAX_CONTENT_WIDTH } from "@/components/ui/screen-container";
-import { COLORS, PRESSED, SPACE } from "@/theme/tokens";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Squircle } from "@/components/ui/squircle";
+import { TEXT } from "@/theme/text";
+import { COLORS, CONTROL_ICON_SIZE, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
 
-export const TAB_ICON_SIZE = 32;
-const BAR_HEIGHT = 56;
+export const TAB_ICON_SIZE = CONTROL_ICON_SIZE;
+
+const TRACK_PADDING = SPACE.xxs;
+const TRIGGER_HEIGHT = 49;
+const BAR_HEIGHT = TRIGGER_HEIGHT + TRACK_PADDING * 2;
+
+// The bar floats over the screen, so a tab screen pads its content by the whole thing.
+export function useAppTabBarHeight() {
+  return bottomGap(useSafeAreaInsets().bottom) + BAR_HEIGHT;
+}
 
 export function AppTabBar({ state, descriptors, navigation, insets }: BottomTabBarProps) {
   return (
-    <View style={[styles.bar, { paddingBottom: insets.bottom }]}>
-      <View style={styles.icons}>
+    <View style={[styles.overlay, { paddingBottom: bottomGap(insets.bottom) }]}>
+      <Squircle radius={RADIUS.lg} color={COLORS.quiet} style={styles.track}>
         {state.routes.map((route, index) => {
           const focused = state.index === index;
-          const { tabBarAccessibilityLabel, tabBarIcon } = descriptors[route.key].options;
+          const { title, tabBarIcon } = descriptors[route.key].options;
+          const content = (
+            <>
+              {tabBarIcon?.({ focused, color: COLORS.ink, size: TAB_ICON_SIZE })}
+              <Text style={styles.label}>{title}</Text>
+            </>
+          );
 
           return (
             <Pressable
               key={route.key}
-              style={({ pressed }) => [styles.tab, pressed && styles.pressed]}
+              style={({ pressed }) => pressed && styles.pressed}
               onPress={() => {
                 const event = navigation.emit({
                   type: "tabPress",
@@ -30,39 +46,59 @@ export function AppTabBar({ state, descriptors, navigation, insets }: BottomTabB
               }}
               accessibilityRole="tab"
               accessibilityState={{ selected: focused }}
-              accessibilityLabel={tabBarAccessibilityLabel}
+              accessibilityLabel={title}
             >
-              {tabBarIcon?.({
-                focused,
-                color: focused ? COLORS.primary : COLORS.inkMuted,
-                size: TAB_ICON_SIZE,
-              })}
+              {focused ? (
+                <Squircle
+                  radius={RADIUS.lg}
+                  color={COLORS.face}
+                  borderColor={COLORS.ink}
+                  borderWidth={1}
+                  style={styles.trigger}
+                >
+                  {content}
+                </Squircle>
+              ) : (
+                <View style={styles.trigger}>{content}</View>
+              )}
             </Pressable>
           );
         })}
-      </View>
+      </Squircle>
     </View>
   );
 }
 
+// A phone with no home indicator would otherwise sit the bar flat on the screen edge.
+function bottomGap(inset: number): number {
+  return Math.max(inset, SPACE.lg);
+}
+
 const styles = StyleSheet.create({
-  bar: {
-    width: "100%",
-    maxWidth: MAX_CONTENT_WIDTH,
-    alignSelf: "center",
-    backgroundColor: COLORS.background,
+  overlay: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: "center",
+    pointerEvents: "box-none",
   },
-  // The two glyphs read as one centered pair, never one per half-width.
-  icons: {
-    height: BAR_HEIGHT,
+  track: {
+    flexDirection: "row",
+    padding: TRACK_PADDING,
+  },
+  trigger: {
+    height: TRIGGER_HEIGHT,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: SPACE.xl,
+    gap: SPACE.sm,
+    paddingHorizontal: SPACE.xl,
   },
-  tab: {
-    alignItems: "center",
-    justifyContent: "center",
+  label: {
+    ...TEXT.label,
+    color: COLORS.ink,
+    userSelect: "none",
   },
   pressed: PRESSED,
 });

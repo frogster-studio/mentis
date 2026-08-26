@@ -1,9 +1,8 @@
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Tabs } from "expo-router/js-tabs";
 import { Easing, StyleSheet, useWindowDimensions, View } from "react-native";
 import { AppHeader } from "@/components/app-header";
 import { AppTabBar, TAB_ICON_SIZE } from "@/components/app-tab-bar";
-import { HouseIcon } from "@/components/house-icon";
-import { WorldIcon } from "@/components/world-icon";
 import { HOME_TAB_LABEL } from "@/features/quiz/constants";
 import { WORLD_TAB_LABEL } from "@/features/world/constants";
 import { COLORS } from "@/theme/tokens";
@@ -44,15 +43,23 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            tabBarAccessibilityLabel: HOME_TAB_LABEL,
-            tabBarIcon: ({ color }) => <HouseIcon color={color} size={TAB_ICON_SIZE} />,
+            title: HOME_TAB_LABEL,
+            tabBarIcon: ({ color }) => (
+              <MaterialCommunityIcons
+                name="animation-play-outline"
+                color={color}
+                size={TAB_ICON_SIZE}
+              />
+            ),
           }}
         />
         <Tabs.Screen
           name="world"
           options={{
-            tabBarAccessibilityLabel: WORLD_TAB_LABEL,
-            tabBarIcon: ({ color }) => <WorldIcon color={color} size={TAB_ICON_SIZE} />,
+            title: WORLD_TAB_LABEL,
+            tabBarIcon: ({ color }) => (
+              <MaterialCommunityIcons name="trophy-outline" color={color} size={TAB_ICON_SIZE} />
+            ),
           }}
         />
       </Tabs>

@@ -1,5 +1,6 @@
-export const HOME_TAB_LABEL = "Accueil";
-export const PLAY_LABEL = "Commencer";
+import type { CommunityIconName } from "@/components/ui/icon-name";
+
+export const HOME_TAB_LABEL = "Practice";
 export const SESSION_COUNT_SINGULAR = "partie";
 export const SESSION_COUNT_PLURAL = "parties";
 export const PICKER_TITLE = "Choisis un thème";
@@ -45,3 +46,32 @@ export const CASH_MODE_HOW = "tu écris la réponse, sans indice";
 export const SQUARE_MODE_NAME = "Carré";
 export const SQUARE_MODE_HOW = "4 propositions, tu tapes la bonne";
 export const POINTS_UNIT = "pts";
+
+export const HOME_TITLE = "Un peu d'entrainement ?";
+export const PRACTICE_TITLE = "Lancer un practice";
+export const PRACTICE_CTA_LABEL = "Choisir mon thème";
+// Composed from the rule constants, so a rules change can never leave the pitch lying.
+export const PRACTICE_PITCH = [
+  { text: "1 thème", strong: true },
+  { text: ` parmi ${DRAW_SIZE} choisis au hasard, `, strong: false },
+  { text: `${QUESTIONS_PER_SESSION} questions`, strong: true },
+  { text: " et ", strong: false },
+  { text: `${COUNTDOWN_DURATION_SECONDS} secondes`, strong: true },
+  { text: " pour y répondre.", strong: false },
+] as const;
+
+// Placeholders until the Categories themselves are drawn — the row only has to read as variety.
+export const PRACTICE_PILL_ICONS = [
+  "bug-outline",
+  "account-supervisor-outline",
+  "airballoon-outline",
+  "alien-outline",
+  "arm-flex-outline",
+  "atom",
+  "baby-bottle-outline",
+  "bacteria-outline",
+  "bag-suitcase-outline",
+  "bicycle",
+  "book-open-variant-outline",
+  "pine-tree-variant-outline",
+] as const satisfies CommunityIconName[];

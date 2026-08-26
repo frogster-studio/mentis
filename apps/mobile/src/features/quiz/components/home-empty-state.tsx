@@ -16,7 +16,7 @@ import {
   SQUARE_MODE_NAME,
 } from "@/features/quiz/constants";
 import { TEXT } from "@/theme/text";
-import { COLORS, GUTTER, SPACE } from "@/theme/tokens";
+import { COLORS, SPACE } from "@/theme/tokens";
 
 // A running arc reads as a timer; a full circle reads as a badge.
 const RING_PREVIEW_FRACTION = 0.75;
@@ -49,7 +49,6 @@ export function HomeEmptyState() {
 const styles = StyleSheet.create({
   block: {
     gap: SPACE.lg,
-    paddingHorizontal: GUTTER,
   },
   title: {
     ...TEXT.cardTitle,

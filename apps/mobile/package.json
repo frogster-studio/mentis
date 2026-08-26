@@ -38,6 +38,7 @@
     "expo-linking": "~57.0.5",
     "expo-router": "~57.0.12",
     "expo-splash-screen": "~57.0.6",
+    "expo-squircle-view": "^1.1.0",
     "expo-system-ui": "~57.0.1",
     "expo-web-browser": "~57.0.2",
     "react": "19.2.3",
