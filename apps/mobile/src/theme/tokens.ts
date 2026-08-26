@@ -10,6 +10,7 @@ export const COLORS = {
   primarySunken: "#E09250",
   primaryPlaceholder: "rgba(160, 101, 62, 0.4)",
   quiet: "#F1DBC6",
+  trough: "#E6D3C3",
   neutral: "#C4BDB8",
   divider: "#F5EBE2",
   success: "#22C55E",

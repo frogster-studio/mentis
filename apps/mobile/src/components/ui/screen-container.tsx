@@ -14,13 +14,16 @@ export type ScreenContainerProps = {
   children: ReactNode;
   edges?: SafeAreaViewProps["edges"];
   background?: string;
+  // Painted over the whole paper but under the content — a translucent wash keeps the grid showing.
+  underlay?: ReactNode;
 };
 
-export function ScreenContainer({ children, edges, background }: ScreenContainerProps) {
+export function ScreenContainer({ children, edges, background, underlay }: ScreenContainerProps) {
   return (
     <View style={[styles.screen, background ? { backgroundColor: background } : null]}>
       {/* The grid belongs to the paper; a screen that washes itself another colour drops it. */}
       {background ? null : <PaperBackground />}
+      {underlay}
       <SafeAreaView style={styles.content} edges={edges}>
         {children}
       </SafeAreaView>

@@ -3,9 +3,10 @@ import type { CommunityIconName } from "@/components/ui/icon-name";
 export const HOME_TAB_LABEL = "Practice";
 export const SESSION_COUNT_SINGULAR = "partie";
 export const SESSION_COUNT_PLURAL = "parties";
-export const PICKER_TITLE = "Choisis un thème";
+export const PICKER_TITLE = "Sur quel thème ?";
 export const PICKER_ERROR = "Impossible de charger les thèmes.";
 export const PICKER_BACK_LABEL = "Retour";
+export const PICKER_SWIPE_LABEL = "Swipe pour lancer le quiz";
 export const SESSION_ERROR = "Impossible de charger les questions.";
 export const ANSWER_PLACEHOLDER = "Ta réponse…";
 export const CONFIRM_LABEL = "Valider";
@@ -21,7 +22,7 @@ export const QUIT_MESSAGE =
 export const QUIT_CANCEL_LABEL = "Ne pas quitter";
 export const QUIT_CONFIRM_LABEL = "Oui, quitter";
 
-export const DRAW_SIZE = 10;
+export const DRAW_SIZE = 7;
 export const MIN_QUESTIONS_PER_THEME = 10;
 export const COUNTDOWN_DURATION_MS = 25_000;
 export const COUNTDOWN_TICK_MS = 100;
@@ -49,6 +50,8 @@ export const POINTS_UNIT = "pts";
 
 export const HOME_TITLE = "Un peu d'entrainement ?";
 export const PRACTICE_TITLE = "Lancer un practice";
+// Composed from the rule constants, so a rules change can never leave the picker lying.
+export const PICKER_SUBTITLE = `${DRAW_SIZE} thèmes au hasard · ${QUESTIONS_PER_SESSION} questions · ${COUNTDOWN_DURATION_SECONDS} s / question`;
 export const PRACTICE_CTA_LABEL = "Choisir mon thème";
 // Composed from the rule constants, so a rules change can never leave the pitch lying.
 export const PRACTICE_PITCH = [

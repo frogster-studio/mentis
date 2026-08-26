@@ -10,8 +10,8 @@ export { TrueSheetProvider as SheetProvider } from "@lodev09/react-native-true-s
 
 export type SheetProps = {
   visible: boolean;
-  title: string;
-  message: string;
+  title?: string;
+  message?: string;
   dismissible?: boolean;
   onDismiss: () => void;
   children: ReactNode;
@@ -51,8 +51,8 @@ export function Sheet({ visible, title, message, dismissible, onDismiss, childre
       }}
     >
       <View style={[styles.content, { paddingBottom: bottomInset + SPACE.xl }]}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.message}>{message}</Text>
+        {title ? <Text style={styles.title}>{title}</Text> : null}
+        {message ? <Text style={styles.message}>{message}</Text> : null}
         {children}
       </View>
     </TrueSheet>

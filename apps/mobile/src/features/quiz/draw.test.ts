@@ -55,7 +55,9 @@ describe("drawThemes", () => {
 
   it("keeps the pool order when the RNG always returns 0", () => {
     const draw = drawThemes(TWELVE_ELIGIBLE, () => 0);
-    expect(draw.map((t) => t.id)).toStrictEqual(["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]);
+    expect(draw.map((t) => t.id)).toStrictEqual(
+      TWELVE_ELIGIBLE.slice(0, DRAW_SIZE).map((t) => t.id),
+    );
   });
 
   it("is deterministic for a given RNG seed", () => {

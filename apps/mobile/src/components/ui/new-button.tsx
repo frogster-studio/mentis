@@ -1,7 +1,7 @@
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { SquircleView } from "expo-squircle-view";
 import { ActivityIndicator, Animated, Pressable, StyleSheet, Text } from "react-native";
-import type { IconName } from "@/components/ui/icon-name";
+import type { CommunityIconName } from "@/components/ui/icon-name";
 import { Squircle } from "@/components/ui/squircle";
 import { PRESS_DEPTH, usePressSink } from "@/components/ui/use-press-sink";
 import { TEXT } from "@/theme/text";
@@ -25,8 +25,8 @@ type NewButtonBaseProps = {
 
 export type NewButtonProps = NewButtonBaseProps &
   (
-    | { label: string; icon?: IconName; accessibilityLabel?: undefined }
-    | { label?: undefined; icon: IconName; accessibilityLabel: string }
+    | { label: string; icon?: CommunityIconName; accessibilityLabel?: undefined }
+    | { label?: undefined; icon: CommunityIconName; accessibilityLabel: string }
   );
 
 export function NewButton(props: NewButtonProps) {
@@ -61,7 +61,11 @@ export function NewButton(props: NewButtonProps) {
           ) : (
             <>
               {props.icon ? (
-                <MaterialIcons name={props.icon} size={CONTROL_ICON_SIZE} color={palette.content} />
+                <MaterialCommunityIcons
+                  name={props.icon}
+                  size={CONTROL_ICON_SIZE}
+                  color={palette.content}
+                />
               ) : null}
               {props.label ? (
                 <Text style={[styles.label, { color: palette.content }]}>{props.label}</Text>
