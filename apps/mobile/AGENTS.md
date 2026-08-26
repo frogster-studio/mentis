@@ -14,6 +14,12 @@
 ## Hard constraints
 
 - Colors **only** from the `COLORS` roles in `src/theme/tokens.ts` — a color the table lacks becomes a new role, never a local hex. Two carve-outs: `app.json` (static config) and the press-system palettes (module constants in `NewButton`, and in `Button` shared by `SquareButton`).
+- A tint is the colour with a hex alpha appended at the point of use — never a colour-math helper.
+
+  ```tsx
+  // ✅ backgroundColor: `${categoryColor}${BACKDROP_ALPHA}`
+  // ❌ backgroundColor: categoryWashSolid(category.color)
+  ```
 - Spacing and radius come off the token ladders — `SPACE`/`GUTTER`, `RADIUS`. Screens pick ladder steps, no free integers. Depth is only ever the sink edge under a control — never a blur (`boxShadow`, `elevation`, the `shadow*` triple).
 - Text styles **only** from `TEXT` (in `src/theme/`) — no `fontFamily`/`fontSize`/`fontWeight`/`lineHeight` literals in components (dev-only debug text excepted). Three faces, never more: **Epunda Slab Regular** for content headings, **Inter Tight SemiBold** for numerals and UI emphasis, **Inter Tight Regular** for everything else — `fontWeight` is never set, the face file *is* the weight. Font files in `assets/fonts/` under their PostScript names; a missing file fails the build, a runtime load failure falls back to the system font.
 - All UI copy in **French** — feature copy in the feature's `constants.ts`, shared-ui copy a module constant beside its primitive.
@@ -61,7 +67,13 @@ Database migrations live in `apps/api/src/_database/migrations/` (shared with th
 
 ## Conventions
 
-- Files kebab-case. Component `post-card.tsx` → exports `function PostCard` (+ `type PostCardProps` only if it has props). Screen `*-screen.tsx` → `function XxxScreen`. Hook `use-x.ts` → `function useX`. Store `store.ts` → `useQuizStore`. Queries `api.ts` → `useXxx`, `quizKeys`. Constants `constants.ts` → SCREAMING_SNAKE_CASE. Tests co-located `*.test.ts`.
+- Files kebab-case. Component `post-card.tsx` → `export const PostCard = () => {}` (+ `interface PostCardProps` only if it has props — every prop mandatory: a value no caller varies is a module constant, not an optional prop). Screen `*-screen.tsx` → `XxxScreen`. Hook `use-x.ts` → `useX`. Store `store.ts` → `useQuizStore`. Queries `api.ts` → `useXxx`, `quizKeys`. Constants `constants.ts` → SCREAMING_SNAKE_CASE. Tests co-located `*.test.ts`.
+
+  ```tsx
+  // ✅ interface PlayProgressBarProps { position: number; total: number }
+  //    export const PlayProgressBar = ({ position, total }: PlayProgressBarProps) => { … }
+  // ❌ export function PlayProgressBar({ height = 2 }: { height?: number }) { … }
+  ```
 - Styling: `StyleSheet.create` in each component file, composing the `src/theme/` tokens — the repo's only shared style module.
 - Short files; split anything reusable into its own component. No speculative props — add a prop only when the current implementation uses it.
 - State props are plain booleans the caller computes (`isSelected`, `noSelection`), never an enum the component decodes.
