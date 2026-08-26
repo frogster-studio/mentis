@@ -44,9 +44,9 @@ const config: ExpoConfig = {
       "expo-font",
       {
         fonts: [
-          "./assets/fonts/Lexend-Bold.ttf",
-          "./assets/fonts/Poppins-Regular.ttf",
-          "./assets/fonts/Poppins-SemiBold.ttf",
+          "./assets/fonts/EpundaSlab-Regular.ttf",
+          "./assets/fonts/InterTight-Regular.ttf",
+          "./assets/fonts/InterTight-SemiBold.ttf",
         ],
       },
     ],

@@ -1,9 +1,9 @@
 import type { TextStyle } from "react-native";
 
 const FACES = {
-  heading: "Lexend-Bold",
-  emphasis: "Poppins-SemiBold",
-  regular: "Poppins-Regular",
+  heading: "EpundaSlab-Regular",
+  emphasis: "InterTight-SemiBold",
+  regular: "InterTight-Regular",
 } as const;
 
 export const TEXT = {
