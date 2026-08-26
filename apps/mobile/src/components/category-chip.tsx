@@ -7,13 +7,17 @@ import type { Category } from "@/types/quiz";
 
 const CHIP_ICON_SIZE = 14;
 
+export function categoryWash(color: string): string {
+  return `${color}20`;
+}
+
 export type CategoryChipProps = {
   category: Category;
 };
 
 export function CategoryChip({ category }: CategoryChipProps) {
   return (
-    <View style={[styles.chip, { backgroundColor: `${category.color}20` }]}>
+    <View style={[styles.chip, { backgroundColor: categoryWash(category.color) }]}>
       <MaterialIcons
         name={iconNameOrFallback(category.icon)}
         size={CHIP_ICON_SIZE}

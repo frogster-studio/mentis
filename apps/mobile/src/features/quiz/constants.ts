@@ -26,6 +26,7 @@ export const COUNTDOWN_DURATION_MS = 25_000;
 export const COUNTDOWN_TICK_MS = 100;
 export const COUNTDOWN_DANGER_SECONDS = 10;
 export const THEME_REVEAL_DURATION_MS = 3_000;
+export const THEME_REVEAL_TICK_MS = 1_000;
 export const POINTS_CASH = 5;
 export const POINTS_SQUARE = 2;
 export const QUESTIONS_PER_SESSION = 10;

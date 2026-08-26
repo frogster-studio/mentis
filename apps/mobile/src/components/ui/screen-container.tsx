@@ -12,11 +12,12 @@ export const TAB_SCREEN_EDGES = ["left", "right"] as const;
 export type ScreenContainerProps = {
   children: ReactNode;
   edges?: SafeAreaViewProps["edges"];
+  background?: string;
 };
 
-export function ScreenContainer({ children, edges }: ScreenContainerProps) {
+export function ScreenContainer({ children, edges, background }: ScreenContainerProps) {
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, background ? { backgroundColor: background } : null]}>
       <SafeAreaView style={styles.content} edges={edges}>
         {children}
       </SafeAreaView>

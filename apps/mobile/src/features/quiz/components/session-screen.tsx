@@ -62,7 +62,8 @@ export function SessionScreen() {
   const inputRef = useRef<TextInput>(null);
   const recordedRef = useRef(false);
   const [quitVisible, setQuitVisible] = useState(false);
-  const isRevealDone = useThemeReveal();
+  // The pick fixes the Theme, so practice reveals from the very frame the screen mounts.
+  const { isDone: isRevealDone, secondsLeft } = useThemeReveal(true);
 
   const isActive = session?.status === "active";
   const answeredCount = session?.answers.length ?? 0;
@@ -128,6 +129,7 @@ export function SessionScreen() {
           color: categoryColor,
           icon: categoryIcon,
         }}
+        secondsLeft={secondsLeft}
       />
     );
   }

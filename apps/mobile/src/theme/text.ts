@@ -15,7 +15,8 @@ export const TEXT = {
   cardTitle: { fontFamily: FACES.heading, fontSize: 18, lineHeight: 24 },
   screenTitle: { fontFamily: FACES.heading, fontSize: 22, lineHeight: 28 },
   question: { fontFamily: FACES.heading, fontSize: 26, lineHeight: 34 },
+  revealTitle: { fontFamily: FACES.heading, fontSize: 34, lineHeight: 42 },
   statValue: { fontFamily: FACES.emphasis, fontSize: 26, lineHeight: 32 },
-  // Digits alone never reach the descent, so the line box carries headroom the numeral cannot clip into.
   heroScore: { fontFamily: FACES.emphasis, fontSize: 100, lineHeight: 116 },
+  revealCount: { fontFamily: FACES.emphasis, fontSize: 160, lineHeight: 186 },
 } as const satisfies Record<string, TextStyle>;

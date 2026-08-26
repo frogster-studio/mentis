@@ -1,35 +1,30 @@
 import {
   type AppCompetitionAttemptResponse,
   type AppCompetitionTranscriptResponse,
-  appCompetitionActiveAttemptResponseSchema,
-  appCompetitionAttemptResponseSchema,
   appCompetitionTranscriptResponseSchema,
 } from "@mentis/contracts/app";
 import { useQuery } from "@tanstack/react-query";
+import { prefetchThemeImages } from "@/features/quiz/theme-image-cache";
 import { api } from "@/lib/api";
 import { queryClient } from "@/lib/query-client";
 import { queuedFinalize } from "./finalize-outbox";
 import { useFinalizeOutboxStore } from "./finalize-outbox-store";
-import { activeAttemptRequest, finalizeAttemptRequest, issueAttemptRequest } from "./requests";
+import { finalizeAttemptRequest, resumeOrIssueAttempt } from "./requests";
 
 export const competitionKeys = {
   attempt: (playerId: string) => ["competition", "attempt", playerId] as const,
   transcript: (attemptId: string) => ["competition", "transcript", attemptId] as const,
 };
 
-// A crashed session resumes on its own Questions; only a Player holding none is issued a draw.
-async function todayAttempt(): Promise<AppCompetitionAttemptResponse> {
-  const { attempt } = await api.requestJson(
-    activeAttemptRequest,
-    appCompetitionActiveAttemptResponseSchema,
-  );
-  return attempt ?? api.requestJson(issueAttemptRequest, appCompetitionAttemptResponseSchema);
-}
-
 export function useTodayAttempt(playerId: string | undefined) {
   return useQuery({
     queryKey: competitionKeys.attempt(playerId ?? ""),
-    queryFn: todayAttempt,
+    queryFn: async () => {
+      const attempt = await resumeOrIssueAttempt(api);
+      // The drawn Theme may be newer than any cached list, so issuance itself warms its image.
+      prefetchThemeImages([attempt.imageUrl]);
+      return attempt;
+    },
     enabled: playerId !== undefined,
     // The Attempt is fixed at issuance, so re-serving it mid-play would restart the Countdown.
     staleTime: Number.POSITIVE_INFINITY,
