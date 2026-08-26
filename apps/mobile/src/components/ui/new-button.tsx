@@ -5,14 +5,7 @@ import type { IconName } from "@/components/ui/icon-name";
 import { Squircle } from "@/components/ui/squircle";
 import { PRESS_DEPTH, usePressSink } from "@/components/ui/use-press-sink";
 import { TEXT } from "@/theme/text";
-import {
-  COLORS,
-  CONTROL_HEIGHT,
-  CONTROL_ICON_SIZE,
-  CONTROL_SQUARE_SIZE,
-  RADIUS,
-  SPACE,
-} from "@/theme/tokens";
+import { COLORS, CONTROL_ICON_SIZE, CONTROL_SQUARE_SIZE, RADIUS, SPACE } from "@/theme/tokens";
 
 const BORDER_WIDTH = 1;
 const PADDING_HORIZONTAL = SPACE.xl;
@@ -42,7 +35,6 @@ export function NewButton(props: NewButtonProps) {
   const isInert = disabled || pending;
   const palette = PALETTES[isInert ? "disabled" : "default"];
   const isIconOnly = props.label === undefined;
-  const height = isIconOnly ? CONTROL_SQUARE_SIZE : CONTROL_HEIGHT;
   const radius = shape === "full" ? RADIUS.lg : 26;
 
   return (
@@ -53,16 +45,16 @@ export function NewButton(props: NewButtonProps) {
       disabled={isInert}
       accessibilityRole="button"
       accessibilityLabel={props.label ?? props.accessibilityLabel}
-      style={[styles[layout], { height: height + PRESS_DEPTH }]}
+      style={[styles[layout], { height: CONTROL_SQUARE_SIZE + PRESS_DEPTH }]}
     >
-      <Squircle radius={radius} color={palette.edge} style={[styles.shadow, { height }]} />
+      <Squircle radius={radius} color={palette.edge} style={styles.shadow} />
       <Animated.View style={{ transform: [{ translateY: travel }] }}>
         <SquircleView
           backgroundColor={palette.face}
           borderRadius={radius}
           borderColor={palette.edge}
           borderWidth={BORDER_WIDTH}
-          style={[styles.face, isIconOnly && styles.iconOnlyFace, { height }]}
+          style={[styles.face, isIconOnly && styles.iconOnlyFace]}
         >
           {pending ? (
             <ActivityIndicator size="small" color={palette.content} />
@@ -90,6 +82,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+    height: CONTROL_SQUARE_SIZE,
   },
   face: {
     flexDirection: "row",
@@ -97,6 +90,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: SPACE.sm,
     paddingHorizontal: PADDING_HORIZONTAL,
+    height: CONTROL_SQUARE_SIZE,
   },
   iconOnlyFace: {
     width: CONTROL_SQUARE_SIZE,
