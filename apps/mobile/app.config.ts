@@ -70,11 +70,15 @@ const config: ExpoConfig = {
         },
       },
     ],
-    "./plugins/with-ios-development-team",
   ],
   experiments: {
     typedRoutes: true,
     reactCompiler: true,
+  },
+  extra: {
+    eas: {
+      projectId: "f7cff9c2-f627-4c76-a439-6276413508db",
+    },
   },
 };
 
