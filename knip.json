@@ -10,7 +10,12 @@
       "ignoreDependencies": ["expo-updates", "react-native-purchases"]
     },
     "apps/api": {
-      "entry": ["src/main.ts", "src/_database/datasource.cli.ts", "src/_database/migrations/*.ts"],
+      "entry": [
+        "src/main.ts",
+        "src/_database/datasource.cli.ts",
+        "src/_database/migrations/*.ts",
+        "src/_database/entities/*.entity.ts"
+      ],
       "project": ["src/**/*.ts"]
     },
     "packages/answer-matching": {
