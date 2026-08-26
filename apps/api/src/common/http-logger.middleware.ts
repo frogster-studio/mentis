@@ -3,7 +3,7 @@ import type { RequestHandler } from "express";
 
 const logger = new Logger("HTTP");
 
-// Nest's console logger colours per level, so the status class picks the colour.
+// The status code classifies the log level - color.
 const levelOf = (status: number): "log" | "warn" | "error" =>
   status >= 500 ? "error" : status >= 400 ? "warn" : "log";
 
@@ -19,12 +19,13 @@ export const httpLogger = (): RequestHandler => (request, response, next) => {
     return json(payload);
   };
 
-  response.on("finish", () => {
-    const level = levelOf(response.statusCode);
+  // Bun never fires "close" on the response, so the request is the hook that spots an abort on both runtimes.
+  request.on("close", () => {
+    const aborted = !response.writableFinished;
+    const level = aborted ? "log" : levelOf(response.statusCode);
+    const outcome = aborted ? "ABORTED" : `${response.statusCode}`;
     const elapsed = Math.round(performance.now() - startedAt);
-    logger[level](
-      `${request.method.padEnd(6)} ${request.originalUrl} ${response.statusCode} ${elapsed}ms`,
-    );
+    logger[level](`${request.method.padEnd(6)} ${request.originalUrl} ${outcome} ${elapsed}ms`);
     if (level !== "log" && body !== undefined) {
       logger[level](JSON.stringify(body, null, 2));
     }

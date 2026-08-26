@@ -11,7 +11,7 @@ const bootstrap = async (): Promise<void> => {
 
   const env = app.get<Env>(ENV);
 
-  // First in the chain so even a body-parser rejection gets its line.
+  // Get the logs of each routes requests and responses
   app.use(httpLogger());
 
   // Browser security headers; native and server callers ignore them.
