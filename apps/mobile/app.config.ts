@@ -1,7 +1,9 @@
+import { existsSync, readFileSync } from "node:fs";
+import { parseEnv } from "node:util";
 import type { ExpoConfig } from "expo/config";
 
-// Explicit rather than read off NODE_ENV
-const IS_PRODUCTION = process.env.APP_VARIANT === "production";
+const VARIANT = process.env.APP_VARIANT ?? "development";
+const IS_PRODUCTION = VARIANT === "production";
 
 const APP_NAME = IS_PRODUCTION ? "Mentis" : "Mentis dev";
 const APP_SCHEME = IS_PRODUCTION ? "mentis" : "mentis-dev";
@@ -9,10 +11,21 @@ const BUNDLE_IDENTIFIER = IS_PRODUCTION
   ? "com.frogsterstudio.mentis"
   : "com.frogsterstudio.mentis.dev";
 
+const envFile = `${__dirname}/.env.${VARIANT}`;
+// EAS Build never receives the gitignored env files — there the values come off the build profile.
+const env = existsSync(envFile) ? parseEnv(readFileSync(envFile, "utf8")) : process.env;
+
+const read = (key: string): string => {
+  const value = env[key];
+  if (!value) {
+    throw new Error(`Missing ${key} in .env.${VARIANT}`);
+  }
+  return value;
+};
+
+const GOOGLE_IOS_CLIENT_ID = read("EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID");
 // Google's iOS URL scheme is the client id's leading segment reversed onto the Google domain.
-const IOS_URL_SCHEME = `com.googleusercontent.apps.${
-  process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.split(".")[0] ?? ""
-}`;
+const IOS_URL_SCHEME = `com.googleusercontent.apps.${GOOGLE_IOS_CLIENT_ID.split(".")[0]}`;
 
 const config: ExpoConfig = {
   name: APP_NAME,
@@ -79,6 +92,11 @@ const config: ExpoConfig = {
     eas: {
       projectId: "f7cff9c2-f627-4c76-a439-6276413508db",
     },
+    apiUrl: read("EXPO_PUBLIC_API_URL"),
+    supabaseUrl: read("EXPO_PUBLIC_SUPABASE_URL"),
+    supabasePublishableKey: read("EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY"),
+    googleWebClientId: read("EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID"),
+    googleIosClientId: GOOGLE_IOS_CLIENT_ID,
   },
 };
 

@@ -7,14 +7,20 @@ import {
   type User,
 } from "@react-native-google-signin/google-signin";
 import * as AppleAuthentication from "expo-apple-authentication";
+import Constants from "expo-constants";
 import { Platform } from "react-native";
 import { supabase } from "@/lib/supabase";
+
+const config = Constants.expoConfig?.extra as {
+  googleWebClientId: string;
+  googleIosClientId: string;
+};
 
 // webClientId sets the audience Supabase trusts; Android matches by package + SHA-1, needing no id.
 if (Platform.OS !== "web") {
   GoogleSignin.configure({
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+    webClientId: config.googleWebClientId,
+    iosClientId: config.googleIosClientId,
   });
 }
 

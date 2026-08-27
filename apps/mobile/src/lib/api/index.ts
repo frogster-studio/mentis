@@ -1,15 +1,11 @@
+import Constants from "expo-constants";
 import { supabase } from "@/lib/supabase";
 import { type ApiClient, createApiClient } from "./client";
 
-// A missing API origin is a broken build, not a runtime branch — throw at load.
-const apiUrl = process.env.EXPO_PUBLIC_API_URL;
-
-if (!apiUrl) {
-  throw new Error("Missing EXPO_PUBLIC_API_URL in .env");
-}
+const config = Constants.expoConfig?.extra as { apiUrl: string };
 
 export const api: ApiClient = createApiClient({
-  baseUrl: apiUrl,
+  baseUrl: config.apiUrl,
   // Bound to globalThis: React Native's fetch throws when called detached from its receiver.
   fetch: (...args) => globalThis.fetch(...args),
   getToken: async () => {
