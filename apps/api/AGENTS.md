@@ -2,7 +2,7 @@
 
 `@mentis/api` workspace of the Mentis monorepo (bun only — see the root `AGENTS.md`). It is the **sole** database gateway: admin and mobile both reach every row through it, and neither holds a database key. Issues live in `.grilled/issues/` (gitignored), implemented via the `implement-next-issue` loop.
 
-Deliberately **not** a bounded context, so no `CONTEXT.md` and no row in `CONTEXT-MAP.md`: a gateway publishes existing vocabularies rather than owning one. `/admin/*` speaks Card curation (`apps/admin/CONTEXT.md`), `/app/*` speaks Quiz play (`apps/mobile/CONTEXT.md`).
+Deliberately **not** a bounded context, so no `CONTEXT.md`: a gateway publishes an existing vocabulary rather than owning one. `/app/*` speaks Quiz play (`apps/mobile/CONTEXT.md`); there is no `/admin/*` surface today — `EditorGuard` is kept ready for the future quiz-content back-office.
 
 ## Commands (run in `apps/api`)
 
@@ -16,25 +16,24 @@ Deliberately **not** a bounded context, so no `CONTEXT.md` and no row in `CONTEX
 ## Hard constraints
 
 - Decorator flags live directly in `tsconfig.json` — never move them into a shared base (bun bug oven-sh/bun#6326). `tsconfig.build.json` needs an explicit `rootDir` beside `outDir` (TS 6).
-- **Every row travels through TypeORM** ([ADR 0005](../../docs/adr/0005-the-api-reaches-its-data-through-typeorm.md)): one long-lived `DataSource` on the session pooler, `synchronize: false`, migrations generated from the entities. The service client in `src/supabase.ts` never touches data — it serves `auth.admin.deleteUser` and the Card Images bucket, nothing else. There is still no per-request user-authed client, so owner scoping is explicit owner filters in the repository.
+- **Every row travels through TypeORM** ([ADR 0005](../../docs/adr/0005-the-api-reaches-its-data-through-typeorm.md)): one long-lived `DataSource` on the session pooler, `synchronize: false`, migrations generated from the entities. The service client in `_config/supabase.config.ts` never touches data — it serves `auth.admin.deleteUser`, nothing else. There is still no per-request user-authed client, so owner scoping is explicit owner filters in the repository.
 - **`ConfigModule` is imported, never `@Global()`** — every module that needs `ENV`, `SUPABASE` or `JWKS` lists it, `TypeOrmModule.forRootAsync({ imports: [ConfigModule] })` included: a dynamic module resolves in its own scope, not the root's.
 - **The schema lives in `src/_database/migrations/`, generated from the entities** — there is no Supabase CLI and no `supabase/` directory. `migration:generate` emits only what entity metadata carries, and it *drops* any index, unique or foreign key it finds in the database but not on an entity — so every one of those belongs on the entity (`@Index`, `@Unique`, a relation with `onDelete`), including the cascade to `auth.users`, which `auth-user.entity.ts` mirrors read-only for exactly that reason.
 - **Migrations are generated output, and Hugo runs the generator.** An agent edits the entities and stops there — `bun run migration:generate` is Hugo's command, never an agent's, and a migration is never authored, renamed or edited by hand. What generation cannot emit (RLS, grants, triggers, bucket rows) stays out of the repo: hand it over as SQL snippets for the Supabase dashboard editor, one plain-English comment per statement. The schema is still born locked per [ADR 0003](../../docs/adr/0003-database-admits-only-the-api.md) — RLS everywhere, zero policies, `service_role` alone — but that lock now lives outside the repo, so a new table or function is unreachable until its grant is run by hand.
-- Supabase Auth signs access tokens with ES256 asymmetric keys, so JWT verification is local — `jose` against the project JWKS with `iss`/`aud`/`alg` pinned, never a per-request Auth-server call and never the legacy JWT secret. The namespace prefix is the auth boundary: `EditorGuard` on `/admin/*`, `SupabaseUserGuard` on `/app/me/*`, no auth guard on public `/app` reads.
+- Supabase Auth signs access tokens with ES256 asymmetric keys, so JWT verification is local — `jose` against the project JWKS with `iss`/`aud`/`alg` pinned, never a per-request Auth-server call and never the legacy JWT secret. The namespace prefix is the auth boundary: `SupabaseUserGuard` on `/app/me/*`, no auth guard on public `/app` reads, `EditorGuard` for any future `/admin/*` route.
 - Every non-2xx body is the `ErrorResponse` envelope from `@mentis/contracts/shared`, emitted by `HttpErrorFilter` and nowhere else.
 - Wire casing is camelCase, carried by `@Column({ name })` on the entities and the zod contracts — never a hand-aliased select string.
-- Throttling is per-surface guards ordered **after** auth, never a global `APP_GUARD`: only a guard that runs after verification can key a bucket on the JWT `sub`. One bucket per tier per caller — public reads and the draw key on `req.ip` (hence `trust proxy 2` — Railway fronts the container with two hops, and trusting one reads the edge's own address), `/admin/*` and `/app/me/*` share one `sub`-keyed bucket.
+- Throttling is per-surface guards ordered **after** auth, never a global `APP_GUARD`: only a guard that runs after verification can key a bucket on the JWT `sub`. One bucket per tier per caller — public reads and the draw key on `req.ip` (hence `trust proxy 2` — Railway fronts the container with two hops, and trusting one reads the edge's own address), `/app/me/*` keys one `sub`-keyed bucket.
 - `GET /health` stays unguarded and unthrottled: Railway restarts the container on a failed poll.
-- The API speaks **JSON only**: `NEST_OPTIONS` turns off Nest's parsers wholesale and `bootstrap.ts` registers json alone, capped at 64 kb against the `.max(200)` push batch caps. Never create the app without `NEST_OPTIONS` — that silently restores Express's unchosen 100 kb wall. A non-JSON body reaches the pipe as `undefined` and 400s; nothing sends one (admin parses FormData locally, image bytes never touch the API — ADR 0001).
+- The API speaks **JSON only**: `NEST_OPTIONS` turns off Nest's parsers wholesale and `bootstrap.ts` registers json alone, capped at 64 kb against the `.max(200)` push batch caps. Never create the app without `NEST_OPTIONS` — that silently restores Express's unchosen 100 kb wall. A non-JSON body reaches the pipe as `undefined` and 400s; nothing sends one.
 - Biome and Knip stay root-only. `biome.json` carries one `apps/api/**` override (`unsafeParameterDecoratorsEnabled`, `useImportType: off` — the safe-fix otherwise rewrites injected services to `import type` and erases Nest's DI metadata).
 
 ## Structure
 
 ```
 src/
-  cards/          # /admin/cards + /admin/card-images: Card curation, EditorGuard-bound
-    modules/ controllers/ services/ repositories/ mappers/ _tests/   # the layers of every feature
   catalog/        # /app/themes + /app/questions: public Quiz play reads
+    modules/ controllers/ services/ repositories/ mappers/ _tests/   # the layers of every feature
   competition/    # /app/me/competition: Attempt issuance, resume and the judged finalize
   player/         # /app/me: stats, idempotent pushes, account deletion
   _database/      # TypeORM: the module, the datasource options, entities/ — the schema source — and migrations/
@@ -42,13 +41,13 @@ src/
   auth/           # SupabaseUserGuard (401) and EditorGuard (403), plus the project JWKS
   common/         # ZodValidationPipe, HttpErrorFilter, the rate-limit tiers
   health/         # GET /health
-  _config/        # ConfigModule and its providers: ENV (zod-validated, parsed once at boot), SUPABASE (auth admin + Card Images bucket, never data), JWKS
+  _config/        # ConfigModule and its providers: ENV (zod-validated, parsed once at boot), SUPABASE (auth admin, never data), JWKS
   bootstrap.ts    # helmet, CORS allowlist, trust proxy, json body cap — shared with the e2e suite
   main.ts         # boot: create, configure, shutdown hooks, listen
   app.module.ts   # root module: feature imports, APP_FILTER
 ```
 
-Only those four are features. Everything below them is transversal spine — no layer subfolders there, just a `_tests/` where it has tests.
+Only those three are features. Everything below them is transversal spine — no layer subfolders there, just a `_tests/` where it has tests.
 
 ## Conventions
 
@@ -56,15 +55,15 @@ Only those four are features. Everything below them is transversal spine — no 
 - **Features are folders of layers.** Each `src/<feature>/` splits by layer — `modules/`, `controllers/`, `services/`, `repositories/`, `mappers/` — and a new file joins its layer folder, never the feature root.
 
   ```
-  ✅ src/cards/controllers/admin-cards.controller.ts
-  ❌ src/cards/admin-cards.controller.ts
+  ✅ src/catalog/controllers/themes.controller.ts
+  ❌ src/catalog/themes.controller.ts
   ```
 
 - **`src/_database/` owns TypeORM wholesale.** Every entity lives in `_database/entities/` as the schema's source of truth, beside the datasource config, the migrations and shared database logic — a feature folder never defines one.
 
   ```
-  ✅ src/_database/entities/card.entity.ts
-  ❌ src/cards/card.entity.ts
+  ✅ src/_database/entities/theme.entity.ts
+  ❌ src/catalog/theme.entity.ts
   ```
 
 - **Entities all share one shape.** A new entity copies an existing one — `theme.entity.ts` is the reference.
