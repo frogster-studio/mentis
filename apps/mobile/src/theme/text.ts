@@ -20,5 +20,5 @@ export const TEXT = {
   display: { fontFamily: FACES.heading, fontSize: 50, lineHeight: 49, letterSpacing: -2 },
   statValue: { fontFamily: FACES.emphasis, fontSize: 26, lineHeight: 32 },
   heroScore: { fontFamily: FACES.emphasis, fontSize: 100, lineHeight: 116 },
-  revealCount: { fontFamily: FACES.heading, fontSize: 300, lineHeight: 300, letterSpacing: -12 },
+  revealCount: { fontFamily: FACES.heading, fontSize: 200, lineHeight: 300, letterSpacing: -12 },
 } as const satisfies Record<string, TextStyle>;

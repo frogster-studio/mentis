@@ -150,7 +150,9 @@ export const PickerScreen = () => {
           <Text style={styles.subtitle}>{PICKER_SUBTITLE}</Text>
         </View>
       </HeaderCard>
+
       <SwipeToStart category={selected?.category ?? null} onStart={onStart} />
+
       <Sheet
         visible={helpVisible}
         title={null}

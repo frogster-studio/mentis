@@ -1,5 +1,6 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useFocusEffect } from "expo-router";
+import { SquircleView } from "expo-squircle-view";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, Easing, PanResponder, Platform, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -51,9 +52,9 @@ export const SwipeToStart = ({ category, onStart }: SwipeToStartProps) => {
         <View style={styles.track}>
           <Squircle
             radius={RADIUS.lg}
+            corners="all"
             color={COLORS.trough}
             style={StyleSheet.absoluteFill}
-            corners="all"
             borderColor={null}
             borderWidth={null}
           />
@@ -89,7 +90,6 @@ export const SwipeToStart = ({ category, onStart }: SwipeToStartProps) => {
               <Animated.View
                 style={[
                   styles.chevrons,
-                  // Centred in the free zone right of the pill, where the travel ends.
                   { right: Math.max((maxTravel - CHEVRON_CLUSTER_WIDTH) / 2, 0) },
                   { transform: [{ translateX: chevronShift }] },
                 ]}
@@ -117,13 +117,12 @@ export const SwipeToStart = ({ category, onStart }: SwipeToStartProps) => {
                   borderColor={null}
                   borderWidth={null}
                 />
-                <Squircle
-                  radius={RADIUS.lg}
-                  color={COLORS.face}
+                <SquircleView
+                  backgroundColor={COLORS.card}
+                  borderRadius={999}
                   borderColor={COLORS.ink}
                   borderWidth={1}
                   style={styles.pillFace}
-                  corners="all"
                 >
                   <MaterialCommunityIcons
                     name="gesture-swipe-right"
@@ -133,7 +132,7 @@ export const SwipeToStart = ({ category, onStart }: SwipeToStartProps) => {
                   <Text style={styles.pillLabel} numberOfLines={1}>
                     {PICKER_SWIPE_LABEL}
                   </Text>
-                </Squircle>
+                </SquircleView>
               </Animated.View>
             </Animated.View>
           ) : null}
