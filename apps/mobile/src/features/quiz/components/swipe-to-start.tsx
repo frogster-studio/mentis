@@ -3,7 +3,6 @@ import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, Easing, PanResponder, Platform, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { categoryWashSolid } from "@/components/category-color";
 import { MAX_CONTENT_WIDTH } from "@/components/ui/screen-container";
 import { Squircle } from "@/components/ui/squircle";
 import { PRESS_DEPTH } from "@/components/ui/use-press-sink";
@@ -21,6 +20,8 @@ const CONFIRM_FRACTION = 0.6;
 const SETTLE_MS = 120;
 const CHEVRON_STEP = SPACE.md;
 const CHEVRON_CLUSTER_WIDTH = CONTROL_ICON_SIZE + CHEVRON_STEP * 2;
+// The chevrons sit on the track's Category fill, so paper laid over it is the wash.
+const CHEVRON_PAPER_ALPHA = "C7";
 const CHEVRON_SHIMMY = 6;
 const CHEVRON_SHIMMY_MS = 450;
 const CHEVRON_REST_MS = 600;
@@ -99,7 +100,7 @@ export const SwipeToStart = ({ category, onStart }: SwipeToStartProps) => {
                     key={position}
                     name="chevron-double-right"
                     size={CONTROL_ICON_SIZE}
-                    color={categoryWashSolid(category.color)}
+                    color={`${COLORS.background}${CHEVRON_PAPER_ALPHA}`}
                     style={position > 0 ? styles.chevronOverlap : null}
                   />
                 ))}

@@ -29,7 +29,6 @@ export const PlayScreen = ({
   return (
     <ScreenContainer
       edges={ALL_SCREEN_EDGES}
-      background={null}
       underlay={
         <View
           style={[

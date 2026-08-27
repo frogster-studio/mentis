@@ -57,7 +57,7 @@ export const AccountScreen = () => {
   const showTransferNotice = !user && transferred && isEmpty && !dismissed;
 
   return (
-    <ScreenContainer edges={ALL_SCREEN_EDGES} background={null} underlay={null}>
+    <ScreenContainer edges={ALL_SCREEN_EDGES} underlay={null}>
       <View style={styles.header}>
         <QuietButton
           layout="circle"

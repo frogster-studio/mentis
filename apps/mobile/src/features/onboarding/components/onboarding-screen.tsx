@@ -17,7 +17,7 @@ export const OnboardingScreen = () => {
   const complete = useOnboardingStore((state) => state.complete);
 
   return (
-    <ScreenContainer edges={ALL_SCREEN_EDGES} background={null} underlay={null}>
+    <ScreenContainer edges={ALL_SCREEN_EDGES} underlay={null}>
       <View style={styles.headroom} />
       <View style={styles.logo}>
         <LogoMark color={COLORS.primary} size={MARK_SIZE} />

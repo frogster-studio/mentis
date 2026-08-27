@@ -17,7 +17,7 @@ export const WorldScreen = () => {
   useTabScroll();
 
   return (
-    <ScreenContainer edges={TAB_SCREEN_EDGES} background={null} underlay={null}>
+    <ScreenContainer edges={TAB_SCREEN_EDGES} underlay={null}>
       <View style={[styles.content, { paddingTop: headerHeight, paddingBottom: tabBarHeight }]}>
         <View style={styles.block}>
           {/* Competition needs an Account, so the entry simply is not there for a signed-out Player. */}

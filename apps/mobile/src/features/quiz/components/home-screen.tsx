@@ -12,7 +12,7 @@ export const HomeScreen = () => {
   const onScroll = useTabScroll();
 
   return (
-    <ScreenContainer edges={TAB_SCREEN_EDGES} background={null} underlay={null}>
+    <ScreenContainer edges={TAB_SCREEN_EDGES} underlay={null}>
       <Animated.ScrollView
         showsVerticalScrollIndicator={false}
         onScroll={onScroll}

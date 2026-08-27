@@ -15,7 +15,6 @@ export const ALL_SCREEN_EDGES = ["top", "right", "bottom", "left"] as const;
 
 export interface ScreenContainerProps {
   edges: SafeAreaViewProps["edges"];
-  background: string | null;
   // Painted over the whole paper but under the content — a translucent wash keeps the grid showing.
   underlay: ReactNode;
 }
@@ -23,13 +22,11 @@ export interface ScreenContainerProps {
 export const ScreenContainer = ({
   children,
   edges,
-  background,
   underlay,
 }: PropsWithChildren<ScreenContainerProps>) => {
   return (
-    <View style={[styles.screen, background ? { backgroundColor: background } : null]}>
-      {/* The grid belongs to the paper; a screen that washes itself another colour drops it. */}
-      {background ? null : <PaperBackground />}
+    <View style={styles.screen}>
+      <PaperBackground />
       {underlay}
       <SafeAreaView style={styles.content} edges={edges}>
         {children}

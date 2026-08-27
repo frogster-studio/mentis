@@ -1,7 +1,6 @@
 import { Image } from "expo-image";
 import { StyleSheet, Text, View } from "react-native";
 import { CategoryBadge } from "@/components/category-badge";
-import { categoryShade, categoryWashSolid } from "@/components/category-color";
 import { ALL_SCREEN_EDGES, ScreenContainer } from "@/components/ui/screen-container";
 import { Squircle } from "@/components/ui/squircle";
 import { THEME_IMAGE_CACHE_POLICY } from "@/features/quiz/theme-image-cache";
@@ -9,20 +8,21 @@ import { TEXT } from "@/theme/text";
 import { COLORS, GUTTER, RADIUS, SPACE } from "@/theme/tokens";
 import type { Category } from "@/types/quiz";
 
+const BACKDROP_ALPHA = "38";
 const IMAGE_ASPECT_RATIO = 286 / 467;
 const IMAGE_BORDER_WIDTH = 2;
-// The mockup's thrown shadow: the Category's shade falling away toward the bottom right.
+// The mockup's thrown shadow: the Category's colour falling away toward the bottom right.
 const SHADOW_LAYERS = [
-  { x: 5, y: 7, blur: 19, alpha: 0.56 },
-  { x: 19, y: 28, blur: 34, alpha: 0.48 },
-  { x: 43, y: 62, blur: 45, alpha: 0.28 },
-  { x: 77, y: 111, blur: 54, alpha: 0.08 },
-  { x: 120, y: 173, blur: 59, alpha: 0.01 },
+  { x: 5, y: 7, blur: 19, alphaHex: "8F" },
+  { x: 19, y: 28, blur: 34, alphaHex: "7A" },
+  { x: 43, y: 62, blur: 45, alphaHex: "47" },
+  { x: 77, y: 111, blur: 54, alphaHex: "14" },
+  { x: 120, y: 173, blur: 59, alphaHex: "03" },
 ];
 
 function revealShadow(color: string): string {
   return SHADOW_LAYERS.map(
-    ({ x, y, blur, alpha }) => `${x}px ${y}px ${blur}px ${categoryShade(color, alpha)}`,
+    ({ x, y, blur, alphaHex }) => `${x}px ${y}px ${blur}px ${color}${alphaHex}`,
   ).join(", ");
 }
 
@@ -37,8 +37,14 @@ export const ThemeReveal = ({ name, imageUrl, category, secondsLeft }: ThemeReve
   return (
     <ScreenContainer
       edges={ALL_SCREEN_EDGES}
-      background={categoryWashSolid(category.color)}
-      underlay={null}
+      underlay={
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: `${category.color}${BACKDROP_ALPHA}` },
+          ]}
+        />
+      }
     >
       <View style={styles.stack}>
         <View style={styles.caption}>

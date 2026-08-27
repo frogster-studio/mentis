@@ -1,12 +1,12 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { StyleSheet, Text, View } from "react-native";
-import { categoryWash } from "@/components/category-color";
 import { iconNameOrFallback } from "@/components/ui/icon-name";
 import { TEXT } from "@/theme/text";
 import { RADIUS, SPACE } from "@/theme/tokens";
 import type { Category } from "@/types/quiz";
 
 const CHIP_ICON_SIZE = 14;
+const WASH_ALPHA = "38";
 
 export interface CategoryChipProps {
   category: Category;
@@ -14,7 +14,7 @@ export interface CategoryChipProps {
 
 export const CategoryChip = ({ category }: CategoryChipProps) => {
   return (
-    <View style={[styles.chip, { backgroundColor: categoryWash(category.color) }]}>
+    <View style={[styles.chip, { backgroundColor: `${category.color}${WASH_ALPHA}` }]}>
       <MaterialIcons
         name={iconNameOrFallback(category.icon)}
         size={CHIP_ICON_SIZE}

@@ -138,7 +138,7 @@ export const CompetitionScreen = () => {
 
   // Nothing is under way yet, so the quit control leaves straight away — no confirmation.
   const framed = (body: ReactNode) => (
-    <ScreenContainer edges={ALL_SCREEN_EDGES} background={null} underlay={null}>
+    <ScreenContainer edges={ALL_SCREEN_EDGES} underlay={null}>
       <View style={styles.header}>
         <QuietButton
           layout="circle"

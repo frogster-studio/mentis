@@ -1,7 +1,6 @@
 import { useNavigation, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Animated, StyleSheet, Text, View } from "react-native";
-import { categoryWash } from "@/components/category-color";
 import { HEADER_DIVIDER_HEIGHT, HeaderCard, useHeaderCardHeight } from "@/components/header-card";
 import { NewButton } from "@/components/ui/new-button";
 import { ScreenContainer } from "@/components/ui/screen-container";
@@ -27,6 +26,8 @@ import { TEXT } from "@/theme/text";
 import { COLORS, CONTROL_SQUARE_SIZE, GUTTER, SPACE } from "@/theme/tokens";
 import type { ThemeWithCount } from "@/types/quiz";
 
+const WASH_ALPHA = "38";
+
 const TITLE_HALF_HEIGHT =
   HEADER_DIVIDER_HEIGHT +
   SPACE.xxl +
@@ -44,7 +45,7 @@ export const PickerScreen = () => {
   const [helpVisible, setHelpVisible] = useState(false);
   const scrollOffset = useRef(new Animated.Value(0)).current;
   const headerHeight = useHeaderCardHeight(TITLE_HALF_HEIGHT);
-  const wash = useColorCrossFade(selected ? categoryWash(selected.category.color) : null);
+  const wash = useColorCrossFade(selected ? `${selected.category.color}${WASH_ALPHA}` : null);
   const leave = useBarredBackGestures(() => router.back());
 
   // The Draw warms the image cache as it renders, so the Reveal of whichever Theme wins is instant.
@@ -80,11 +81,7 @@ export const PickerScreen = () => {
     ) : null;
 
   return (
-    <ScreenContainer
-      edges={["left", "right"]}
-      background={null}
-      underlay={<SelectionWash wash={wash} />}
-    >
+    <ScreenContainer edges={["left", "right"]} underlay={<SelectionWash wash={wash} />}>
       {feedback ? (
         <View style={[styles.feedback, { paddingTop: headerHeight }]}>{feedback}</View>
       ) : (
