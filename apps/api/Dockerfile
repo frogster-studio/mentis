@@ -18,8 +18,8 @@ COPY packages/answer-matching packages/answer-matching
 COPY packages/contracts packages/contracts
 COPY apps/api apps/api
 # node runs tsc-compiled output only; bun's transpiler never touches prod code
-RUN cd packages/answer-matching && bun --bun run build
 RUN cd packages/contracts && bun --bun run build
+RUN cd packages/answer-matching && bun --bun run build
 RUN cd apps/api && bun --bun run build
 
 # ---- prod-deps: production dependency tree only ----
@@ -34,6 +34,7 @@ WORKDIR /repo
 COPY --from=prod-deps --chown=node:node /repo/node_modules ./node_modules
 COPY --from=prod-deps --chown=node:node /repo/apps/api/node_modules ./apps/api/node_modules
 COPY --from=prod-deps --chown=node:node /repo/packages/contracts/node_modules ./packages/contracts/node_modules
+COPY --from=prod-deps --chown=node:node /repo/packages/answer-matching/node_modules ./packages/answer-matching/node_modules
 COPY --from=build --chown=node:node /repo/packages/answer-matching/dist ./packages/answer-matching/dist
 COPY --from=build --chown=node:node /repo/packages/answer-matching/package.json ./packages/answer-matching/
 COPY --from=build --chown=node:node /repo/packages/contracts/dist ./packages/contracts/dist
