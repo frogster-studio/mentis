@@ -2,58 +2,33 @@
 
 Cross-cutting design decisions. Honor these in every UI change; don't re-litigate them
 per feature. Area-specific choices live in their issue, not here.
-(Complements the design guidelines in AGENTS.md: sky accent on zinc, whitespace,
-one radius, 2–3 type sizes, Lexend headings / Poppins body, lucide only.)
-
-## Brand
-- The orange `#F59E0B` is **brand-mark only** (the Mark, favicon). It is never a UI
-  accent — no orange buttons, links, rings, or highlights. Sky stays the only UI accent.
-- Brand art is two inline SVG components, never an `<img>`: `LogoMark` with `#F59E0B`
-  baked, `LogoWordmark` in `currentColor` so the lettering follows the theme.
+(Complements the design guidelines in AGENTS.md: sky accent on zinc, brand rules,
+whitespace, one radius, 2–3 type sizes, Lexend headings / Poppins body.)
 
 ## App chrome
-- The app header is a **sticky translucent bar**: `sticky top-0 z-40 bg-background/80
+- The app header is a **sticky translucent bar**: `sticky top-0 z-40 bg-white/80
   backdrop-blur border-b`, `h-14`, viewport-wide with `px-6` gutters.
 - Header layout is a 3-column grid (`grid-cols-[1fr_auto_1fr]`) — brand left, primary
   action dead-center, session actions right.
-- Header-level icon buttons are **40px** (`size-10`); in-content icon buttons keep the
-  shadcn defaults (`size-8`/`size-7`).
+- Header-level icon buttons are **40px** (`size-10`).
 
 ## Surfaces
 - Pages use a **canvas + surface** model: canvas `bg-zinc-50`, content surfaces
-  `bg-card border rounded-lg shadow-xs overflow-hidden`. No borderless full-bleed
+  white with `border rounded-lg shadow-xs overflow-hidden`. No borderless full-bleed
   content on white.
 - Page content is constrained to `max-w-7xl mx-auto`; only the header spans the viewport.
-- One radius everywhere: `rounded-lg` (= `--radius`). Badges keep their pill shape.
+- One radius everywhere: `rounded-lg`. Badges keep their pill shape.
 
 ## Buttons
-- Icon-only buttons always carry `aria-label` **and** a tooltip (shadcn Tooltip,
-  ~450 ms delay). Never a bare unlabeled glyph.
+- Icon-only buttons always carry `aria-label` **and** a tooltip. Never a bare
+  unlabeled glyph.
 - **Tonal primary** recipe for icon-form primary actions: `bg-sky-100 text-sky-600` at
-  rest → `hover:bg-primary hover:text-primary-foreground`. Same recipe as the
-  posted-state social toggles — soft sky tint means "primary/active".
-- Ghost icon buttons rest with `text-muted-foreground` and gain `bg-muted
-  text-foreground` on hover.
+  rest → solid sky on hover. Soft sky tint means "primary/active".
+- Ghost icon buttons rest muted (`text-zinc-500`) and gain a subtle background on hover.
 
 ## Data tables
 - Header row is a **muted band**: `bg-zinc-50 border-b`, labels `text-xs font-medium
-  text-muted-foreground`.
-- Rows: white, hairline dividers (`border-b`, none on last), `hover:bg-muted/50`,
-  `data-[state=selected]:bg-muted`. No zebra stripes, no vertical grid lines.
+  text-zinc-500`.
+- Rows: white, hairline dividers (`border-b`, none on last), subtle hover tint. No zebra
+  stripes, no vertical grid lines.
 - Cells `py-2.5`; first and last columns `px-4` so content clears the surface edge.
-
-## Card Type colors
-- Each Card Type has one canonical **categorical color** — Quiz `#3D9AFF`, True/False
-  `#7FDE2A`, Anecdote `#7317D0`, Did You Know `#FE770C`, Riddle `#FDE22F` — with a single
-  source of truth (`--type-*` CSS variables in `globals.css`), never re-hardcoded per use.
-- These are **data colors, not accents**: sky stays the only interactive accent. Type colors
-  never style buttons, links, rings, or text — the type label always stays `foreground`, and
-  color never carries meaning alone (the label is always present).
-- Two standard marks: the **underline** (3px bar in the type color, 2px below the label,
-  `whitespace-nowrap`) where a type is *displayed*; the **dot** (14px `rounded-full`, faint
-  inset ring `black/12` so pale colors keep an edge; 10px compact inside Select
-  items/triggers) where a type is *picked or filtered*.
-- Type pickers may **hover-tint** their control with that type's color at ~10% over white;
-  focus-visible keeps the standard sky ring. Keyboard/hover highlight in menus stays neutral.
-- In type Select menus, the no-filter item ("All Types") keeps an empty spacer so labels
-  align with the dotted items.

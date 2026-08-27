@@ -16,11 +16,8 @@ export default async function LoginPage({
   const { error } = await searchParams;
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-8 bg-background p-8">
-      <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="font-semibold text-3xl text-foreground tracking-tight">Mentis</h1>
-        <p className="max-w-md text-muted-foreground">Log in to the Card library.</p>
-      </div>
+    <main className="flex flex-1 flex-col items-center justify-center gap-8 p-8">
+      <h1 className="text-3xl tracking-tight">Mentis</h1>
       <LoginForm notice={error === NO_EDITOR_ACCESS_PARAM ? NO_EDITOR_ACCESS : undefined} />
     </main>
   );

@@ -20,7 +20,7 @@ const lexend = localFont({
 
 export const metadata: Metadata = {
   title: "Mentis",
-  description: "Back-office for the Mentis Card library",
+  description: "Mentis back-office",
 };
 
 export default function RootLayout({
