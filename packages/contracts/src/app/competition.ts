@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { QuizAnswerModeEnum, UserAnswerMatchedViaEnum } from "../enums";
+import { appCategorySchema } from "./theme";
 
 export const COMPETITION_QUESTION_COUNT = 10;
 // The self-reported mode alone prices a correct answer.
@@ -8,7 +10,6 @@ const MAX_SCORE = COMPETITION_QUESTION_COUNT * COMPETITION_POINTS.cash;
 const MAX_SEASON_SCORE = MAX_SCORE * 31;
 
 const competitionAttemptKindSchema = z.enum(["initial", "replay", "catchup"]);
-const competitionPlayedModeSchema = z.enum(["cash", "square"]);
 
 const competitionQuestionSchema = z.object({
   id: z.string(),
@@ -16,13 +17,20 @@ const competitionQuestionSchema = z.object({
   squareChoices: z.array(z.string()).length(4),
 });
 
+const competitionThemeSchema = z.object({
+  themeId: z.string(),
+  themeName: z.string(),
+  // Denormalized: a server-drawn Theme may be newer than any theme list the phone holds.
+  imageUrl: z.url(),
+  category: appCategorySchema,
+});
+
 export const appCompetitionAttemptResponseSchema = z.object({
   id: z.uuid(),
   day: z.iso.date(),
   kind: competitionAttemptKindSchema,
   status: z.enum(["active", "finalized"]),
-  themeId: z.string(),
-  themeName: z.string(),
+  ...competitionThemeSchema.shape,
   // Served order — a finalize batch answers by position into this list.
   questions: z.array(competitionQuestionSchema).length(COMPETITION_QUESTION_COUNT),
 });
@@ -38,7 +46,7 @@ export type AppCompetitionActiveAttemptResponse = z.infer<
 
 const competitionAnswerInputSchema = z.object({
   questionId: z.string(),
-  mode: competitionPlayedModeSchema,
+  mode: z.enum(QuizAnswerModeEnum).exclude([QuizAnswerModeEnum.NONE]),
   rawInput: z.string(),
   clientElapsedMs: z.number().int().min(0),
 });
@@ -61,19 +69,18 @@ const competitionVerdictSchema = z.object({
   questionText: z.string(),
   // Revealed here and nowhere earlier: the results screen ends the Attempt that hid it.
   canonicalAnswer: z.string(),
-  mode: z.enum([...competitionPlayedModeSchema.options, "none"]),
+  mode: z.enum(QuizAnswerModeEnum),
   rawInput: z.string().nullable(),
   correct: z.boolean(),
   points: z.number().int().min(0).max(COMPETITION_POINTS.cash),
-  matchedVia: z.enum(["canonical", "alias", "misspelling", "fuzzy", "choice"]).nullable(),
+  matchedVia: z.enum(UserAnswerMatchedViaEnum).nullable(),
 });
 
 export const appCompetitionTranscriptResponseSchema = z.object({
   id: z.uuid(),
   day: z.iso.date(),
   kind: competitionAttemptKindSchema,
-  themeId: z.string(),
-  themeName: z.string(),
+  ...competitionThemeSchema.shape,
   finalizeReason: z.enum(["completed", "quit", "expired"]),
   score: z.number().int().min(0).max(MAX_SCORE),
   answers: z.array(competitionVerdictSchema).length(COMPETITION_QUESTION_COUNT),

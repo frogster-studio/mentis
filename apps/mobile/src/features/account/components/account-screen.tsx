@@ -1,8 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { ChevronLeft } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { QuietButton } from "@/components/ui/quiet-button";
 import { ScreenContainer } from "@/components/ui/screen-container";
@@ -11,6 +10,7 @@ import { signOut } from "@/features/account/auth";
 import { useAuthStore } from "@/features/account/auth-store";
 import { AppleSignInButton } from "@/features/account/components/apple-sign-in-button";
 import { GoogleSignInButton } from "@/features/account/components/google-sign-in-button";
+import { TransferNotice } from "@/features/account/components/transfer-notice";
 import {
   ACCOUNT_BACK_LABEL,
   ACCOUNT_PITCH,
@@ -29,8 +29,11 @@ import {
   SIGN_OUT_TITLE,
 } from "@/features/account/constants";
 import { deleteAccount } from "@/features/account/delete-account";
+import { HomeEmptyState } from "@/features/quiz/components/home-empty-state";
+import { HomeThemeCard } from "@/features/quiz/components/home-theme-card";
 import { drainOutbox } from "@/features/quiz/outbox-sync";
 import { useTransferStore } from "@/features/quiz/transfer-store";
+import { useHomeCards } from "@/features/quiz/use-home-cards";
 import { TEXT } from "@/theme/text";
 import { COLORS, CONTROL_HEIGHT, GUTTER, PRESSED, SPACE } from "@/theme/tokens";
 
@@ -45,13 +48,20 @@ export function AccountScreen() {
   const accountDeletion = useMutation({ mutationFn: deleteAccount });
 
   const user = session?.user;
+  const cards = useHomeCards();
+  const transferred = useTransferStore((state) => state.transferred);
+  const dismissed = useTransferStore((state) => state.dismissed);
+  const isEmpty = cards.length === 0;
+
+  // The signed-out shelf is empty because the stats moved, not because nothing was ever played.
+  const showTransferNotice = !user && transferred && isEmpty && !dismissed;
 
   return (
     <ScreenContainer>
       <View style={styles.header}>
         <QuietButton
           layout="circle"
-          icon={ChevronLeft}
+          icon="chevron-left"
           accessibilityLabel={ACCOUNT_BACK_LABEL}
           onPress={() => router.back()}
         />
@@ -62,35 +72,58 @@ export function AccountScreen() {
 
       {isLoading ? (
         <ScreenLoading />
-      ) : user ? (
-        <View style={styles.body}>
-          {/* The provider is never shown in v1: the email is the identity. */}
-          <View style={styles.identity}>
-            {user.email ? <Text style={styles.email}>{user.email}</Text> : null}
-          </View>
-          <View style={styles.footer}>
-            {accountDeletion.isError ? (
-              <Text style={styles.error}>{DELETE_ACCOUNT_ERROR}</Text>
-            ) : null}
-            <QuietButton label={SIGN_OUT_LABEL} onPress={() => setSignOutVisible(true)} />
-            {/* Gated behind its own confirmation (App Store guideline 5.1.1(v)). */}
-            <Pressable
-              style={({ pressed }) => [styles.deleteButton, pressed && styles.pressed]}
-              onPress={() => setDeleteVisible(true)}
-            >
-              <Text style={styles.deleteLabel}>{DELETE_ACCOUNT_LABEL}</Text>
-            </Pressable>
-          </View>
-        </View>
       ) : (
         <View style={styles.body}>
-          <View style={styles.pitchBlock}>
-            <Text style={styles.pitch}>{ACCOUNT_PITCH}</Text>
-          </View>
+          <ScrollView
+            style={styles.shelfScroll}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.shelf}
+          >
+            {/* The provider is never shown in v1: the email is the identity. */}
+            {user ? (
+              user.email ? (
+                <Text style={styles.email}>{user.email}</Text>
+              ) : null
+            ) : (
+              <Text style={styles.pitch}>{ACCOUNT_PITCH}</Text>
+            )}
+            {showTransferNotice ? <TransferNotice /> : null}
+            {isEmpty ? (
+              <HomeEmptyState />
+            ) : (
+              cards.map((card) => (
+                <HomeThemeCard
+                  key={card.id}
+                  name={card.name}
+                  average={card.average}
+                  sessionCount={card.sessionCount}
+                  category={card.category}
+                />
+              ))
+            )}
+          </ScrollView>
           <View style={styles.footer}>
-            {signInFailed ? <Text style={styles.error}>{SIGN_IN_ERROR}</Text> : null}
-            <AppleSignInButton onError={() => setSignInFailed(true)} />
-            <GoogleSignInButton onError={() => setSignInFailed(true)} />
+            {user ? (
+              <>
+                {accountDeletion.isError ? (
+                  <Text style={styles.error}>{DELETE_ACCOUNT_ERROR}</Text>
+                ) : null}
+                <QuietButton label={SIGN_OUT_LABEL} onPress={() => setSignOutVisible(true)} />
+                {/* Gated behind its own confirmation (App Store guideline 5.1.1(v)). */}
+                <Pressable
+                  style={({ pressed }) => [styles.deleteButton, pressed && styles.pressed]}
+                  onPress={() => setDeleteVisible(true)}
+                >
+                  <Text style={styles.deleteLabel}>{DELETE_ACCOUNT_LABEL}</Text>
+                </Pressable>
+              </>
+            ) : (
+              <>
+                {signInFailed ? <Text style={styles.error}>{SIGN_IN_ERROR}</Text> : null}
+                <AppleSignInButton onError={() => setSignInFailed(true)} />
+                <GoogleSignInButton onError={() => setSignInFailed(true)} />
+              </>
+            )}
           </View>
         </View>
       )}
@@ -147,22 +180,22 @@ const styles = StyleSheet.create({
   spacer: {
     width: CONTROL_HEIGHT,
   },
-  // The flex fill keeps the pitch / identity near the top and pins the action to the bottom.
+  // The flex fill keeps the shelf near the top and pins the action to the bottom.
   body: {
     flex: 1,
     paddingHorizontal: GUTTER,
   },
-  pitchBlock: {
+  shelfScroll: {
     flex: 1,
-    paddingTop: SPACE.xxl,
+  },
+  shelf: {
+    paddingTop: SPACE.lg,
+    paddingBottom: SPACE.lg,
+    gap: SPACE.md,
   },
   pitch: {
     ...TEXT.cardTitle,
     color: COLORS.ink,
-  },
-  identity: {
-    flex: 1,
-    paddingTop: SPACE.xxl,
   },
   email: {
     ...TEXT.body,

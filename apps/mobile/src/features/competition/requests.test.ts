@@ -3,21 +3,28 @@ import {
   appCompetitionAttemptResponseSchema,
   appCompetitionTranscriptResponseSchema,
 } from "@mentis/contracts/app";
+import { QuizAnswerModeEnum } from "@mentis/contracts/enums";
 import { describe, expect, it, vi } from "vitest";
 import { type ApiClient, createApiClient } from "@/lib/api/client";
 import type { PlayedAnswer } from "./attempt-reducer";
-import { activeAttemptRequest, finalizeAttemptRequest, issueAttemptRequest } from "./requests";
+import {
+  activeAttemptRequest,
+  finalizeAttemptRequest,
+  issueAttemptRequest,
+  resumeOrIssueAttempt,
+} from "./requests";
 
 const BASE_URL = "https://api.test";
 const ATTEMPT_ID = "3f1d4d1e-0f4a-4c9b-9a1a-8f5c2b7d6e01";
 
 type Call = { url: string; init: RequestInit };
 
-function client(body: unknown): { api: ApiClient; calls: Call[] } {
+// Bodies are scripted in call order, so a two-request sequence can answer differently each time.
+function client(...bodies: unknown[]): { api: ApiClient; calls: Call[] } {
   const calls: Call[] = [];
   const fetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
     calls.push({ url: String(input), init: init ?? {} });
-    return new Response(JSON.stringify(body), {
+    return new Response(JSON.stringify(bodies[calls.length - 1]), {
       status: 200,
       headers: { "content-type": "application/json" },
     });
@@ -41,6 +48,9 @@ function issuedQuestion(position: number) {
   };
 }
 
+const CATEGORY = { id: "culture", name: "Culture", color: "#6a1b9a", icon: "menu-book" };
+const IMAGE_URL = "https://stub.supabase.co/storage/v1/object/public/theme-images/histoire.webp";
+
 const ISSUED_BODY = {
   id: ATTEMPT_ID,
   day: "2026-08-21",
@@ -48,12 +58,24 @@ const ISSUED_BODY = {
   status: "active",
   themeId: "histoire",
   themeName: "Histoire",
+  imageUrl: IMAGE_URL,
+  category: CATEGORY,
   questions: Array.from({ length: 10 }, (_, index) => issuedQuestion(index + 1)),
 };
 
 const PLAYED: PlayedAnswer[] = [
-  { questionId: "q1", mode: "cash", rawInput: "Charlemagne", clientElapsedMs: 9_120 },
-  { questionId: "q2", mode: "square", rawInput: "bonne réponse 2", clientElapsedMs: 25_000 },
+  {
+    questionId: "q1",
+    mode: QuizAnswerModeEnum.CASH,
+    rawInput: "Charlemagne",
+    clientElapsedMs: 9_120,
+  },
+  {
+    questionId: "q2",
+    mode: QuizAnswerModeEnum.SQUARE,
+    rawInput: "bonne réponse 2",
+    clientElapsedMs: 25_000,
+  },
 ];
 
 describe("the competition paths", () => {
@@ -90,6 +112,8 @@ describe("the finalize payload", () => {
       kind: "initial",
       themeId: "histoire",
       themeName: "Histoire",
+      imageUrl: IMAGE_URL,
+      category: CATEGORY,
       finalizeReason: "quit",
       score: 5,
       answers: Array.from({ length: 10 }, (_, position) => ({
@@ -97,7 +121,7 @@ describe("the finalize payload", () => {
         questionId: `q${position + 1}`,
         questionText: `Question ${position + 1} ?`,
         canonicalAnswer: `bonne réponse ${position + 1}`,
-        mode: "none",
+        mode: QuizAnswerModeEnum.NONE,
         rawInput: null,
         correct: false,
         points: 0,
@@ -112,8 +136,18 @@ describe("the finalize payload", () => {
 
     expect(JSON.parse(String(calls[0].init.body))).toStrictEqual({
       answers: [
-        { questionId: "q1", mode: "cash", rawInput: "Charlemagne", clientElapsedMs: 9_120 },
-        { questionId: "q2", mode: "square", rawInput: "bonne réponse 2", clientElapsedMs: 25_000 },
+        {
+          questionId: "q1",
+          mode: QuizAnswerModeEnum.CASH,
+          rawInput: "Charlemagne",
+          clientElapsedMs: 9_120,
+        },
+        {
+          questionId: "q2",
+          mode: QuizAnswerModeEnum.SQUARE,
+          rawInput: "bonne réponse 2",
+          clientElapsedMs: 25_000,
+        },
       ],
     });
   });
@@ -152,5 +186,26 @@ describe("what issuance may put on the device", () => {
     );
 
     expect(attempt?.questions[0]).toStrictEqual(issuedQuestion(1));
+  });
+});
+
+describe("the Attempt a Player is handed on arrival", () => {
+  it("resumes the one already under way, so dying mid-Reveal spends it and no draw replaces it", async () => {
+    const { api, calls } = client({ attempt: ISSUED_BODY });
+
+    const attempt = await resumeOrIssueAttempt(api);
+
+    expect(attempt.id).toBe(ATTEMPT_ID);
+    expect(calls).toHaveLength(1);
+    expect(calls[0].url).toBe(`${BASE_URL}/app/me/competition/attempts/active`);
+  });
+
+  it("draws a fresh one only for a Player holding none", async () => {
+    const { api, calls } = client({ attempt: null }, ISSUED_BODY);
+
+    const attempt = await resumeOrIssueAttempt(api);
+
+    expect(attempt.id).toBe(ATTEMPT_ID);
+    expect(calls.map((call) => call.init.method)).toStrictEqual(["GET", "POST"]);
   });
 });

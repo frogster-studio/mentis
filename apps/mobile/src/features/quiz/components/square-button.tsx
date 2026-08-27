@@ -1,10 +1,7 @@
-import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
-import { QUIET_PALETTE } from "@/components/ui/button";
-import { PRESS_DEPTH, usePressSink } from "@/components/ui/use-press-sink";
+import { Pressable, StyleSheet, Text } from "react-native";
+import { Squircle } from "@/components/ui/squircle";
 import { TEXT } from "@/theme/text";
-import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
-
-const MIN_HEIGHT = 72;
+import { COLORS, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
 
 export type SquareButtonProps = {
   label: string;
@@ -13,67 +10,44 @@ export type SquareButtonProps = {
 };
 
 export function SquareButton({ label, selected, onPress }: SquareButtonProps) {
-  const { travel, pressIn, pressOut } = usePressSink();
-
   return (
     <Pressable
       onPress={onPress}
-      onPressIn={pressIn}
-      onPressOut={pressOut}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ selected }}
-      style={styles.root}
+      style={({ pressed }) => [styles.root, pressed && styles.pressed]}
     >
-      <View style={styles.shadow} />
-      <Animated.View
-        style={[
-          styles.face,
-          selected && styles.faceSelected,
-          { transform: [{ translateY: travel }] },
-        ]}
+      <Squircle
+        radius={RADIUS.sm}
+        color={selected ? COLORS.primary : COLORS.face}
+        borderColor={selected ? COLORS.primary : COLORS.stroke}
+        borderWidth={1}
+        style={styles.face}
       >
         <Text style={styles.label}>{label}</Text>
-      </Animated.View>
+      </Squircle>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  // Holding the travel inside the layout box keeps the grid still as the face sinks.
   root: {
     flexGrow: 1,
     flexBasis: "45%",
-    paddingBottom: PRESS_DEPTH,
   },
-  shadow: {
-    position: "absolute",
-    top: PRESS_DEPTH,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: QUIET_PALETTE.shadow,
-    borderRadius: RADIUS.base,
-    borderCurve: "continuous",
-  },
+  pressed: PRESSED,
+  // flexGrow keeps the two cells of a row level while the taller label still sizes them.
   face: {
     flexGrow: 1,
-    minHeight: MIN_HEIGHT,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: SPACE.md,
-    backgroundColor: QUIET_PALETTE.face,
-    borderColor: QUIET_PALETTE.border,
-    borderWidth: 2,
-    borderRadius: RADIUS.base,
-    borderCurve: "continuous",
-  },
-  faceSelected: {
-    borderColor: COLORS.primary,
+    paddingVertical: SPACE.lg,
+    paddingHorizontal: SPACE.sm,
   },
   label: {
     ...TEXT.label,
-    color: QUIET_PALETTE.text,
+    color: COLORS.ink,
     textAlign: "center",
     userSelect: "none",
   },

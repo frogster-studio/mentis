@@ -1,9 +1,11 @@
 import { StyleSheet, Text, View } from "react-native";
+import { CategoryChip } from "@/components/category-chip";
 import { Card } from "@/components/ui/card";
 import { MAX_SESSION_SCORE } from "@/features/quiz/constants";
 import { formatAverage, formatSessionCount } from "@/features/quiz/stats";
 import { TEXT } from "@/theme/text";
 import { COLORS, SPACE } from "@/theme/tokens";
+import type { Category } from "@/types/quiz";
 
 // Holds the widest run « 37,5/50 » unwrapped, so every title starts on the same column.
 const STAT_SLOT_WIDTH = 82;
@@ -12,9 +14,10 @@ export type HomeThemeCardProps = {
   name: string;
   average: number;
   sessionCount: number;
+  category?: Category;
 };
 
-export function HomeThemeCard({ name, average, sessionCount }: HomeThemeCardProps) {
+export function HomeThemeCard({ name, average, sessionCount, category }: HomeThemeCardProps) {
   return (
     <Card>
       <View style={styles.row}>
@@ -26,7 +29,10 @@ export function HomeThemeCard({ name, average, sessionCount }: HomeThemeCardProp
           <Text style={styles.name} numberOfLines={1}>
             {name}
           </Text>
-          <Text style={styles.sessions}>{formatSessionCount(sessionCount)}</Text>
+          <View style={styles.meta}>
+            {category ? <CategoryChip category={category} /> : null}
+            <Text style={styles.sessions}>{formatSessionCount(sessionCount)}</Text>
+          </View>
         </View>
       </View>
     </Card>
@@ -50,6 +56,11 @@ const styles = StyleSheet.create({
   },
   titleSlot: {
     flex: 1,
+  },
+  meta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACE.sm,
   },
   name: {
     ...TEXT.cardTitle,

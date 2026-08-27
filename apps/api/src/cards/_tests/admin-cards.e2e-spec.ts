@@ -14,7 +14,7 @@ import {
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { ENV } from "../../_config/env.config";
 import { SUPABASE } from "../../_config/supabase.config";
-import type { CardEntity } from "../../_database/entities/card.entity";
+import { CardEntity } from "../../_database/entities/card.entity";
 import { stubDataSource, testEnv } from "../../_tests/test-env";
 import { AppModule } from "../../app.module";
 import { JWKS } from "../../auth/jwks";
@@ -81,13 +81,13 @@ const fakeCardsRepository = {
   },
   async create(content) {
     const now = nextTimestamp();
-    const row: CardEntity = {
+    const row = Object.assign(new CardEntity(), {
       id: randomUUID(),
       ...content,
       postedOn: [],
       createdAt: now,
       updatedAt: now,
-    };
+    });
     rows.push(row);
     return row;
   },

@@ -1,6 +1,5 @@
 import { Redirect, useRouter } from "expo-router";
-import { X } from "lucide-react-native";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { StyleSheet, type TextInput, View } from "react-native";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { QuietButton } from "@/components/ui/quiet-button";
@@ -28,7 +27,9 @@ import { useCompetitionStore } from "@/features/competition/store";
 import { AnswerFooter } from "@/features/quiz/components/answer-footer";
 import { PlayHeader } from "@/features/quiz/components/play-header";
 import { PlayScreen } from "@/features/quiz/components/play-screen";
+import { ThemeReveal } from "@/features/quiz/components/theme-reveal";
 import { usePlayClock } from "@/features/quiz/use-play-clock";
+import { useThemeReveal } from "@/features/quiz/use-theme-reveal";
 import { isApiError } from "@/lib/api/client";
 import { GUTTER, SPACE } from "@/theme/tokens";
 
@@ -62,17 +63,21 @@ export function CompetitionScreen() {
   const transcript = useTranscript(owner, attempt?.id, isJudgeable);
   // The queue is acked the moment the batch lands, so the transcript itself holds the screen after.
   const showResults = isJudgeable || transcript.data !== undefined;
+  // The server draws the Theme, so the Reveal can only start once its Attempt has landed.
+  const isRevealable = attempt?.status === "active" && !showResults;
+  const { isDone: isRevealDone, secondsLeft } = useThemeReveal(isRevealable);
 
-  useEffect(() => {
+  // Layout, so the play exists in the very frame the Reveal ends and no stand-in screen paints.
+  useLayoutEffect(() => {
     // A batch still owed owns the Attempt — replaying it would race its own answers.
     const stillQueued = queuedFinalize(
       useFinalizeOutboxStore.getState().entries,
       attempt?.id ?? "",
     );
-    if (attempt?.status === "active" && stillQueued === undefined) {
+    if (isRevealDone && attempt?.status === "active" && stillQueued === undefined) {
       startAttempt(attempt, Date.now());
     }
-  }, [attempt, startAttempt]);
+  }, [isRevealDone, attempt, startAttempt]);
 
   // Leaving the screen abandons the local play only: the Attempt stays active and resumes blank.
   useEffect(() => clearAttempt, [clearAttempt]);
@@ -137,7 +142,7 @@ export function CompetitionScreen() {
       <View style={styles.header}>
         <QuietButton
           layout="circle"
-          icon={X}
+          icon="close"
           accessibilityLabel={COMPETITION_QUIT_LABEL}
           onPress={goHome}
         />
@@ -186,8 +191,20 @@ export function CompetitionScreen() {
     );
   }
 
+  // The Attempt is already spent by the time this plays: dying here counts like any quit.
+  if (isRevealable && !isRevealDone && attempt) {
+    return (
+      <ThemeReveal
+        name={attempt.themeName}
+        imageUrl={attempt.imageUrl}
+        category={attempt.category}
+        secondsLeft={secondsLeft}
+      />
+    );
+  }
+
   // A just-finished Attempt holds here for the commit its batch takes to reach the queue.
-  if (!play || play.status === "finished") {
+  if (!play || !attempt || play.status === "finished") {
     return (
       <>
         {framed(<ScreenLoading />)}
@@ -200,10 +217,12 @@ export function CompetitionScreen() {
     <>
       <PlayScreen
         questionText={currentAttemptQuestion(play).text}
+        position={play.answers.length + 1}
+        total={play.questions.length}
+        categoryColor={attempt.category.color}
         header={
           <PlayHeader
-            position={play.answers.length + 1}
-            total={play.questions.length}
+            showCrown={true}
             endsAt={play.endsAt}
             now={now}
             quitLabel={COMPETITION_QUIT_LABEL}

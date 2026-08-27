@@ -18,7 +18,7 @@ Deliberately **not** a bounded context, so no `CONTEXT.md` and no row in `CONTEX
 - Decorator flags live directly in `tsconfig.json` — never move them into a shared base (bun bug oven-sh/bun#6326). `tsconfig.build.json` needs an explicit `rootDir` beside `outDir` (TS 6).
 - **Every row travels through TypeORM** ([ADR 0005](../../docs/adr/0005-the-api-reaches-its-data-through-typeorm.md)): one long-lived `DataSource` on the session pooler, `synchronize: false`, migrations generated from the entities. The service client in `src/supabase.ts` never touches data — it serves `auth.admin.deleteUser` and the Card Images bucket, nothing else. There is still no per-request user-authed client, so owner scoping is explicit owner filters in the repository.
 - **`ConfigModule` is imported, never `@Global()`** — every module that needs `ENV`, `SUPABASE` or `JWKS` lists it, `TypeOrmModule.forRootAsync({ imports: [ConfigModule] })` included: a dynamic module resolves in its own scope, not the root's.
-- **The schema lives in `src/_database/migrations/`, generated from the entities** — there is no Supabase CLI and no `supabase/` directory. `migration:generate` emits only what entity metadata carries, and it *drops* any index, check, unique or foreign key it finds in the database but not on an entity — so every one of those belongs on the entity (`@Index`, `@Check`, `@Unique`, a relation with `onDelete`), including the cascade to `auth.users`, which `auth-user.entity.ts` mirrors read-only for exactly that reason.
+- **The schema lives in `src/_database/migrations/`, generated from the entities** — there is no Supabase CLI and no `supabase/` directory. `migration:generate` emits only what entity metadata carries, and it *drops* any index, unique or foreign key it finds in the database but not on an entity — so every one of those belongs on the entity (`@Index`, `@Unique`, a relation with `onDelete`), including the cascade to `auth.users`, which `auth-user.entity.ts` mirrors read-only for exactly that reason.
 - **Migrations are generated output, and Hugo runs the generator.** An agent edits the entities and stops there — `bun run migration:generate` is Hugo's command, never an agent's, and a migration is never authored, renamed or edited by hand. What generation cannot emit (RLS, grants, triggers, bucket rows) stays out of the repo: hand it over as SQL snippets for the Supabase dashboard editor, one plain-English comment per statement. The schema is still born locked per [ADR 0003](../../docs/adr/0003-database-admits-only-the-api.md) — RLS everywhere, zero policies, `service_role` alone — but that lock now lives outside the repo, so a new table or function is unreachable until its grant is run by hand.
 - Supabase Auth signs access tokens with ES256 asymmetric keys, so JWT verification is local — `jose` against the project JWKS with `iss`/`aud`/`alg` pinned, never a per-request Auth-server call and never the legacy JWT secret. The namespace prefix is the auth boundary: `EditorGuard` on `/admin/*`, `SupabaseUserGuard` on `/app/me/*`, no auth guard on public `/app` reads.
 - Every non-2xx body is the `ErrorResponse` envelope from `@mentis/contracts/shared`, emitted by `HttpErrorFilter` and nowhere else.
@@ -65,6 +65,13 @@ Only those four are features. Everything below them is transversal spine — no 
   ```
   ✅ src/_database/entities/card.entity.ts
   ❌ src/cards/card.entity.ts
+  ```
+
+- **Entities all share one shape.** A new entity copies an existing one — `theme.entity.ts` is the reference.
+
+  ```ts
+  // ✅ extends BaseEntity, generated uuid key, @Column options, Relation<T>, no `!`
+  // ❌ @PrimaryColumn("text"), @Check on the class, a bare relation type, id!: string
   ```
 
 - **Every test lives in a `_tests/` folder**, beside the code it proves — `src/<feature>/_tests/` per feature, `src/auth/_tests/` and `src/common/_tests/` for the spine, `src/_tests/` for the shared harness and what no feature owns. There is no top-level `test/` — vitest looks inside `src/` only, and `tsconfig.build.json` keeps every `_tests/` out of the emit.

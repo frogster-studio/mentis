@@ -6,9 +6,9 @@ import type {
   AppThemeListResponse,
 } from "@mentis/contracts/app";
 
-export type QuizMode = "cash" | "square";
-
 export type ThemeWithCount = AppThemeListResponse[number];
+
+export type Category = ThemeWithCount["category"];
 
 export type Question = AppQuestionDrawResponse[number];
 

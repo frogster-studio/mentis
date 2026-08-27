@@ -15,3 +15,16 @@ code's reason for existing isn't obvious from reading it (business-logic "why"),
 explain what changed or why it used to be different — that's `docs/adr/` territory, not a
 comment. One short sentence max; never multi-line. The rule binds file headers exactly as
 it binds inline comments — a multi-line header block is the same violation.
+
+## Shared vocabularies
+
+A closed set of values is an enum in `packages/contracts/src/enums/`, never a union of string
+literals: one enum per file, named `*Enum` in a `*.enum.ts` file, keys and values UPPERCASE,
+imported by every app and package rather than re-declared or re-spelled.
+
+```ts
+// ✅ packages/contracts/src/enums/quiz-answer-mode.enum.ts
+export enum QuizAnswerModeEnum { CASH = "CASH", SQUARE = "SQUARE", NONE = "NONE" }
+
+// ❌ export type MatchedVia = "canonical" | "alias" | "misspelling" | "fuzzy";
+```

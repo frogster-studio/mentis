@@ -7,8 +7,8 @@ import { createLocalJWKSet, exportJWK, generateKeyPair, type JWTPayload, SignJWT
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { ENV } from "../../_config/env.config";
 import { SUPABASE } from "../../_config/supabase.config";
-import type { QuizSessionEntity } from "../../_database/entities/quiz-session.entity";
-import type { StatBaselineEntity } from "../../_database/entities/stat-baseline.entity";
+import { QuizSessionEntity } from "../../_database/entities/quiz-session.entity";
+import { StatBaselineEntity } from "../../_database/entities/stat-baseline.entity";
 import { stubDataSource, testEnv } from "../../_tests/test-env";
 import { AppModule } from "../../app.module";
 import { JWKS } from "../../auth/jwks";
@@ -31,28 +31,30 @@ const sessionRow = (
   id: string,
   owner: string,
   overrides: Partial<QuizSessionEntity> = {},
-): QuizSessionEntity => ({
-  id,
-  owner,
-  themeId: "geo",
-  themeName: "Géographie",
-  points: 30,
-  finishedAt: new Date("2026-08-11T10:00:00.000Z"),
-  ...overrides,
-});
+): QuizSessionEntity =>
+  Object.assign(new QuizSessionEntity(), {
+    id,
+    owner,
+    themeId: "geo",
+    themeName: "Géographie",
+    points: 30,
+    finishedAt: new Date("2026-08-11T10:00:00.000Z"),
+    ...overrides,
+  });
 
 const baselineRow = (
   owner: string,
   overrides: Partial<StatBaselineEntity> = {},
-): StatBaselineEntity => ({
-  owner,
-  device: DEVICE_A,
-  themeId: "geo",
-  themeName: "Géographie",
-  totalPoints: 120,
-  sessionCount: 4,
-  ...overrides,
-});
+): StatBaselineEntity =>
+  Object.assign(new StatBaselineEntity(), {
+    owner,
+    device: DEVICE_A,
+    themeId: "geo",
+    themeName: "Géographie",
+    totalPoints: 120,
+    sessionCount: 4,
+    ...overrides,
+  });
 
 // ON CONFLICT DO NOTHING and the owner FK, in memory: the SQL itself is proven by the live smoke.
 const insertIfAbsent = <Row extends { owner: string }>(

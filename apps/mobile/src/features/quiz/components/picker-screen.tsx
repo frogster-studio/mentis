@@ -1,31 +1,75 @@
-import { useRouter } from "expo-router";
-import { ChevronLeft } from "lucide-react-native";
-import { useMemo } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { BlurBand } from "@/components/ui/blur-band";
-import { QuietButton } from "@/components/ui/quiet-button";
+import { useNavigation, useRouter } from "expo-router";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Animated, StyleSheet, Text, View } from "react-native";
+import { categoryWash } from "@/components/category-color";
+import { HEADER_DIVIDER_HEIGHT, HeaderCard, useHeaderCardHeight } from "@/components/header-card";
+import { NewButton } from "@/components/ui/new-button";
 import { ScreenContainer } from "@/components/ui/screen-container";
 import { ScreenError } from "@/components/ui/screen-error";
 import { ScreenLoading } from "@/components/ui/screen-loading";
+import { Sheet } from "@/components/ui/sheet";
 import { useThemes } from "@/features/quiz/api";
+import { HomeEmptyState } from "@/features/quiz/components/home-empty-state";
+import { SwipeToStart } from "@/features/quiz/components/swipe-to-start";
 import { ThemeCard } from "@/features/quiz/components/theme-card";
-import { PICKER_BACK_LABEL, PICKER_ERROR, PICKER_TITLE } from "@/features/quiz/constants";
+import {
+  HOME_EMPTY_TITLE,
+  PICKER_BACK_LABEL,
+  PICKER_ERROR,
+  PICKER_SUBTITLE,
+  PICKER_TITLE,
+  PRACTICE_TITLE,
+} from "@/features/quiz/constants";
 import { drawThemes } from "@/features/quiz/draw";
+import { prefetchThemeImages } from "@/features/quiz/theme-image-cache";
+import { type ColorCrossFade, useColorCrossFade } from "@/features/quiz/use-color-cross-fade";
 import { TEXT } from "@/theme/text";
-import { COLORS, CONTROL_HEIGHT, GUTTER, SPACE } from "@/theme/tokens";
+import { COLORS, CONTROL_SQUARE_SIZE, GUTTER, SPACE } from "@/theme/tokens";
+import type { ThemeWithCount } from "@/types/quiz";
 
-// The band pads its own top inset, so the screen under it must not spend it twice.
-const PICKER_EDGES = ["left", "right", "bottom"] as const;
-const HEADER_ROW_HEIGHT = CONTROL_HEIGHT + SPACE.md * 2;
+const TITLE_HALF_HEIGHT =
+  HEADER_DIVIDER_HEIGHT +
+  SPACE.xxl +
+  TEXT.display.lineHeight +
+  SPACE.sm +
+  TEXT.caption.lineHeight +
+  SPACE.lg;
 
 export function PickerScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { data, isPending, isError, isFetching, refetch } = useThemes();
   // One Draw per visit: recomputed on every mount, stable while the screen stays up.
   const draw = useMemo(() => (data ? drawThemes(data, Math.random) : []), [data]);
-  const headerHeight = insets.top + HEADER_ROW_HEIGHT;
+  const [selected, setSelected] = useState<ThemeWithCount | null>(null);
+  const [helpVisible, setHelpVisible] = useState(false);
+  const scrollOffset = useRef(new Animated.Value(0)).current;
+  const headerHeight = useHeaderCardHeight(TITLE_HALF_HEIGHT);
+  const wash = useColorCrossFade(selected ? categoryWash(selected.category.color) : null);
+  const leave = useBarredBackGestures(() => router.back());
+
+  // The Draw warms the image cache as it renders, so the Reveal of whichever Theme wins is instant.
+  useEffect(() => {
+    const imageUrls = draw.map((theme) => theme.imageUrl);
+    prefetchThemeImages(imageUrls);
+  }, [draw]);
+
+  const onStart = () => {
+    if (!selected) {
+      return;
+    }
+    router.push({
+      pathname: "/session/[themeId]",
+      params: {
+        themeId: selected.id,
+        name: selected.name,
+        imageUrl: selected.imageUrl,
+        categoryId: selected.category.id,
+        categoryName: selected.category.name,
+        categoryColor: selected.category.color,
+        categoryIcon: selected.category.icon,
+      },
+    });
+  };
 
   // A retry leaves the query in "error" until it lands, so the spinner stands in for it.
   const feedback =
@@ -36,44 +80,119 @@ export function PickerScreen() {
     ) : null;
 
   return (
-    <ScreenContainer edges={PICKER_EDGES}>
+    <ScreenContainer edges={["left", "right"]} underlay={<SelectionWash wash={wash} />}>
       {feedback ? (
         <View style={[styles.feedback, { paddingTop: headerHeight }]}>{feedback}</View>
       ) : (
-        <ScrollView
+        <Animated.ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={[styles.list, { paddingTop: headerHeight }]}
+          onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollOffset } } }], {
+            useNativeDriver: true,
+          })}
+          scrollEventThrottle={16}
+          contentContainerStyle={[
+            styles.list,
+            { paddingTop: headerHeight + SPACE.md, paddingBottom: 200 },
+          ]}
         >
           {draw.map((theme) => (
             <ThemeCard
               key={theme.id}
               name={theme.name}
-              onPress={() =>
-                router.push({
-                  pathname: "/session/[themeId]",
-                  params: { themeId: theme.id, name: theme.name },
-                })
-              }
+              color={theme.category.color}
+              category={theme.category}
+              noSelection={!selected}
+              isSelected={theme.id === selected?.id}
+              onPress={() => setSelected(theme)}
             />
           ))}
-        </ScrollView>
+        </Animated.ScrollView>
       )}
-      {/* After the list in JSX: expo-blur only blurs what mounted before it. */}
-      <BlurBand edge="top">
-        <View style={[styles.header, { height: headerHeight, paddingTop: insets.top + SPACE.md }]}>
-          <QuietButton
-            layout="circle"
-            icon={ChevronLeft}
-            accessibilityLabel={PICKER_BACK_LABEL}
-            onPress={() => router.back()}
-          />
+      <HeaderCard
+        collapseHeight={TITLE_HALF_HEIGHT}
+        scrollOffset={scrollOffset}
+        mask={<SelectionWash wash={wash} />}
+        topRow={
+          <>
+            <View style={styles.labelSlot}>
+              <Text style={styles.label}>{PRACTICE_TITLE}</Text>
+            </View>
+            <View style={styles.actions}>
+              <NewButton
+                layout="hug"
+                icon="tooltip-question-outline"
+                accessibilityLabel={HOME_EMPTY_TITLE}
+                onPress={() => setHelpVisible(true)}
+              />
+              <NewButton
+                layout="hug"
+                icon="close"
+                accessibilityLabel={PICKER_BACK_LABEL}
+                onPress={leave}
+              />
+            </View>
+          </>
+        }
+      >
+        <View style={styles.titleHalf}>
           <Text style={styles.title}>{PICKER_TITLE}</Text>
-          {/* Balances the back circle, so the title holds the screen's centre line. */}
-          <View style={styles.spacer} />
+          <Text style={styles.subtitle}>{PICKER_SUBTITLE}</Text>
         </View>
-      </BlurBand>
+      </HeaderCard>
+      <SwipeToStart category={selected?.category ?? null} onStart={onStart} />
+      <Sheet visible={helpVisible} onDismiss={() => setHelpVisible(false)}>
+        <HomeEmptyState />
+      </Sheet>
     </ScreenContainer>
   );
+}
+
+// The wash rides between the paper's grid and the content, so the squares keep showing through.
+function SelectionWash({ wash }: { wash: ColorCrossFade }) {
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      {wash.base ? (
+        <Animated.View
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: wash.base, opacity: wash.baseOpacity },
+          ]}
+        />
+      ) : null}
+      {wash.top ? (
+        <Animated.View
+          style={[StyleSheet.absoluteFill, { backgroundColor: wash.top, opacity: wash.topOpacity }]}
+        />
+      ) : null}
+    </View>
+  );
+}
+
+// The pill's drag starts at the screen edge, so both OS back gestures are barred on this screen.
+function useBarredBackGestures(goBack: () => void) {
+  const navigation = useNavigation();
+  const leavingRef = useRef(false);
+
+  // iOS: the edge swipe never starts. Android's system gesture lands as GO_BACK below.
+  useEffect(() => {
+    navigation.setOptions({ gestureEnabled: false });
+  }, [navigation]);
+
+  useEffect(
+    () =>
+      navigation.addListener("beforeRemove", (event) => {
+        // A pop from a screen above (the session quitting home) must keep its way through.
+        if (navigation.isFocused() && !leavingRef.current) {
+          event.preventDefault();
+        }
+      }),
+    [navigation],
+  );
+
+  return () => {
+    leavingRef.current = true;
+    goBack();
+  };
 }
 
 const styles = StyleSheet.create({
@@ -82,23 +201,33 @@ const styles = StyleSheet.create({
   },
   list: {
     paddingHorizontal: GUTTER,
-    paddingBottom: GUTTER,
-    gap: SPACE.md,
+    gap: SPACE.sm,
   },
-  // Taps stop at the band, so a card scrolled half under it is never hit by mistake.
-  header: {
+  labelSlot: {
+    flex: 1,
+    height: CONTROL_SQUARE_SIZE,
+    justifyContent: "center",
+  },
+  label: {
+    ...TEXT.body,
+    color: COLORS.ink,
+  },
+  actions: {
     flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: GUTTER,
-    paddingVertical: SPACE.md,
+    gap: SPACE.sm,
+  },
+  titleHalf: {
+    paddingHorizontal: SPACE.lg,
+    paddingTop: SPACE.xxl,
+    paddingBottom: SPACE.lg,
   },
   title: {
-    ...TEXT.screenTitle,
-    flex: 1,
+    ...TEXT.display,
     color: COLORS.ink,
-    textAlign: "center",
   },
-  spacer: {
-    width: CONTROL_HEIGHT,
+  subtitle: {
+    ...TEXT.caption,
+    color: COLORS.inkMuted,
+    marginTop: SPACE.sm,
   },
 });

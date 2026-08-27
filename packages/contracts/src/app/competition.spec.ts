@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { QuizAnswerModeEnum, UserAnswerMatchedViaEnum } from "../enums";
 import {
   appCompetitionActiveAttemptResponseSchema,
   appCompetitionAttemptResponseSchema,
@@ -16,6 +17,9 @@ const question = (index: number, overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
+const CATEGORY = { id: "nature", name: "Nature", color: "#2e7d32", icon: "park" };
+const IMAGE_URL = "https://cdn.example.com/storage/v1/object/public/theme-images/geo.webp";
+
 const attempt = (overrides: Record<string, unknown> = {}) => ({
   id: "3f2b1c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
   day: "2026-08-20",
@@ -23,6 +27,8 @@ const attempt = (overrides: Record<string, unknown> = {}) => ({
   status: "active",
   themeId: "geo",
   themeName: "Géographie",
+  imageUrl: IMAGE_URL,
+  category: CATEGORY,
   questions: Array.from({ length: COMPETITION_QUESTION_COUNT }, (_, index) => question(index)),
   ...overrides,
 });
@@ -65,6 +71,20 @@ describe("appCompetitionAttemptResponseSchema", () => {
     ).toBe(false);
   });
 
+  it("carries the drawn Theme's visuals, so the phone never joins on its cached list", () => {
+    const parsed = appCompetitionAttemptResponseSchema.parse(attempt());
+    expect(parsed.imageUrl).toBe(IMAGE_URL);
+    expect(parsed.category).toEqual(CATEGORY);
+  });
+
+  it("rejects an Attempt whose Theme carries no visuals", () => {
+    expect(
+      appCompetitionAttemptResponseSchema.safeParse(attempt({ imageUrl: "geo.webp" })).success,
+    ).toBe(false);
+    const { category: _dropped, ...withoutCategory } = attempt();
+    expect(appCompetitionAttemptResponseSchema.safeParse(withoutCategory).success).toBe(false);
+  });
+
   it("rejects a Competition Day that is not a plain Europe/Paris date", () => {
     expect(
       appCompetitionAttemptResponseSchema.safeParse(attempt({ day: "2026-08-20T00:00:00.000Z" }))
@@ -98,11 +118,11 @@ const verdict = (index: number, overrides: Record<string, unknown> = {}) => ({
   questionId: `q${index}`,
   questionText: `Question ${index} ?`,
   canonicalAnswer: "Paris",
-  mode: "cash",
+  mode: QuizAnswerModeEnum.CASH,
   rawInput: "paris",
   correct: true,
   points: COMPETITION_POINTS.cash,
-  matchedVia: "canonical",
+  matchedVia: UserAnswerMatchedViaEnum.CANONICAL,
   ...overrides,
 });
 
@@ -112,6 +132,8 @@ const transcript = (overrides: Record<string, unknown> = {}) => ({
   kind: "initial",
   themeId: "geo",
   themeName: "Géographie",
+  imageUrl: IMAGE_URL,
+  category: CATEGORY,
   finalizeReason: "completed",
   score: COMPETITION_QUESTION_COUNT * COMPETITION_POINTS.cash,
   answers: Array.from({ length: COMPETITION_QUESTION_COUNT }, (_, index) => verdict(index)),
@@ -121,7 +143,7 @@ const transcript = (overrides: Record<string, unknown> = {}) => ({
 describe("appCompetitionFinalizeInputSchema", () => {
   const answer = (index: number, overrides: Record<string, unknown> = {}) => ({
     questionId: `q${index}`,
-    mode: "cash",
+    mode: QuizAnswerModeEnum.CASH,
     rawInput: "paris",
     clientElapsedMs: 4200,
     ...overrides,
@@ -142,8 +164,9 @@ describe("appCompetitionFinalizeInputSchema", () => {
 
   it("rejects a mode the phone cannot have played", () => {
     expect(
-      appCompetitionFinalizeInputSchema.safeParse({ answers: [answer(0, { mode: "none" })] })
-        .success,
+      appCompetitionFinalizeInputSchema.safeParse({
+        answers: [answer(0, { mode: QuizAnswerModeEnum.NONE })],
+      }).success,
     ).toBe(false);
   });
 
@@ -153,7 +176,7 @@ describe("appCompetitionFinalizeInputSchema", () => {
     });
     expect(parsed.answers[0]).toEqual({
       questionId: "q0",
-      mode: "cash",
+      mode: QuizAnswerModeEnum.CASH,
       rawInput: "paris",
       clientElapsedMs: 4200,
     });
@@ -165,9 +188,15 @@ describe("appCompetitionTranscriptResponseSchema", () => {
     const parsed = appCompetitionTranscriptResponseSchema.parse(transcript());
     expect(parsed.answers[0]).toMatchObject({
       canonicalAnswer: "Paris",
-      matchedVia: "canonical",
+      matchedVia: UserAnswerMatchedViaEnum.CANONICAL,
       points: COMPETITION_POINTS.cash,
     });
+  });
+
+  it("carries the same Theme visuals the issuance served", () => {
+    const parsed = appCompetitionTranscriptResponseSchema.parse(transcript());
+    expect(parsed.imageUrl).toBe(IMAGE_URL);
+    expect(parsed.category).toEqual(CATEGORY);
   });
 
   it("accepts an unresolved position — no mode, no input, no rule", () => {
@@ -177,7 +206,7 @@ describe("appCompetitionTranscriptResponseSchema", () => {
         score: 0,
         answers: Array.from({ length: COMPETITION_QUESTION_COUNT }, (_, index) =>
           verdict(index, {
-            mode: "none",
+            mode: QuizAnswerModeEnum.NONE,
             rawInput: null,
             correct: false,
             points: 0,
@@ -186,7 +215,7 @@ describe("appCompetitionTranscriptResponseSchema", () => {
         ),
       }),
     );
-    expect(parsed.answers[0].mode).toBe("none");
+    expect(parsed.answers[0].mode).toBe(QuizAnswerModeEnum.NONE);
   });
 
   it("holds a verdict for every served position and nothing above the Cash ceiling", () => {

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView, type SafeAreaViewProps } from "react-native-safe-area-context";
+import { PaperBackground } from "@/components/ui/paper-background";
 import { COLORS } from "@/theme/tokens";
 
 // Desktop web must not stretch edge-to-edge; on phones the cap never engages.
@@ -12,11 +13,17 @@ export const TAB_SCREEN_EDGES = ["left", "right"] as const;
 export type ScreenContainerProps = {
   children: ReactNode;
   edges?: SafeAreaViewProps["edges"];
+  background?: string;
+  // Painted over the whole paper but under the content — a translucent wash keeps the grid showing.
+  underlay?: ReactNode;
 };
 
-export function ScreenContainer({ children, edges }: ScreenContainerProps) {
+export function ScreenContainer({ children, edges, background, underlay }: ScreenContainerProps) {
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, background ? { backgroundColor: background } : null]}>
+      {/* The grid belongs to the paper; a screen that washes itself another colour drops it. */}
+      {background ? null : <PaperBackground />}
+      {underlay}
       <SafeAreaView style={styles.content} edges={edges}>
         {children}
       </SafeAreaView>

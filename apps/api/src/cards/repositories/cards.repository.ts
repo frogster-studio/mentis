@@ -1,7 +1,8 @@
+import type { Social } from "@mentis/contracts/admin";
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { CardEntity, type CardNetwork } from "../../_database/entities/card.entity";
+import { CardEntity } from "../../_database/entities/card.entity";
 
 export type CardContent = Pick<CardEntity, "type" | "title" | "tags" | "payload" | "images">;
 
@@ -61,7 +62,7 @@ export class CardsRepository {
   }
 
   // The set_updated_at trigger ignores a posted_on-only write, so marking never reorders the library.
-  async setPosted(id: string, postedOn: CardNetwork[]): Promise<CardEntity | null> {
+  async setPosted(id: string, postedOn: Social[]): Promise<CardEntity | null> {
     const { affected } = await this.cards.update({ id }, { postedOn });
     if (affected === 0) {
       return null;

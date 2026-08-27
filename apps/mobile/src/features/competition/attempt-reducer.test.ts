@@ -1,4 +1,5 @@
 import type { AppCompetitionAttemptResponse } from "@mentis/contracts/app";
+import { QuizAnswerModeEnum } from "@mentis/contracts/enums";
 import { describe, expect, it } from "vitest";
 import { COUNTDOWN_DURATION_MS } from "@/features/quiz/constants";
 import {
@@ -22,6 +23,8 @@ const ISSUED: AppCompetitionAttemptResponse = {
   status: "active",
   themeId: "histoire",
   themeName: "Histoire",
+  imageUrl: "https://stub.supabase.co/storage/v1/object/public/theme-images/histoire.webp",
+  category: { id: "culture", name: "Culture", color: "#6a1b9a", icon: "menu-book" },
   questions: Array.from({ length: 10 }, (_, index) => ({
     id: `q${index + 1}`,
     text: `Question ${index + 1} ?`,
@@ -41,7 +44,7 @@ describe("createAttempt", () => {
     expect(state.status).toBe("active");
     expect(state.answers).toStrictEqual([]);
     expect(state.input).toBe("");
-    expect(state.mode).toBe("cash");
+    expect(state.mode).toBe(QuizAnswerModeEnum.CASH);
     expect(state.choices).toBeNull();
     expect(state.endsAt).toBe(T0 + COUNTDOWN_DURATION_MS);
     expect(currentAttemptQuestion(state)).toBe(ISSUED.questions[0]);
@@ -54,7 +57,12 @@ describe("the recorded answer", () => {
     const state = attemptReducer(typed, { type: "confirm", now: T0 + 9_000 });
 
     expect(state.answers).toStrictEqual([
-      { questionId: "q1", mode: "cash", rawInput: "Charlemagne", clientElapsedMs: 9_000 },
+      {
+        questionId: "q1",
+        mode: QuizAnswerModeEnum.CASH,
+        rawInput: "Charlemagne",
+        clientElapsedMs: 9_000,
+      },
     ]);
   });
 
@@ -92,7 +100,7 @@ describe("switchToSquare", () => {
     const typed = attemptReducer(activeAttempt(), { type: "setInput", value: "à moitié tapé" });
     const state = attemptReducer(typed, { type: "switchToSquare" });
 
-    expect(state.mode).toBe("square");
+    expect(state.mode).toBe(QuizAnswerModeEnum.SQUARE);
     expect(state.input).toBe("");
     expect(state.choices).toStrictEqual(squareChoices(1));
     expect(state.endsAt).toBe(typed.endsAt);
@@ -111,7 +119,7 @@ describe("switchToSquare", () => {
 
     expect(state.answers[0]).toStrictEqual({
       questionId: "q1",
-      mode: "square",
+      mode: QuizAnswerModeEnum.SQUARE,
       rawInput: "bonne réponse 1",
       clientElapsedMs: 4_000,
     });
@@ -129,7 +137,12 @@ describe("expire", () => {
     const expired = attemptReducer(state, { type: "expire", now: state.endsAt + 40 });
 
     expect(expired.answers).toStrictEqual([
-      { questionId: "q1", mode: "cash", rawInput: "", clientElapsedMs: COUNTDOWN_DURATION_MS },
+      {
+        questionId: "q1",
+        mode: QuizAnswerModeEnum.CASH,
+        rawInput: "",
+        clientElapsedMs: COUNTDOWN_DURATION_MS,
+      },
     ]);
     expect(expired.endsAt).toBe(state.endsAt + 40 + COUNTDOWN_DURATION_MS);
   });

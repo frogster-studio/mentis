@@ -1,4 +1,5 @@
 import { COMPETITION_POINTS, COMPETITION_QUESTION_COUNT } from "@mentis/contracts/app";
+import { QuizAnswerModeEnum, UserAnswerMatchedViaEnum } from "@mentis/contracts/enums";
 import { errorResponseSchema } from "@mentis/contracts/shared";
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
@@ -6,10 +7,10 @@ import { getDataSourceToken } from "@nestjs/typeorm";
 import { createLocalJWKSet, exportJWK, generateKeyPair, type JWTPayload, SignJWT } from "jose";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { ENV } from "../../_config/env.config";
-import type { CompetitionAnswerEntity } from "../../_database/entities/competition-answer.entity";
-import type {
+import { CompetitionAnswerEntity } from "../../_database/entities/competition-answer.entity";
+import {
   CompetitionAttemptEntity,
-  CompetitionFinalizeReason,
+  type CompetitionFinalizeReason,
 } from "../../_database/entities/competition-attempt.entity";
 import { stubDataSource, testEnv } from "../../_tests/test-env";
 import { AppModule } from "../../app.module";
@@ -18,8 +19,10 @@ import {
   CatalogRepository,
   type DrawnQuestion,
 } from "../../catalog/repositories/catalog.repository";
+import { THEME_IMAGES_BUCKET } from "../../catalog/utils/theme-image-url";
 import { CompetitionRepository } from "../repositories/competition.repository";
 import type { FinalizedOutcome } from "../types/finalized-outcome";
+import type { NewCompetitionAnswer } from "../types/new-competition-answer";
 import { CLOCK } from "../utils/clock";
 import { competitionDay, daysBefore } from "../utils/competition-day";
 
@@ -81,37 +84,44 @@ const JUDGED_QUESTIONS: DrawnQuestion[] = [
 const JUDGED_IDS = JUDGED_QUESTIONS.map((question) => question.id);
 const JUDGED_ATTEMPT = attemptId(20);
 
-const THEMES = [
-  { id: "alpha", name: "Alpha" },
-  { id: "beta", name: "Beta" },
-  { id: "gamma", name: "Gamma" },
-  { id: "delta", name: "Delta" },
-  { id: "maigre", name: "Maigre" },
-];
+const CATEGORY = { id: "nature", name: "Nature", color: "#2e7d32", icon: "park" };
+
+const themeRow = (name: string) => ({
+  id: name.toLowerCase(),
+  name,
+  image: `${name.toLowerCase()}.webp`,
+  category: CATEGORY,
+});
+
+const THEMES = ["Alpha", "Beta", "Gamma", "Delta", "Maigre"].map(themeRow);
+// The judged Attempt's Theme sits outside the draw pool, yet its visuals still travel.
+const JUDGED_THEME = themeRow("France");
 const ELIGIBLE_THEME_IDS = ["alpha", "beta", "gamma", "delta"];
+
+const expectedImageUrl = (themeId: string) =>
+  `${testEnv.SUPABASE_URL}/storage/v1/object/public/${THEME_IMAGES_BUCKET}/${themeId}.webp`;
 
 const servedIds = (themeId: string) =>
   QUESTIONS.filter((question) => question.themeId === themeId)
     .slice(0, COMPETITION_QUESTION_COUNT)
     .map((question) => question.id);
 
-const attemptRow = (
-  overrides: Partial<CompetitionAttemptEntity> = {},
-): CompetitionAttemptEntity => ({
-  id: attemptId(99),
-  owner: PLAYER_A,
-  day: "2026-08-20",
-  kind: "initial",
-  status: "active",
-  themeId: "alpha",
-  themeName: "Alpha",
-  questionIds: servedIds("alpha"),
-  finalizeReason: null,
-  score: null,
-  issuedAt: new Date("2026-08-20T08:00:00.000Z"),
-  finalizedAt: null,
-  ...overrides,
-});
+const attemptRow = (overrides: Partial<CompetitionAttemptEntity> = {}): CompetitionAttemptEntity =>
+  Object.assign(new CompetitionAttemptEntity(), {
+    id: attemptId(99),
+    owner: PLAYER_A,
+    day: "2026-08-20",
+    kind: "initial",
+    status: "active",
+    themeId: "alpha",
+    themeName: "Alpha",
+    questionIds: servedIds("alpha"),
+    finalizeReason: null,
+    score: null,
+    issuedAt: new Date("2026-08-20T08:00:00.000Z"),
+    finalizedAt: null,
+    ...overrides,
+  });
 
 const PARIS_AFTERNOON = new Date("2026-08-20T12:00:00.000Z");
 let now = PARIS_AFTERNOON;
@@ -120,7 +130,7 @@ let draws: { themeId: string | null; count: number }[] = [];
 let issuedAttempts: { owner: string; day: string; kind: string }[] = [];
 let ineligibleThemeIds: string[] = [];
 let racingAttempt: CompetitionAttemptEntity | null = null;
-let answerRows: CompetitionAnswerEntity[] = [];
+let answerRows: NewCompetitionAnswer[] = [];
 let racingFinalize: FinalizedOutcome | null = null;
 
 // Stands in for Postgres at the repository seam: the SQL itself is proven by the live smoke.
@@ -136,6 +146,10 @@ const fakeCatalogRepository = {
   async themeExists(id) {
     return THEMES.some((theme) => theme.id === id);
   },
+  async themeVisualsById(id) {
+    const theme = [...THEMES, JUDGED_THEME].find((row) => row.id === id);
+    return theme === undefined ? null : { image: theme.image, category: theme.category };
+  },
   async drawRandomQuestions(themeId, count) {
     draws.push({ themeId, count });
     return QUESTIONS.filter((question) => question.themeId === themeId).slice(0, count);
@@ -145,7 +159,11 @@ const fakeCatalogRepository = {
   },
 } satisfies Pick<
   CatalogRepository,
-  "themesWithQuestionCounts" | "themeExists" | "drawRandomQuestions" | "questionsByIds"
+  | "themesWithQuestionCounts"
+  | "themeExists"
+  | "themeVisualsById"
+  | "drawRandomQuestions"
+  | "questionsByIds"
 >;
 
 const fakeCompetitionRepository = {
@@ -188,7 +206,8 @@ const fakeCompetitionRepository = {
   async findAnswers(id) {
     return answerRows
       .filter((row) => row.attemptId === id)
-      .sort((left, right) => left.position - right.position);
+      .sort((left, right) => left.position - right.position)
+      .map((row) => Object.assign(new CompetitionAnswerEntity(), row));
   },
   async findFinalizedDayScores(owner, from, to) {
     return attemptRows
@@ -224,7 +243,7 @@ const applyFinalize = (
   id: string,
   reason: CompetitionFinalizeReason,
   score: number,
-  answers: CompetitionAnswerEntity[],
+  answers: NewCompetitionAnswer[],
 ): CompetitionAttemptEntity | null => {
   const attempt = attemptRows.find((row) => row.id === id);
   if (attempt === undefined || attempt.status !== "active") {
@@ -350,6 +369,25 @@ describe("app competition routes e2e", () => {
     expect(attemptRows[0].questionIds).toEqual(
       body.questions.map((question: { id: string }) => question.id),
     );
+  });
+
+  it("carries the drawn Theme's image and Category, so no cached theme list is joined", async () => {
+    const body = await issued(tokenA);
+
+    expect(body).toMatchObject({
+      imageUrl: expectedImageUrl(body.themeId),
+      category: CATEGORY,
+    });
+  });
+
+  it("serves the same Theme visuals to the Attempt a crashed phone resumes", async () => {
+    const issuance = await issued(tokenA);
+
+    const { attempt } = await readActiveBody(tokenA);
+    expect(attempt).toMatchObject({
+      imageUrl: issuance.imageUrl,
+      category: CATEGORY,
+    });
   });
 
   it("serves every Question with its 4 pre-shuffled Square choices", async () => {
@@ -538,7 +576,7 @@ describe("app competition routes e2e", () => {
       expect(
         answerRows.every(
           (answer) =>
-            answer.mode === "none" &&
+            answer.mode === QuizAnswerModeEnum.NONE &&
             answer.points === 0 &&
             answer.rawInput === null &&
             answer.correct === false,
@@ -606,7 +644,7 @@ describe("app competition routes e2e", () => {
           attemptId: JUDGED_ATTEMPT,
           position,
           questionId,
-          mode: "none",
+          mode: QuizAnswerModeEnum.NONE,
           rawInput: null,
           correct: false,
           points: 0,
@@ -632,7 +670,11 @@ describe("app competition routes e2e", () => {
   });
 
   describe("finalize", () => {
-    const played = (position: number, rawInput: string, mode: "cash" | "square" = "cash") => ({
+    const played = (
+      position: number,
+      rawInput: string,
+      mode: QuizAnswerModeEnum = QuizAnswerModeEnum.CASH,
+    ) => ({
       questionId: JUDGED_IDS[position],
       mode,
       rawInput,
@@ -653,8 +695,8 @@ describe("app competition routes e2e", () => {
       played(4, "1799"),
       played(5, "versingetorix"),
       played(6, "krisantème"),
-      played(7, "Seine", "square"),
-      played(8, "faux-a-8", "square"),
+      played(7, "Seine", QuizAnswerModeEnum.SQUARE),
+      played(8, "faux-a-8", QuizAnswerModeEnum.SQUARE),
       played(9, "Or"),
     ];
 
@@ -684,16 +726,16 @@ describe("app competition routes e2e", () => {
       expect(
         body.answers.map((answer: { matchedVia: string | null }) => answer.matchedVia),
       ).toEqual([
-        "canonical",
-        "alias",
-        "alias",
-        "fuzzy",
+        UserAnswerMatchedViaEnum.CANONICAL,
+        UserAnswerMatchedViaEnum.ALIAS,
+        UserAnswerMatchedViaEnum.ALIAS,
+        UserAnswerMatchedViaEnum.FUZZY,
         null,
-        "fuzzy",
-        "misspelling",
-        "choice",
+        UserAnswerMatchedViaEnum.FUZZY,
+        UserAnswerMatchedViaEnum.MISSPELLING,
+        UserAnswerMatchedViaEnum.CHOICE,
         null,
-        "canonical",
+        UserAnswerMatchedViaEnum.CANONICAL,
       ]);
       expect(body.answers.map((answer: { points: number }) => answer.points)).toEqual([
         COMPETITION_POINTS.cash,
@@ -726,6 +768,16 @@ describe("app competition routes e2e", () => {
       ).toEqual(JUDGED_QUESTIONS.map((question) => question.answer));
     });
 
+    it("carries the Theme visuals the Attempt was issued with", async () => {
+      const body = await finalized(tokenA, fullBatch());
+
+      expect(body).toMatchObject({
+        themeName: "France",
+        imageUrl: expectedImageUrl("france"),
+        category: CATEGORY,
+      });
+    });
+
     it("stores the ten judged rows and marks the Attempt completed", async () => {
       const body = await finalized(tokenA, fullBatch());
 
@@ -735,9 +787,9 @@ describe("app competition routes e2e", () => {
         attemptId: JUDGED_ATTEMPT,
         position: 7,
         questionId: JUDGED_IDS[7],
-        mode: "square",
+        mode: QuizAnswerModeEnum.SQUARE,
         rawInput: "Seine",
-        matchedVia: "choice",
+        matchedVia: UserAnswerMatchedViaEnum.CHOICE,
         clientElapsedMs: 4207,
       });
       expect(attemptRows[0]).toMatchObject({ status: "finalized", finalizeReason: "completed" });
@@ -782,7 +834,7 @@ describe("app competition routes e2e", () => {
       expect(body.answers[1]).toMatchObject({
         position: 1,
         questionId: JUDGED_IDS[1],
-        mode: "none",
+        mode: QuizAnswerModeEnum.NONE,
         rawInput: null,
         correct: false,
         points: 0,
@@ -795,7 +847,11 @@ describe("app competition routes e2e", () => {
       const body = await finalized(tokenA, []);
 
       expect(body).toMatchObject({ finalizeReason: "quit", score: 0 });
-      expect(body.answers.every((answer: { mode: string }) => answer.mode === "none")).toBe(true);
+      expect(
+        body.answers.every(
+          (answer: { mode: QuizAnswerModeEnum }) => answer.mode === QuizAnswerModeEnum.NONE,
+        ),
+      ).toBe(true);
       expect(attemptRows[0].status).toBe("finalized");
     });
 
@@ -822,18 +878,18 @@ describe("app competition routes e2e", () => {
                 attemptId: JUDGED_ATTEMPT,
                 position,
                 questionId,
-                mode: "cash",
+                mode: QuizAnswerModeEnum.CASH,
                 rawInput: "Ville Lumière",
                 correct: true,
                 points: COMPETITION_POINTS.cash,
-                matchedVia: "alias",
+                matchedVia: UserAnswerMatchedViaEnum.ALIAS,
                 clientElapsedMs: 1000,
               }
             : {
                 attemptId: JUDGED_ATTEMPT,
                 position,
                 questionId,
-                mode: "none",
+                mode: QuizAnswerModeEnum.NONE,
                 rawInput: null,
                 correct: false,
                 points: 0,
@@ -845,7 +901,10 @@ describe("app competition routes e2e", () => {
 
       const body = await finalized(tokenA, fullBatch());
       expect(body).toMatchObject({ finalizeReason: "quit", score: COMPETITION_POINTS.cash });
-      expect(body.answers[0]).toMatchObject({ rawInput: "Ville Lumière", matchedVia: "alias" });
+      expect(body.answers[0]).toMatchObject({
+        rawInput: "Ville Lumière",
+        matchedVia: UserAnswerMatchedViaEnum.ALIAS,
+      });
       expect(answerRows).toHaveLength(COMPETITION_QUESTION_COUNT);
     });
   });

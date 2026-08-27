@@ -1,44 +1,68 @@
-import { Check, Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from "typeorm";
+import { QuizAnswerModeEnum, UserAnswerMatchedViaEnum } from "@mentis/contracts/enums";
+import {
+  BaseEntity,
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  type Relation,
+  Unique,
+  UpdateDateColumn,
+} from "typeorm";
 import { CompetitionAttemptEntity } from "./competition-attempt.entity";
 
-export type CompetitionAnswerMode = "cash" | "square" | "none";
-export type CompetitionMatchedVia = "canonical" | "alias" | "misspelling" | "fuzzy" | "choice";
-
-@Check("competition_answers_mode_known", "mode in ('cash', 'square', 'none')")
-@Check(
-  "competition_answers_matched_via_known",
-  "matched_via in ('canonical', 'alias', 'misspelling', 'fuzzy', 'choice')",
-)
+// An Attempt answers each position once, so a replayed finalize adds nothing.
+@Unique("competition_answers_one_per_position", ["attemptId", "position"])
 @Entity("competition_answers")
-export class CompetitionAnswerEntity {
-  @PrimaryColumn("uuid", { name: "attempt_id" })
-  attemptId!: string;
+export class CompetitionAnswerEntity extends BaseEntity {
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
 
-  @ManyToOne(() => CompetitionAttemptEntity, { nullable: false, onDelete: "CASCADE" })
+  @Column({ type: "uuid", name: "attempt_id" })
+  attemptId: string;
+
+  @ManyToOne(
+    () => CompetitionAttemptEntity,
+    (attempt) => attempt.answers,
+    { nullable: false, onDelete: "CASCADE" },
+  )
   @JoinColumn({ name: "attempt_id" })
-  attempt?: CompetitionAttemptEntity;
+  attempt: Relation<CompetitionAttemptEntity>;
 
-  @PrimaryColumn("smallint")
-  position!: number;
+  @Column({ type: "smallint" })
+  position: number;
 
-  @Column("text", { name: "question_id" })
-  questionId!: string;
+  @Column({ type: "uuid", name: "question_id" })
+  questionId: string;
 
-  @Column("text")
-  mode!: CompetitionAnswerMode;
+  @Column({ type: "enum", enum: QuizAnswerModeEnum })
+  mode: QuizAnswerModeEnum;
 
-  @Column("text", { name: "raw_input", nullable: true })
-  rawInput!: string | null;
+  @Column({ type: "varchar", length: 255, name: "raw_input", nullable: true })
+  rawInput: string | null;
 
-  @Column("boolean")
-  correct!: boolean;
+  @Column({ type: "boolean" })
+  correct: boolean;
 
-  @Column("smallint")
-  points!: number;
+  @Column({ type: "smallint" })
+  points: number;
 
-  @Column("text", { name: "matched_via", nullable: true })
-  matchedVia!: CompetitionMatchedVia | null;
+  @Column({
+    type: "enum",
+    enum: UserAnswerMatchedViaEnum,
+    name: "matched_via",
+    nullable: true,
+  })
+  matchedVia: UserAnswerMatchedViaEnum | null;
 
-  @Column("integer", { name: "client_elapsed_ms", nullable: true })
-  clientElapsedMs!: number | null;
+  @Column({ type: "integer", name: "client_elapsed_ms", nullable: true })
+  clientElapsedMs: number | null;
+
+  @UpdateDateColumn({ type: "timestamptz", name: "updated_at" })
+  updatedAt: Date;
+
+  @CreateDateColumn({ type: "timestamptz", name: "created_at" })
+  createdAt: Date;
 }

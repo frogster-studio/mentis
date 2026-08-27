@@ -1,6 +1,11 @@
-// Every competition path and payload in one pure place, so the wire shape is testable alone.
+// Every competition call in one place, its client injected, so the wire sequence is testable alone.
 
-import type { ApiRequest } from "@/lib/api/client";
+import {
+  type AppCompetitionAttemptResponse,
+  appCompetitionActiveAttemptResponseSchema,
+  appCompetitionAttemptResponseSchema,
+} from "@mentis/contracts/app";
+import type { ApiClient, ApiRequest } from "@/lib/api/client";
 import type { PlayedAnswer } from "./attempt-reducer";
 
 const ATTEMPTS_PATH = "/app/me/competition/attempts";
@@ -19,4 +24,13 @@ export function finalizeAttemptRequest(attemptId: string, answers: PlayedAnswer[
     path: `${ATTEMPTS_PATH}/${attemptId}/finalize`,
     body: { answers },
   };
+}
+
+// A crashed session resumes on its own Questions; only a Player holding none is issued a draw.
+export async function resumeOrIssueAttempt(api: ApiClient): Promise<AppCompetitionAttemptResponse> {
+  const { attempt } = await api.requestJson(
+    activeAttemptRequest,
+    appCompetitionActiveAttemptResponseSchema,
+  );
+  return attempt ?? api.requestJson(issueAttemptRequest, appCompetitionAttemptResponseSchema);
 }

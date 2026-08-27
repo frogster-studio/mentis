@@ -38,21 +38,22 @@ const config: ExpoConfig = {
   },
   plugins: [
     "expo-router",
+    "expo-image",
     "expo-web-browser",
     [
       "expo-font",
       {
         fonts: [
-          "./assets/fonts/Lexend-Bold.ttf",
-          "./assets/fonts/Poppins-Regular.ttf",
-          "./assets/fonts/Poppins-SemiBold.ttf",
+          "./assets/fonts/EpundaSlab-Regular.ttf",
+          "./assets/fonts/InterTight-Regular.ttf",
+          "./assets/fonts/InterTight-SemiBold.ttf",
         ],
       },
     ],
     [
       "expo-splash-screen",
       {
-        backgroundColor: "#F6F6F6",
+        backgroundColor: "#F5EBE2",
         image: "./assets/images/splash-icon.png",
         imageWidth: 96,
       },

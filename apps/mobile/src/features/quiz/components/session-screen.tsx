@@ -1,8 +1,7 @@
 import { squareChoices } from "@mentis/answer-matching";
 import { randomUUID } from "expo-crypto";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { X } from "lucide-react-native";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { StyleSheet, type TextInput, View } from "react-native";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { QuietButton } from "@/components/ui/quiet-button";
@@ -16,6 +15,7 @@ import { DevSkipToResults } from "@/features/quiz/components/dev-skip-to-results
 import { PlayHeader } from "@/features/quiz/components/play-header";
 import { PlayScreen } from "@/features/quiz/components/play-screen";
 import { SessionResults } from "@/features/quiz/components/session-results";
+import { ThemeReveal } from "@/features/quiz/components/theme-reveal";
 import {
   QUIT_CANCEL_LABEL,
   QUIT_CONFIRM_LABEL,
@@ -30,12 +30,22 @@ import { currentQuestion, sessionScore } from "@/features/quiz/session-reducer";
 import { useStatsStore } from "@/features/quiz/stats-store";
 import { useQuizStore } from "@/features/quiz/store";
 import { usePlayClock } from "@/features/quiz/use-play-clock";
+import { useThemeReveal } from "@/features/quiz/use-theme-reveal";
 import { GUTTER, SPACE } from "@/theme/tokens";
 
 export function SessionScreen() {
-  const { themeId, name } = useLocalSearchParams<{ themeId: string; name: string }>();
+  const { themeId, name, imageUrl, categoryId, categoryName, categoryColor, categoryIcon } =
+    useLocalSearchParams<{
+      themeId: string;
+      name: string;
+      imageUrl: string;
+      categoryId: string;
+      categoryName: string;
+      categoryColor: string;
+      categoryIcon: string;
+    }>();
   const router = useRouter();
-  const { data: questions, isPending, isFetching, refetch } = useSessionQuestions(themeId);
+  const { data: questions, isError, isFetching, refetch } = useSessionQuestions(themeId);
 
   const session = useQuizStore((state) => state.session);
   const startSession = useQuizStore((state) => state.startSession);
@@ -52,6 +62,8 @@ export function SessionScreen() {
   const inputRef = useRef<TextInput>(null);
   const recordedRef = useRef(false);
   const [quitVisible, setQuitVisible] = useState(false);
+  // The pick fixes the Theme, so practice reveals from the very frame the screen mounts.
+  const { isDone: isRevealDone, secondsLeft } = useThemeReveal(true);
 
   const isActive = session?.status === "active";
   const answeredCount = session?.answers.length ?? 0;
@@ -59,11 +71,13 @@ export function SessionScreen() {
   const activeQuestion = session && isActive ? currentQuestion(session) : null;
   const now = usePlayClock(session?.endsAt ?? 0, isActive, expire);
 
-  useEffect(() => {
-    if (questions && questions.length > 0) {
+  // The Questions can land mid-Reveal and no Countdown may run behind it, yet the Session must
+  // exist in the very frame the Reveal ends — hence layout, so no stand-in screen paints between.
+  useLayoutEffect(() => {
+    if (isRevealDone && questions && questions.length > 0) {
       startSession(questions, Date.now());
     }
-  }, [questions, startSession]);
+  }, [isRevealDone, questions, startSession]);
 
   // An abandoned screen (back gesture, web back) must not leak a stale session.
   useEffect(() => clearSession, [clearSession]);
@@ -102,6 +116,23 @@ export function SessionScreen() {
       setQuitVisible(false);
     }
   }, [session?.status]);
+
+  // The Theme is fixed by the pick, so the Reveal plays once here — a replay never repeats it.
+  if (!isRevealDone) {
+    return (
+      <ThemeReveal
+        name={name}
+        imageUrl={imageUrl}
+        category={{
+          id: categoryId,
+          name: categoryName,
+          color: categoryColor,
+          icon: categoryIcon,
+        }}
+        secondsLeft={secondsLeft}
+      />
+    );
+  }
 
   // Nothing unmounts on a replay, so the record guard and the Questions are both reset by hand.
   const onReplay = () => {
@@ -151,6 +182,8 @@ export function SessionScreen() {
   }
 
   if (!session) {
+    // Landing empty starts no Session, so a Theme drawing nothing fails it exactly as the network does.
+    const isDrawLost = (isError || questions?.length === 0) && !isFetching;
     return (
       <>
         <ScreenContainer>
@@ -158,16 +191,16 @@ export function SessionScreen() {
           <View style={styles.header}>
             <QuietButton
               layout="circle"
-              icon={X}
+              icon="close"
               accessibilityLabel={QUIT_LABEL}
               onPress={() => router.dismissTo("/")}
             />
           </View>
           {/* A retry leaves the query in "error" until it lands, so the spinner stands in for it. */}
-          {isPending || isFetching ? (
-            <ScreenLoading />
-          ) : (
+          {isDrawLost ? (
             <ScreenError message={SESSION_ERROR} onRetry={() => void refetch()} />
+          ) : (
+            <ScreenLoading />
           )}
         </ScreenContainer>
         {quitConfirm}
@@ -188,11 +221,13 @@ export function SessionScreen() {
     <>
       <PlayScreen
         questionText={activeQuestion?.text ?? ""}
+        position={answeredCount + 1}
+        total={session.questions.length}
+        categoryColor={categoryColor}
         header={
           <>
             <PlayHeader
-              position={answeredCount + 1}
-              total={session.questions.length}
+              showCrown={false}
               endsAt={session.endsAt}
               now={now}
               quitLabel={QUIT_LABEL}

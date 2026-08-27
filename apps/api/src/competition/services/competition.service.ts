@@ -6,10 +6,12 @@ import {
   type AppCompetitionTranscriptResponse,
   COMPETITION_QUESTION_COUNT,
 } from "@mentis/contracts/app";
+import { QuizAnswerModeEnum } from "@mentis/contracts/enums";
 import { ConflictException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import type { CompetitionAttemptEntity } from "../../_database/entities/competition-attempt.entity";
 import type { DrawnQuestion } from "../../catalog/repositories/catalog.repository";
 import { CatalogService } from "../../catalog/services/catalog.service";
+import type { ThemeVisuals } from "../../catalog/types/theme-visuals";
 import {
   toAppCompetitionActiveAttemptResponse,
   toAppCompetitionAttemptResponse,
@@ -19,6 +21,8 @@ import {
 import { CompetitionRepository } from "../repositories/competition.repository";
 import type { Clock } from "../types/clock";
 import type { DrawnTheme } from "../types/drawn-theme";
+import type { NewCompetitionAnswer } from "../types/new-competition-answer";
+import type { ServedAttempt } from "../types/served-attempt";
 import { CLOCK } from "../utils/clock";
 import {
   bestScorePerDay,
@@ -26,7 +30,7 @@ import {
   daysBefore,
   seasonBounds,
 } from "../utils/competition-day";
-import { attemptScore, judgeAttempt, unresolvedAnswer } from "../utils/judge-attempt";
+import { judgeAttempt } from "../utils/judge-attempt";
 
 const ROTATION_LOOKBACK_DAYS = 2;
 
@@ -57,7 +61,7 @@ export class CompetitionService {
       questionIds: questions.map((question) => question.id),
     });
     if (issued !== null) {
-      return toAppCompetitionAttemptResponse(issued, questions);
+      return toAppCompetitionAttemptResponse({ attempt: issued, theme, questions });
     }
 
     // Two devices asked at once: the insert the day's Attempt shut out serves the winner's draw.
@@ -73,10 +77,7 @@ export class CompetitionService {
     if (current === undefined) {
       return toAppCompetitionActiveAttemptResponse(null);
     }
-    return toAppCompetitionActiveAttemptResponse({
-      attempt: current,
-      questions: await this.servedQuestions(current),
-    });
+    return toAppCompetitionActiveAttemptResponse(await this.servedAttempt(current));
   }
 
   async finalizeAttempt(
@@ -91,12 +92,12 @@ export class CompetitionService {
       return this.storedTranscript(attempt);
     }
 
-    const questions = await this.servedQuestions(attempt);
-    const answers = judgeAttempt(attempt.id, questions, batch);
+    const served = await this.servedAttempt(attempt);
+    const answers = judgeAttempt(attempt.id, served.questions, batch);
     const finalized = await this.competitionRepository.finalize(attempt.id, {
       // Positions the batch never reached are the Attempt the Player walked out of.
       reason: batch.answers.length === COMPETITION_QUESTION_COUNT ? "completed" : "quit",
-      score: attemptScore(answers),
+      score: answers.reduce((total, answer) => total + answer.points, 0),
       answers,
     });
     if (finalized === null) {
@@ -105,7 +106,7 @@ export class CompetitionService {
       this.refuseExpired(stored);
       return this.storedTranscript(stored);
     }
-    return toAppCompetitionTranscriptResponse(finalized, answers, questions);
+    return toAppCompetitionTranscriptResponse({ ...served, attempt: finalized }, answers);
   }
 
   async readStanding(owner: string): Promise<AppCompetitionStandingResponse> {
@@ -143,12 +144,22 @@ export class CompetitionService {
 
   // Zeros need no answer material, so a Question the Catalog dropped can never block a burial.
   private async zeroFinalize(attempt: CompetitionAttemptEntity): Promise<void> {
-    const answers = attempt.questionIds.map((questionId, position) =>
-      unresolvedAnswer(attempt.id, position, questionId),
+    const answers = attempt.questionIds.map(
+      (questionId, position): NewCompetitionAnswer => ({
+        attemptId: attempt.id,
+        position,
+        questionId,
+        mode: QuizAnswerModeEnum.NONE,
+        rawInput: null,
+        correct: false,
+        points: 0,
+        matchedVia: null,
+        clientElapsedMs: null,
+      }),
     );
     await this.competitionRepository.finalize(attempt.id, {
       reason: "expired",
-      score: attemptScore(answers),
+      score: 0,
       answers,
     });
   }
@@ -174,17 +185,35 @@ export class CompetitionService {
   private async storedTranscript(
     attempt: CompetitionAttemptEntity,
   ): Promise<AppCompetitionTranscriptResponse> {
-    const [questions, answers] = await Promise.all([
-      this.servedQuestions(attempt),
+    const [served, answers] = await Promise.all([
+      this.servedAttempt(attempt),
       this.competitionRepository.findAnswers(attempt.id),
     ]);
-    return toAppCompetitionTranscriptResponse(attempt, answers, questions);
+    return toAppCompetitionTranscriptResponse(served, answers);
   }
 
   private async serveExistingAttempt(
     attempt: CompetitionAttemptEntity,
   ): Promise<AppCompetitionAttemptResponse> {
-    return toAppCompetitionAttemptResponse(attempt, await this.servedQuestions(attempt));
+    return toAppCompetitionAttemptResponse(await this.servedAttempt(attempt));
+  }
+
+  private async servedAttempt(
+    attempt: CompetitionAttemptEntity,
+  ): Promise<ServedAttempt & { questions: DrawnQuestion[] }> {
+    const [theme, questions] = await Promise.all([
+      this.themeVisuals(attempt),
+      this.servedQuestions(attempt),
+    ]);
+    return { attempt, theme, questions };
+  }
+
+  private async themeVisuals(attempt: CompetitionAttemptEntity): Promise<ThemeVisuals> {
+    const theme = await this.catalogService.themeVisuals(attempt.themeId);
+    if (theme === null) {
+      throw new Error(`attempt ${attempt.id} lost its drawn theme ${attempt.themeId}`);
+    }
+    return theme;
   }
 
   // An Attempt is fixed at issuance, so the stored ids replay it in the order it was served.
@@ -224,6 +253,6 @@ export class CompetitionService {
     const themes = await this.catalogService.themesWithQuestionCounts();
     return themes
       .filter((theme) => theme.questionCount >= COMPETITION_QUESTION_COUNT)
-      .map(({ id, name }) => ({ id, name }));
+      .map(({ id, name, imageUrl, category }) => ({ id, name, imageUrl, category }));
   }
 }

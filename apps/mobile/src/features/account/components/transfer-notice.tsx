@@ -1,4 +1,4 @@
-import { X } from "lucide-react-native";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { TRANSFER_DONE_DISMISS_LABEL, TRANSFER_DONE_HOME } from "@/features/account/constants";
 import { useTransferStore } from "@/features/quiz/transfer-store";
@@ -19,7 +19,7 @@ export function TransferNotice() {
         hitSlop={SPACE.sm}
         style={({ pressed }) => pressed && styles.pressed}
       >
-        <X size={DISMISS_ICON_SIZE} color={COLORS.inkMuted} />
+        <MaterialIcons name="close" size={DISMISS_ICON_SIZE} color={COLORS.inkMuted} />
       </Pressable>
     </View>
   );

@@ -133,7 +133,15 @@ describe("serialization", () => {
 
 describe("contract parsing", () => {
   it("returns the parsed response", async () => {
-    const themes = [{ id: "histoire", name: "Histoire", questionCount: 12 }];
+    const themes = [
+      {
+        id: "histoire",
+        name: "Histoire",
+        imageUrl: "https://cdn.example.com/histoire.webp",
+        questionCount: 12,
+        category: { id: "culture", name: "Culture", color: "#6d4c41", icon: "history-edu" },
+      },
+    ];
     const { api } = client([jsonResponse(themes)]);
 
     await expect(

@@ -4,6 +4,17 @@ import { type InsertResult, QueryFailedError, Repository } from "typeorm";
 import { QuizSessionEntity } from "../../_database/entities/quiz-session.entity";
 import { StatBaselineEntity } from "../../_database/entities/stat-baseline.entity";
 
+// Rows before they are rows: no id, no timestamps, no hydrated owner.
+export type NewQuizSession = Pick<
+  QuizSessionEntity,
+  "id" | "owner" | "themeId" | "themeName" | "points" | "finishedAt"
+>;
+
+export type NewStatBaseline = Pick<
+  StatBaselineEntity,
+  "owner" | "device" | "themeId" | "themeName" | "totalPoints" | "sessionCount"
+>;
+
 const OWNER_FK_VIOLATION = "23503";
 
 export class AccountGoneError extends Error {}
@@ -29,13 +40,13 @@ export class PlayerRepository {
     return this.baselines.find({ where: { owner } });
   }
 
-  async insertQuizSessionsIfAbsent(rows: QuizSessionEntity[]): Promise<void> {
+  async insertQuizSessionsIfAbsent(rows: NewQuizSession[]): Promise<void> {
     await this.insertIfAbsent(() =>
       this.sessions.createQueryBuilder().insert().values(rows).orIgnore().execute(),
     );
   }
 
-  async insertStatBaselinesIfAbsent(rows: StatBaselineEntity[]): Promise<void> {
+  async insertStatBaselinesIfAbsent(rows: NewStatBaseline[]): Promise<void> {
     await this.insertIfAbsent(() =>
       this.baselines.createQueryBuilder().insert().values(rows).orIgnore().execute(),
     );

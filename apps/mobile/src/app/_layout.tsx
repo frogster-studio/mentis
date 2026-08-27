@@ -15,9 +15,9 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
-    "Lexend-Bold": require("../../assets/fonts/Lexend-Bold.ttf"),
-    "Poppins-Regular": require("../../assets/fonts/Poppins-Regular.ttf"),
-    "Poppins-SemiBold": require("../../assets/fonts/Poppins-SemiBold.ttf"),
+    "EpundaSlab-Regular": require("../../assets/fonts/EpundaSlab-Regular.ttf"),
+    "InterTight-Regular": require("../../assets/fonts/InterTight-Regular.ttf"),
+    "InterTight-SemiBold": require("../../assets/fonts/InterTight-SemiBold.ttf"),
   });
 
   // A load failure still lifts the splash — the app falls back to the system font.

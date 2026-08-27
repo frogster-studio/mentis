@@ -1,7 +1,8 @@
-import type { LucideIcon } from "lucide-react-native";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Pressable, StyleSheet, Text } from "react-native";
+import type { IconName } from "@/components/ui/icon-name";
 import { TEXT } from "@/theme/text";
-import { COLORS, CONTROL_HEIGHT, PRESSED, RADIUS } from "@/theme/tokens";
+import { COLORS, CONTROL_HEIGHT, CONTROL_ICON_SIZE, PRESSED, RADIUS } from "@/theme/tokens";
 
 type QuietButtonBaseProps = {
   onPress: () => void;
@@ -11,7 +12,7 @@ type QuietButtonBaseProps = {
 export type QuietButtonProps = QuietButtonBaseProps &
   (
     | { layout?: "block" | "flex"; label: string }
-    | { layout: "circle"; icon: LucideIcon; accessibilityLabel: string }
+    | { layout: "circle"; icon: IconName; accessibilityLabel: string }
   );
 
 export function QuietButton(props: QuietButtonProps) {
@@ -31,7 +32,7 @@ export function QuietButton(props: QuietButtonProps) {
       ]}
     >
       {props.layout === "circle" ? (
-        <props.icon size={20} color={color} />
+        <MaterialIcons name={props.icon} size={CONTROL_ICON_SIZE} color={color} />
       ) : (
         <Text style={[styles.label, { color }]}>{props.label}</Text>
       )}

@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { Animated, Easing, Platform } from "react-native";
 
-export const PRESS_DEPTH = 6;
+export const PRESS_DEPTH = 5;
 
 const PUSH_MS = 70;
 const RELEASE_MS = 180;

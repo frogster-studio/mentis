@@ -4,7 +4,13 @@ import { DRAW_SIZE, MIN_QUESTIONS_PER_THEME } from "./constants";
 import { drawThemes } from "./draw";
 
 function theme(id: string, questionCount = 20): ThemeWithCount {
-  return { id, name: `Thème ${id}`, questionCount };
+  return {
+    id,
+    name: `Thème ${id}`,
+    imageUrl: `https://cdn.example.com/${id}.webp`,
+    questionCount,
+    category: { id: "nature", name: "Nature", color: "#2e7d32", icon: "park" },
+  };
 }
 
 function seededRng(seed: number): () => number {
@@ -49,7 +55,9 @@ describe("drawThemes", () => {
 
   it("keeps the pool order when the RNG always returns 0", () => {
     const draw = drawThemes(TWELVE_ELIGIBLE, () => 0);
-    expect(draw.map((t) => t.id)).toStrictEqual(["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]);
+    expect(draw.map((t) => t.id)).toStrictEqual(
+      TWELVE_ELIGIBLE.slice(0, DRAW_SIZE).map((t) => t.id),
+    );
   });
 
   it("is deterministic for a given RNG seed", () => {

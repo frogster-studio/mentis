@@ -1,7 +1,8 @@
 import { COMPETITION_POINTS, COMPETITION_QUESTION_COUNT } from "@mentis/contracts/app";
+import { QuizAnswerModeEnum, UserAnswerMatchedViaEnum } from "@mentis/contracts/enums";
 import { describe, expect, it } from "vitest";
 import type { JudgeableQuestion } from "../types/judgeable-question";
-import { attemptScore, judgeAttempt } from "../utils/judge-attempt";
+import { judgeAttempt } from "../utils/judge-attempt";
 
 const ATTEMPT = "30000000-0000-4000-8000-000000000020";
 
@@ -19,7 +20,11 @@ const QUESTIONS: JudgeableQuestion[] = [
   { id: "q9", answer: "Or", aliases: [], misspellings: [] },
 ];
 
-const played = (position: number, rawInput: string, mode: "cash" | "square" = "cash") => ({
+const played = (
+  position: number,
+  rawInput: string,
+  mode: QuizAnswerModeEnum = QuizAnswerModeEnum.CASH,
+) => ({
   questionId: QUESTIONS[position].id,
   mode,
   rawInput,
@@ -48,16 +53,16 @@ describe("judgeAttempt — verdicts match practice exactly", () => {
         played(9, "Or"),
       ]),
     ).toEqual([
-      "canonical",
-      "alias",
-      "alias",
-      "fuzzy",
-      "canonical",
-      "fuzzy",
-      "misspelling",
-      "canonical",
-      "fuzzy",
-      "canonical",
+      UserAnswerMatchedViaEnum.CANONICAL,
+      UserAnswerMatchedViaEnum.ALIAS,
+      UserAnswerMatchedViaEnum.ALIAS,
+      UserAnswerMatchedViaEnum.FUZZY,
+      UserAnswerMatchedViaEnum.CANONICAL,
+      UserAnswerMatchedViaEnum.FUZZY,
+      UserAnswerMatchedViaEnum.MISSPELLING,
+      UserAnswerMatchedViaEnum.CANONICAL,
+      UserAnswerMatchedViaEnum.FUZZY,
+      UserAnswerMatchedViaEnum.CANONICAL,
     ]);
   });
 
@@ -77,36 +82,39 @@ describe("judgeAttempt — verdicts match practice exactly", () => {
         played(9, "ore"),
       ]),
     ).toEqual([
-      "misspelling",
-      "canonical",
-      "fuzzy",
-      "canonical",
+      UserAnswerMatchedViaEnum.MISSPELLING,
+      UserAnswerMatchedViaEnum.CANONICAL,
+      UserAnswerMatchedViaEnum.FUZZY,
+      UserAnswerMatchedViaEnum.CANONICAL,
       null,
-      "canonical",
+      UserAnswerMatchedViaEnum.CANONICAL,
       null,
-      "canonical",
-      "canonical",
+      UserAnswerMatchedViaEnum.CANONICAL,
+      UserAnswerMatchedViaEnum.CANONICAL,
       null,
     ]);
   });
 
   it("judges Carré on the chosen text alone, and an empty choice is never right", () => {
-    const judged = judge([played(0, "Paris", "square"), played(1, "faux", "square")]);
-    expect(judged[0]).toMatchObject({ correct: true, matchedVia: "choice" });
+    const judged = judge([
+      played(0, "Paris", QuizAnswerModeEnum.SQUARE),
+      played(1, "faux", QuizAnswerModeEnum.SQUARE),
+    ]);
+    expect(judged[0]).toMatchObject({ correct: true, matchedVia: UserAnswerMatchedViaEnum.CHOICE });
     expect(judged[1]).toMatchObject({ correct: false, matchedVia: null });
-    expect(judge([played(0, "", "square")])[0].correct).toBe(false);
+    expect(judge([played(0, "", QuizAnswerModeEnum.SQUARE)])[0].correct).toBe(false);
   });
 });
 
 describe("judgeAttempt — pricing and zero-fill", () => {
   it("prices on the self-reported mode alone — Carré pays 2 even on the Canonical Answer", () => {
-    const judged = judge([played(0, "Paris", "square"), played(1, "Élysée")]);
+    const judged = judge([played(0, "Paris", QuizAnswerModeEnum.SQUARE), played(1, "Élysée")]);
     expect(judged[0].points).toBe(COMPETITION_POINTS.square);
     expect(judged[1].points).toBe(COMPETITION_POINTS.cash);
   });
 
   it("scores a wrong answer at nothing whatever the mode", () => {
-    const judged = judge([played(0, "Lyon"), played(1, "faux", "square")]);
+    const judged = judge([played(0, "Lyon"), played(1, "faux", QuizAnswerModeEnum.SQUARE)]);
     expect(judged.map((answer) => answer.points).slice(0, 2)).toEqual([0, 0]);
   });
 
@@ -117,14 +125,16 @@ describe("judgeAttempt — pricing and zero-fill", () => {
       attemptId: ATTEMPT,
       position: 1,
       questionId: "q1",
-      mode: "none",
+      mode: QuizAnswerModeEnum.NONE,
       rawInput: null,
       correct: false,
       points: 0,
       matchedVia: null,
       clientElapsedMs: null,
     });
-    expect(attemptScore(judged)).toBe(COMPETITION_POINTS.cash);
+    expect(judged.reduce((total, answer) => total + answer.points, 0)).toBe(
+      COMPETITION_POINTS.cash,
+    );
   });
 
   it("carries the phone's claimed elapsed through untouched", () => {

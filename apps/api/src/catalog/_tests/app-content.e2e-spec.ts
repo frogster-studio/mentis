@@ -7,10 +7,26 @@ import { ENV } from "../../_config/env.config";
 import { stubDataSource, testEnv } from "../../_tests/test-env";
 import { AppModule } from "../../app.module";
 import { CatalogRepository, type DrawnQuestion } from "../repositories/catalog.repository";
+import { THEME_IMAGES_BUCKET } from "../utils/theme-image-url";
+
+const television = { id: "television", name: "Télévision", color: "#8e24aa", icon: "tv" };
+const histoire = { id: "histoire", name: "Histoire", color: "#6d4c41", icon: "history-edu" };
 
 const themes = [
-  { id: "les-simpson", name: "Les Simpson", questionCount: 2 },
-  { id: "marie-antoinette", name: "Marie-Antoinette", questionCount: 1 },
+  {
+    id: "les-simpson",
+    name: "Les Simpson",
+    image: "les-simpson.webp",
+    questionCount: 2,
+    category: television,
+  },
+  {
+    id: "marie-antoinette",
+    name: "Marie-Antoinette",
+    image: "marie-antoinette.webp",
+    questionCount: 1,
+    category: histoire,
+  },
 ];
 
 const question = (id: string, themeId: string, themeName: string): DrawnQuestion => ({
@@ -84,8 +100,20 @@ describe("app content routes e2e", () => {
     const response = await fetch(`${baseUrl}/app/themes`);
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual([
-      { id: "les-simpson", name: "Les Simpson", questionCount: 2 },
-      { id: "marie-antoinette", name: "Marie-Antoinette", questionCount: 1 },
+      {
+        id: "les-simpson",
+        name: "Les Simpson",
+        imageUrl: `${testEnv.SUPABASE_URL}/storage/v1/object/public/${THEME_IMAGES_BUCKET}/les-simpson.webp`,
+        questionCount: 2,
+        category: television,
+      },
+      {
+        id: "marie-antoinette",
+        name: "Marie-Antoinette",
+        imageUrl: `${testEnv.SUPABASE_URL}/storage/v1/object/public/${THEME_IMAGES_BUCKET}/marie-antoinette.webp`,
+        questionCount: 1,
+        category: histoire,
+      },
     ]);
   });
 

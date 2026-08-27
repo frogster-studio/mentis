@@ -4,11 +4,15 @@ import type { NestExpressApplication } from "@nestjs/platform-express";
 import helmet from "helmet";
 import { ENV, type Env } from "./_config/env.config";
 import { AppModule } from "./app.module";
+import { httpLogger } from "./common/http-logger.middleware";
 
 const bootstrap = async (): Promise<void> => {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   const env = app.get<Env>(ENV);
+
+  // Get the logs of each routes requests and responses
+  app.use(httpLogger());
 
   // Browser security headers; native and server callers ignore them.
   app.use(helmet());
