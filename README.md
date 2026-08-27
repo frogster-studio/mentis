@@ -1,12 +1,12 @@
 # Mentis
 
-Monorepo for **Mentis**, a French general-knowledge quiz product: a mobile quiz app ("Cash ou Carré"), the back-office that curates its content, and the REST gateway between them and the database — sharing one Supabase project.
+Monorepo for **Mentis**, a French general-knowledge quiz product: a mobile quiz app ("Cash ou Carré"), an authenticated back-office shell awaiting its quiz-content features, and the REST gateway between them and the database — sharing one Supabase project.
 
 ## Layout
 
 ```
 apps/
-  admin/     # Next.js back-office — editors curate the Card library (deployed on Vercel)
+  admin/     # Next.js back-office shell — the login gate, nothing more yet (deployed on Vercel)
   api/       # NestJS REST gateway — the sole database path (Railway)
     src/_database/  # shared database: TypeORM entities + generated migrations
   mobile/    # Expo app (iOS/Android/Web) — the quiz game itself (EAS builds)
@@ -14,7 +14,7 @@ packages/
   contracts/ # @mentis/contracts — zod request/response schemas the API publishes
 ```
 
-Each app carries an `AGENTS.md` with its app-specific details. Admin and mobile also have a `CONTEXT.md` domain glossary (see [CONTEXT-MAP.md](CONTEXT-MAP.md)); the API has none by design — it publishes both vocabularies rather than owning one.
+Each app carries an `AGENTS.md` with its app-specific details. The domain glossary lives in [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md); the API has none by design — it publishes that vocabulary rather than owning one.
 
 ## Tooling
 
