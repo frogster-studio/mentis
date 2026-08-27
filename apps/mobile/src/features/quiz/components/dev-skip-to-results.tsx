@@ -13,7 +13,7 @@ const CORRECT_COUNTS = [0, 2, 4, 6, 8, 10];
 const DEFAULT_CORRECT_COUNT = 4;
 const SKIP_LABEL = "go to end";
 
-export function DevSkipToResults() {
+export const DevSkipToResults = () => {
   const questions = useQuizStore((state) =>
     state.session?.status === "active" ? state.session.questions : null,
   );
@@ -37,7 +37,7 @@ export function DevSkipToResults() {
       </Pressable>
     </View>
   );
-}
+};
 
 function finishNow(questions: Question[], correctCount: number) {
   useQuizStore.setState((state) =>

@@ -1,16 +1,23 @@
 import { useFocusEffect } from "expo-router";
-import { createContext, type ReactNode, useCallback, useContext, useMemo, useRef } from "react";
+import {
+  createContext,
+  type PropsWithChildren,
+  useCallback,
+  useContext,
+  useMemo,
+  useRef,
+} from "react";
 import { Animated, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
 import { TAB_TRANSITION_EASING, TAB_TRANSITION_MS } from "@/components/tab-transition";
 
 const TabScrollContext = createContext<Animated.Value | null>(null);
 
 // The AppHeader sits outside the scenes, so the focused tab publishes its scroll offset here.
-export function TabScrollProvider({ children }: { children: ReactNode }) {
+export const TabScrollProvider = ({ children }: PropsWithChildren) => {
   const offset = useRef(new Animated.Value(0)).current;
 
   return <TabScrollContext.Provider value={offset}>{children}</TabScrollContext.Provider>;
-}
+};
 
 export function useTabScrollOffset(): Animated.Value {
   const offset = useContext(TabScrollContext);

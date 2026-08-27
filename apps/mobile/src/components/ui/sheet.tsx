@@ -1,5 +1,5 @@
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
-import { type ReactNode, useEffect, useRef } from "react";
+import { type PropsWithChildren, useEffect, useRef } from "react";
 import { Platform, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MAX_CONTENT_WIDTH } from "@/components/ui/screen-container";
@@ -8,16 +8,22 @@ import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
 
 export { TrueSheetProvider as SheetProvider } from "@lodev09/react-native-true-sheet";
 
-export type SheetProps = {
+export interface SheetProps {
   visible: boolean;
-  title?: string;
-  message?: string;
-  dismissible?: boolean;
+  title: string | null;
+  message: string | null;
+  dismissible: boolean;
   onDismiss: () => void;
-  children: ReactNode;
-};
+}
 
-export function Sheet({ visible, title, message, dismissible, onDismiss, children }: SheetProps) {
+export const Sheet = ({
+  visible,
+  title,
+  message,
+  dismissible,
+  onDismiss,
+  children,
+}: PropsWithChildren<SheetProps>) => {
   const sheet = useRef<TrueSheet>(null);
   const presented = useRef(false);
   const insets = useSafeAreaInsets();
@@ -57,7 +63,7 @@ export function Sheet({ visible, title, message, dismissible, onDismiss, childre
       </View>
     </TrueSheet>
   );
-}
+};
 
 const styles = StyleSheet.create({
   content: {

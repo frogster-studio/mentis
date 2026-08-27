@@ -5,7 +5,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { StyleSheet, type TextInput, View } from "react-native";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { QuietButton } from "@/components/ui/quiet-button";
-import { ScreenContainer } from "@/components/ui/screen-container";
+import { ALL_SCREEN_EDGES, ScreenContainer } from "@/components/ui/screen-container";
 import { ScreenError } from "@/components/ui/screen-error";
 import { ScreenLoading } from "@/components/ui/screen-loading";
 import { useAuthStore } from "@/features/account/auth-store";
@@ -33,7 +33,7 @@ import { usePlayClock } from "@/features/quiz/use-play-clock";
 import { useThemeReveal } from "@/features/quiz/use-theme-reveal";
 import { GUTTER, SPACE } from "@/theme/tokens";
 
-export function SessionScreen() {
+export const SessionScreen = () => {
   const { themeId, name, imageUrl, categoryId, categoryName, categoryColor, categoryIcon } =
     useLocalSearchParams<{
       themeId: string;
@@ -186,14 +186,16 @@ export function SessionScreen() {
     const isDrawLost = (isError || questions?.length === 0) && !isFetching;
     return (
       <>
-        <ScreenContainer>
+        <ScreenContainer edges={ALL_SCREEN_EDGES} background={null} underlay={null}>
           {/* Nothing is under way yet, so the quit control leaves straight away — no confirmation. */}
           <View style={styles.header}>
             <QuietButton
               layout="circle"
+              label={null}
               icon="close"
               accessibilityLabel={QUIT_LABEL}
               onPress={() => router.dismissTo("/")}
+              disabled={false}
             />
           </View>
           {/* A retry leaves the query in "error" until it lands, so the spinner stands in for it. */}
@@ -251,7 +253,7 @@ export function SessionScreen() {
       {quitConfirm}
     </>
   );
-}
+};
 
 const styles = StyleSheet.create({
   header: {

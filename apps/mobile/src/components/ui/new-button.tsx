@@ -16,34 +16,32 @@ const PALETTES = {
   disabled: { face: COLORS.face, edge: COLORS.inkMuted, content: COLORS.inkMuted },
 } as const;
 
-type NewButtonBaseProps = {
+export interface NewButtonProps {
   onPress: () => void;
-  layout?: "block" | "hug";
-  shape?: "rounded" | "full";
-  tone?: "default" | "primary";
-  disabled?: boolean;
-  pending?: boolean;
-};
+  layout: "block" | "hug";
+  shape: "rounded" | "full";
+  tone: "default" | "primary";
+  disabled: boolean;
+  pending: boolean;
+  icon: CommunityIconName | null;
+  label: string | null;
+  accessibilityLabel: string | null;
+}
 
-export type NewButtonProps = NewButtonBaseProps &
-  (
-    | { label: string; icon?: CommunityIconName; accessibilityLabel?: undefined }
-    | { label?: undefined; icon: CommunityIconName; accessibilityLabel: string }
-  );
-
-export function NewButton(props: NewButtonProps) {
-  const {
-    onPress,
-    layout = "block",
-    shape = "rounded",
-    tone = "default",
-    disabled = false,
-    pending = false,
-  } = props;
+export const NewButton = ({
+  onPress,
+  layout,
+  shape,
+  tone,
+  disabled,
+  pending,
+  icon,
+  label,
+  accessibilityLabel,
+}: NewButtonProps) => {
   const { travel, pressIn, pressOut } = usePressSink();
   const isInert = disabled || pending;
   const palette = PALETTES[isInert ? "disabled" : tone];
-  const isIconOnly = props.label === undefined;
   const radius = shape === "full" ? RADIUS.lg : 26;
 
   return (
@@ -53,31 +51,38 @@ export function NewButton(props: NewButtonProps) {
       onPressOut={pressOut}
       disabled={isInert}
       accessibilityRole="button"
-      accessibilityLabel={props.label ?? props.accessibilityLabel}
+      accessibilityLabel={label ?? accessibilityLabel ?? undefined}
       style={[styles[layout], { height: CONTROL_SQUARE_SIZE + PRESS_DEPTH }]}
     >
-      <Squircle radius={radius} color={palette.edge} style={styles.shadow} />
+      <Squircle
+        radius={radius}
+        corners="all"
+        color={palette.edge}
+        borderColor={null}
+        borderWidth={null}
+        style={styles.shadow}
+      />
       <Animated.View style={{ transform: [{ translateY: travel }] }}>
         <SquircleView
           backgroundColor={palette.face}
           borderRadius={radius}
           borderColor={palette.edge}
           borderWidth={BORDER_WIDTH}
-          style={[styles.face, isIconOnly && styles.iconOnlyFace]}
+          style={[styles.face, label === null && styles.iconOnlyFace]}
         >
           {pending ? (
             <ActivityIndicator size="small" color={palette.content} />
           ) : (
             <>
-              {props.icon ? (
+              {icon ? (
                 <MaterialCommunityIcons
-                  name={props.icon}
+                  name={icon}
                   size={CONTROL_ICON_SIZE}
                   color={palette.content}
                 />
               ) : null}
-              {props.label ? (
-                <Text style={[styles.label, { color: palette.content }]}>{props.label}</Text>
+              {label ? (
+                <Text style={[styles.label, { color: palette.content }]}>{label}</Text>
               ) : null}
             </>
           )}
@@ -85,7 +90,7 @@ export function NewButton(props: NewButtonProps) {
       </Animated.View>
     </Pressable>
   );
-}
+};
 
 const styles = StyleSheet.create({
   block: { alignSelf: "stretch" },

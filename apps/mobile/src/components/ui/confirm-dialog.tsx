@@ -4,7 +4,7 @@ import { QuietButton } from "@/components/ui/quiet-button";
 import { Sheet } from "@/components/ui/sheet";
 import { SPACE } from "@/theme/tokens";
 
-export type ConfirmDialogProps = {
+export interface ConfirmDialogProps {
   visible: boolean;
   title: string;
   message: string;
@@ -12,9 +12,9 @@ export type ConfirmDialogProps = {
   cancelLabel: string;
   onConfirm: () => void;
   onCancel: () => void;
-};
+}
 
-export function ConfirmDialog({
+export const ConfirmDialog = ({
   visible,
   title,
   message,
@@ -22,17 +22,30 @@ export function ConfirmDialog({
   cancelLabel,
   onConfirm,
   onCancel,
-}: ConfirmDialogProps) {
+}: ConfirmDialogProps) => {
   return (
-    <Sheet visible={visible} title={title} message={message} onDismiss={onCancel}>
+    <Sheet
+      visible={visible}
+      title={title}
+      message={message}
+      dismissible={true}
+      onDismiss={onCancel}
+    >
       {/* The destructive action takes the quiet slot, so the emphasis never invites the damage. */}
       <View style={styles.actions}>
-        <Button label={cancelLabel} onPress={onCancel} />
-        <QuietButton label={confirmLabel} onPress={onConfirm} />
+        <Button label={cancelLabel} onPress={onCancel} pending={false} />
+        <QuietButton
+          layout="block"
+          label={confirmLabel}
+          icon={null}
+          accessibilityLabel={null}
+          onPress={onConfirm}
+          disabled={false}
+        />
       </View>
     </Sheet>
   );
-}
+};
 
 const styles = StyleSheet.create({
   actions: {

@@ -3,13 +3,13 @@ import { Squircle } from "@/components/ui/squircle";
 import { TEXT } from "@/theme/text";
 import { COLORS, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
 
-export type SquareButtonProps = {
+export interface SquareButtonProps {
   label: string;
   selected: boolean;
   onPress: () => void;
-};
+}
 
-export function SquareButton({ label, selected, onPress }: SquareButtonProps) {
+export const SquareButton = ({ label, selected, onPress }: SquareButtonProps) => {
   return (
     <Pressable
       onPress={onPress}
@@ -24,12 +24,13 @@ export function SquareButton({ label, selected, onPress }: SquareButtonProps) {
         borderColor={selected ? COLORS.primary : COLORS.stroke}
         borderWidth={1}
         style={styles.face}
+        corners="all"
       >
         <Text style={styles.label}>{label}</Text>
       </Squircle>
     </Pressable>
   );
-}
+};
 
 const styles = StyleSheet.create({
   root: {

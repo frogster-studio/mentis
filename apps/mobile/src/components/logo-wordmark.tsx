@@ -2,12 +2,12 @@ import Svg, { Path } from "react-native-svg";
 
 const HEIGHT_PER_WIDTH = 21 / 99;
 
-export type LogoWordmarkProps = {
+export interface LogoWordmarkProps {
   color: string;
   width: number;
-};
+}
 
-export function LogoWordmark({ color, width }: LogoWordmarkProps) {
+export const LogoWordmark = ({ color, width }: LogoWordmarkProps) => {
   return (
     <Svg width={width} height={width * HEIGHT_PER_WIDTH} viewBox="0 0 99 21" fill="none">
       <Path
@@ -16,4 +16,4 @@ export function LogoWordmark({ color, width }: LogoWordmarkProps) {
       />
     </Svg>
   );
-}
+};

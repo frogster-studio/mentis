@@ -5,15 +5,15 @@ import { CountdownRing } from "@/features/quiz/components/countdown-ring";
 import { remainingFraction, remainingSeconds } from "@/features/quiz/countdown";
 import { COLORS, CONTROL_ICON_SIZE, SPACE } from "@/theme/tokens";
 
-export type PlayHeaderProps = {
+export interface PlayHeaderProps {
   showCrown: boolean;
   endsAt: number;
   now: number;
   quitLabel: string;
   onQuit: () => void;
-};
+}
 
-export function PlayHeader({ showCrown, endsAt, now, quitLabel, onQuit }: PlayHeaderProps) {
+export const PlayHeader = ({ showCrown, endsAt, now, quitLabel, onQuit }: PlayHeaderProps) => {
   return (
     <View style={styles.row}>
       {showCrown ? (
@@ -28,11 +28,21 @@ export function PlayHeader({ showCrown, endsAt, now, quitLabel, onQuit }: PlayHe
           fraction={remainingFraction(endsAt, now)}
           seconds={remainingSeconds(endsAt, now)}
         />
-        <NewButton layout="hug" icon="close" accessibilityLabel={quitLabel} onPress={onQuit} />
+        <NewButton
+          layout="hug"
+          shape="rounded"
+          tone="default"
+          icon="close"
+          label={null}
+          accessibilityLabel={quitLabel}
+          onPress={onQuit}
+          disabled={false}
+          pending={false}
+        />
       </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   row: {

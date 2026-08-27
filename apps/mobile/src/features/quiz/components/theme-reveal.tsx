@@ -2,7 +2,7 @@ import { Image } from "expo-image";
 import { StyleSheet, Text, View } from "react-native";
 import { CategoryBadge } from "@/components/category-badge";
 import { categoryShade, categoryWashSolid } from "@/components/category-color";
-import { ScreenContainer } from "@/components/ui/screen-container";
+import { ALL_SCREEN_EDGES, ScreenContainer } from "@/components/ui/screen-container";
 import { Squircle } from "@/components/ui/squircle";
 import { THEME_IMAGE_CACHE_POLICY } from "@/features/quiz/theme-image-cache";
 import { TEXT } from "@/theme/text";
@@ -33,9 +33,13 @@ interface ThemeRevealProps {
   secondsLeft: number;
 }
 
-export function ThemeReveal({ name, imageUrl, category, secondsLeft }: ThemeRevealProps) {
+export const ThemeReveal = ({ name, imageUrl, category, secondsLeft }: ThemeRevealProps) => {
   return (
-    <ScreenContainer background={categoryWashSolid(category.color)}>
+    <ScreenContainer
+      edges={ALL_SCREEN_EDGES}
+      background={categoryWashSolid(category.color)}
+      underlay={null}
+    >
       <View style={styles.stack}>
         <View style={styles.caption}>
           <CategoryBadge category={category} isSelected={true} />
@@ -54,6 +58,8 @@ export function ThemeReveal({ name, imageUrl, category, secondsLeft }: ThemeReve
             borderColor={COLORS.face}
             borderWidth={IMAGE_BORDER_WIDTH}
             style={StyleSheet.absoluteFill}
+            corners="all"
+            color={null}
           />
           <View style={[StyleSheet.absoluteFill, styles.countLayer]}>
             <Text style={styles.count}>{secondsLeft}</Text>
@@ -62,7 +68,7 @@ export function ThemeReveal({ name, imageUrl, category, secondsLeft }: ThemeReve
       </View>
     </ScreenContainer>
   );
-}
+};
 
 const styles = StyleSheet.create({
   stack: {

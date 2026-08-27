@@ -74,11 +74,12 @@ Database migrations live in `apps/api/src/_database/migrations/` (shared with th
 
 ## Conventions
 
-- Files kebab-case. Component `post-card.tsx` → `export const PostCard = () => {}` (+ `interface PostCardProps` only if it has props — every prop mandatory: a value no caller varies is a module constant, not an optional prop). Screen `*-screen.tsx` → `XxxScreen`. Hook `use-x.ts` → `useX`. Store `store.ts` → `useQuizStore`. Queries `api.ts` → `useXxx`, `quizKeys`. Constants `constants.ts` → SCREAMING_SNAKE_CASE. Tests co-located `*.test.ts`.
+- Files kebab-case. Component `post-card.tsx` → `export const PostCard = () => {}` (+ `interface PostCardProps` only if it has props beyond `children`, which comes off `PropsWithChildren` — every prop mandatory: a value no caller varies is a module constant, not an optional prop). Screen `*-screen.tsx` → `XxxScreen`. Hook `use-x.ts` → `useX`. Store `store.ts` → `useQuizStore`. Queries `api.ts` → `useXxx`, `quizKeys`. Constants `constants.ts` → SCREAMING_SNAKE_CASE. Tests co-located `*.test.ts`.
 
   ```tsx
   // ✅ interface PlayProgressBarProps { position: number; total: number }
   //    export const PlayProgressBar = ({ position, total }: PlayProgressBarProps) => { … }
+  // ✅ export const Card = ({ children, onPress }: PropsWithChildren<CardProps>) => { … }
   // ❌ export function PlayProgressBar({ height = 2 }: { height?: number }) { … }
   ```
 - Styling: `StyleSheet.create` in each component file, composing the `src/theme/` tokens — the repo's only shared style module.

@@ -1,13 +1,13 @@
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { COLORS, GUTTER } from "@/theme/tokens";
 
-export function ScreenLoading() {
+export const ScreenLoading = () => {
   return (
     <View style={styles.root}>
       <ActivityIndicator size="large" color={COLORS.primary} />
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   root: {

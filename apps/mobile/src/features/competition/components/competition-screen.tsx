@@ -3,7 +3,7 @@ import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "re
 import { StyleSheet, type TextInput, View } from "react-native";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { QuietButton } from "@/components/ui/quiet-button";
-import { ScreenContainer } from "@/components/ui/screen-container";
+import { ALL_SCREEN_EDGES, ScreenContainer } from "@/components/ui/screen-container";
 import { ScreenError } from "@/components/ui/screen-error";
 import { ScreenLoading } from "@/components/ui/screen-loading";
 import { useAuthStore } from "@/features/account/auth-store";
@@ -33,7 +33,7 @@ import { useThemeReveal } from "@/features/quiz/use-theme-reveal";
 import { isApiError } from "@/lib/api/client";
 import { GUTTER, SPACE } from "@/theme/tokens";
 
-export function CompetitionScreen() {
+export const CompetitionScreen = () => {
   const router = useRouter();
   const owner = useAuthStore((state) => state.session?.user.id);
   const isAuthLoading = useAuthStore((state) => state.isLoading);
@@ -138,13 +138,15 @@ export function CompetitionScreen() {
 
   // Nothing is under way yet, so the quit control leaves straight away — no confirmation.
   const framed = (body: ReactNode) => (
-    <ScreenContainer>
+    <ScreenContainer edges={ALL_SCREEN_EDGES} background={null} underlay={null}>
       <View style={styles.header}>
         <QuietButton
           layout="circle"
+          label={null}
           icon="close"
           accessibilityLabel={COMPETITION_QUIT_LABEL}
           onPress={goHome}
+          disabled={false}
         />
       </View>
       {body}
@@ -171,7 +173,7 @@ export function CompetitionScreen() {
           transcript.isError ? (
             <ScreenError
               message={expired ? COMPETITION_EXPIRED_ERROR : COMPETITION_JUDGE_ERROR}
-              onRetry={expired ? undefined : () => void transcript.refetch()}
+              onRetry={expired ? null : () => void transcript.refetch()}
             />
           ) : (
             <ScreenLoading />
@@ -247,7 +249,7 @@ export function CompetitionScreen() {
       {quitConfirm}
     </>
   );
-}
+};
 
 const styles = StyleSheet.create({
   header: {

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { PropsWithChildren, ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView, type SafeAreaViewProps } from "react-native-safe-area-context";
 import { PaperBackground } from "@/components/ui/paper-background";
@@ -10,15 +10,22 @@ export const MAX_CONTENT_WIDTH = 480;
 // The AppHeader and the tab bar spend the vertical insets, so a tab screen must never spend them twice.
 export const TAB_SCREEN_EDGES = ["left", "right"] as const;
 
-export type ScreenContainerProps = {
-  children: ReactNode;
-  edges?: SafeAreaViewProps["edges"];
-  background?: string;
-  // Painted over the whole paper but under the content — a translucent wash keeps the grid showing.
-  underlay?: ReactNode;
-};
+// SafeAreaView's own default, written out so no screen inherits an edge set it never chose.
+export const ALL_SCREEN_EDGES = ["top", "right", "bottom", "left"] as const;
 
-export function ScreenContainer({ children, edges, background, underlay }: ScreenContainerProps) {
+export interface ScreenContainerProps {
+  edges: SafeAreaViewProps["edges"];
+  background: string | null;
+  // Painted over the whole paper but under the content — a translucent wash keeps the grid showing.
+  underlay: ReactNode;
+}
+
+export const ScreenContainer = ({
+  children,
+  edges,
+  background,
+  underlay,
+}: PropsWithChildren<ScreenContainerProps>) => {
   return (
     <View style={[styles.screen, background ? { backgroundColor: background } : null]}>
       {/* The grid belongs to the paper; a screen that washes itself another colour drops it. */}
@@ -29,7 +36,7 @@ export function ScreenContainer({ children, edges, background, underlay }: Scree
       </SafeAreaView>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   screen: {

@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type PropsWithChildren, useEffect, useRef, useState } from "react";
 import { Animated, Easing, Platform, StyleSheet, View } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
@@ -8,13 +8,12 @@ const FADE_SOLID_STOP = 0.25;
 // Web has no native animated module and warns on every frame; it falls back to JS anyway.
 const NATIVE_DRIVER = Platform.OS !== "web";
 
-export type MarqueeProps = {
-  children: ReactNode;
+export interface MarqueeProps {
   gap: number;
   fadeColor: string;
-};
+}
 
-export function Marquee({ children, gap, fadeColor }: MarqueeProps) {
+export const Marquee = ({ children, gap, fadeColor }: PropsWithChildren<MarqueeProps>) => {
   const [runWidth, setRunWidth] = useState(0);
   const travel = useRef(new Animated.Value(0)).current;
   const period = runWidth + gap;
@@ -50,9 +49,14 @@ export function Marquee({ children, gap, fadeColor }: MarqueeProps) {
       <EdgeFade color={fadeColor} side="right" />
     </View>
   );
+};
+
+interface EdgeFadeProps {
+  color: string;
+  side: "left" | "right";
 }
 
-function EdgeFade({ color, side }: { color: string; side: "left" | "right" }) {
+const EdgeFade = ({ color, side }: EdgeFadeProps) => {
   const id = `marquee-fade-${side}`;
   const solidFirst = side === "left";
 
@@ -72,7 +76,7 @@ function EdgeFade({ color, side }: { color: string; side: "left" | "right" }) {
       <Rect x={0} y={0} width="100%" height="100%" fill={`url(#${id})`} />
     </Svg>
   );
-}
+};
 
 const styles = StyleSheet.create({
   viewport: {

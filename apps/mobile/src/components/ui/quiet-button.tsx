@@ -4,19 +4,23 @@ import type { IconName } from "@/components/ui/icon-name";
 import { TEXT } from "@/theme/text";
 import { COLORS, CONTROL_HEIGHT, CONTROL_ICON_SIZE, PRESSED, RADIUS } from "@/theme/tokens";
 
-type QuietButtonBaseProps = {
+export interface QuietButtonProps {
   onPress: () => void;
-  disabled?: boolean;
-};
+  disabled: boolean;
+  layout: "block" | "circle";
+  label: string | null;
+  icon: IconName | null;
+  accessibilityLabel: string | null;
+}
 
-export type QuietButtonProps = QuietButtonBaseProps &
-  (
-    | { layout?: "block" | "flex"; label: string }
-    | { layout: "circle"; icon: IconName; accessibilityLabel: string }
-  );
-
-export function QuietButton(props: QuietButtonProps) {
-  const { onPress, disabled = false } = props;
+export const QuietButton = ({
+  onPress,
+  disabled,
+  layout,
+  label,
+  icon,
+  accessibilityLabel,
+}: QuietButtonProps) => {
   const color = disabled ? COLORS.inkMuted : COLORS.ink;
 
   return (
@@ -24,21 +28,17 @@ export function QuietButton(props: QuietButtonProps) {
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="button"
-      accessibilityLabel={props.layout === "circle" ? props.accessibilityLabel : props.label}
-      style={({ pressed }) => [
-        styles.face,
-        styles[props.layout ?? "block"],
-        pressed && styles.pressed,
-      ]}
+      accessibilityLabel={label ?? accessibilityLabel ?? undefined}
+      style={({ pressed }) => [styles.face, styles[layout], pressed && styles.pressed]}
     >
-      {props.layout === "circle" ? (
-        <MaterialIcons name={props.icon} size={CONTROL_ICON_SIZE} color={color} />
+      {layout === "circle" ? (
+        <MaterialIcons name={icon ?? undefined} size={CONTROL_ICON_SIZE} color={color} />
       ) : (
-        <Text style={[styles.label, { color }]}>{props.label}</Text>
+        <Text style={[styles.label, { color }]}>{label}</Text>
       )}
     </Pressable>
   );
-}
+};
 
 const styles = StyleSheet.create({
   face: {
@@ -51,7 +51,6 @@ const styles = StyleSheet.create({
     borderCurve: "continuous",
   },
   block: { alignSelf: "stretch" },
-  flex: { flex: 1 },
   circle: { width: CONTROL_HEIGHT, paddingHorizontal: 0, borderRadius: RADIUS.round },
   pressed: PRESSED,
   label: {

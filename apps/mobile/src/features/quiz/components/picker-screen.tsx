@@ -35,7 +35,7 @@ const TITLE_HALF_HEIGHT =
   TEXT.caption.lineHeight +
   SPACE.lg;
 
-export function PickerScreen() {
+export const PickerScreen = () => {
   const router = useRouter();
   const { data, isPending, isError, isFetching, refetch } = useThemes();
   // One Draw per visit: recomputed on every mount, stable while the screen stays up.
@@ -80,7 +80,11 @@ export function PickerScreen() {
     ) : null;
 
   return (
-    <ScreenContainer edges={["left", "right"]} underlay={<SelectionWash wash={wash} />}>
+    <ScreenContainer
+      edges={["left", "right"]}
+      background={null}
+      underlay={<SelectionWash wash={wash} />}
+    >
       {feedback ? (
         <View style={[styles.feedback, { paddingTop: headerHeight }]}>{feedback}</View>
       ) : (
@@ -120,15 +124,25 @@ export function PickerScreen() {
             <View style={styles.actions}>
               <NewButton
                 layout="hug"
+                shape="rounded"
+                tone="default"
                 icon="tooltip-question-outline"
+                label={null}
                 accessibilityLabel={HOME_EMPTY_TITLE}
                 onPress={() => setHelpVisible(true)}
+                disabled={false}
+                pending={false}
               />
               <NewButton
                 layout="hug"
+                shape="rounded"
+                tone="default"
                 icon="close"
+                label={null}
                 accessibilityLabel={PICKER_BACK_LABEL}
                 onPress={leave}
+                disabled={false}
+                pending={false}
               />
             </View>
           </>
@@ -140,15 +154,25 @@ export function PickerScreen() {
         </View>
       </HeaderCard>
       <SwipeToStart category={selected?.category ?? null} onStart={onStart} />
-      <Sheet visible={helpVisible} onDismiss={() => setHelpVisible(false)}>
+      <Sheet
+        visible={helpVisible}
+        title={null}
+        message={null}
+        dismissible={true}
+        onDismiss={() => setHelpVisible(false)}
+      >
         <HomeEmptyState />
       </Sheet>
     </ScreenContainer>
   );
+};
+
+interface SelectionWashProps {
+  wash: ColorCrossFade;
 }
 
 // The wash rides between the paper's grid and the content, so the squares keep showing through.
-function SelectionWash({ wash }: { wash: ColorCrossFade }) {
+const SelectionWash = ({ wash }: SelectionWashProps) => {
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
       {wash.base ? (
@@ -166,7 +190,7 @@ function SelectionWash({ wash }: { wash: ColorCrossFade }) {
       ) : null}
     </View>
   );
-}
+};
 
 // The pill's drag starts at the screen edge, so both OS back gestures are barred on this screen.
 function useBarredBackGestures(goBack: () => void) {

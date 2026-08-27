@@ -5,12 +5,12 @@ import {
   MARK_VIEWBOX_SIZE,
 } from "@/components/logo-mark-paths";
 
-export type LogoMarkProps = {
+export interface LogoMarkProps {
   color: string;
   size: number;
-};
+}
 
-export function LogoMark({ color, size }: LogoMarkProps) {
+export const LogoMark = ({ color, size }: LogoMarkProps) => {
   return (
     <Svg
       width={size}
@@ -22,4 +22,4 @@ export function LogoMark({ color, size }: LogoMarkProps) {
       <Path fill={color} d={MARK_STARBURST_PATH} />
     </Svg>
   );
-}
+};

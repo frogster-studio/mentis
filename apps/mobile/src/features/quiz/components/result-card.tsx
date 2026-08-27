@@ -10,29 +10,29 @@ const MENU_ICON_SIZE = 20;
 const MODE_ICON_SIZE = 16;
 const CHIP_SIZE = 32;
 
-export type ResultCardProps = {
+export interface ResultCardProps {
   questionText: string;
   canonicalAnswer: string;
   answerText: string;
   mode: QuizAnswerModeEnum;
   correct: boolean;
   points: number;
-};
+}
 
-export function ResultCard({
+export const ResultCard = ({
   questionText,
   canonicalAnswer,
   answerText,
   mode,
   correct,
   points,
-}: ResultCardProps) {
+}: ResultCardProps) => {
   const isEmpty = answerText.trim() === "";
   const modeGlyph = mode === QuizAnswerModeEnum.SQUARE ? "grid-view" : "edit";
   const accent = correct ? COLORS.success : COLORS.danger;
 
   return (
-    <Card>
+    <Card onPress={null}>
       <View style={styles.body}>
         <View style={styles.head}>
           <Text style={styles.question}>{questionText}</Text>
@@ -56,7 +56,7 @@ export function ResultCard({
       </View>
     </Card>
   );
-}
+};
 
 const styles = StyleSheet.create({
   body: {

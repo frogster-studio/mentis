@@ -8,11 +8,11 @@ import type { Category } from "@/types/quiz";
 
 const CHIP_ICON_SIZE = 14;
 
-export type CategoryChipProps = {
+export interface CategoryChipProps {
   category: Category;
-};
+}
 
-export function CategoryChip({ category }: CategoryChipProps) {
+export const CategoryChip = ({ category }: CategoryChipProps) => {
   return (
     <View style={[styles.chip, { backgroundColor: categoryWash(category.color) }]}>
       <MaterialIcons
@@ -25,7 +25,7 @@ export function CategoryChip({ category }: CategoryChipProps) {
       </Text>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   chip: {

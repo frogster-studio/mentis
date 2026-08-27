@@ -10,7 +10,7 @@ import { hasStandingAnswer, type QuestionPlay } from "@/features/quiz/question-p
 import { TEXT } from "@/theme/text";
 import { COLORS, CONTROL_HEIGHT, CONTROL_ICON_SIZE, GUTTER, RADIUS, SPACE } from "@/theme/tokens";
 
-export type AnswerFooterProps = {
+export interface AnswerFooterProps {
   play: QuestionPlay;
   // Held by the screen, which blurs the field before raising the quit sheet.
   inputRef: RefObject<TextInput | null>;
@@ -19,9 +19,9 @@ export type AnswerFooterProps = {
   onSwitchToSquare: () => void;
   onSelect: (index: number) => void;
   onConfirm: () => void;
-};
+}
 
-export function AnswerFooter({
+export const AnswerFooter = ({
   play,
   inputRef,
   autoFocus,
@@ -29,7 +29,7 @@ export function AnswerFooter({
   onSwitchToSquare,
   onSelect,
   onConfirm,
-}: AnswerFooterProps) {
+}: AnswerFooterProps) => {
   const disabled = !hasStandingAnswer(play);
 
   if (play.mode === QuizAnswerModeEnum.SQUARE && play.choices) {
@@ -47,11 +47,15 @@ export function AnswerFooter({
         </View>
         <View style={styles.confirmSlot}>
           <NewButton
+            layout="block"
             shape="full"
+            tone="default"
             icon="arrow-right"
             label={CONFIRM_LABEL}
+            accessibilityLabel={null}
             onPress={onConfirm}
             disabled={disabled}
+            pending={false}
           />
         </View>
       </View>
@@ -66,6 +70,7 @@ export function AnswerFooter({
         borderColor={COLORS.ink}
         borderWidth={1}
         style={styles.inputShell}
+        corners="all"
       >
         <TextInput
           ref={inputRef}
@@ -91,21 +96,29 @@ export function AnswerFooter({
       </Squircle>
       <NewButton
         layout="hug"
+        shape="rounded"
+        tone="default"
         icon="grid-large"
+        label={null}
         accessibilityLabel={SQUARE_SWITCH_LABEL}
         onPress={onSwitchToSquare}
+        disabled={false}
+        pending={false}
       />
       <NewButton
         layout="hug"
+        shape="rounded"
         tone="primary"
         icon="arrow-right"
+        label={null}
         accessibilityLabel={CONFIRM_LABEL}
         onPress={onConfirm}
         disabled={disabled}
+        pending={false}
       />
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   footer: {

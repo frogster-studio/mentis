@@ -31,7 +31,7 @@ export function useAppHeaderHeight() {
   return useHeaderCardHeight(TITLE_HALF_HEIGHT);
 }
 
-export function AppHeader() {
+export const AppHeader = () => {
   const router = useRouter();
   const user = useAuthStore((state) => state.session?.user);
   const scrollOffset = useTabScrollOffset();
@@ -41,16 +41,21 @@ export function AppHeader() {
     <HeaderCard
       collapseHeight={TITLE_HALF_HEIGHT}
       scrollOffset={scrollOffset}
+      mask={null}
       topRow={
         <>
-          <ProfileAvatar photoUrl={metadataString(user, "avatar_url")} />
+          <ProfileAvatar photoUrl={metadataString(user, "avatar_url") ?? null} />
           <View style={styles.greetingSlot}>
             <Text style={styles.greeting}>{greetingFor(firstNameOf(user))}</Text>
           </View>
           <NewButton
             layout="hug"
             shape="rounded"
+            tone="default"
+            disabled={false}
+            pending={false}
             icon="menu"
+            label={null}
             accessibilityLabel={ACCOUNT_TITLE}
             onPress={() => router.push("/account")}
           />
@@ -73,7 +78,7 @@ export function AppHeader() {
       </View>
     </HeaderCard>
   );
-}
+};
 
 // The card never rides the tab slide, so its title is the only thing that crosses tabs.
 function useTitleSwap() {

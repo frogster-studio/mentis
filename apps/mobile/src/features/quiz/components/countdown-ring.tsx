@@ -4,10 +4,10 @@ import { COUNTDOWN_DANGER_SECONDS } from "@/features/quiz/constants";
 import { TEXT } from "@/theme/text";
 import { COLORS, CONTROL_HEIGHT } from "@/theme/tokens";
 
-export type CountdownRingProps = {
+export interface CountdownRingProps {
   fraction: number;
   seconds: number;
-};
+}
 
 // Twin of the quit circle it sits beside.
 const SIZE = CONTROL_HEIGHT;
@@ -15,7 +15,7 @@ const STROKE_WIDTH = 6;
 const RADIUS = (SIZE - STROKE_WIDTH) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-export function CountdownRing({ fraction, seconds }: CountdownRingProps) {
+export const CountdownRing = ({ fraction, seconds }: CountdownRingProps) => {
   const urgent = seconds <= COUNTDOWN_DANGER_SECONDS;
 
   return (
@@ -47,7 +47,7 @@ export function CountdownRing({ fraction, seconds }: CountdownRingProps) {
       </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {

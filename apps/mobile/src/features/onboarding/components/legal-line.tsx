@@ -19,7 +19,7 @@ function openLegal() {
   void WebBrowser.openBrowserAsync(LEGAL_URL);
 }
 
-export function LegalLine() {
+export const LegalLine = () => {
   return (
     <Text style={styles.sentence}>
       {LEGAL_INTRO}
@@ -33,7 +33,7 @@ export function LegalLine() {
       </Text>
     </Text>
   );
-}
+};
 
 const styles = StyleSheet.create({
   sentence: {

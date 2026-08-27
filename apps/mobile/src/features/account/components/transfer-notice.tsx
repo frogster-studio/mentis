@@ -7,7 +7,7 @@ import { COLORS, GUTTER, PRESSED, SPACE } from "@/theme/tokens";
 
 const DISMISS_ICON_SIZE = 20;
 
-export function TransferNotice() {
+export const TransferNotice = () => {
   const dismissNotice = useTransferStore((state) => state.dismissNotice);
 
   return (
@@ -23,7 +23,7 @@ export function TransferNotice() {
       </Pressable>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   notice: {

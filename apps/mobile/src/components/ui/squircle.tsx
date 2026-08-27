@@ -1,5 +1,5 @@
 import { SquircleView } from "expo-squircle-view";
-import type { ReactNode } from "react";
+import type { PropsWithChildren } from "react";
 import {
   type ColorValue,
   Platform,
@@ -15,25 +15,24 @@ const IS_WEB = Platform.OS === "web";
 // Figma's own corner smoothing runs to 100; anything less stops matching the mockup.
 const CORNER_SMOOTHING = 100;
 
-export type SquircleProps = {
-  children?: ReactNode;
+export interface SquircleProps {
   radius: number;
-  corners?: "all" | "top" | "bottom";
-  color?: ColorValue;
-  borderColor?: ColorValue;
-  borderWidth?: number;
-  style?: StyleProp<ViewStyle>;
-};
+  corners: "all" | "top" | "bottom";
+  color: ColorValue | null;
+  borderColor: ColorValue | null;
+  borderWidth: number | null;
+  style: StyleProp<ViewStyle>;
+}
 
-export function Squircle({
+export const Squircle = ({
   children,
   radius,
-  corners = "all",
+  corners,
   color,
   borderColor,
   borderWidth,
   style,
-}: SquircleProps) {
+}: PropsWithChildren<SquircleProps>) => {
   const overhang =
     corners === "top" ? { bottom: -radius } : corners === "bottom" ? { top: -radius } : null;
 
@@ -46,9 +45,9 @@ export function Squircle({
             overhang,
             styles.continuous,
             {
-              backgroundColor: color,
-              borderColor,
-              borderWidth,
+              backgroundColor: color ?? undefined,
+              borderColor: borderColor ?? undefined,
+              borderWidth: borderWidth ?? undefined,
               borderRadius: radius,
             },
           ]}
@@ -58,15 +57,15 @@ export function Squircle({
           style={[StyleSheet.absoluteFill, overhang]}
           cornerSmoothing={CORNER_SMOOTHING}
           borderRadius={radius}
-          backgroundColor={color}
-          borderColor={borderColor}
-          borderWidth={borderWidth}
+          backgroundColor={color ?? undefined}
+          borderColor={borderColor ?? undefined}
+          borderWidth={borderWidth ?? undefined}
         />
       )}
       {children}
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   clip: { overflow: "hidden" },

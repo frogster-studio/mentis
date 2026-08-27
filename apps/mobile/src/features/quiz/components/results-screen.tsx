@@ -1,5 +1,4 @@
-import type { ReactNode } from "react";
-import { useRef, useState } from "react";
+import { type PropsWithChildren, type ReactNode, useRef, useState } from "react";
 import { Animated, type LayoutChangeEvent, Platform, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurBand } from "@/components/ui/blur-band";
@@ -20,14 +19,18 @@ const HANDOVER = SPACE.lg;
 // Web has no native animated module and warns on every mount; it falls back to JS anyway.
 const NATIVE_DRIVER = Platform.OS !== "web";
 
-export type ResultsScreenProps = {
+export interface ResultsScreenProps {
   score: number;
   themeName: string;
-  children: ReactNode;
   footer: ReactNode;
-};
+}
 
-export function ResultsScreen({ score, themeName, children, footer }: ResultsScreenProps) {
+export const ResultsScreen = ({
+  score,
+  themeName,
+  children,
+  footer,
+}: PropsWithChildren<ResultsScreenProps>) => {
   const insets = useSafeAreaInsets();
   const bandHeight = useResultsBandHeight();
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -49,7 +52,7 @@ export function ResultsScreen({ score, themeName, children, footer }: ResultsScr
   });
 
   return (
-    <ScreenContainer edges={RESULTS_EDGES}>
+    <ScreenContainer edges={RESULTS_EDGES} background={null} underlay={null}>
       <Animated.ScrollView
         showsVerticalScrollIndicator={false}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
@@ -84,7 +87,7 @@ export function ResultsScreen({ score, themeName, children, footer }: ResultsScr
       </BlurBand>
     </ScreenContainer>
   );
-}
+};
 
 const styles = StyleSheet.create({
   scrollContent: {

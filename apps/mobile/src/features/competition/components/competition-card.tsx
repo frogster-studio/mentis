@@ -9,7 +9,7 @@ import { COLORS, SPACE } from "@/theme/tokens";
 const TROPHY_SIZE = 24;
 const CHEVRON_SIZE = 20;
 
-export function CompetitionCard() {
+export const CompetitionCard = () => {
   const router = useRouter();
 
   return (
@@ -24,7 +24,7 @@ export function CompetitionCard() {
       </View>
     </Card>
   );
-}
+};
 
 const styles = StyleSheet.create({
   row: {

@@ -3,7 +3,7 @@ import { StyleSheet, View } from "react-native";
 import { LogoMark } from "@/components/logo-mark";
 import { LogoWordmark } from "@/components/logo-wordmark";
 import { Button } from "@/components/ui/button";
-import { ScreenContainer } from "@/components/ui/screen-container";
+import { ALL_SCREEN_EDGES, ScreenContainer } from "@/components/ui/screen-container";
 import { LegalLine } from "@/features/onboarding/components/legal-line";
 import { ONBOARDING_START_LABEL } from "@/features/onboarding/constants";
 import { useOnboardingStore } from "@/features/onboarding/store";
@@ -12,12 +12,12 @@ import { COLORS, GUTTER, SPACE } from "@/theme/tokens";
 const MARK_SIZE = 96;
 const WORDMARK_WIDTH = 180;
 
-export function OnboardingScreen() {
+export const OnboardingScreen = () => {
   const router = useRouter();
   const complete = useOnboardingStore((state) => state.complete);
 
   return (
-    <ScreenContainer>
+    <ScreenContainer edges={ALL_SCREEN_EDGES} background={null} underlay={null}>
       <View style={styles.headroom} />
       <View style={styles.logo}>
         <LogoMark color={COLORS.primary} size={MARK_SIZE} />
@@ -31,12 +31,13 @@ export function OnboardingScreen() {
             complete();
             router.replace("/");
           }}
+          pending={false}
         />
         <LegalLine />
       </View>
     </ScreenContainer>
   );
-}
+};
 
 const styles = StyleSheet.create({
   // The 1:2 spacer ratio sits the logo above the screen's centre line.

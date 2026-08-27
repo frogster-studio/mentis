@@ -6,7 +6,7 @@ import { COLORS } from "@/theme/tokens";
 const CELL_WIDTH = 22;
 const CELL_HEIGHT = 23.55;
 
-export function PaperBackground() {
+export const PaperBackground = () => {
   // Both tab scenes stay mounted, so on web the two pattern ids must not collide.
   const patternId = `paper-grid-${useId().replace(/\W/g, "")}`;
 
@@ -26,4 +26,4 @@ export function PaperBackground() {
       <Rect x={0} y={0} width="100%" height="100%" fill={`url(#${patternId})`} />
     </Svg>
   );
-}
+};

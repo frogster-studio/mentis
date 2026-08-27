@@ -9,7 +9,7 @@ import { WORLD_PLACEHOLDER } from "@/features/world/constants";
 import { TEXT } from "@/theme/text";
 import { COLORS, GUTTER, SPACE } from "@/theme/tokens";
 
-export function WorldScreen() {
+export const WorldScreen = () => {
   const headerHeight = useAppHeaderHeight();
   const tabBarHeight = useAppTabBarHeight();
   const session = useAuthStore((state) => state.session);
@@ -17,7 +17,7 @@ export function WorldScreen() {
   useTabScroll();
 
   return (
-    <ScreenContainer edges={TAB_SCREEN_EDGES}>
+    <ScreenContainer edges={TAB_SCREEN_EDGES} background={null} underlay={null}>
       <View style={[styles.content, { paddingTop: headerHeight, paddingBottom: tabBarHeight }]}>
         <View style={styles.block}>
           {/* Competition needs an Account, so the entry simply is not there for a signed-out Player. */}
@@ -29,7 +29,7 @@ export function WorldScreen() {
       </View>
     </ScreenContainer>
   );
-}
+};
 
 const styles = StyleSheet.create({
   content: {

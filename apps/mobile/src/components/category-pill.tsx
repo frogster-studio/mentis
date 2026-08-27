@@ -14,17 +14,35 @@ const BAR_HEIGHT = 8;
 const BAR_RADIUS = 2;
 const BAR_GAP = 6;
 
+export interface CategoryPillProps {
+  icon: CommunityIconName;
+}
+
 // The label is a bar until Categories are drawn for real; only the glyph carries meaning today.
-export function CategoryPill({ icon }: { icon: CommunityIconName }) {
+export const CategoryPill = ({ icon }: CategoryPillProps) => {
   return (
-    <Squircle radius={RADIUS.sm} color={COLORS.primarySunken} style={styles.pill}>
-      <Squircle radius={BADGE_SIZE / 3} color={COLORS.primary} style={styles.badge}>
+    <Squircle
+      radius={RADIUS.sm}
+      color={COLORS.primarySunken}
+      style={styles.pill}
+      corners="all"
+      borderColor={null}
+      borderWidth={null}
+    >
+      <Squircle
+        radius={BADGE_SIZE / 3}
+        color={COLORS.primary}
+        style={styles.badge}
+        corners="all"
+        borderColor={null}
+        borderWidth={null}
+      >
         <MaterialCommunityIcons name={icon} size={ICON_SIZE} color={COLORS.inkMuted} />
       </Squircle>
       <View style={styles.bar} />
     </Squircle>
   );
-}
+};
 
 const styles = StyleSheet.create({
   pill: {

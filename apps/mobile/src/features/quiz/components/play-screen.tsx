@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from "react-native";
-import { ScreenContainer } from "@/components/ui/screen-container";
+import { ALL_SCREEN_EDGES, ScreenContainer } from "@/components/ui/screen-container";
 import { Squircle } from "@/components/ui/squircle";
 import { PlayProgressBar } from "@/features/quiz/components/play-progress-bar";
 import { TEXT } from "@/theme/text";
@@ -9,25 +9,27 @@ import { COLORS, GUTTER, RADIUS, SPACE } from "@/theme/tokens";
 // The Reveal's wash carried into the session: the Category colour with a hex alpha appended.
 const BACKDROP_ALPHA = "38";
 
-export type PlayScreenProps = {
+export interface PlayScreenProps {
   questionText: string;
   position: number;
   total: number;
   categoryColor: string;
   header: ReactNode;
   footer: ReactNode;
-};
+}
 
-export function PlayScreen({
+export const PlayScreen = ({
   questionText,
   position,
   total,
   categoryColor,
   header,
   footer,
-}: PlayScreenProps) {
+}: PlayScreenProps) => {
   return (
     <ScreenContainer
+      edges={ALL_SCREEN_EDGES}
+      background={null}
       underlay={
         <View
           style={[
@@ -42,12 +44,21 @@ export function PlayScreen({
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={styles.card}>
-          <Squircle radius={RADIUS.xl} corners="top" color={COLORS.card} style={styles.cardTop} />
+          <Squircle
+            radius={RADIUS.xl}
+            corners="top"
+            color={COLORS.card}
+            style={styles.cardTop}
+            borderColor={null}
+            borderWidth={null}
+          />
           <Squircle
             radius={RADIUS.base}
             corners="bottom"
             color={COLORS.card}
             style={styles.cardBottom}
+            borderColor={null}
+            borderWidth={null}
           />
           {header}
           <View style={styles.progress}>
@@ -61,7 +72,7 @@ export function PlayScreen({
       </KeyboardAvoidingView>
     </ScreenContainer>
   );
-}
+};
 
 const styles = StyleSheet.create({
   flex: {

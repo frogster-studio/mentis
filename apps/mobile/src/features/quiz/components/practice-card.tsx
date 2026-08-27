@@ -15,11 +15,18 @@ import { COLORS, GUTTER, RADIUS, SPACE } from "@/theme/tokens";
 
 const PILL_GAP = SPACE.sm;
 
-export function PracticeCard() {
+export const PracticeCard = () => {
   const router = useRouter();
 
   return (
-    <Squircle radius={RADIUS.base} color={COLORS.primary} style={styles.card}>
+    <Squircle
+      radius={RADIUS.base}
+      color={COLORS.primary}
+      style={styles.card}
+      corners="all"
+      borderColor={null}
+      borderWidth={null}
+    >
       <Text style={styles.title}>{PRACTICE_TITLE}</Text>
       <Text style={styles.pitch}>
         {PRACTICE_PITCH.map((run) => (
@@ -36,15 +43,20 @@ export function PracticeCard() {
       </Marquee>
       <View style={styles.action}>
         <NewButton
+          layout="block"
           shape="full"
-          label={PRACTICE_CTA_LABEL}
+          tone="default"
           icon="play-circle-outline"
+          label={PRACTICE_CTA_LABEL}
+          accessibilityLabel={null}
           onPress={() => router.push("/picker")}
+          disabled={false}
+          pending={false}
         />
       </View>
     </Squircle>
   );
-}
+};
 
 const styles = StyleSheet.create({
   card: {

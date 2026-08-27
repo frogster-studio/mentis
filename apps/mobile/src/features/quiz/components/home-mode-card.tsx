@@ -10,16 +10,16 @@ import { COLORS, SPACE } from "@/theme/tokens";
 const POINTS_SLOT_WIDTH = 46;
 const MODE_ICON_SIZE = 18;
 
-export type HomeModeCardProps = {
+export interface HomeModeCardProps {
   points: number;
   name: string;
   how: string;
   icon: IconName;
-};
+}
 
-export function HomeModeCard({ points, name, how, icon }: HomeModeCardProps) {
+export const HomeModeCard = ({ points, name, how, icon }: HomeModeCardProps) => {
   return (
-    <Card>
+    <Card onPress={null}>
       <View style={styles.row}>
         <Text style={styles.points}>
           {points}
@@ -35,7 +35,7 @@ export function HomeModeCard({ points, name, how, icon }: HomeModeCardProps) {
       </View>
     </Card>
   );
-}
+};
 
 const styles = StyleSheet.create({
   row: {

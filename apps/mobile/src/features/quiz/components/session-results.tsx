@@ -10,28 +10,28 @@ import type { Question } from "@/types/quiz";
 
 const HOME_LINK_HEIGHT = TEXT.label.lineHeight + SPACE.md * 2;
 
-export type SessionResultsProps = {
+export interface SessionResultsProps {
   themeName: string;
   questions: Question[];
   answers: SessionAnswer[];
   onReplay: () => void;
   onGoHome: () => void;
-};
+}
 
-export function SessionResults({
+export const SessionResults = ({
   themeName,
   questions,
   answers,
   onReplay,
   onGoHome,
-}: SessionResultsProps) {
+}: SessionResultsProps) => {
   return (
     <ResultsScreen
       score={sessionScore(answers)}
       themeName={themeName}
       footer={
         <>
-          <Button label={RESULTS_REPLAY_LABEL} onPress={onReplay} />
+          <Button label={RESULTS_REPLAY_LABEL} onPress={onReplay} pending={false} />
           <Pressable
             style={({ pressed }) => [styles.homeLink, pressed && styles.pressed]}
             onPress={onGoHome}
@@ -54,7 +54,7 @@ export function SessionResults({
       ))}
     </ResultsScreen>
   );
-}
+};
 
 const styles = StyleSheet.create({
   homeLink: {

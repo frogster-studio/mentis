@@ -28,13 +28,13 @@ const REVEAL_MS = 250;
 // Web has no native animated module; it falls back to JS anyway.
 const NATIVE_DRIVER = Platform.OS !== "web";
 
-export type SwipeToStartProps = {
+export interface SwipeToStartProps {
   // Nothing picked yet leaves the empty trough waiting.
   category: Category | null;
   onStart: () => void;
-};
+}
 
-export function SwipeToStart({ category, onStart }: SwipeToStartProps) {
+export const SwipeToStart = ({ category, onStart }: SwipeToStartProps) => {
   const insets = useSafeAreaInsets();
   const fill = useColorCrossFade(category?.color ?? null);
   const reveal = useReveal(category !== null);
@@ -48,15 +48,36 @@ export function SwipeToStart({ category, onStart }: SwipeToStartProps) {
     <View style={[styles.overlay, { paddingBottom: bottomGap(insets.bottom) }]}>
       <View style={styles.band}>
         <View style={styles.track}>
-          <Squircle radius={RADIUS.lg} color={COLORS.trough} style={StyleSheet.absoluteFill} />
+          <Squircle
+            radius={RADIUS.lg}
+            color={COLORS.trough}
+            style={StyleSheet.absoluteFill}
+            corners="all"
+            borderColor={null}
+            borderWidth={null}
+          />
           {fill.base ? (
             <Animated.View style={[StyleSheet.absoluteFill, { opacity: fill.baseOpacity }]}>
-              <Squircle radius={RADIUS.lg} color={fill.base} style={styles.fill} />
+              <Squircle
+                radius={RADIUS.lg}
+                color={fill.base}
+                style={styles.fill}
+                corners="all"
+                borderColor={null}
+                borderWidth={null}
+              />
             </Animated.View>
           ) : null}
           {fill.top ? (
             <Animated.View style={[StyleSheet.absoluteFill, { opacity: fill.topOpacity }]}>
-              <Squircle radius={RADIUS.lg} color={fill.top} style={styles.fill} />
+              <Squircle
+                radius={RADIUS.lg}
+                color={fill.top}
+                style={styles.fill}
+                corners="all"
+                borderColor={null}
+                borderWidth={null}
+              />
             </Animated.View>
           ) : null}
           {category ? (
@@ -87,13 +108,21 @@ export function SwipeToStart({ category, onStart }: SwipeToStartProps) {
                 {...panHandlers}
                 style={[styles.pill, { width: pillWidth, transform: [{ translateX: drag }] }]}
               >
-                <Squircle radius={RADIUS.lg} color={COLORS.ink} style={styles.pillEdge} />
+                <Squircle
+                  radius={RADIUS.lg}
+                  color={COLORS.ink}
+                  style={styles.pillEdge}
+                  corners="all"
+                  borderColor={null}
+                  borderWidth={null}
+                />
                 <Squircle
                   radius={RADIUS.lg}
                   color={COLORS.face}
                   borderColor={COLORS.ink}
                   borderWidth={1}
                   style={styles.pillFace}
+                  corners="all"
                 >
                   <MaterialCommunityIcons
                     name="gesture-swipe-right"
@@ -111,7 +140,7 @@ export function SwipeToStart({ category, onStart }: SwipeToStartProps) {
       </View>
     </View>
   );
-}
+};
 
 function useDragToConfirm(maxTravel: number, onStart: () => void) {
   const drag = useRef(new Animated.Value(0)).current;

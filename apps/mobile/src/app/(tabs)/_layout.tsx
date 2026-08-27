@@ -9,7 +9,7 @@ import { HOME_TAB_LABEL } from "@/features/quiz/constants";
 import { WORLD_TAB_LABEL } from "@/features/world/constants";
 import { COLORS } from "@/theme/tokens";
 
-export default function TabsLayout() {
+const TabsLayout = () => {
   const { width } = useWindowDimensions();
 
   return (
@@ -69,7 +69,7 @@ export default function TabsLayout() {
       </View>
     </TabScrollProvider>
   );
-}
+};
 
 const styles = StyleSheet.create({
   shell: {
@@ -80,3 +80,5 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
 });
+
+export default TabsLayout;

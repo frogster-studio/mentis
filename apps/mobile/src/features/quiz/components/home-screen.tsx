@@ -6,13 +6,13 @@ import { ScreenContainer, TAB_SCREEN_EDGES } from "@/components/ui/screen-contai
 import { PracticeCard } from "@/features/quiz/components/practice-card";
 import { SPACE } from "@/theme/tokens";
 
-export function HomeScreen() {
+export const HomeScreen = () => {
   const headerHeight = useAppHeaderHeight();
   const tabBarHeight = useAppTabBarHeight();
   const onScroll = useTabScroll();
 
   return (
-    <ScreenContainer edges={TAB_SCREEN_EDGES}>
+    <ScreenContainer edges={TAB_SCREEN_EDGES} background={null} underlay={null}>
       <Animated.ScrollView
         showsVerticalScrollIndicator={false}
         onScroll={onScroll}
@@ -26,4 +26,4 @@ export function HomeScreen() {
       </Animated.ScrollView>
     </ScreenContainer>
   );
-}
+};

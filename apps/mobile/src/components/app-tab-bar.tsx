@@ -26,7 +26,7 @@ export function useAppTabBarHeight() {
   return bottomGap(useSafeAreaInsets().bottom) + BAR_HEIGHT;
 }
 
-export function AppTabBar({ state, descriptors, navigation, insets }: BottomTabBarProps) {
+export const AppTabBar = ({ state, descriptors, navigation, insets }: BottomTabBarProps) => {
   const [frames, setFrames] = useState<Record<string, TriggerFrame>>({});
   const activeFrame = frames[state.routes[state.index].key];
   const chip = useChipTravel(activeFrame);
@@ -43,7 +43,14 @@ export function AppTabBar({ state, descriptors, navigation, insets }: BottomTabB
 
   return (
     <View style={[styles.overlay, { paddingBottom: bottomGap(insets.bottom) }]}>
-      <Squircle radius={RADIUS.lg} color={COLORS.quiet} style={styles.track}>
+      <Squircle
+        radius={RADIUS.lg}
+        color={COLORS.quiet}
+        style={styles.track}
+        corners="all"
+        borderColor={null}
+        borderWidth={null}
+      >
         <View style={styles.rail}>
           {/* One chip travels between the triggers, so the selection slides instead of jumping. */}
           {activeFrame ? (
@@ -54,6 +61,7 @@ export function AppTabBar({ state, descriptors, navigation, insets }: BottomTabB
                 borderColor={COLORS.ink}
                 borderWidth={1}
                 style={styles.chipFace}
+                corners="all"
               />
             </Animated.View>
           ) : null}
@@ -89,7 +97,7 @@ export function AppTabBar({ state, descriptors, navigation, insets }: BottomTabB
       </Squircle>
     </View>
   );
-}
+};
 
 // Width and left are laid-out values, so the travel runs on the JS driver.
 function useChipTravel(frame: TriggerFrame | undefined) {

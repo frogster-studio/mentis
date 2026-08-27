@@ -22,7 +22,7 @@ import { COLORS, SPACE } from "@/theme/tokens";
 const RING_PREVIEW_FRACTION = 0.75;
 const SWITCH_ICON_SIZE = 20;
 
-export function HomeEmptyState() {
+export const HomeEmptyState = () => {
   return (
     <View style={styles.block}>
       <Text style={styles.title}>{HOME_EMPTY_TITLE}</Text>
@@ -44,7 +44,7 @@ export function HomeEmptyState() {
       <Text style={styles.outcome}>{HOME_EMPTY_OUTCOME}</Text>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   block: {

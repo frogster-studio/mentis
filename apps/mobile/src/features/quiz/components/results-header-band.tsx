@@ -12,12 +12,12 @@ export function useResultsBandHeight() {
   return useSafeAreaInsets().top + ROW_HEIGHT;
 }
 
-export type ResultsHeaderBandProps = {
+export interface ResultsHeaderBandProps {
   score: number;
   themeName: string;
-};
+}
 
-export function ResultsHeaderBand({ score, themeName }: ResultsHeaderBandProps) {
+export const ResultsHeaderBand = ({ score, themeName }: ResultsHeaderBandProps) => {
   const insets = useSafeAreaInsets();
 
   return (
@@ -33,7 +33,7 @@ export function ResultsHeaderBand({ score, themeName }: ResultsHeaderBandProps) 
       </View>
     </BlurBand>
   );
-}
+};
 
 const styles = StyleSheet.create({
   row: {

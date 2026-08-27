@@ -5,19 +5,28 @@ import { COLORS, GUTTER, SPACE } from "@/theme/tokens";
 
 const RETRY_LABEL = "Réessayer";
 
-export type ScreenErrorProps = {
+export interface ScreenErrorProps {
   message: string;
-  onRetry?: () => void;
-};
+  onRetry: (() => void) | null;
+}
 
-export function ScreenError({ message, onRetry }: ScreenErrorProps) {
+export const ScreenError = ({ message, onRetry }: ScreenErrorProps) => {
   return (
     <View style={styles.root}>
       <Text style={styles.message}>{message}</Text>
-      {onRetry ? <QuietButton label={RETRY_LABEL} onPress={onRetry} /> : null}
+      {onRetry ? (
+        <QuietButton
+          layout="block"
+          label={RETRY_LABEL}
+          icon={null}
+          accessibilityLabel={null}
+          onPress={onRetry}
+          disabled={false}
+        />
+      ) : null}
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   root: {

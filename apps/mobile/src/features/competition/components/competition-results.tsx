@@ -4,17 +4,17 @@ import { COMPETITION_RESULTS_HOME_LABEL } from "@/features/competition/constants
 import { ResultCard } from "@/features/quiz/components/result-card";
 import { ResultsScreen } from "@/features/quiz/components/results-screen";
 
-export type CompetitionResultsProps = {
+export interface CompetitionResultsProps {
   transcript: AppCompetitionTranscriptResponse;
   onGoHome: () => void;
-};
+}
 
-export function CompetitionResults({ transcript, onGoHome }: CompetitionResultsProps) {
+export const CompetitionResults = ({ transcript, onGoHome }: CompetitionResultsProps) => {
   return (
     <ResultsScreen
       score={transcript.score}
       themeName={transcript.themeName}
-      footer={<Button label={COMPETITION_RESULTS_HOME_LABEL} onPress={onGoHome} />}
+      footer={<Button label={COMPETITION_RESULTS_HOME_LABEL} onPress={onGoHome} pending={false} />}
     >
       {transcript.answers.map((answer) => (
         <ResultCard
@@ -29,4 +29,4 @@ export function CompetitionResults({ transcript, onGoHome }: CompetitionResultsP
       ))}
     </ResultsScreen>
   );
-}
+};

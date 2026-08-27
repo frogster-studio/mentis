@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { QuietButton } from "@/components/ui/quiet-button";
-import { ScreenContainer } from "@/components/ui/screen-container";
+import { ALL_SCREEN_EDGES, ScreenContainer } from "@/components/ui/screen-container";
 import { ScreenLoading } from "@/components/ui/screen-loading";
 import { signOut } from "@/features/account/auth";
 import { useAuthStore } from "@/features/account/auth-store";
@@ -37,7 +37,7 @@ import { useHomeCards } from "@/features/quiz/use-home-cards";
 import { TEXT } from "@/theme/text";
 import { COLORS, CONTROL_HEIGHT, GUTTER, PRESSED, SPACE } from "@/theme/tokens";
 
-export function AccountScreen() {
+export const AccountScreen = () => {
   const router = useRouter();
   const session = useAuthStore((state) => state.session);
   const isLoading = useAuthStore((state) => state.isLoading);
@@ -57,13 +57,15 @@ export function AccountScreen() {
   const showTransferNotice = !user && transferred && isEmpty && !dismissed;
 
   return (
-    <ScreenContainer>
+    <ScreenContainer edges={ALL_SCREEN_EDGES} background={null} underlay={null}>
       <View style={styles.header}>
         <QuietButton
           layout="circle"
+          label={null}
           icon="chevron-left"
           accessibilityLabel={ACCOUNT_BACK_LABEL}
           onPress={() => router.back()}
+          disabled={false}
         />
         <Text style={styles.title}>{ACCOUNT_TITLE}</Text>
         {/* Balances the back circle, so the title holds the screen's centre line. */}
@@ -97,7 +99,7 @@ export function AccountScreen() {
                   name={card.name}
                   average={card.average}
                   sessionCount={card.sessionCount}
-                  category={card.category}
+                  category={card.category ?? null}
                 />
               ))
             )}
@@ -108,7 +110,14 @@ export function AccountScreen() {
                 {accountDeletion.isError ? (
                   <Text style={styles.error}>{DELETE_ACCOUNT_ERROR}</Text>
                 ) : null}
-                <QuietButton label={SIGN_OUT_LABEL} onPress={() => setSignOutVisible(true)} />
+                <QuietButton
+                  layout="block"
+                  label={SIGN_OUT_LABEL}
+                  icon={null}
+                  accessibilityLabel={null}
+                  onPress={() => setSignOutVisible(true)}
+                  disabled={false}
+                />
                 {/* Gated behind its own confirmation (App Store guideline 5.1.1(v)). */}
                 <Pressable
                   style={({ pressed }) => [styles.deleteButton, pressed && styles.pressed]}
@@ -162,7 +171,7 @@ export function AccountScreen() {
       />
     </ScreenContainer>
   );
-}
+};
 
 const styles = StyleSheet.create({
   header: {

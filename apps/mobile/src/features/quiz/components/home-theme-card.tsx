@@ -10,16 +10,16 @@ import type { Category } from "@/types/quiz";
 // Holds the widest run « 37,5/50 » unwrapped, so every title starts on the same column.
 const STAT_SLOT_WIDTH = 82;
 
-export type HomeThemeCardProps = {
+export interface HomeThemeCardProps {
   name: string;
   average: number;
   sessionCount: number;
-  category?: Category;
-};
+  category: Category | null;
+}
 
-export function HomeThemeCard({ name, average, sessionCount, category }: HomeThemeCardProps) {
+export const HomeThemeCard = ({ name, average, sessionCount, category }: HomeThemeCardProps) => {
   return (
-    <Card>
+    <Card onPress={null}>
       <View style={styles.row}>
         <Text style={styles.value}>
           {formatAverage(average)}
@@ -37,7 +37,7 @@ export function HomeThemeCard({ name, average, sessionCount, category }: HomeThe
       </View>
     </Card>
   );
-}
+};
 
 const styles = StyleSheet.create({
   row: {

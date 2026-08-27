@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { PropsWithChildren, ReactNode } from "react";
 import { Animated, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PaperBackground } from "@/components/ui/paper-background";
@@ -17,23 +17,22 @@ export function useHeaderCardHeight(collapseHeight: number) {
   return useSafeAreaInsets().top + CARD_TOP_GAP + HEADER_TOP_HALF_HEIGHT + collapseHeight;
 }
 
-export type HeaderCardProps = {
+export interface HeaderCardProps {
   topRow: ReactNode;
-  // The collapsing half under the divider; collapseHeight is its full height, divider included.
-  children: ReactNode;
+  // The full height of the collapsing half under the divider, divider included.
   collapseHeight: number;
   scrollOffset: Animated.Value;
   // A screen that washes its paper must wash the status-bar strip the same way.
-  mask?: ReactNode;
-};
+  mask: ReactNode;
+}
 
-export function HeaderCard({
+export const HeaderCard = ({
   topRow,
   children,
   collapseHeight,
   scrollOffset,
   mask,
-}: HeaderCardProps) {
+}: PropsWithChildren<HeaderCardProps>) => {
   const insets = useSafeAreaInsets();
 
   const collapse = scrollOffset.interpolate({
@@ -57,14 +56,28 @@ export function HeaderCard({
       <View style={styles.band}>
         <View style={styles.stack}>
           <View style={styles.topHalf}>
-            <Squircle radius={RADIUS.xl} color={COLORS.card} style={styles.topFace} />
+            <Squircle
+              radius={RADIUS.xl}
+              color={COLORS.card}
+              style={styles.topFace}
+              corners="all"
+              borderColor={null}
+              borderWidth={null}
+            />
             <View style={styles.row}>{topRow}</View>
           </View>
           {/* Fills the card's bottom corners until the half has gone, so the join reads as one card. */}
           <Animated.View style={[styles.bridge, { opacity: bridgeOpacity }]} pointerEvents="none" />
           <View style={[styles.window, { height: collapseHeight }]}>
             <Animated.View style={{ transform: [{ translateY: collapse }] }}>
-              <Squircle radius={RADIUS.base} corners="bottom" color={COLORS.card}>
+              <Squircle
+                radius={RADIUS.base}
+                corners="bottom"
+                color={COLORS.card}
+                borderColor={null}
+                borderWidth={null}
+                style={null}
+              >
                 <View style={styles.divider} />
                 {children}
               </Squircle>
@@ -74,7 +87,7 @@ export function HeaderCard({
       </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   overlay: {

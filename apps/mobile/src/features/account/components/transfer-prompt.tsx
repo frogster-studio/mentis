@@ -18,7 +18,7 @@ import { transferDeviceStats } from "@/features/quiz/transfer-sync";
 import { TEXT } from "@/theme/text";
 import { COLORS, SPACE } from "@/theme/tokens";
 
-export function TransferPrompt() {
+export const TransferPrompt = () => {
   const playerId = useAuthStore((state) => state.session?.user.id);
   const deviceStats = useStatsStore((state) => state.stats);
   const dormant = useTransferStore((state) => state.dormant);
@@ -49,14 +49,17 @@ export function TransferPrompt() {
       <View style={styles.actions}>
         <Button label={TRANSFER_ACCEPT_LABEL} onPress={onAccept} pending={transfer.isPending} />
         <QuietButton
+          layout="block"
           label={TRANSFER_DECLINE_LABEL}
+          icon={null}
+          accessibilityLabel={null}
           onPress={decline}
           disabled={transfer.isPending}
         />
       </View>
     </Sheet>
   );
-}
+};
 
 const styles = StyleSheet.create({
   error: {

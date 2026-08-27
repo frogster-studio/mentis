@@ -13,7 +13,7 @@ import { COLORS } from "@/theme/tokens";
 
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+const RootLayout = () => {
   const [fontsLoaded, fontError] = useFonts({
     "EpundaSlab-Regular": require("../../assets/fonts/EpundaSlab-Regular.ttf"),
     "InterTight-Regular": require("../../assets/fonts/InterTight-Regular.ttf"),
@@ -42,9 +42,9 @@ export default function RootLayout() {
       </SheetProvider>
     </PersistQueryClientProvider>
   );
-}
+};
 
-function RootNavigator() {
+const RootNavigator = () => {
   useOutboxSync();
   useCompetitionSync();
 
@@ -59,4 +59,6 @@ function RootNavigator() {
       <TransferPrompt />
     </>
   );
-}
+};
+
+export default RootLayout;
