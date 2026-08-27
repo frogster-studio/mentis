@@ -3,7 +3,6 @@ import { APP_FILTER } from "@nestjs/core";
 import { ThrottlerModule } from "@nestjs/throttler";
 import { ConfigModule } from "./_config/config.module";
 import { DatabaseModule } from "./_database/database.module";
-import { CardsModule } from "./cards/modules/cards.module";
 import { CatalogModule } from "./catalog/modules/catalog.module";
 import { HttpErrorFilter } from "./common/http-error.filter";
 import { CompetitionModule } from "./competition/modules/competition.module";
@@ -15,7 +14,6 @@ import { PlayerModule } from "./player/modules/player.module";
     ConfigModule,
     DatabaseModule,
     ThrottlerModule.forRoot([]),
-    CardsModule,
     CatalogModule,
     CompetitionModule,
     PlayerModule,

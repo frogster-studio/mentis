@@ -3,12 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "exports": {
-    "./admin": {
-      "bun": "./src/admin/index.ts",
-      "react-native": "./src/admin/index.ts",
-      "types": "./dist/admin/index.d.ts",
-      "default": "./dist/admin/index.js"
-    },
     "./app": {
       "bun": "./src/app/index.ts",
       "react-native": "./src/app/index.ts",

@@ -19,8 +19,7 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
-      "@mentis/contracts/*": ["../../packages/contracts/src/*/index.ts"]
+      "@/*": ["./src/*"]
     }
   },
   "include": [
