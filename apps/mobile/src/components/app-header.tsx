@@ -45,12 +45,13 @@ export const AppHeader = () => {
       topRow={
         <>
           <ProfileAvatar photoUrl={metadataString(user, "avatar_url") ?? null} />
+
           <View style={styles.greetingSlot}>
             <Text style={styles.greeting}>{greetingFor(firstNameOf(user))}</Text>
           </View>
           <NewButton
             layout="hug"
-            shape="rounded"
+            shape="full"
             tone="default"
             disabled={false}
             pending={false}

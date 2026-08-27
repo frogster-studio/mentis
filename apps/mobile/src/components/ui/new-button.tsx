@@ -1,14 +1,11 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { SquircleView } from "expo-squircle-view";
 import { ActivityIndicator, Animated, Pressable, StyleSheet, Text } from "react-native";
+import SquircleView from "react-native-fast-squircle";
 import type { CommunityIconName } from "@/components/ui/icon-name";
 import { Squircle } from "@/components/ui/squircle";
 import { PRESS_DEPTH, usePressSink } from "@/components/ui/use-press-sink";
 import { TEXT } from "@/theme/text";
 import { COLORS, CONTROL_ICON_SIZE, CONTROL_SQUARE_SIZE, RADIUS, SPACE } from "@/theme/tokens";
-
-const BORDER_WIDTH = 1;
-const PADDING_HORIZONTAL = SPACE.xl;
 
 const PALETTES = {
   default: { face: COLORS.face, edge: COLORS.ink, content: COLORS.ink },
@@ -64,11 +61,11 @@ export const NewButton = ({
       />
       <Animated.View style={{ transform: [{ translateY: travel }] }}>
         <SquircleView
-          backgroundColor={palette.face}
-          borderRadius={radius}
-          borderColor={palette.edge}
-          borderWidth={BORDER_WIDTH}
-          style={[styles.face, label === null && styles.iconOnlyFace]}
+          style={[
+            styles.face,
+            label === null && styles.iconOnlyFace,
+            { borderRadius: radius, borderColor: palette.edge },
+          ]}
         >
           {pending ? (
             <ActivityIndicator size="small" color={palette.content} />
@@ -103,11 +100,13 @@ const styles = StyleSheet.create({
     height: CONTROL_SQUARE_SIZE,
   },
   face: {
+    backgroundColor: COLORS.face,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: SPACE.sm,
-    paddingHorizontal: PADDING_HORIZONTAL,
+    borderWidth: 1,
+    paddingHorizontal: SPACE.xl,
     height: CONTROL_SQUARE_SIZE,
   },
   iconOnlyFace: {

@@ -121,7 +121,7 @@ export const PickerScreen = () => {
             <View style={styles.actions}>
               <NewButton
                 layout="hug"
-                shape="rounded"
+                shape="full"
                 tone="default"
                 icon="tooltip-question-outline"
                 label={null}
@@ -132,7 +132,7 @@ export const PickerScreen = () => {
               />
               <NewButton
                 layout="hug"
-                shape="rounded"
+                shape="full"
                 tone="default"
                 icon="close"
                 label={null}

@@ -30,7 +30,7 @@ export const PlayHeader = ({ showCrown, endsAt, now, quitLabel, onQuit }: PlayHe
         />
         <NewButton
           layout="hug"
-          shape="rounded"
+          shape="full"
           tone="default"
           icon="close"
           label={null}

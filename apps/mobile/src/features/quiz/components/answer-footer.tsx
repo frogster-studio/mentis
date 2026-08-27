@@ -2,8 +2,8 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { QuizAnswerModeEnum } from "@mentis/contracts/enums";
 import type { RefObject } from "react";
 import { Platform, StyleSheet, TextInput, View } from "react-native";
+import SquircleView from "react-native-fast-squircle";
 import { NewButton } from "@/components/ui/new-button";
-import { Squircle } from "@/components/ui/squircle";
 import { SquareButton } from "@/features/quiz/components/square-button";
 import { ANSWER_PLACEHOLDER, CONFIRM_LABEL, SQUARE_SWITCH_LABEL } from "@/features/quiz/constants";
 import { hasStandingAnswer, type QuestionPlay } from "@/features/quiz/question-play";
@@ -64,14 +64,7 @@ export const AnswerFooter = ({
 
   return (
     <View style={styles.footer}>
-      <Squircle
-        radius={RADIUS.base}
-        color={COLORS.face}
-        borderColor={COLORS.ink}
-        borderWidth={1}
-        style={styles.inputShell}
-        corners="all"
-      >
+      <SquircleView style={styles.inputShell}>
         <TextInput
           ref={inputRef}
           style={styles.input}
@@ -93,10 +86,10 @@ export const AnswerFooter = ({
           color={COLORS.ink}
           style={styles.mic}
         />
-      </Squircle>
+      </SquircleView>
       <NewButton
         layout="hug"
-        shape="rounded"
+        shape="full"
         tone="default"
         icon="grid-large"
         label={null}
@@ -107,7 +100,7 @@ export const AnswerFooter = ({
       />
       <NewButton
         layout="hug"
-        shape="rounded"
+        shape="full"
         tone="primary"
         icon="arrow-right"
         label={null}
@@ -131,6 +124,10 @@ const styles = StyleSheet.create({
   inputShell: {
     flex: 1,
     minWidth: 0,
+    borderWidth: 1,
+    borderRadius: RADIUS.base,
+    backgroundColor: COLORS.face,
+    borderColor: COLORS.ink,
     height: CONTROL_HEIGHT,
     flexDirection: "row",
     alignItems: "center",

@@ -19,7 +19,8 @@ import { useColorCrossFade } from "@/features/quiz/use-color-cross-fade";
 import { TEXT } from "@/theme/text";
 import { COLORS, CONTROL_HEIGHT, CONTROL_ICON_SIZE, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
 
-const TRACK_PADDING = 4;
+const TRACK_PADDING = 6;
+const BUTTON_SHADOW_OFFSET = 4;
 const PILL_FRACTION = 0.7;
 const CONFIRM_FRACTION = 0.6;
 const SETTLE_MS = 120;
@@ -171,6 +172,7 @@ const styles = StyleSheet.create({
   track: {
     height: CONTROL_HEIGHT + TRACK_PADDING * 2,
     padding: TRACK_PADDING,
+    paddingBottom: TRACK_PADDING + BUTTON_SHADOW_OFFSET,
     borderRadius: RADIUS.round,
     backgroundColor: COLORS.trough,
     overflow: "hidden",
@@ -192,6 +194,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.ink,
     backgroundColor: COLORS.card,
+    shadowColor: COLORS.ink,
+    shadowOffset: { width: 0, height: BUTTON_SHADOW_OFFSET },
+    shadowOpacity: 1,
+    elevation: 5,
   },
   label: { ...TEXT.label, color: COLORS.ink, userSelect: "none" },
 });
