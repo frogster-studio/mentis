@@ -7,6 +7,7 @@ export const PICKER_TITLE = "Sur quel thème ?";
 export const PICKER_ERROR = "Impossible de charger les thèmes.";
 export const PICKER_BACK_LABEL = "Retour";
 export const PICKER_SWIPE_LABEL = "Swipe pour lancer le quiz";
+export const PICKER_START_LABEL = "Lancer le quiz";
 export const SESSION_ERROR = "Impossible de charger les questions.";
 export const ANSWER_PLACEHOLDER = "Ta réponse…";
 export const CONFIRM_LABEL = "Valider";

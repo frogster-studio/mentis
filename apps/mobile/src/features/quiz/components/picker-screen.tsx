@@ -9,7 +9,7 @@ import { ScreenLoading } from "@/components/ui/screen-loading";
 import { Sheet } from "@/components/ui/sheet";
 import { useThemes } from "@/features/quiz/api";
 import { HomeEmptyState } from "@/features/quiz/components/home-empty-state";
-import { SwipeToStart } from "@/features/quiz/components/swipe-to-start";
+import { SwipableButton } from "@/features/quiz/components/swipable-button";
 import { ThemeCard } from "@/features/quiz/components/theme-card";
 import {
   HOME_EMPTY_TITLE,
@@ -151,7 +151,7 @@ export const PickerScreen = () => {
         </View>
       </HeaderCard>
 
-      <SwipeToStart category={selected?.category ?? null} onStart={onStart} />
+      <SwipableButton color={selected?.category.color ?? null} start={onStart} />
 
       <Sheet
         visible={helpVisible}
