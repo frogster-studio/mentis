@@ -1,7 +1,6 @@
 "use server";
 
 import { redirect } from "next/navigation";
-
 import {
   createEditorClient,
   isEditor,
@@ -20,9 +19,11 @@ export async function login(
 
   const supabase = await createEditorClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
   if (error) {
     return { error: "Invalid email or password." };
   }
+
   if (!isEditor(data.user.app_metadata)) {
     await supabase.auth.signOut();
     return { error: NO_EDITOR_ACCESS };
