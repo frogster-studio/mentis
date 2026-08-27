@@ -1,19 +1,9 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class Init1787678528931 implements MigrationInterface {
-  name = "Init1787678528931";
+export class Init1787817530969 implements MigrationInterface {
+  name = "Init1787817530969";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `CREATE TYPE "public"."cards_type_enum" AS ENUM('quiz', 'true-false', 'anecdote', 'did-you-know', 'riddle')`,
-    );
-    await queryRunner.query(
-      `CREATE TYPE "public"."cards_posted_on_enum" AS ENUM('x', 'linkedin', 'facebook', 'tiktok', 'youtube', 'instagram')`,
-    );
-    await queryRunner.query(
-      `CREATE TABLE "cards" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "type" "public"."cards_type_enum" NOT NULL, "title" character varying(255) NOT NULL, "tags" character varying(255) array NOT NULL DEFAULT '{}', "payload" jsonb NOT NULL DEFAULT '{}', "images" jsonb NOT NULL DEFAULT '[]', "posted_on" "public"."cards_posted_on_enum" array NOT NULL DEFAULT '{}', "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "PK_5f3269634705fdff4a9935860fc" PRIMARY KEY ("id"))`,
-    );
-    await queryRunner.query(`CREATE INDEX "cards_updated_at_idx" ON "cards"  ("updated_at") `);
     await queryRunner.query(
       `CREATE TABLE "categories" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "slug" character varying(255) NOT NULL, "name" character varying(255) NOT NULL, "color" character varying(7) NOT NULL, "icon" character varying(255) NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "UQ_420d9f679d41281f282f5bc7d09" UNIQUE ("slug"), CONSTRAINT "PK_24dbc6126a28ff948da33e97d3b" PRIMARY KEY ("id"))`,
     );
@@ -25,7 +15,10 @@ export class Init1787678528931 implements MigrationInterface {
     );
     await queryRunner.query(`CREATE INDEX "questions_theme_id_idx" ON "questions"  ("theme_id") `);
     await queryRunner.query(
-      `CREATE TABLE "stat_baselines" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "owner" uuid NOT NULL, "device" uuid NOT NULL, "theme_id" uuid NOT NULL, "theme_name" character varying(255) NOT NULL, "total_points" integer NOT NULL, "session_count" integer NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "stat_baselines_one_per_device_theme" UNIQUE ("owner", "device", "theme_id"), CONSTRAINT "PK_04653c33fd93ef482ab3fb550b0" PRIMARY KEY ("id"))`,
+      `CREATE TYPE "public"."premium_entitlements_environment_enum" AS ENUM('SANDBOX', 'PRODUCTION')`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "premium_entitlements" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "owner" uuid NOT NULL, "premium_until" TIMESTAMP WITH TIME ZONE, "environment" "public"."premium_entitlements_environment_enum", "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "premium_entitlements_one_per_owner" UNIQUE ("owner"), CONSTRAINT "PK_c0299640100c50d305bfa6269e0" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE TYPE "public"."competition_answers_mode_enum" AS ENUM('CASH', 'SQUARE', 'NONE')`,
@@ -55,6 +48,9 @@ export class Init1787678528931 implements MigrationInterface {
       `CREATE INDEX "competition_attempts_owner_day_idx" ON "competition_attempts"  ("owner", "day") `,
     );
     await queryRunner.query(
+      `CREATE TABLE "stat_baselines" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "owner" uuid NOT NULL, "device" uuid NOT NULL, "theme_id" uuid NOT NULL, "theme_name" character varying(255) NOT NULL, "total_points" integer NOT NULL, "session_count" integer NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "stat_baselines_one_per_device_theme" UNIQUE ("owner", "device", "theme_id"), CONSTRAINT "PK_04653c33fd93ef482ab3fb550b0" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
       `CREATE TABLE "quiz_sessions" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "owner" uuid NOT NULL, "theme_id" uuid NOT NULL, "theme_name" character varying(255) NOT NULL, "points" integer NOT NULL, "finished_at" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "PK_db4ac35661dd2f29269b272a4c2" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
@@ -67,13 +63,16 @@ export class Init1787678528931 implements MigrationInterface {
       `ALTER TABLE "questions" ADD CONSTRAINT "FK_e33a5129cc01279299076fc7c05" FOREIGN KEY ("theme_id") REFERENCES "themes"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
-      `ALTER TABLE "stat_baselines" ADD CONSTRAINT "FK_c35d9043c1439d70c92195ecd31" FOREIGN KEY ("owner") REFERENCES "auth"."users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+      `ALTER TABLE "premium_entitlements" ADD CONSTRAINT "FK_0a107c0e3777ce0db33dacb35d0" FOREIGN KEY ("owner") REFERENCES "auth"."users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
       `ALTER TABLE "competition_answers" ADD CONSTRAINT "FK_e3ee1bffa7226995dbc1756b3df" FOREIGN KEY ("attempt_id") REFERENCES "competition_attempts"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
       `ALTER TABLE "competition_attempts" ADD CONSTRAINT "FK_d583a3e338196b0d750f4aebf73" FOREIGN KEY ("owner") REFERENCES "auth"."users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "stat_baselines" ADD CONSTRAINT "FK_c35d9043c1439d70c92195ecd31" FOREIGN KEY ("owner") REFERENCES "auth"."users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
       `ALTER TABLE "quiz_sessions" ADD CONSTRAINT "FK_2ea2bf9290e5526cf207c60c3a4" FOREIGN KEY ("owner") REFERENCES "auth"."users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
@@ -85,13 +84,16 @@ export class Init1787678528931 implements MigrationInterface {
       `ALTER TABLE "quiz_sessions" DROP CONSTRAINT "FK_2ea2bf9290e5526cf207c60c3a4"`,
     );
     await queryRunner.query(
+      `ALTER TABLE "stat_baselines" DROP CONSTRAINT "FK_c35d9043c1439d70c92195ecd31"`,
+    );
+    await queryRunner.query(
       `ALTER TABLE "competition_attempts" DROP CONSTRAINT "FK_d583a3e338196b0d750f4aebf73"`,
     );
     await queryRunner.query(
       `ALTER TABLE "competition_answers" DROP CONSTRAINT "FK_e3ee1bffa7226995dbc1756b3df"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "stat_baselines" DROP CONSTRAINT "FK_c35d9043c1439d70c92195ecd31"`,
+      `ALTER TABLE "premium_entitlements" DROP CONSTRAINT "FK_0a107c0e3777ce0db33dacb35d0"`,
     );
     await queryRunner.query(
       `ALTER TABLE "questions" DROP CONSTRAINT "FK_e33a5129cc01279299076fc7c05"`,
@@ -101,6 +103,7 @@ export class Init1787678528931 implements MigrationInterface {
     );
     await queryRunner.query(`DROP INDEX "public"."quiz_sessions_owner_idx"`);
     await queryRunner.query(`DROP TABLE "quiz_sessions"`);
+    await queryRunner.query(`DROP TABLE "stat_baselines"`);
     await queryRunner.query(`DROP INDEX "public"."competition_attempts_owner_day_idx"`);
     await queryRunner.query(`DROP INDEX "public"."competition_attempts_day_idx"`);
     await queryRunner.query(`DROP TABLE "competition_attempts"`);
@@ -110,14 +113,11 @@ export class Init1787678528931 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE "competition_answers"`);
     await queryRunner.query(`DROP TYPE "public"."competition_answers_matched_via_enum"`);
     await queryRunner.query(`DROP TYPE "public"."competition_answers_mode_enum"`);
-    await queryRunner.query(`DROP TABLE "stat_baselines"`);
+    await queryRunner.query(`DROP TABLE "premium_entitlements"`);
+    await queryRunner.query(`DROP TYPE "public"."premium_entitlements_environment_enum"`);
     await queryRunner.query(`DROP INDEX "public"."questions_theme_id_idx"`);
     await queryRunner.query(`DROP TABLE "questions"`);
     await queryRunner.query(`DROP TABLE "themes"`);
     await queryRunner.query(`DROP TABLE "categories"`);
-    await queryRunner.query(`DROP INDEX "public"."cards_updated_at_idx"`);
-    await queryRunner.query(`DROP TABLE "cards"`);
-    await queryRunner.query(`DROP TYPE "public"."cards_posted_on_enum"`);
-    await queryRunner.query(`DROP TYPE "public"."cards_type_enum"`);
   }
 }
