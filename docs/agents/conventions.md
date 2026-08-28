@@ -28,3 +28,13 @@ export enum QuizAnswerModeEnum { CASH = "CASH", SQUARE = "SQUARE", NONE = "NONE"
 
 // ❌ export type MatchedVia = "canonical" | "alias" | "misspelling" | "fuzzy";
 ```
+
+## Contract types
+
+A contract type is imported under its published name; a local alias earns its place only by
+computing something the contract does not publish.
+
+```ts
+// ✅ export type Theme = AdminThemeListResponse[number];
+// ❌ export type SavedTheme = AdminThemeResponse;
+```

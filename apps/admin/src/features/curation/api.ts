@@ -1,11 +1,13 @@
 import {
   type AdminCategoryWrite,
   type AdminQuestionWrite,
+  type AdminThemeWrite,
   adminCategoryListResponseSchema,
   adminCategoryResponseSchema,
   adminQuestionListResponseSchema,
   adminQuestionResponseSchema,
   adminThemeListResponseSchema,
+  adminThemeResponseSchema,
 } from "@mentis/contracts/admin";
 import { type QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -60,6 +62,26 @@ export function useDeleteCategory() {
   return useMutation({
     mutationFn: (id: string) => deleteFromApi(`/categories/${id}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: curationKeys.categories }),
+  });
+}
+
+export function useSaveTheme() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, theme }: { id?: string; theme: AdminThemeWrite }) =>
+      id === undefined
+        ? sendToApi("POST", "/themes", theme, adminThemeResponseSchema)
+        : sendToApi("PATCH", `/themes/${id}`, theme, adminThemeResponseSchema),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: curationKeys.themes }),
+  });
+}
+
+export function useDeleteTheme() {
+  const queryClient = useQueryClient();
+  // The Theme's Questions die with it in the DB, so their cached column goes too.
+  return useMutation({
+    mutationFn: (id: string) => deleteFromApi(`/themes/${id}`),
+    onSuccess: () => refetchCatalogColumns(queryClient),
   });
 }
 

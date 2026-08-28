@@ -1,5 +1,5 @@
 import { errorResponseSchema } from "@mentis/contracts/shared";
-import type { INestApplication } from "@nestjs/common";
+import { BadRequestException, ConflictException, type INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { getDataSourceToken } from "@nestjs/typeorm";
 import { createLocalJWKSet, exportJWK, generateKeyPair, type JWTPayload, SignJWT } from "jose";
@@ -11,11 +11,7 @@ import { ThemeEntity } from "../../_database/entities/theme.entity";
 import { stubDataSource, testEnv } from "../../_tests/test-env";
 import { AppModule } from "../../app.module";
 import { JWKS } from "../../auth/jwks";
-import {
-  CategoryHoldsThemesError,
-  CategoryNameTakenError,
-  CurationRepository,
-} from "../repositories/curation.repository";
+import { CurationRepository } from "../repositories/curation.repository";
 import { slugify } from "../utils/slugify";
 
 const PLAYER_ID = "11111111-1111-4111-8111-111111111111";
@@ -27,6 +23,8 @@ const AUTHORED_CATEGORY = "3f1d0d3a-0000-4000-8000-000000000004";
 const UNKNOWN_CATEGORY = "3f1d0d3a-0000-4000-8000-00000000ffff";
 const SIMPSON = "5c2e0d3a-0000-4000-8000-000000000001";
 const BROUILLON = "5c2e0d3a-0000-4000-8000-000000000002";
+const AUTHORED_THEME = "5c2e0d3a-0000-4000-8000-000000000003";
+const UNKNOWN_THEME = "5c2e0d3a-0000-4000-8000-00000000ffff";
 const CAPITALE = "9a3e0d3a-0000-4000-8000-000000000001";
 const DRAPEAU = "9a3e0d3a-0000-4000-8000-000000000002";
 const MONNAIE = "9a3e0d3a-0000-4000-8000-000000000003";
@@ -70,7 +68,7 @@ const theme = (
 ): ThemeEntity =>
   Object.assign(new ThemeEntity(), {
     id,
-    slug: name.toLowerCase(),
+    slug: slugify(name),
     name,
     categoryId,
     image: `${id}.webp`,
@@ -109,6 +107,7 @@ const storedQuestions = [
 ];
 
 let liveCategories: CategoryEntity[] = [];
+let liveThemes: ThemeEntity[] = [];
 let liveQuestions: QuestionEntity[] = [];
 
 // Stands in for Postgres at the repository seam: the SQL itself is proven by the live smoke.
@@ -118,7 +117,7 @@ const fakeCurationRepository = {
   },
   async createCategory(authored) {
     if (liveCategories.some((row) => row.slug === authored.slug)) {
-      throw new CategoryNameTakenError();
+      throw new ConflictException({ message: `A Category is already named ${authored.name}` });
     }
     const created = Object.assign(new CategoryEntity(), authored, {
       id: AUTHORED_CATEGORY,
@@ -137,8 +136,8 @@ const fakeCurationRepository = {
     return updated;
   },
   async deleteCategory(id) {
-    if (storedThemes.some((row) => row.categoryId === id)) {
-      throw new CategoryHoldsThemesError();
+    if (liveThemes.some((row) => row.categoryId === id)) {
+      throw new ConflictException({ message: `Category ${id} still holds Themes` });
     }
     const remaining = liveCategories.filter((row) => row.id !== id);
     const wasDeleted = remaining.length < liveCategories.length;
@@ -146,13 +145,51 @@ const fakeCurationRepository = {
     return wasDeleted;
   },
   async listThemes() {
-    return newestFirst(storedThemes).map((entity) => ({
+    return newestFirst(liveThemes).map((entity) => ({
       entity,
       questionCount: liveQuestions.filter((row) => row.themeId === entity.id).length,
       readyQuestionCount: liveQuestions.filter(
         (row) => row.themeId === entity.id && row.readyToBePublished,
       ).length,
     }));
+  },
+  async createTheme(authored) {
+    if (liveThemes.some((row) => row.slug === authored.slug)) {
+      throw new ConflictException({ message: `A Theme is already named ${authored.name}` });
+    }
+    if (!liveCategories.some((row) => row.id === authored.categoryId)) {
+      throw new BadRequestException({
+        message: "This Theme names a Category that no longer exists",
+      });
+    }
+    const created = Object.assign(new ThemeEntity(), authored, {
+      id: AUTHORED_THEME,
+      createdAt: new Date("2026-08-24T10:00:00.000Z"),
+    });
+    liveThemes.push(created);
+    return created;
+  },
+  async updateTheme(authored) {
+    const stored = liveThemes.find((row) => row.id === authored.id);
+    if (stored === undefined) {
+      return null;
+    }
+    if (!liveCategories.some((row) => row.id === authored.categoryId)) {
+      throw new BadRequestException({
+        message: "This Theme names a Category that no longer exists",
+      });
+    }
+    const updated = Object.assign(new ThemeEntity(), stored, authored);
+    liveThemes = liveThemes.map((row) => (row.id === updated.id ? updated : row));
+    return updated;
+  },
+  // Postgres cascades the Theme's Questions; the fake owes the columns the same truth.
+  async deleteTheme(id) {
+    const remaining = liveThemes.filter((row) => row.id !== id);
+    const wasDeleted = remaining.length < liveThemes.length;
+    liveThemes = remaining;
+    liveQuestions = liveQuestions.filter((row) => row.themeId !== id);
+    return wasDeleted;
   },
   async listQuestions(themeId) {
     return newestFirst(liveQuestions.filter((row) => row.themeId === themeId));
@@ -187,6 +224,9 @@ const fakeCurationRepository = {
   | "updateCategory"
   | "deleteCategory"
   | "listThemes"
+  | "createTheme"
+  | "updateTheme"
+  | "deleteTheme"
   | "listQuestions"
   | "createQuestion"
   | "updateQuestion"
@@ -204,6 +244,12 @@ const AUTHORED_QUESTION = {
 
 const AUTHORED_CATEGORY_WRITE = { name: "Ciné & Séries", color: "#00897b", icon: "movie" };
 
+const AUTHORED_THEME_WRITE = {
+  name: "Kaamelott",
+  categoryId: TELEVISION,
+  image: "kaamelott.webp",
+};
+
 const WRITE_ROUTES = [
   { method: "POST", path: "/admin/questions", body: AUTHORED_QUESTION },
   { method: "PATCH", path: `/admin/questions/${CAPITALE}`, body: AUTHORED_QUESTION },
@@ -211,6 +257,9 @@ const WRITE_ROUTES = [
   { method: "POST", path: "/admin/categories", body: AUTHORED_CATEGORY_WRITE },
   { method: "PATCH", path: `/admin/categories/${MUSIQUE}`, body: AUTHORED_CATEGORY_WRITE },
   { method: "DELETE", path: `/admin/categories/${MUSIQUE}`, body: undefined },
+  { method: "POST", path: "/admin/themes", body: AUTHORED_THEME_WRITE },
+  { method: "PATCH", path: `/admin/themes/${SIMPSON}`, body: AUTHORED_THEME_WRITE },
+  { method: "DELETE", path: `/admin/themes/${BROUILLON}`, body: undefined },
 ];
 
 const LIST_ROUTES = ["/admin/categories", "/admin/themes", `/admin/questions?themeId=${SIMPSON}`];
@@ -239,6 +288,7 @@ describe("admin curation routes e2e", () => {
 
   beforeEach(() => {
     liveCategories = [...storedCategories];
+    liveThemes = [...storedThemes];
     liveQuestions = [...storedQuestions];
   });
 
@@ -586,6 +636,149 @@ describe("admin curation routes e2e", () => {
         method,
         path: "/admin/categories/histoire",
         body: method === "PATCH" ? AUTHORED_CATEGORY_WRITE : undefined,
+      },
+      editorToken,
+    );
+
+    expect(response.status).toBe(400);
+    expect(errorResponseSchema.parse(await response.json()).code).toBe("VALIDATION_FAILED");
+  });
+
+  it("POST /admin/themes tops the column with an unpublished Theme carrying no slug", async () => {
+    const response = await write(WRITE_ROUTES[6], editorToken);
+
+    expect(response.status).toBe(201);
+    expect(await response.json()).toEqual({
+      id: AUTHORED_THEME,
+      name: "Kaamelott",
+      categoryId: TELEVISION,
+      image: "kaamelott.webp",
+      published: false,
+    });
+    const listed = await (await asEditor("/admin/themes")).json();
+    expect(listed[0]).toEqual({
+      id: AUTHORED_THEME,
+      name: "Kaamelott",
+      categoryId: TELEVISION,
+      image: "kaamelott.webp",
+      published: false,
+      questionCount: 0,
+      readyQuestionCount: 0,
+    });
+  });
+
+  it("POST /admin/themes refuses a name the stored slugs already answer to", async () => {
+    const response = await write(
+      {
+        method: "POST",
+        path: "/admin/themes",
+        body: { ...AUTHORED_THEME_WRITE, name: "les simpson" },
+      },
+      editorToken,
+    );
+
+    expect(response.status).toBe(409);
+    expect(errorResponseSchema.parse(await response.json()).code).toBe("CONFLICT");
+  });
+
+  it.each([
+    ["a blank name", { name: "   " }],
+    ["a blank image path", { image: "  " }],
+    ["a Category slug where a uuid belongs", { categoryId: "television" }],
+    ["a name no slug can be built from", { name: "!?…" }],
+    ["a Category no row answers to", { categoryId: UNKNOWN_CATEGORY }],
+  ])("POST /admin/themes with %s → 400", async (_case, invalid) => {
+    const response = await write(
+      { method: "POST", path: "/admin/themes", body: { ...AUTHORED_THEME_WRITE, ...invalid } },
+      editorToken,
+    );
+
+    expect(response.status).toBe(400);
+  });
+
+  it("PATCH /admin/themes/:id moves it to another Category and leaves Published alone", async () => {
+    const response = await write(
+      {
+        method: "PATCH",
+        path: `/admin/themes/${SIMPSON}`,
+        body: { ...AUTHORED_THEME_WRITE, categoryId: MUSIQUE },
+      },
+      editorToken,
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      id: SIMPSON,
+      name: "Kaamelott",
+      categoryId: MUSIQUE,
+      image: "kaamelott.webp",
+      published: true,
+    });
+  });
+
+  it("PATCH /admin/themes/:id leaves the slug the name was born with", async () => {
+    await write(
+      {
+        method: "PATCH",
+        path: `/admin/themes/${SIMPSON}`,
+        body: { ...AUTHORED_THEME_WRITE, name: "Springfield" },
+      },
+      editorToken,
+    );
+
+    const response = await write(
+      {
+        method: "POST",
+        path: "/admin/themes",
+        body: { ...AUTHORED_THEME_WRITE, name: "Les Simpson" },
+      },
+      editorToken,
+    );
+
+    expect(response.status).toBe(409);
+  });
+
+  it("DELETE /admin/themes/:id takes its Questions with it", async () => {
+    const response = await write(WRITE_ROUTES[8], editorToken);
+
+    expect(response.status).toBe(204);
+    const listed = await (await asEditor("/admin/themes")).json();
+    expect(listed.map((row: { id: string }) => row.id)).toEqual([SIMPSON]);
+    expect(await (await asEditor(`/admin/questions?themeId=${BROUILLON}`)).json()).toEqual([]);
+  });
+
+  it("DELETE /admin/themes/:id goes through on a Published Theme: the gate is the dashboard's", async () => {
+    const response = await write(
+      { method: "DELETE", path: `/admin/themes/${SIMPSON}`, body: undefined },
+      editorToken,
+    );
+
+    expect(response.status).toBe(204);
+  });
+
+  it.each(["PATCH", "DELETE"])(
+    "%s /admin/themes on an unknown id → 404 NOT_FOUND",
+    async (method) => {
+      const response = await write(
+        {
+          method,
+          path: `/admin/themes/${UNKNOWN_THEME}`,
+          body: method === "PATCH" ? AUTHORED_THEME_WRITE : undefined,
+        },
+        editorToken,
+      );
+
+      expect(response.status).toBe(404);
+      expect(errorResponseSchema.parse(await response.json()).code).toBe("NOT_FOUND");
+    },
+  );
+
+  it.each(["PATCH", "DELETE"])("%s /admin/themes on a malformed id → 400", async (method) => {
+    const response = await write(
+      {
+        method,
+        path: "/admin/themes/les-simpson",
+        body: method === "PATCH" ? AUTHORED_THEME_WRITE : undefined,
       },
       editorToken,
     );

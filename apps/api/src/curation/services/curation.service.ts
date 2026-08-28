@@ -7,23 +7,17 @@ import {
   type AdminQuestionResponse,
   type AdminQuestionWrite,
   type AdminThemeListResponse,
+  type AdminThemeResponse,
+  type AdminThemeWrite,
   adminCategoryListResponseSchema,
   adminCategoryResponseSchema,
   adminQuestionListResponseSchema,
   adminQuestionResponseSchema,
   adminThemeListResponseSchema,
+  adminThemeResponseSchema,
 } from "@mentis/contracts/admin";
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
-import {
-  CategoryHoldsThemesError,
-  CategoryNameTakenError,
-  CurationRepository,
-} from "../repositories/curation.repository";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { CurationRepository } from "../repositories/curation.repository";
 import { slugify } from "../utils/slugify";
 
 @Injectable()
@@ -36,22 +30,10 @@ export class CurationService {
   }
 
   async createCategory(category: AdminCategoryWrite): Promise<AdminCategoryResponse> {
-    const slug = slugify(category.name);
-    if (slug === "") {
-      throw new BadRequestException({
-        message: `A Category name needs a letter or a digit: ${category.name}`,
-      });
-    }
-    try {
-      return adminCategoryResponseSchema.parse(
-        await this.curationRepository.createCategory({ ...category, slug }),
-      );
-    } catch (error) {
-      if (error instanceof CategoryNameTakenError) {
-        throw new ConflictException({ message: `A Category is already named ${category.name}` });
-      }
-      throw error;
-    }
+    const slug = this.slugOf(category.name, "Category");
+    return adminCategoryResponseSchema.parse(
+      await this.curationRepository.createCategory({ ...category, slug }),
+    );
   }
 
   // The slug stays out of the write: renaming a Category must never move the key the Catalog stores.
@@ -64,15 +46,8 @@ export class CurationService {
   }
 
   async deleteCategory(id: string): Promise<void> {
-    try {
-      if (!(await this.curationRepository.deleteCategory(id))) {
-        throw new NotFoundException({ message: `Unknown category: ${id}` });
-      }
-    } catch (error) {
-      if (error instanceof CategoryHoldsThemesError) {
-        throw new ConflictException({ message: `Category ${id} still holds Themes` });
-      }
-      throw error;
+    if (!(await this.curationRepository.deleteCategory(id))) {
+      throw new NotFoundException({ message: `Unknown category: ${id}` });
     }
   }
 
@@ -85,6 +60,29 @@ export class CurationService {
         readyQuestionCount,
       })),
     );
+  }
+
+  async createTheme(theme: AdminThemeWrite): Promise<AdminThemeResponse> {
+    const slug = this.slugOf(theme.name, "Theme");
+    // Authoring never stages: a new Theme waits for the Editor's Published switch.
+    return adminThemeResponseSchema.parse(
+      await this.curationRepository.createTheme({ ...theme, slug, published: false }),
+    );
+  }
+
+  // The slug stays out of the write: renaming a Theme must never move the key the Catalog stores.
+  async updateTheme(id: string, theme: AdminThemeWrite): Promise<AdminThemeResponse> {
+    const updated = await this.curationRepository.updateTheme({ id, ...theme });
+    if (updated === null) {
+      throw new NotFoundException({ message: `Unknown theme: ${id}` });
+    }
+    return adminThemeResponseSchema.parse(updated);
+  }
+
+  async deleteTheme(id: string): Promise<void> {
+    if (!(await this.curationRepository.deleteTheme(id))) {
+      throw new NotFoundException({ message: `Unknown theme: ${id}` });
+    }
   }
 
   async listQuestions(query: AdminQuestionListQuery): Promise<AdminQuestionListResponse> {
@@ -113,5 +111,15 @@ export class CurationService {
     if (!(await this.curationRepository.deleteQuestion(id))) {
       throw new NotFoundException({ message: `Unknown question: ${id}` });
     }
+  }
+
+  private slugOf(name: string, kind: "Category" | "Theme"): string {
+    const slug = slugify(name);
+    if (slug === "") {
+      throw new BadRequestException({
+        message: `A ${kind} name needs a letter or a digit: ${name}`,
+      });
+    }
+    return slug;
   }
 }

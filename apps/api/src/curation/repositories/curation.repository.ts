@@ -1,19 +1,9 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, ConflictException, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { type DeepPartial, QueryFailedError, Repository } from "typeorm";
+import { type DeepPartial, Repository } from "typeorm";
 import { CategoryEntity } from "../../_database/entities/category.entity";
 import { QuestionEntity } from "../../_database/entities/question.entity";
 import { ThemeEntity } from "../../_database/entities/theme.entity";
-
-const UNIQUE_VIOLATION = "23505";
-const THEME_FK_VIOLATION = "23503";
-
-export class CategoryNameTakenError extends Error {}
-export class CategoryHoldsThemesError extends Error {}
-
-const isDriverError = (error: unknown, code: string): boolean =>
-  error instanceof QueryFailedError &&
-  (error.driverError as { code?: string } | undefined)?.code === code;
 
 // An aggregate composes its entity rather than restating it: only the computed columns are named.
 export interface CuratedTheme {
@@ -57,15 +47,15 @@ export class CurationRepository {
   }
 
   async createCategory(category: DeepPartial<CategoryEntity>): Promise<CategoryEntity> {
-    try {
-      return await this.categories.save(this.categories.create(category));
-    } catch (error) {
-      // Two names slugify to one key often enough that the collision is the Editor's, not a crash.
-      if (isDriverError(error, UNIQUE_VIOLATION)) {
-        throw new CategoryNameTakenError();
-      }
-      throw error;
+    const created = this.categories.create(category);
+    // Two names slugify to one key often enough that the collision is the Editor's, not a crash.
+    const alreadyExists = await this.categories.existsBy({ slug: created.slug });
+
+    if (alreadyExists) {
+      throw new ConflictException({ message: `A Category is already named ${created.name}` });
     }
+
+    return this.categories.save(created);
   }
 
   async updateCategory(category: DeepPartial<CategoryEntity>): Promise<CategoryEntity | null> {
@@ -73,17 +63,56 @@ export class CurationRepository {
     return merged === undefined ? null : this.categories.save(merged);
   }
 
-  // The Theme relation is RESTRICT, so Postgres itself is the guard against orphaning a Category.
+  // Postgres RESTRICT is the backstop; asking first is what makes an orphaning delete a 409.
   async deleteCategory(id: string): Promise<boolean> {
-    try {
-      const { affected } = await this.categories.delete({ id });
-      return (affected ?? 0) > 0;
-    } catch (error) {
-      if (isDriverError(error, THEME_FK_VIOLATION)) {
-        throw new CategoryHoldsThemesError();
-      }
-      throw error;
+    const stillHasThemes = await this.themes.existsBy({ categoryId: id });
+
+    if (stillHasThemes) {
+      throw new ConflictException({ message: `Category ${id} still holds Themes` });
     }
+
+    const { affected } = await this.categories.delete({ id });
+    return (affected ?? 0) > 0;
+  }
+
+  async createTheme(theme: DeepPartial<ThemeEntity>): Promise<ThemeEntity> {
+    const created = this.themes.create(theme);
+    const alreadyExists = await this.themes.existsBy({ slug: created.slug });
+
+    if (alreadyExists) {
+      throw new ConflictException({ message: `A Theme is already named ${created.name}` });
+    }
+
+    await this.refuseUnknownCategory(created.categoryId);
+    return this.themes.save(created);
+  }
+
+  // preload keeps the stored slug, so a rename never collides — only the Category can still move.
+  async updateTheme(theme: DeepPartial<ThemeEntity>): Promise<ThemeEntity | null> {
+    const merged = await this.themes.preload(theme);
+    if (merged === undefined) {
+      return null;
+    }
+
+    await this.refuseUnknownCategory(merged.categoryId);
+    return this.themes.save(merged);
+  }
+
+  // Another tab can drop the Category a write names between the column's load and the save.
+  private async refuseUnknownCategory(categoryId: string): Promise<void> {
+    const stillExists = await this.categories.existsBy({ id: categoryId });
+
+    if (!stillExists) {
+      throw new BadRequestException({
+        message: "This Theme names a Category that no longer exists",
+      });
+    }
+  }
+
+  // The Question relation is CASCADE, so Postgres takes the Theme's Questions with it.
+  async deleteTheme(id: string): Promise<boolean> {
+    const { affected } = await this.themes.delete({ id });
+    return (affected ?? 0) > 0;
   }
 
   createQuestion(question: DeepPartial<QuestionEntity>): Promise<QuestionEntity> {

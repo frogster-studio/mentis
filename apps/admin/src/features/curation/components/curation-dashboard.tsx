@@ -1,5 +1,6 @@
 "use client";
 
+import type { AdminThemeResponse } from "@mentis/contracts/admin";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -69,6 +70,14 @@ export const CurationDashboard = () => {
     navigate(NO_SELECTION);
   };
 
+  const startCreatingTheme = () => {
+    if (!mayLeaveForm()) {
+      return;
+    }
+    setAuthoring("theme");
+    navigate({ ...selection, themeId: null, questionId: null });
+  };
+
   const onQuestionSaved = (saved: Question) => {
     setIsFormDirty(false);
     setAuthoring(null);
@@ -95,6 +104,19 @@ export const CurationDashboard = () => {
     setIsFormDirty(false);
     setAuthoring(null);
     navigate(NO_SELECTION);
+  };
+
+  // A Theme can move Category, so the columns follow it rather than the spot it was authored from.
+  const onThemeSaved = (saved: AdminThemeResponse) => {
+    setIsFormDirty(false);
+    setAuthoring(null);
+    navigate({ categoryId: saved.categoryId, themeId: saved.id, questionId: null });
+  };
+
+  const onThemeDeleted = () => {
+    setIsFormDirty(false);
+    setAuthoring(null);
+    navigate({ ...selection, themeId: null, questionId: null });
   };
 
   const linkedQuery = selectionQuery(linkedSelection);
@@ -177,8 +199,7 @@ export const CurationDashboard = () => {
             isLoading={themes.isPending}
             isEmpty={themesOfCategory.length === 0}
             emptyLabel={selection.categoryId ? "No Theme in this Category." : "Select a Category."}
-            // Themes are seeded, never authored here: the API publishes no create route yet.
-            create={{ label: "New Theme", onSelect: () => {} }}
+            create={{ label: "New Theme", onSelect: startCreatingTheme }}
           >
             {themesOfCategory.map((theme) => (
               <Row
@@ -218,6 +239,7 @@ export const CurationDashboard = () => {
             category={selectedCategory}
             theme={selectedTheme}
             question={selectedQuestion}
+            categories={categories.data ?? []}
             themes={themes.data ?? []}
             isCategoryVisible={
               selectedCategory ? visibleCategories.has(selectedCategory.id) : false
@@ -227,6 +249,8 @@ export const CurationDashboard = () => {
             onDirtyChange={setIsFormDirty}
             onCategorySaved={onCategorySaved}
             onCategoryDeleted={onCategoryDeleted}
+            onThemeSaved={onThemeSaved}
+            onThemeDeleted={onThemeDeleted}
             onQuestionSaved={onQuestionSaved}
             onQuestionDeleted={onQuestionDeleted}
           />

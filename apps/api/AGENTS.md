@@ -86,6 +86,13 @@ Only those four are features. Everything below them is transversal spine — no 
 
 - **Repositories select whole entities.** Holding a column back is the response schema's job: zod strips whatever the contract does not name.
 
+- **A refused write throws a NestJS exception, guarded by a TypeORM read.** Ask before saving; never decode a driver error code, never subclass `Error`.
+
+  ```ts
+  // ✅ if (await this.themes.existsBy({ slug })) throw new ConflictException({ message: … });
+  // ❌ if (error.driverError?.code === "23505") throw new ThemeNameTakenError();
+  ```
+
 - **`src/_database/` owns TypeORM wholesale.** Every entity lives in `_database/entities/` as the schema's source of truth, beside the datasource config, the migrations and shared database logic — a feature folder never defines one.
 
   ```

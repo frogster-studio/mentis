@@ -8,4 +8,4 @@ export type Category = AdminCategoryListResponse[number];
 export type Theme = AdminThemeListResponse[number];
 export type Question = AdminQuestionListResponse[number];
 
-export type Authoring = "category" | "question" | null;
+export type Authoring = "category" | "theme" | "question" | null;

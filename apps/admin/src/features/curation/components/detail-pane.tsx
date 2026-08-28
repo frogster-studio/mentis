@@ -1,13 +1,16 @@
+import type { AdminThemeResponse } from "@mentis/contracts/admin";
+
 import type { Authoring, Category, Question, Theme } from "../types";
 import { CategoryForm } from "./category-form";
 import { Column } from "./column";
 import { QuestionForm } from "./question-form";
-import { ThemeDetail } from "./theme-detail";
+import { ThemeForm } from "./theme-form";
 
 interface DetailPaneProps {
   category?: Category;
   theme?: Theme;
   question?: Question;
+  categories: Category[];
   themes: Theme[];
   isCategoryVisible: boolean;
   categoryThemeCount: number | null;
@@ -15,6 +18,8 @@ interface DetailPaneProps {
   onDirtyChange: (isDirty: boolean) => void;
   onCategorySaved: (category: Category) => void;
   onCategoryDeleted: () => void;
+  onThemeSaved: (theme: AdminThemeResponse) => void;
+  onThemeDeleted: () => void;
   onQuestionSaved: (question: Question) => void;
   onQuestionDeleted: () => void;
 }
@@ -23,6 +28,7 @@ export const DetailPane = ({
   category,
   theme,
   question,
+  categories,
   themes,
   isCategoryVisible,
   categoryThemeCount,
@@ -30,18 +36,23 @@ export const DetailPane = ({
   onDirtyChange,
   onCategorySaved,
   onCategoryDeleted,
+  onThemeSaved,
+  onThemeDeleted,
   onQuestionSaved,
   onQuestionDeleted,
 }: DetailPaneProps) => {
   const showsQuestionForm = authoring === "question" || question !== undefined;
+  const showsThemeForm =
+    !showsQuestionForm && (authoring === "theme" || (authoring === null && theme !== undefined));
   const showsCategoryForm =
-    !showsQuestionForm && (authoring === "category" || (category !== undefined && !theme));
-  const showsThemeDetail = !showsQuestionForm && !showsCategoryForm && theme !== undefined;
+    !showsQuestionForm &&
+    !showsThemeForm &&
+    (authoring === "category" || (authoring === null && category !== undefined));
 
   return (
     <Column
       title="Details"
-      isEmpty={!showsQuestionForm && !showsCategoryForm && !showsThemeDetail}
+      isEmpty={!showsQuestionForm && !showsThemeForm && !showsCategoryForm}
       emptyLabel="Select a Category, a Theme or a Question to see it here."
     >
       <div className="flex flex-col gap-5 p-4">
@@ -56,6 +67,17 @@ export const DetailPane = ({
             onDeleted={onQuestionDeleted}
           />
         ) : null}
+        {showsThemeForm ? (
+          <ThemeForm
+            key={authoring === "theme" ? "new-theme" : theme?.id}
+            theme={authoring === "theme" ? undefined : theme}
+            categories={categories}
+            selectedCategoryId={category?.id ?? null}
+            onDirtyChange={onDirtyChange}
+            onSaved={onThemeSaved}
+            onDeleted={onThemeDeleted}
+          />
+        ) : null}
         {showsCategoryForm ? (
           <CategoryForm
             key={authoring === "category" ? "new-category" : category?.id}
@@ -67,7 +89,6 @@ export const DetailPane = ({
             onDeleted={onCategoryDeleted}
           />
         ) : null}
-        {showsThemeDetail ? <ThemeDetail theme={theme} category={category} /> : null}
       </div>
     </Column>
   );
