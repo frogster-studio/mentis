@@ -35,7 +35,11 @@ export class CatalogRepository {
     const rows = await this.themes
       .createQueryBuilder("theme")
       .innerJoin("theme.category", "category")
-      .leftJoin(QuestionEntity, "question", "question.themeId = theme.id")
+      .leftJoin(
+        QuestionEntity,
+        "question",
+        "question.themeId = theme.id and question.readyToBePublished = true",
+      )
       .select("theme.id", "id")
       .addSelect("theme.name", "name")
       .addSelect("theme.image", "image")
@@ -44,6 +48,7 @@ export class CatalogRepository {
       .addSelect("category.color", "categoryColor")
       .addSelect("category.icon", "categoryIcon")
       .addSelect("count(question.id)", "questionCount")
+      .where("theme.published = true")
       .groupBy("theme.id")
       .addGroupBy("theme.name")
       .addGroupBy("theme.image")
@@ -76,10 +81,11 @@ export class CatalogRepository {
     }));
   }
 
-  themeExists(id: string): Promise<boolean> {
-    return this.themes.existsBy({ id });
+  publishedThemeExists(id: string): Promise<boolean> {
+    return this.themes.existsBy({ id, published: true });
   }
 
+  // An issued Attempt keeps the Theme it was drawn on, published or not.
   async themeVisualsById(id: string): Promise<StoredThemeVisuals | null> {
     const theme = await this.themes.findOne({ where: { id }, relations: { category: true } });
     if (theme === null) {
@@ -98,13 +104,16 @@ export class CatalogRepository {
   }
 
   drawRandomQuestions(themeId: string | null, count: number): Promise<DrawnQuestion[]> {
-    const builder = this.servedQuestionBuilder();
+    const builder = this.servedQuestionBuilder()
+      .where("theme.published = true")
+      .andWhere("question.readyToBePublished = true");
     if (themeId !== null) {
-      builder.where("question.themeId = :themeId", { themeId });
+      builder.andWhere("question.themeId = :themeId", { themeId });
     }
     return builder.orderBy("random()").limit(count).getRawMany<DrawnQuestion>();
   }
 
+  // An Attempt is fixed at issuance, so un-staging its content must never break one in flight.
   questionsByIds(ids: string[]): Promise<DrawnQuestion[]> {
     if (ids.length === 0) {
       return Promise.resolve([]);

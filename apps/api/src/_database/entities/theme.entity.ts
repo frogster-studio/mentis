@@ -40,6 +40,9 @@ export class ThemeEntity extends BaseEntity {
   @Column({ type: "varchar", length: 255 })
   image: string;
 
+  @Column({ type: "boolean", default: false })
+  published: boolean;
+
   @UpdateDateColumn({ type: "timestamptz", name: "updated_at" })
   updatedAt: Date;
 

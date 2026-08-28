@@ -12,20 +12,27 @@ import { THEME_IMAGES_BUCKET } from "../utils/theme-image-url";
 const television = { id: "television", name: "Télévision", color: "#8e24aa", icon: "tv" };
 const histoire = { id: "histoire", name: "Histoire", color: "#6d4c41", icon: "history-edu" };
 
-const themes = [
+const storedThemes = [
   {
     id: "les-simpson",
     name: "Les Simpson",
     image: "les-simpson.webp",
-    questionCount: 2,
     category: television,
+    published: true,
   },
   {
     id: "marie-antoinette",
     name: "Marie-Antoinette",
     image: "marie-antoinette.webp",
-    questionCount: 1,
     category: histoire,
+    published: true,
+  },
+  {
+    id: "brouillon",
+    name: "Brouillon",
+    image: "brouillon.webp",
+    category: histoire,
+    published: false,
   },
 ];
 
@@ -40,11 +47,21 @@ const question = (id: string, themeId: string, themeName: string): DrawnQuestion
   wrongChoices: ["1", "2", "3"],
 });
 
-const questions = [
-  question("q1", "les-simpson", "Les Simpson"),
-  question("q2", "les-simpson", "Les Simpson"),
-  question("q3", "marie-antoinette", "Marie-Antoinette"),
+const ready = (row: DrawnQuestion) => ({ ...row, readyToBePublished: true });
+const unready = (row: DrawnQuestion) => ({ ...row, readyToBePublished: false });
+
+const storedQuestions = [
+  ready(question("q1", "les-simpson", "Les Simpson")),
+  ready(question("q2", "les-simpson", "Les Simpson")),
+  ready(question("q3", "marie-antoinette", "Marie-Antoinette")),
+  unready(question("q4", "les-simpson", "Les Simpson")),
+  ready(question("q5", "brouillon", "Brouillon")),
 ];
+
+const themeIsPublished = (themeId: string) =>
+  storedThemes.some((theme) => theme.id === themeId && theme.published);
+
+const asServed = ({ readyToBePublished: _, ...row }: (typeof storedQuestions)[number]) => row;
 
 type Draw = { themeId: string | null; count: number };
 
@@ -53,21 +70,32 @@ let draws: Draw[] = [];
 // Stands in for Postgres at the repository seam: the SQL itself is proven by the live smoke.
 const fakeCatalogRepository = {
   async themesWithQuestionCounts() {
-    return themes;
+    return storedThemes
+      .filter((theme) => theme.published)
+      .map(({ published: _, ...theme }) => ({
+        ...theme,
+        questionCount: storedQuestions.filter(
+          (row) => row.themeId === theme.id && row.readyToBePublished,
+        ).length,
+      }));
   },
-  async themeExists(id) {
-    return themes.some((theme) => theme.id === id);
+  async publishedThemeExists(id) {
+    return themeIsPublished(id);
   },
   async drawRandomQuestions(themeId, count) {
     draws.push({ themeId, count });
-    return questions.filter((row) => themeId === null || row.themeId === themeId).slice(0, count);
+    return storedQuestions
+      .filter((row) => row.readyToBePublished && themeIsPublished(row.themeId))
+      .filter((row) => themeId === null || row.themeId === themeId)
+      .slice(0, count)
+      .map(asServed);
   },
   async questionsByIds(ids) {
-    return questions.filter((row) => ids.includes(row.id));
+    return storedQuestions.filter((row) => ids.includes(row.id)).map(asServed);
   },
 } satisfies Pick<
   CatalogRepository,
-  "themesWithQuestionCounts" | "themeExists" | "drawRandomQuestions" | "questionsByIds"
+  "themesWithQuestionCounts" | "publishedThemeExists" | "drawRandomQuestions" | "questionsByIds"
 >;
 
 describe("app content routes e2e", () => {
@@ -96,7 +124,7 @@ describe("app content routes e2e", () => {
     draws = [];
   });
 
-  it("GET /app/themes returns camelCase Themes with their Question count", async () => {
+  it("GET /app/themes returns camelCase Published Themes with their Ready Question count", async () => {
     const response = await fetch(`${baseUrl}/app/themes`);
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual([
@@ -117,7 +145,7 @@ describe("app content routes e2e", () => {
     ]);
   });
 
-  it("GET /app/questions draws 10 across every Theme by default", async () => {
+  it("GET /app/questions draws 10 Ready Questions across every Published Theme by default", async () => {
     const response = await fetch(`${baseUrl}/app/questions`);
     expect(response.status).toBe(200);
     expect(draws).toEqual([{ themeId: null, count: 10 }]);
@@ -142,6 +170,13 @@ describe("app content routes e2e", () => {
     expect(response.status).toBe(404);
     const body = errorResponseSchema.parse(await response.json());
     expect(body.code).toBe("THEME_NOT_FOUND");
+    expect(draws).toEqual([]);
+  });
+
+  it("GET /app/questions?theme= an unpublished Theme → 404, like any Theme that never existed", async () => {
+    const response = await fetch(`${baseUrl}/app/questions?theme=brouillon`);
+    expect(response.status).toBe(404);
+    expect(errorResponseSchema.parse(await response.json()).code).toBe("THEME_NOT_FOUND");
     expect(draws).toEqual([]);
   });
 

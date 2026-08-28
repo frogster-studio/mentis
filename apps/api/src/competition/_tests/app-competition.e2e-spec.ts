@@ -50,6 +50,8 @@ const QUESTIONS: DrawnQuestion[] = [
   ...themeQuestions("delta", "Delta", 10),
   // One Question short of a Competition Session, so this Theme never wins a draw.
   ...themeQuestions("maigre", "Maigre", 9),
+  // Twelve Questions under a Theme no Editor published, so this one never wins a draw either.
+  ...themeQuestions("secret", "Secret", 12),
 ];
 
 const judgedQuestion = (
@@ -93,10 +95,11 @@ const themeRow = (name: string) => ({
   category: CATEGORY,
 });
 
-const THEMES = ["Alpha", "Beta", "Gamma", "Delta", "Maigre"].map(themeRow);
+const THEMES = ["Alpha", "Beta", "Gamma", "Delta", "Maigre", "Secret"].map(themeRow);
 // The judged Attempt's Theme sits outside the draw pool, yet its visuals still travel.
 const JUDGED_THEME = themeRow("France");
 const ELIGIBLE_THEME_IDS = ["alpha", "beta", "gamma", "delta"];
+const UNPUBLISHED_THEME_IDS = ["secret"];
 
 const expectedImageUrl = (themeId: string) =>
   `${testEnv.SUPABASE_URL}/storage/v1/object/public/${THEME_IMAGES_BUCKET}/${themeId}.webp`;
@@ -129,22 +132,30 @@ let attemptRows: CompetitionAttemptEntity[] = [];
 let draws: { themeId: string | null; count: number }[] = [];
 let issuedAttempts: { owner: string; day: string; kind: string }[] = [];
 let ineligibleThemeIds: string[] = [];
+let unpublishedThemeIds: string[] = [];
+let unreadyQuestionIds: string[] = [];
 let racingAttempt: CompetitionAttemptEntity | null = null;
 let answerRows: NewCompetitionAnswer[] = [];
 let racingFinalize: FinalizedOutcome | null = null;
 
+const servedQuestions = () =>
+  QUESTIONS.filter(
+    (question) =>
+      !unpublishedThemeIds.includes(question.themeId) && !unreadyQuestionIds.includes(question.id),
+  );
+
 // Stands in for Postgres at the repository seam: the SQL itself is proven by the live smoke.
 const fakeCatalogRepository = {
   async themesWithQuestionCounts() {
-    return THEMES.map((theme) => ({
+    return THEMES.filter((theme) => !unpublishedThemeIds.includes(theme.id)).map((theme) => ({
       ...theme,
       questionCount: ineligibleThemeIds.includes(theme.id)
         ? 0
-        : QUESTIONS.filter((question) => question.themeId === theme.id).length,
+        : servedQuestions().filter((question) => question.themeId === theme.id).length,
     }));
   },
-  async themeExists(id) {
-    return THEMES.some((theme) => theme.id === id);
+  async publishedThemeExists(id) {
+    return THEMES.some((theme) => theme.id === id) && !unpublishedThemeIds.includes(id);
   },
   async themeVisualsById(id) {
     const theme = [...THEMES, JUDGED_THEME].find((row) => row.id === id);
@@ -152,15 +163,18 @@ const fakeCatalogRepository = {
   },
   async drawRandomQuestions(themeId, count) {
     draws.push({ themeId, count });
-    return QUESTIONS.filter((question) => question.themeId === themeId).slice(0, count);
+    return servedQuestions()
+      .filter((question) => question.themeId === themeId)
+      .slice(0, count);
   },
+  // Blind to both exclusion lists on purpose: an issued Attempt outlives its content going dark.
   async questionsByIds(ids) {
     return [...QUESTIONS, ...JUDGED_QUESTIONS].filter((question) => ids.includes(question.id));
   },
 } satisfies Pick<
   CatalogRepository,
   | "themesWithQuestionCounts"
-  | "themeExists"
+  | "publishedThemeExists"
   | "themeVisualsById"
   | "drawRandomQuestions"
   | "questionsByIds"
@@ -347,6 +361,8 @@ describe("app competition routes e2e", () => {
     draws = [];
     issuedAttempts = [];
     ineligibleThemeIds = [];
+    unpublishedThemeIds = [...UNPUBLISHED_THEME_IDS];
+    unreadyQuestionIds = [];
     racingAttempt = null;
     answerRows = [];
     racingFinalize = null;
@@ -464,6 +480,15 @@ describe("app competition routes e2e", () => {
     expect(drawn.size).toBeGreaterThan(1);
   });
 
+  it("never draws a Theme no Editor published, however many Questions it holds", async () => {
+    const drawn = new Set<string>();
+    for (let round = 0; round < 20; round += 1) {
+      attemptRows = [];
+      drawn.add((await issued(tokenA)).themeId);
+    }
+    expect(drawn.has("secret")).toBe(false);
+  });
+
   it("plays on rather than deny the day when the rotation excludes every eligible Theme", async () => {
     attemptRows.push(
       attemptRow({ id: attemptId(8), day: daysBefore(today, 1), themeId: "alpha" }),
@@ -525,6 +550,16 @@ describe("app competition routes e2e", () => {
 
       const body = await readActiveBody(tokenA);
       expect(body.attempt).toEqual(first);
+      expect(draws).toEqual([]);
+    });
+
+    it("resumes an Attempt the Catalog un-staged under it, Theme and Questions alike", async () => {
+      const first = await issued(tokenA);
+      unpublishedThemeIds.push(first.themeId);
+      unreadyQuestionIds = first.questions.map((question: { id: string }) => question.id);
+      draws = [];
+
+      expect((await readActiveBody(tokenA)).attempt).toEqual(first);
       expect(draws).toEqual([]);
     });
 

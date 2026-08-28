@@ -27,8 +27,11 @@ export class CatalogService {
   }
 
   async drawQuestions(query: AppQuestionDrawQuery): Promise<AppQuestionDrawResponse> {
-    // An unknown Theme and a Theme with no Questions both draw nothing, so the 404 is decided first.
-    if (query.theme !== undefined && !(await this.catalogRepository.themeExists(query.theme))) {
+    // An unpublished Theme is an unknown Theme app-side, and a 404 beats a silently empty draw.
+    if (
+      query.theme !== undefined &&
+      !(await this.catalogRepository.publishedThemeExists(query.theme))
+    ) {
       throw new NotFoundException({
         code: "THEME_NOT_FOUND",
         message: `Unknown theme: ${query.theme}`,

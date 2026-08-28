@@ -44,6 +44,9 @@ export class QuestionEntity extends BaseEntity {
   @Column({ type: "varchar", length: 255, array: true, name: "wrong_choices", default: [] })
   wrongChoices: string[];
 
+  @Column({ type: "boolean", name: "ready_to_be_published", default: false })
+  readyToBePublished: boolean;
+
   @UpdateDateColumn({ type: "timestamptz", name: "updated_at" })
   updatedAt: Date;
 
