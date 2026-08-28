@@ -1,15 +1,18 @@
 import {
+  type AdminQuestionWrite,
   adminCategoryListResponseSchema,
   adminQuestionListResponseSchema,
+  adminQuestionResponseSchema,
   adminThemeListResponseSchema,
 } from "@mentis/contracts/admin";
-import { useQuery } from "@tanstack/react-query";
+import { type QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { getFromApi } from "@/lib/api/client";
+import { deleteFromApi, getFromApi, sendToApi } from "@/lib/api/client";
 
 const curationKeys = {
   categories: ["curation", "categories"] as const,
   themes: ["curation", "themes"] as const,
+  allQuestions: ["curation", "questions"] as const,
   questions: (themeId: string) => ["curation", "questions", themeId] as const,
 };
 
@@ -34,5 +37,34 @@ export function useThemeQuestions(themeId: string | null) {
     queryFn: () =>
       getFromApi("/questions", adminQuestionListResponseSchema, { themeId: themeId ?? "" }),
     enabled: themeId !== null,
+  });
+}
+
+type AuthoredQuestion = { id?: string; question: AdminQuestionWrite };
+
+// A Question can move Theme, so every cached column is refetched rather than patched in place.
+async function refetchCatalogColumns(queryClient: QueryClient): Promise<void> {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: curationKeys.allQuestions }),
+    queryClient.invalidateQueries({ queryKey: curationKeys.themes }),
+  ]);
+}
+
+export function useSaveQuestion() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, question }: AuthoredQuestion) =>
+      id === undefined
+        ? sendToApi("POST", "/questions", question, adminQuestionResponseSchema)
+        : sendToApi("PATCH", `/questions/${id}`, question, adminQuestionResponseSchema),
+    onSuccess: () => refetchCatalogColumns(queryClient),
+  });
+}
+
+export function useDeleteQuestion() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteFromApi(`/questions/${id}`),
+    onSuccess: () => refetchCatalogColumns(queryClient),
   });
 }

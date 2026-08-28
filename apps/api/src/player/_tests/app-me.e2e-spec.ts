@@ -84,13 +84,18 @@ const fakePlayerRepository = {
     return baselineRows.filter((row) => row.owner === owner);
   },
   async insertQuizSessionsIfAbsent(rows) {
-    insertIfAbsent("quiz_sessions", sessionRows, rows, (existing, row) => existing.id === row.id);
+    insertIfAbsent(
+      "quiz_sessions",
+      sessionRows,
+      rows.map((row) => Object.assign(new QuizSessionEntity(), row)),
+      (existing, row) => existing.id === row.id,
+    );
   },
   async insertStatBaselinesIfAbsent(rows) {
     insertIfAbsent(
       "stat_baselines",
       baselineRows,
-      rows,
+      rows.map((row) => Object.assign(new StatBaselineEntity(), row)),
       (existing, row) =>
         existing.owner === row.owner &&
         existing.device === row.device &&

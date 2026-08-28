@@ -63,10 +63,28 @@ Only those four are features. Everything below them is transversal spine — no 
 - **Mappers earn their place by transforming.** A service parses a response its repository already shapes, at the point it lands; `mappers/` appears only where a payload is assembled or fields are held back.
 
   ```ts
-  // ✅ const themes = await this.curationRepository.listThemes();
-  //    return adminThemeListResponseSchema.parse(themes);
-  // ❌ mappers/curation.mapper.ts — toAdminThemeListResponse, a lone schema.parse
+  // ✅ const categories = await this.curationRepository.listCategories();
+  //    return adminCategoryListResponseSchema.parse(categories);
+  // ❌ mappers/curation.mapper.ts — toAdminCategoryListResponse, a lone schema.parse
   ```
+
+- **Three types cross the layers: input, entity, response.** The controller sees only the contract's input and response; the repository sees only entities — whole, `DeepPartial` for a write, or an id. The service is the sole translator and invents no shape in between: no `Pick`, no `NewX`, no row type restating an entity's columns.
+
+  ```ts
+  // ✅ createQuestion(question: DeepPartial<QuestionEntity>): Promise<QuestionEntity>
+  // ❌ export type NewQuestion = Pick<QuestionEntity, "themeId" | "text" | "answer">
+  ```
+
+- **An aggregate composes its entity.** A read carrying computed columns returns `{ entity, ...computed }`, flattened into the response by the service — never a flat type restating the entity's fields.
+
+  ```ts
+  // ✅ interface CuratedTheme { entity: ThemeEntity; questionCount: number }
+  // ❌ interface CuratedTheme { id: string; name: string; questionCount: number }
+  ```
+
+- **A domain value earns its own type.** The input or output of a calculation that is neither a row nor a payload — `DayScore`, `JudgeableQuestion` — stays free of TypeORM, so the pure function keeps being shared with the phone.
+
+- **Repositories select whole entities.** Holding a column back is the response schema's job: zod strips whatever the contract does not name.
 
 - **`src/_database/` owns TypeORM wholesale.** Every entity lives in `_database/entities/` as the schema's source of truth, beside the datasource config, the migrations and shared database logic — a feature folder never defines one.
 

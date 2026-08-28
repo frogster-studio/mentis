@@ -1,9 +1,25 @@
 import {
   type AdminQuestionListQuery,
   type AdminQuestionListResponse,
+  type AdminQuestionResponse,
+  type AdminQuestionWrite,
+  adminQuestionIdSchema,
   adminQuestionListQuerySchema,
+  adminQuestionWriteSchema,
 } from "@mentis/contracts/admin";
-import { Controller, Get, Query, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from "@nestjs/common";
 import { EditorGuard } from "../../auth/editor.guard";
 import { AuthenticatedThrottlerGuard } from "../../common/rate-limit.guard";
 import { ZodValidationPipe } from "../../common/zod-validation.pipe";
@@ -19,5 +35,26 @@ export class AdminQuestionsController {
     @Query(new ZodValidationPipe(adminQuestionListQuerySchema)) query: AdminQuestionListQuery,
   ): Promise<AdminQuestionListResponse> {
     return this.curationService.listQuestions(query);
+  }
+
+  @Post()
+  create(
+    @Body(new ZodValidationPipe(adminQuestionWriteSchema)) question: AdminQuestionWrite,
+  ): Promise<AdminQuestionResponse> {
+    return this.curationService.createQuestion(question);
+  }
+
+  @Patch(":id")
+  update(
+    @Param("id", new ZodValidationPipe(adminQuestionIdSchema)) id: string,
+    @Body(new ZodValidationPipe(adminQuestionWriteSchema)) question: AdminQuestionWrite,
+  ): Promise<AdminQuestionResponse> {
+    return this.curationService.updateQuestion(id, question);
+  }
+
+  @Delete(":id")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(@Param("id", new ZodValidationPipe(adminQuestionIdSchema)) id: string): Promise<void> {
+    return this.curationService.deleteQuestion(id);
   }
 }

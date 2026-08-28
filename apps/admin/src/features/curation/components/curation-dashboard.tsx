@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useCategories, useThemeQuestions, useThemes } from "../api";
 import {
@@ -15,13 +15,17 @@ import {
   visibleCategoryIds,
 } from "../selection";
 import { publishedLabel, readyLabel, visibleLabel } from "../staging-labels";
+import type { Question } from "../types";
 import { Badge } from "./badge";
 import { Column } from "./column";
 import { DetailPane } from "./detail-pane";
 import { Row } from "./row";
+import { TonalButton } from "./tonal-button";
 
 export const CurationDashboard = () => {
   const searchParams = useSearchParams();
+  const [isCreatingQuestion, setIsCreatingQuestion] = useState(false);
+  const [isQuestionDirty, setIsQuestionDirty] = useState(false);
   const categories = useCategories();
   const themes = useThemes();
 
@@ -34,8 +38,43 @@ export const CurationDashboard = () => {
   const questions = useThemeQuestions(selection.themeId);
 
   // Shallow routing: the URL is the selection's home, so refresh and deep links land on the same rows.
-  const goTo = (next: Selection) => {
+  const navigate = (next: Selection) => {
     window.history.pushState(null, "", `${window.location.pathname}${selectionQuery(next)}`);
+  };
+
+  const mayLeaveForm = (): boolean =>
+    !isQuestionDirty || window.confirm("This Question has unsaved changes. Leave anyway?");
+
+  const goTo = (next: Selection) => {
+    if (!mayLeaveForm()) {
+      return;
+    }
+    setIsCreatingQuestion(false);
+    navigate(next);
+  };
+
+  const startCreatingQuestion = () => {
+    if (!mayLeaveForm()) {
+      return;
+    }
+    setIsCreatingQuestion(true);
+    navigate({ ...selection, questionId: null });
+  };
+
+  const onQuestionSaved = (saved: Question) => {
+    setIsQuestionDirty(false);
+    setIsCreatingQuestion(false);
+    const theme = themes.data?.find(({ id }) => id === saved.themeId);
+    navigate({
+      categoryId: theme?.categoryId ?? selection.categoryId,
+      themeId: saved.themeId,
+      questionId: saved.id,
+    });
+  };
+
+  const onQuestionDeleted = () => {
+    setIsQuestionDirty(false);
+    navigate({ ...selection, questionId: null });
   };
 
   const linkedQuery = selectionQuery(linkedSelection);
@@ -47,6 +86,23 @@ export const CurationDashboard = () => {
       window.history.replaceState(null, "", `${window.location.pathname}${resolvedQuery}`);
     }
   }, [linkedQuery, resolvedQuery]);
+
+  // Back walks the selection history, so an authoring pane opened over the old one must close with it.
+  useEffect(() => {
+    const closeAuthoring = () => setIsCreatingQuestion(false);
+    window.addEventListener("popstate", closeAuthoring);
+    return () => window.removeEventListener("popstate", closeAuthoring);
+  }, []);
+
+  // The browser's own leave prompt: shallow routing never sees a tab closing or a typed URL.
+  useEffect(() => {
+    if (!isQuestionDirty) return;
+
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener("beforeunload", warn);
+
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [isQuestionDirty]);
 
   const visibleCategories = useMemo(() => visibleCategoryIds(themes.data ?? []), [themes.data]);
   const themesOfCategory = (themes.data ?? []).filter(
@@ -66,6 +122,11 @@ export const CurationDashboard = () => {
           {error.message}
         </p>
       ) : null}
+      <div className="flex justify-end">
+        <TonalButton type="button" onClick={startCreatingQuestion}>
+          New Question
+        </TonalButton>
+      </div>
       <div className="min-h-0 flex-1 overflow-x-auto">
         <div className="grid h-full min-w-[64rem] grid-cols-[1fr_1.5fr_1.8fr_1.4fr] gap-4">
           <Column
@@ -135,9 +196,14 @@ export const CurationDashboard = () => {
             category={selectedCategory}
             theme={selectedTheme}
             question={selectedQuestion}
+            themes={themes.data ?? []}
             isCategoryVisible={
               selectedCategory ? visibleCategories.has(selectedCategory.id) : false
             }
+            isCreatingQuestion={isCreatingQuestion}
+            onQuestionDirtyChange={setIsQuestionDirty}
+            onQuestionSaved={onQuestionSaved}
+            onQuestionDeleted={onQuestionDeleted}
           />
         </div>
       </div>

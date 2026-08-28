@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { adminQuestionListQuerySchema, adminQuestionListResponseSchema } from "./question";
+import {
+  adminQuestionListQuerySchema,
+  adminQuestionListResponseSchema,
+  adminQuestionWriteSchema,
+} from "./question";
 
 const THEME_ID = "5c2e0d3a-0000-4000-8000-000000000001";
 
@@ -45,5 +49,46 @@ describe("adminQuestionListResponseSchema", () => {
   it("serves an id whose version and variant bits are not RFC 9562", () => {
     const seeded = { ...question, id: "f78be0eb-2e1c-8fb4-38fc-04e2b3ac6ec5" };
     expect(adminQuestionListResponseSchema.parse([seeded])).toEqual([seeded]);
+  });
+});
+
+const write = {
+  themeId: THEME_ID,
+  text: "Quelle est la capitale de l'Australie ?",
+  answer: "Canberra",
+  wrongChoices: ["Sydney", "Melbourne", "Perth"],
+  aliases: ["Canbera City"],
+  misspellings: ["Camberra"],
+};
+
+describe("adminQuestionWriteSchema", () => {
+  it("keeps the authored Question as the Editor typed it, trimmed", () => {
+    expect(adminQuestionWriteSchema.parse({ ...write, text: "  Un titre  " })).toEqual({
+      ...write,
+      text: "Un titre",
+      aliases: ["canbera city"],
+      misspellings: ["camberra"],
+    });
+  });
+
+  it("lowercases aliases and misspellings, dropping blanks and repeats", () => {
+    const parsed = adminQuestionWriteSchema.parse({
+      ...write,
+      aliases: ["Canbera City", " canbera city ", "  "],
+      misspellings: ["CAMBERRA"],
+    });
+    expect(parsed.aliases).toEqual(["canbera city"]);
+    expect(parsed.misspellings).toEqual(["camberra"]);
+  });
+
+  it.each([
+    ["no text", { text: "   " }],
+    ["no designated correct answer", { answer: "" }],
+    ["three answers only", { wrongChoices: ["Sydney", "Melbourne"] }],
+    ["a blank answer slot", { wrongChoices: ["Sydney", "Melbourne", " "] }],
+    ["a wrong choice repeating the correct one", { wrongChoices: ["Sydney", "canberra", "Perth"] }],
+    ["no Theme", { themeId: "les-simpson" }],
+  ])("refuses a Question with %s", (_case, incomplete) => {
+    expect(adminQuestionWriteSchema.safeParse({ ...write, ...incomplete }).success).toBe(false);
   });
 });

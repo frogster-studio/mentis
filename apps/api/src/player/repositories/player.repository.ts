@@ -1,19 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { type InsertResult, QueryFailedError, Repository } from "typeorm";
+import { type DeepPartial, type InsertResult, QueryFailedError, Repository } from "typeorm";
 import { QuizSessionEntity } from "../../_database/entities/quiz-session.entity";
 import { StatBaselineEntity } from "../../_database/entities/stat-baseline.entity";
-
-// Rows before they are rows: no id, no timestamps, no hydrated owner.
-export type NewQuizSession = Pick<
-  QuizSessionEntity,
-  "id" | "owner" | "themeId" | "themeName" | "points" | "finishedAt"
->;
-
-export type NewStatBaseline = Pick<
-  StatBaselineEntity,
-  "owner" | "device" | "themeId" | "themeName" | "totalPoints" | "sessionCount"
->;
 
 const OWNER_FK_VIOLATION = "23503";
 
@@ -40,13 +29,13 @@ export class PlayerRepository {
     return this.baselines.find({ where: { owner } });
   }
 
-  async insertQuizSessionsIfAbsent(rows: NewQuizSession[]): Promise<void> {
+  async insertQuizSessionsIfAbsent(rows: DeepPartial<QuizSessionEntity>[]): Promise<void> {
     await this.insertIfAbsent(() =>
       this.sessions.createQueryBuilder().insert().values(rows).orIgnore().execute(),
     );
   }
 
-  async insertStatBaselinesIfAbsent(rows: NewStatBaseline[]): Promise<void> {
+  async insertStatBaselinesIfAbsent(rows: DeepPartial<StatBaselineEntity>[]): Promise<void> {
     await this.insertIfAbsent(() =>
       this.baselines.createQueryBuilder().insert().values(rows).orIgnore().execute(),
     );
