@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  adminThemeImageUploadResponseSchema,
   adminThemeListResponseSchema,
   adminThemeResponseSchema,
   adminThemeStagingSchema,
@@ -88,5 +89,25 @@ describe("adminThemeStagingSchema", () => {
 
   it.each([{}, { published: "true" }, { published: null }])("rejects %o", (staging) => {
     expect(adminThemeStagingSchema.safeParse(staging).success).toBe(false);
+  });
+});
+
+const upload = {
+  path: "5c2e0d3a-0000-4000-8000-000000000001.webp",
+  signedUrl: "https://stub.supabase.co/storage/v1/object/upload/sign/theme-images/a.webp?token=x",
+};
+
+describe("adminThemeImageUploadResponseSchema", () => {
+  it("carries the bucket path the Theme will store and the URL the browser PUTs to", () => {
+    expect(adminThemeImageUploadResponseSchema.parse(upload)).toEqual(upload);
+  });
+
+  it.each([
+    ["a pathless mint", { path: "" }],
+    ["a signed URL that is no URL", { signedUrl: "theme-images/a.webp" }],
+  ])("rejects %s", (_case, broken) => {
+    expect(adminThemeImageUploadResponseSchema.safeParse({ ...upload, ...broken }).success).toBe(
+      false,
+    );
   });
 });

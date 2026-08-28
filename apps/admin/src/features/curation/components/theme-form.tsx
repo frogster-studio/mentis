@@ -20,6 +20,7 @@ import { Badge } from "./badge";
 import { CONTROL } from "./control";
 import { Dialog } from "./dialog";
 import { Field } from "./field";
+import { ImageField } from "./image-field";
 import { StagingSwitch } from "./staging-switch";
 import { TonalButton } from "./tonal-button";
 
@@ -47,6 +48,7 @@ export const ThemeForm = ({
   const [form, setForm] = useState(initialForm);
   const [saved, setSaved] = useState(initialForm);
   const [isConsequenceShown, setIsConsequenceShown] = useState(false);
+  const [isImageUploading, setIsImageUploading] = useState(false);
   const save = useSaveTheme();
   const stage = useStageTheme();
   const remove = useDeleteTheme();
@@ -102,7 +104,7 @@ export const ThemeForm = ({
     stage.mutate({ id: theme.id, published: !theme.published });
   };
 
-  const isBusy = save.isPending || stage.isPending || remove.isPending;
+  const isBusy = save.isPending || stage.isPending || remove.isPending || isImageUploading;
   const error = save.error ?? stage.error ?? remove.error;
 
   return (
@@ -136,17 +138,12 @@ export const ThemeForm = ({
       </Field>
 
       <Field label="Image">
-        <input
-          type="text"
-          value={form.image}
-          onChange={(event) => edit({ image: event.target.value })}
-          placeholder="les-simpson.webp"
-          aria-label="Image"
-          className={CONTROL}
+        <ImageField
+          path={form.image}
+          isUploading={isImageUploading}
+          onUploadingChange={setIsImageUploading}
+          onUploaded={(image) => edit({ image })}
         />
-        <p className="mt-2 text-xs text-zinc-500">
-          The path inside the theme-images bucket — uploading arrives with the image slice.
-        </p>
       </Field>
 
       {theme ? (

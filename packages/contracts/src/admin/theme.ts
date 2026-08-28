@@ -31,3 +31,10 @@ export type AdminThemeWrite = z.infer<typeof adminThemeWriteSchema>;
 // Staging is a write of its own: the API stores the flag as sent and recomputes no count (ADR 0008).
 export const adminThemeStagingSchema = z.object({ published: z.boolean() });
 export type AdminThemeStaging = z.infer<typeof adminThemeStagingSchema>;
+
+// ADR 0007: the API mints the URL and the browser PUTs the processed webp straight to storage.
+export const adminThemeImageUploadResponseSchema = z.object({
+  path: z.string().min(1),
+  signedUrl: z.url(),
+});
+export type AdminThemeImageUploadResponse = z.infer<typeof adminThemeImageUploadResponseSchema>;

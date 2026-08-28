@@ -16,7 +16,7 @@ Deliberately **not** a bounded context, so no `CONTEXT.md`: a gateway publishes 
 ## Hard constraints
 
 - Decorator flags live directly in `tsconfig.json` — never move them into a shared base (bun bug oven-sh/bun#6326). `tsconfig.build.json` needs an explicit `rootDir` beside `outDir` (TS 6).
-- **Every row travels through TypeORM** ([ADR 0005](../../docs/adr/0005-the-api-reaches-its-data-through-typeorm.md)): one long-lived `DataSource` on the session pooler, `synchronize: false`, migrations generated from the entities. The service client in `_config/supabase.config.ts` never touches data — it serves `auth.admin.deleteUser`, nothing else. There is still no per-request user-authed client, so owner scoping is explicit owner filters in the repository.
+- **Every row travels through TypeORM** ([ADR 0005](../../docs/adr/0005-the-api-reaches-its-data-through-typeorm.md)): one long-lived `DataSource` on the session pooler, `synchronize: false`, migrations generated from the entities. The service client in `_config/supabase.config.ts` never touches data — it serves `auth.admin.deleteUser` and the Theme image upload signing ([ADR 0007](../../docs/adr/0007-storage-bytes-never-transit-the-api.md)), nothing else. There is still no per-request user-authed client, so owner scoping is explicit owner filters in the repository.
 - **`ConfigModule` is imported, never `@Global()`** — every module that needs `ENV`, `SUPABASE` or `JWKS` lists it, `TypeOrmModule.forRootAsync({ imports: [ConfigModule] })` included: a dynamic module resolves in its own scope, not the root's.
 - **The schema lives in `src/_database/migrations/`, generated from the entities** — there is no Supabase CLI and no `supabase/` directory. `migration:generate` emits only what entity metadata carries, and it *drops* any index, unique or foreign key it finds in the database but not on an entity — so every one of those belongs on the entity (`@Index`, `@Unique`, a relation with `onDelete`), including the cascade to `auth.users`, which `auth-user.entity.ts` mirrors read-only for exactly that reason.
 - **Migrations are generated output, and Hugo runs the generator.** An agent edits the entities and stops there — `bun run migration:generate` is Hugo's command, never an agent's, and a migration is never authored, renamed or edited by hand. What generation cannot emit (RLS, grants, triggers, bucket rows) stays out of the repo: hand it over as SQL snippets for the Supabase dashboard editor, one plain-English comment per statement. The schema is still born locked per [ADR 0003](../../docs/adr/0003-database-admits-only-the-api.md) — RLS everywhere, zero policies, `service_role` alone — but that lock now lives outside the repo, so a new table or function is unreachable until its grant is run by hand.
@@ -42,7 +42,7 @@ src/
   auth/           # SupabaseUserGuard (401) and EditorGuard (403), plus the project JWKS
   common/         # ZodValidationPipe, HttpErrorFilter, the rate-limit tiers
   health/         # GET /health
-  _config/        # ConfigModule and its providers: ENV (zod-validated, parsed once at boot), SUPABASE (auth admin, never data), JWKS
+  _config/        # ConfigModule and its providers: ENV (zod-validated, parsed once at boot), SUPABASE (auth admin and storage signing, never data), JWKS
   bootstrap.ts    # helmet, CORS allowlist, trust proxy, json body cap — shared with the e2e suite
   main.ts         # boot: create, configure, shutdown hooks, listen
   app.module.ts   # root module: feature imports, APP_FILTER

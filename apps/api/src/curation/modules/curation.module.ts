@@ -9,11 +9,12 @@ import { AdminQuestionsController } from "../controllers/admin-questions.control
 import { AdminThemesController } from "../controllers/admin-themes.controller";
 import { CurationRepository } from "../repositories/curation.repository";
 import { CurationService } from "../services/curation.service";
+import { ThemeImageService } from "../services/theme-image.service";
 
 // Catalog curation — the /admin surface, EditorGuard-bound on every route.
 @Module({
   imports: [ConfigModule, TypeOrmModule.forFeature([CategoryEntity, QuestionEntity, ThemeEntity])],
   controllers: [AdminCategoriesController, AdminQuestionsController, AdminThemesController],
-  providers: [CurationRepository, CurationService],
+  providers: [CurationRepository, CurationService, ThemeImageService],
 })
 export class CurationModule {}

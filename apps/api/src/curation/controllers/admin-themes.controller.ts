@@ -1,4 +1,5 @@
 import {
+  type AdminThemeImageUploadResponse,
   type AdminThemeListResponse,
   type AdminThemeResponse,
   type AdminThemeStaging,
@@ -23,11 +24,15 @@ import { EditorGuard } from "../../auth/editor.guard";
 import { AuthenticatedThrottlerGuard } from "../../common/rate-limit.guard";
 import { ZodValidationPipe } from "../../common/zod-validation.pipe";
 import { CurationService } from "../services/curation.service";
+import { ThemeImageService } from "../services/theme-image.service";
 
 @Controller("admin/themes")
 @UseGuards(EditorGuard, AuthenticatedThrottlerGuard)
 export class AdminThemesController {
-  constructor(private readonly curationService: CurationService) {}
+  constructor(
+    private readonly curationService: CurationService,
+    private readonly themeImageService: ThemeImageService,
+  ) {}
 
   @Get()
   list(): Promise<AdminThemeListResponse> {
@@ -39,6 +44,12 @@ export class AdminThemesController {
     @Body(new ZodValidationPipe(adminThemeWriteSchema)) theme: AdminThemeWrite,
   ): Promise<AdminThemeResponse> {
     return this.curationService.createTheme(theme);
+  }
+
+  @Post("image-upload-url")
+  @HttpCode(HttpStatus.OK)
+  createImageUploadUrl(): Promise<AdminThemeImageUploadResponse> {
+    return this.themeImageService.createUploadUrl();
   }
 
   @Patch(":id")

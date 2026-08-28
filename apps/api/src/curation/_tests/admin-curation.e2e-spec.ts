@@ -5,12 +5,14 @@ import { getDataSourceToken } from "@nestjs/typeorm";
 import { createLocalJWKSet, exportJWK, generateKeyPair, type JWTPayload, SignJWT } from "jose";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { ENV } from "../../_config/env.config";
+import { SUPABASE } from "../../_config/supabase.config";
 import { CategoryEntity } from "../../_database/entities/category.entity";
 import { QuestionEntity } from "../../_database/entities/question.entity";
 import { ThemeEntity } from "../../_database/entities/theme.entity";
 import { stubDataSource, testEnv } from "../../_tests/test-env";
 import { AppModule } from "../../app.module";
 import { JWKS } from "../../auth/jwks";
+import { THEME_IMAGES_BUCKET } from "../../catalog/utils/theme-image-url";
 import { CurationRepository } from "../repositories/curation.repository";
 import { slugify } from "../utils/slugify";
 
@@ -245,6 +247,25 @@ const fakeCurationRepository = {
   | "deleteQuestion"
 >;
 
+let signedUploads: { bucket: string; path: string }[] = [];
+
+// Stands in for Supabase Storage: signing is the only step of an upload the API takes part in.
+const stubSupabase = {
+  storage: {
+    from: (bucket: string) => ({
+      createSignedUploadUrl: (path: string) => {
+        signedUploads.push({ bucket, path });
+        return Promise.resolve({
+          data: {
+            signedUrl: `${testEnv.SUPABASE_URL}/storage/v1/object/upload/sign/${bucket}/${path}?token=stub`,
+          },
+          error: null,
+        });
+      },
+    }),
+  },
+};
+
 const AUTHORED_QUESTION = {
   themeId: SIMPSON,
   text: "Quelle est la capitale de l'Australie ?",
@@ -278,6 +299,7 @@ const WRITE_ROUTES = [
     path: `/admin/questions/${CAPITALE}/staging`,
     body: { readyToBePublished: false },
   },
+  { method: "POST", path: "/admin/themes/image-upload-url", body: undefined },
 ];
 
 const LIST_ROUTES = ["/admin/categories", "/admin/themes", `/admin/questions?themeId=${SIMPSON}`];
@@ -308,6 +330,7 @@ describe("admin curation routes e2e", () => {
     liveCategories = [...storedCategories];
     liveThemes = [...storedThemes];
     liveQuestions = [...storedQuestions];
+    signedUploads = [];
   });
 
   beforeAll(async () => {
@@ -335,6 +358,8 @@ describe("admin curation routes e2e", () => {
       .useValue(stubDataSource)
       .overrideProvider(CurationRepository)
       .useValue(fakeCurationRepository)
+      .overrideProvider(SUPABASE)
+      .useValue(stubSupabase)
       .overrideProvider(JWKS)
       .useValue(createLocalJWKSet({ keys: [publicJwk] }))
       .compile();
@@ -878,5 +903,22 @@ describe("admin curation routes e2e", () => {
 
     expect(response.status).toBe(404);
     expect(errorResponseSchema.parse(await response.json()).code).toBe("NOT_FOUND");
+  });
+
+  it("POST /admin/themes/image-upload-url signs a fresh webp object of the theme-images bucket", async () => {
+    const response = await write(WRITE_ROUTES[11], editorToken);
+
+    expect(response.status).toBe(200);
+    const minted = await response.json();
+    expect(minted.path).toMatch(/^[0-9a-f-]{36}\.webp$/);
+    expect(signedUploads).toEqual([{ bucket: THEME_IMAGES_BUCKET, path: minted.path }]);
+    expect(minted.signedUrl).toContain(minted.path);
+  });
+
+  it("POST /admin/themes/image-upload-url mints a path of its own every time", async () => {
+    const first = await (await write(WRITE_ROUTES[11], editorToken)).json();
+    const second = await (await write(WRITE_ROUTES[11], editorToken)).json();
+
+    expect(second.path).not.toBe(first.path);
   });
 });
