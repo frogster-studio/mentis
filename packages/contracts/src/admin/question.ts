@@ -1,11 +1,11 @@
 import { z } from "zod";
 
-export const adminQuestionListQuerySchema = z.object({ themeId: z.uuid() });
+export const adminQuestionListQuerySchema = z.object({ themeId: z.guid() });
 export type AdminQuestionListQuery = z.infer<typeof adminQuestionListQuerySchema>;
 
 const adminQuestionSchema = z.object({
-  id: z.uuid(),
-  themeId: z.uuid(),
+  id: z.guid(),
+  themeId: z.guid(),
   text: z.string(),
   answer: z.string(),
   aliases: z.array(z.string()),

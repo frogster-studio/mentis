@@ -1,6 +1,6 @@
 # Mentis — admin
 
-Back-office shell for Mentis: an authenticated web app that today holds nothing but the login gate and an empty landing page. It will grow into the quiz-content back-office.
+Back-office for Mentis: an authenticated web app whose home is the Catalog curation dashboard — four Miller columns over Categories, Themes and Questions.
 
 Part of the [Mentis monorepo](../../README.md) — `@mentis/admin` workspace.
 
@@ -9,6 +9,7 @@ Part of the [Mentis monorepo](../../README.md) — `@mentis/admin` workspace.
 - [Next.js](https://nextjs.org) (App Router) deployed on [Vercel](https://vercel.com)
 - [Supabase Auth](https://supabase.com/docs/guides/auth) for editor sign-in, server-side through `@supabase/ssr`
 - Tailwind CSS (SKY and ZINC palettes); vitest for tests; Biome and Knip are configured at the monorepo root
+- React Query over a BFF proxy: `/api/admin/*` route handlers forward the editor's Bearer token to `apps/api`, so the browser never talks to the API host
 
 ## Authentication
 
@@ -30,6 +31,7 @@ All variables are server-side only — none use the `NEXT_PUBLIC_` prefix, so no
 | --- | --- |
 | `SUPABASE_URL` | URL of the Supabase project that signs editors in. |
 | `SUPABASE_PUBLISHABLE_KEY` | Supabase publishable key (`sb_publishable_…`). Safe to expose; it grants nothing on its own. |
+| `API_URL` | Base URL of `apps/api`. Only the admin server reads it — the browser reaches the API through `/api/admin/*`. |
 
 ## Scripts (run in `apps/admin`)
 

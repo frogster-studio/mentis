@@ -40,4 +40,10 @@ describe("adminQuestionListResponseSchema", () => {
     const { readyToBePublished: _dropped, ...unstaged } = question;
     expect(adminQuestionListResponseSchema.safeParse([unstaged]).success).toBe(false);
   });
+
+  // The seeded Catalog holds ids outside RFC 9562, so serving them must never be a parse error.
+  it("serves an id whose version and variant bits are not RFC 9562", () => {
+    const seeded = { ...question, id: "f78be0eb-2e1c-8fb4-38fc-04e2b3ac6ec5" };
+    expect(adminQuestionListResponseSchema.parse([seeded])).toEqual([seeded]);
+  });
 });

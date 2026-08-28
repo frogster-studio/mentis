@@ -39,7 +39,7 @@ jobs:
             exit 0
           fi
           if git diff --name-only "$BASE" "$HEAD_SHA" \
-            | grep -Eq '^(apps/admin/|bun\.lock$|\.github/workflows/ci\.yml$)'; then
+            | grep -Eq '^(apps/admin/|packages/contracts/|bun\.lock$|\.github/workflows/ci\.yml$)'; then
             echo 'relevant=true' >> "$GITHUB_OUTPUT"
           else
             echo 'relevant=false' >> "$GITHUB_OUTPUT"

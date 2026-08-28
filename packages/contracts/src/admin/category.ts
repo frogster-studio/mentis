@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const adminCategorySchema = z.object({
-  id: z.uuid(),
+  id: z.guid(),
   name: z.string(),
   color: z.string(),
   icon: z.string(),

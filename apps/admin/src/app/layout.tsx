@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import type { PropsWithChildren } from "react";
 import "./globals.css";
+import { Providers } from "./providers";
 
 // Body text — Poppins Regular, self-hosted from /public/fonts
 const poppins = localFont({
@@ -23,14 +25,12 @@ export const metadata: Metadata = {
   description: "Mentis back-office",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html lang="en" className={`${poppins.variable} ${lexend.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="h-full flex flex-col">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

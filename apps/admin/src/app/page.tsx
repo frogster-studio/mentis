@@ -1,21 +1,17 @@
-import { LogoWordmark } from "@/components/logo-wordmark";
-import { logout } from "@/lib/auth/actions";
+import { Suspense } from "react";
+
+import { AppHeader } from "@/components/app-header";
+import { CurationDashboard } from "@/features/curation/components/curation-dashboard";
 
 export default function HomePage() {
   return (
-    <main className="flex flex-1 flex-col p-6">
-      <form action={logout} className="flex justify-end">
-        <button
-          type="submit"
-          className="text-sm text-zinc-400 transition-colors hover:text-zinc-600"
-        >
-          Sign out
-        </button>
-      </form>
-      <div className="flex flex-1 flex-col items-center justify-center gap-6 pb-16">
-        <LogoWordmark className="h-10 w-auto text-zinc-900" />
-        <p className="text-zinc-400">Nothing here yet.</p>
-      </div>
-    </main>
+    <div className="flex min-h-0 flex-1 flex-col bg-zinc-50">
+      <AppHeader />
+      <main className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col p-6">
+        <Suspense>
+          <CurationDashboard />
+        </Suspense>
+      </main>
+    </div>
   );
 }
