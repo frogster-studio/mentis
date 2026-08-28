@@ -44,3 +44,7 @@ export const adminQuestionWriteSchema = z
     { message: "The four answers must all differ", path: ["wrongChoices"] },
   );
 export type AdminQuestionWrite = z.infer<typeof adminQuestionWriteSchema>;
+
+// Staging is a write of its own: the API stores the flag as sent and recomputes no count (ADR 0008).
+export const adminQuestionStagingSchema = z.object({ readyToBePublished: z.boolean() });
+export type AdminQuestionStaging = z.infer<typeof adminQuestionStagingSchema>;

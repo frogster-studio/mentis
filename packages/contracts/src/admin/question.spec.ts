@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   adminQuestionListQuerySchema,
   adminQuestionListResponseSchema,
+  adminQuestionStagingSchema,
   adminQuestionWriteSchema,
 } from "./question";
 
@@ -91,4 +92,25 @@ describe("adminQuestionWriteSchema", () => {
   ])("refuses a Question with %s", (_case, incomplete) => {
     expect(adminQuestionWriteSchema.safeParse({ ...write, ...incomplete }).success).toBe(false);
   });
+});
+
+describe("adminQuestionStagingSchema", () => {
+  it("carries the flag alone", () => {
+    expect(adminQuestionStagingSchema.parse({ readyToBePublished: true })).toEqual({
+      readyToBePublished: true,
+    });
+  });
+
+  it("ignores the authoring fields staging never touches", () => {
+    expect(adminQuestionStagingSchema.parse({ readyToBePublished: false, ...write })).toEqual({
+      readyToBePublished: false,
+    });
+  });
+
+  it.each([{}, { readyToBePublished: "true" }, { readyToBePublished: null }])(
+    "rejects %o",
+    (staging) => {
+      expect(adminQuestionStagingSchema.safeParse(staging).success).toBe(false);
+    },
+  );
 });

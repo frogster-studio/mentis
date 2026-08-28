@@ -27,3 +27,7 @@ export const adminThemeWriteSchema = z.object({
   image: z.string().trim().min(1).max(255),
 });
 export type AdminThemeWrite = z.infer<typeof adminThemeWriteSchema>;
+
+// Staging is a write of its own: the API stores the flag as sent and recomputes no count (ADR 0008).
+export const adminThemeStagingSchema = z.object({ published: z.boolean() });
+export type AdminThemeStaging = z.infer<typeof adminThemeStagingSchema>;

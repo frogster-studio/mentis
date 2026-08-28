@@ -5,9 +5,11 @@ import {
   type AdminQuestionListQuery,
   type AdminQuestionListResponse,
   type AdminQuestionResponse,
+  type AdminQuestionStaging,
   type AdminQuestionWrite,
   type AdminThemeListResponse,
   type AdminThemeResponse,
+  type AdminThemeStaging,
   type AdminThemeWrite,
   adminCategoryListResponseSchema,
   adminCategoryResponseSchema,
@@ -79,6 +81,15 @@ export class CurationService {
     return adminThemeResponseSchema.parse(updated);
   }
 
+  // ADR 0008: the switch is stored as sent — no count is recomputed and no threshold is checked here.
+  async stageTheme(id: string, { published }: AdminThemeStaging): Promise<AdminThemeResponse> {
+    const staged = await this.curationRepository.stageTheme({ id, published });
+    if (staged === null) {
+      throw new NotFoundException({ message: `Unknown theme: ${id}` });
+    }
+    return adminThemeResponseSchema.parse(staged);
+  }
+
   async deleteTheme(id: string): Promise<void> {
     if (!(await this.curationRepository.deleteTheme(id))) {
       throw new NotFoundException({ message: `Unknown theme: ${id}` });
@@ -105,6 +116,18 @@ export class CurationService {
       throw new NotFoundException({ message: `Unknown question: ${id}` });
     }
     return adminQuestionResponseSchema.parse(updated);
+  }
+
+  // ADR 0008: the flag is stored as sent — the Theme's Ready floor is the dashboard's rule, not ours.
+  async stageQuestion(
+    id: string,
+    { readyToBePublished }: AdminQuestionStaging,
+  ): Promise<AdminQuestionResponse> {
+    const staged = await this.curationRepository.updateQuestion({ id, readyToBePublished });
+    if (staged === null) {
+      throw new NotFoundException({ message: `Unknown question: ${id}` });
+    }
+    return adminQuestionResponseSchema.parse(staged);
   }
 
   async deleteQuestion(id: string): Promise<void> {

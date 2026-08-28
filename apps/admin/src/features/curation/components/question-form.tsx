@@ -12,12 +12,14 @@ import {
   questionPayloadOf,
   toQuestionForm,
 } from "../question-form";
+import { questionFloorBlocker } from "../staging";
 import { readyLabel } from "../staging-labels";
 import type { Question, Theme } from "../types";
 import { Badge } from "./badge";
 import { Chips } from "./chips";
 import { CONTROL } from "./control";
 import { Field } from "./field";
+import { FloorBlockDialog } from "./floor-block-dialog";
 import { TonalButton } from "./tonal-button";
 
 const SLOT_LABELS = Array.from({ length: ANSWER_SLOTS }, (_slot, index) => `Answer ${index + 1}`);
@@ -43,11 +45,19 @@ export const QuestionForm = ({
     question === undefined ? blankQuestionForm(selectedThemeId) : toQuestionForm(question);
   const [form, setForm] = useState(initialForm);
   const [saved, setSaved] = useState(initialForm);
+  const [isFloorShown, setIsFloorShown] = useState(false);
   const save = useSaveQuestion();
   const remove = useDeleteQuestion();
 
   const isDirty = isQuestionFormDirty(form, saved);
   const payload = questionPayloadOf(form);
+  const floorBlocker =
+    question === undefined
+      ? null
+      : questionFloorBlocker(
+          themes.find(({ id }) => id === question.themeId),
+          question,
+        );
 
   useEffect(() => {
     onDirtyChange(isDirty);
@@ -68,6 +78,11 @@ export const QuestionForm = ({
     if (payload === null) {
       return;
     }
+    // Moving a Question out of its Theme empties the same Ready count un-readying it would.
+    if (question !== undefined && payload.themeId !== question.themeId && floorBlocker !== null) {
+      setIsFloorShown(true);
+      return;
+    }
     save.mutate(
       { id: question?.id, question: payload },
       {
@@ -86,10 +101,17 @@ export const QuestionForm = ({
     );
   };
 
+  // The floor is a wall, never a confirm: a Published Theme's twentieth Ready Question cannot go.
   const onDelete = () => {
-    if (question === undefined || !window.confirm("Delete this Question for good?")) {
+    if (question === undefined) return;
+
+    if (floorBlocker !== null) {
+      setIsFloorShown(true);
       return;
     }
+
+    if (!window.confirm("Delete this Question for good?")) return;
+
     remove.mutate(question.id, { onSuccess: onDeleted });
   };
 
@@ -203,6 +225,10 @@ export const QuestionForm = ({
           </button>
         ) : null}
       </div>
+
+      {isFloorShown && floorBlocker ? (
+        <FloorBlockDialog message={floorBlocker} onDismiss={() => setIsFloorShown(false)} />
+      ) : null}
     </form>
   );
 };

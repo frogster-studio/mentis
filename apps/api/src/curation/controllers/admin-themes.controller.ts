@@ -1,8 +1,10 @@
 import {
   type AdminThemeListResponse,
   type AdminThemeResponse,
+  type AdminThemeStaging,
   type AdminThemeWrite,
   adminThemeIdSchema,
+  adminThemeStagingSchema,
   adminThemeWriteSchema,
 } from "@mentis/contracts/admin";
 import {
@@ -45,6 +47,14 @@ export class AdminThemesController {
     @Body(new ZodValidationPipe(adminThemeWriteSchema)) theme: AdminThemeWrite,
   ): Promise<AdminThemeResponse> {
     return this.curationService.updateTheme(id, theme);
+  }
+
+  @Patch(":id/staging")
+  stage(
+    @Param("id", new ZodValidationPipe(adminThemeIdSchema)) id: string,
+    @Body(new ZodValidationPipe(adminThemeStagingSchema)) staging: AdminThemeStaging,
+  ): Promise<AdminThemeResponse> {
+    return this.curationService.stageTheme(id, staging);
   }
 
   @Delete(":id")

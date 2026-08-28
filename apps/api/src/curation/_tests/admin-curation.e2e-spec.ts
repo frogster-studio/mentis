@@ -183,6 +183,15 @@ const fakeCurationRepository = {
     liveThemes = liveThemes.map((row) => (row.id === updated.id ? updated : row));
     return updated;
   },
+  async stageTheme(staging) {
+    const stored = liveThemes.find((row) => row.id === staging.id);
+    if (stored === undefined) {
+      return null;
+    }
+    const staged = Object.assign(new ThemeEntity(), stored, staging);
+    liveThemes = liveThemes.map((row) => (row.id === staged.id ? staged : row));
+    return staged;
+  },
   // Postgres cascades the Theme's Questions; the fake owes the columns the same truth.
   async deleteTheme(id) {
     const remaining = liveThemes.filter((row) => row.id !== id);
@@ -226,6 +235,7 @@ const fakeCurationRepository = {
   | "listThemes"
   | "createTheme"
   | "updateTheme"
+  | "stageTheme"
   | "deleteTheme"
   | "listQuestions"
   | "createQuestion"
@@ -260,6 +270,12 @@ const WRITE_ROUTES = [
   { method: "POST", path: "/admin/themes", body: AUTHORED_THEME_WRITE },
   { method: "PATCH", path: `/admin/themes/${SIMPSON}`, body: AUTHORED_THEME_WRITE },
   { method: "DELETE", path: `/admin/themes/${BROUILLON}`, body: undefined },
+  { method: "PATCH", path: `/admin/themes/${BROUILLON}/staging`, body: { published: true } },
+  {
+    method: "PATCH",
+    path: `/admin/questions/${CAPITALE}/staging`,
+    body: { readyToBePublished: false },
+  },
 ];
 
 const LIST_ROUTES = ["/admin/categories", "/admin/themes", `/admin/questions?themeId=${SIMPSON}`];
@@ -785,5 +801,67 @@ describe("admin curation routes e2e", () => {
 
     expect(response.status).toBe(400);
     expect(errorResponseSchema.parse(await response.json()).code).toBe("VALIDATION_FAILED");
+  });
+
+  it("PATCH /admin/themes/:id/staging publishes a Theme holding no Ready Question at all", async () => {
+    const response = await write(WRITE_ROUTES[9], editorToken);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      id: BROUILLON,
+      name: "Brouillon",
+      categoryId: HISTOIRE,
+      image: `${BROUILLON}.webp`,
+      published: true,
+    });
+  });
+
+  it("PATCH /admin/questions/:id/staging un-readies the Question a Published Theme leans on", async () => {
+    const response = await write(WRITE_ROUTES[10], editorToken);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      id: CAPITALE,
+      themeId: SIMPSON,
+      text: `${CAPITALE} ?`,
+      answer: "42",
+      aliases: [],
+      misspellings: [],
+      wrongChoices: ["1", "2", "3"],
+      readyToBePublished: false,
+    });
+  });
+
+  it("staging recomputes nothing: the Theme stays Published under a shrinking Ready count", async () => {
+    await write(WRITE_ROUTES[10], editorToken);
+
+    const listed = await (await asEditor("/admin/themes")).json();
+    expect(listed.find((row: { id: string }) => row.id === SIMPSON)).toMatchObject({
+      published: true,
+      questionCount: 3,
+      readyQuestionCount: 1,
+    });
+  });
+
+  it.each([
+    { path: `/admin/themes/${SIMPSON}/staging`, body: { published: "false" } },
+    { path: `/admin/themes/${SIMPSON}/staging`, body: {} },
+    { path: `/admin/questions/${CAPITALE}/staging`, body: { readyToBePublished: "false" } },
+    { path: `/admin/questions/${CAPITALE}/staging`, body: {} },
+  ])("PATCH $path with $body → 400 VALIDATION_FAILED", async (route) => {
+    const response = await write({ method: "PATCH", ...route }, editorToken);
+
+    expect(response.status).toBe(400);
+    expect(errorResponseSchema.parse(await response.json()).code).toBe("VALIDATION_FAILED");
+  });
+
+  it.each([
+    { path: `/admin/themes/${UNKNOWN_THEME}/staging`, body: { published: true } },
+    { path: `/admin/questions/${UNKNOWN_QUESTION}/staging`, body: { readyToBePublished: true } },
+  ])("PATCH $path → 404 NOT_FOUND", async (route) => {
+    const response = await write({ method: "PATCH", ...route }, editorToken);
+
+    expect(response.status).toBe(404);
+    expect(errorResponseSchema.parse(await response.json()).code).toBe("NOT_FOUND");
   });
 });

@@ -4,7 +4,7 @@ import type { AdminThemeResponse } from "@mentis/contracts/admin";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-import { useCategories, useThemeQuestions, useThemes } from "../api";
+import { useCategories, useStageQuestion, useThemeQuestions, useThemes } from "../api";
 import {
   NO_SELECTION,
   readSelection,
@@ -16,19 +16,24 @@ import {
   selectTheme,
   visibleCategoryIds,
 } from "../selection";
+import { isCategoryLastPublishedTheme, questionFloorBlocker } from "../staging";
 import { publishedLabel, readyLabel, visibleLabel } from "../staging-labels";
 import type { Authoring, Category, Question } from "../types";
 import { Badge } from "./badge";
 import { Column } from "./column";
 import { DetailPane } from "./detail-pane";
+import { FloorBlockDialog } from "./floor-block-dialog";
 import { Row } from "./row";
+import { StagingSwitch } from "./staging-switch";
 
 export const CurationDashboard = () => {
   const searchParams = useSearchParams();
   const [authoring, setAuthoring] = useState<Authoring>(null);
   const [isFormDirty, setIsFormDirty] = useState(false);
+  const [floorBlock, setFloorBlock] = useState<string | null>(null);
   const categories = useCategories();
   const themes = useThemes();
+  const stageQuestion = useStageQuestion();
 
   const linkedSelection = readSelection(new URLSearchParams(searchParams.toString()));
   const selection = resolveSelection(linkedSelection, {
@@ -146,6 +151,21 @@ export const CurationDashboard = () => {
     return () => window.removeEventListener("beforeunload", warn);
   }, [isFormDirty]);
 
+  const themeOf = (themeId: string) => themes.data?.find(({ id }) => id === themeId);
+
+  const flipReady = (question: Question) => {
+    const blocker = questionFloorBlocker(themeOf(question.themeId), question);
+    if (blocker !== null) {
+      setFloorBlock(blocker);
+      return;
+    }
+    stageQuestion.mutate({
+      id: question.id,
+      themeId: question.themeId,
+      readyToBePublished: !question.readyToBePublished,
+    });
+  };
+
   const visibleCategories = useMemo(() => visibleCategoryIds(themes.data ?? []), [themes.data]);
   const themesOfCategory = (themes.data ?? []).filter(
     ({ categoryId }) => categoryId === selection.categoryId,
@@ -155,7 +175,7 @@ export const CurationDashboard = () => {
   const selectedTheme = themes.data?.find(({ id }) => id === selection.themeId);
   const selectedQuestion = questions.data?.find(({ id }) => id === selection.questionId);
 
-  const error = categories.error ?? themes.error ?? questions.error;
+  const error = categories.error ?? themes.error ?? questions.error ?? stageQuestion.error;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -228,9 +248,15 @@ export const CurationDashboard = () => {
                 key={question.id}
                 isSelected={question.id === selection.questionId}
                 onSelect={() => goTo(selectQuestion(selection, question.id))}
+                trailing={
+                  <StagingSwitch
+                    isOn={question.readyToBePublished}
+                    label={readyLabel(question.readyToBePublished)}
+                    onFlip={() => flipReady(question)}
+                  />
+                }
               >
                 <span className="flex-1 truncate">{question.text}</span>
-                {question.readyToBePublished ? <Badge isOn>{readyLabel(true)}</Badge> : null}
               </Row>
             ))}
           </Column>
@@ -244,6 +270,10 @@ export const CurationDashboard = () => {
             isCategoryVisible={
               selectedCategory ? visibleCategories.has(selectedCategory.id) : false
             }
+            isCategoryLastPublishedTheme={
+              selectedTheme !== undefined &&
+              isCategoryLastPublishedTheme(themes.data ?? [], selectedTheme)
+            }
             categoryThemeCount={themes.data === undefined ? null : themesOfCategory.length}
             authoring={authoring}
             onDirtyChange={setIsFormDirty}
@@ -256,6 +286,10 @@ export const CurationDashboard = () => {
           />
         </div>
       </div>
+
+      {floorBlock ? (
+        <FloorBlockDialog message={floorBlock} onDismiss={() => setFloorBlock(null)} />
+      ) : null}
     </div>
   );
 };

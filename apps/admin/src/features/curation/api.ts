@@ -1,6 +1,8 @@
 import {
   type AdminCategoryWrite,
+  type AdminQuestionListResponse,
   type AdminQuestionWrite,
+  type AdminThemeListResponse,
   type AdminThemeWrite,
   adminCategoryListResponseSchema,
   adminCategoryResponseSchema,
@@ -76,6 +78,15 @@ export function useSaveTheme() {
   });
 }
 
+export function useStageTheme() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, published }: { id: string; published: boolean }) =>
+      sendToApi("PATCH", `/themes/${id}/staging`, { published }, adminThemeResponseSchema),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: curationKeys.themes }),
+  });
+}
+
 export function useDeleteTheme() {
   const queryClient = useQueryClient();
   // The Theme's Questions die with it in the DB, so their cached column goes too.
@@ -103,6 +114,56 @@ export function useSaveQuestion() {
         ? sendToApi("POST", "/questions", question, adminQuestionResponseSchema)
         : sendToApi("PATCH", `/questions/${id}`, question, adminQuestionResponseSchema),
     onSuccess: () => refetchCatalogColumns(queryClient),
+  });
+}
+
+type QuestionFlip = { id: string; themeId: string; readyToBePublished: boolean };
+
+export function useStageQuestion() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, readyToBePublished }: QuestionFlip) =>
+      sendToApi(
+        "PATCH",
+        `/questions/${id}/staging`,
+        { readyToBePublished },
+        adminQuestionResponseSchema,
+      ),
+    // Staging twenty Questions is twenty clicks, so the flip paints at once and the wire catches up.
+    onMutate: async ({ id, themeId, readyToBePublished }) => {
+      const questionsKey = curationKeys.questions(themeId);
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: questionsKey }),
+        queryClient.cancelQueries({ queryKey: curationKeys.themes }),
+      ]);
+      const rolledBack = {
+        questions: queryClient.getQueryData<AdminQuestionListResponse>(questionsKey),
+        themes: queryClient.getQueryData<AdminThemeListResponse>(curationKeys.themes),
+      };
+      queryClient.setQueryData<AdminQuestionListResponse>(questionsKey, (current) =>
+        current?.map((row) => (row.id === id ? { ...row, readyToBePublished } : row)),
+      );
+      queryClient.setQueryData<AdminThemeListResponse>(curationKeys.themes, (current) =>
+        current?.map((row) =>
+          row.id === themeId
+            ? { ...row, readyQuestionCount: row.readyQuestionCount + (readyToBePublished ? 1 : -1) }
+            : row,
+        ),
+      );
+      return rolledBack;
+    },
+    onError: (_error, { themeId }, rolledBack) => {
+      if (rolledBack === undefined) {
+        return;
+      }
+      queryClient.setQueryData(curationKeys.questions(themeId), rolledBack.questions);
+      queryClient.setQueryData(curationKeys.themes, rolledBack.themes);
+    },
+    onSettled: (_staged, _error, { themeId }) =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: curationKeys.questions(themeId) }),
+        queryClient.invalidateQueries({ queryKey: curationKeys.themes }),
+      ]),
   });
 }
 

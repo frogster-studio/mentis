@@ -109,6 +109,12 @@ export class CurationRepository {
     }
   }
 
+  // The switch names no Category, so staging skips the integrity read an authoring write owes.
+  async stageTheme(theme: DeepPartial<ThemeEntity>): Promise<ThemeEntity | null> {
+    const merged = await this.themes.preload(theme);
+    return merged === undefined ? null : this.themes.save(merged);
+  }
+
   // The Question relation is CASCADE, so Postgres takes the Theme's Questions with it.
   async deleteTheme(id: string): Promise<boolean> {
     const { affected } = await this.themes.delete({ id });

@@ -13,6 +13,7 @@ interface DetailPaneProps {
   categories: Category[];
   themes: Theme[];
   isCategoryVisible: boolean;
+  isCategoryLastPublishedTheme: boolean;
   categoryThemeCount: number | null;
   authoring: Authoring;
   onDirtyChange: (isDirty: boolean) => void;
@@ -31,6 +32,7 @@ export const DetailPane = ({
   categories,
   themes,
   isCategoryVisible,
+  isCategoryLastPublishedTheme,
   categoryThemeCount,
   authoring,
   onDirtyChange,
@@ -73,6 +75,7 @@ export const DetailPane = ({
             theme={authoring === "theme" ? undefined : theme}
             categories={categories}
             selectedCategoryId={category?.id ?? null}
+            isCategoryLastPublishedTheme={isCategoryLastPublishedTheme}
             onDirtyChange={onDirtyChange}
             onSaved={onThemeSaved}
             onDeleted={onThemeDeleted}

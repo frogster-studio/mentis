@@ -2,9 +2,11 @@ import {
   type AdminQuestionListQuery,
   type AdminQuestionListResponse,
   type AdminQuestionResponse,
+  type AdminQuestionStaging,
   type AdminQuestionWrite,
   adminQuestionIdSchema,
   adminQuestionListQuerySchema,
+  adminQuestionStagingSchema,
   adminQuestionWriteSchema,
 } from "@mentis/contracts/admin";
 import {
@@ -50,6 +52,14 @@ export class AdminQuestionsController {
     @Body(new ZodValidationPipe(adminQuestionWriteSchema)) question: AdminQuestionWrite,
   ): Promise<AdminQuestionResponse> {
     return this.curationService.updateQuestion(id, question);
+  }
+
+  @Patch(":id/staging")
+  stage(
+    @Param("id", new ZodValidationPipe(adminQuestionIdSchema)) id: string,
+    @Body(new ZodValidationPipe(adminQuestionStagingSchema)) staging: AdminQuestionStaging,
+  ): Promise<AdminQuestionResponse> {
+    return this.curationService.stageQuestion(id, staging);
   }
 
   @Delete(":id")

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   adminThemeListResponseSchema,
   adminThemeResponseSchema,
+  adminThemeStagingSchema,
   adminThemeWriteSchema,
 } from "./theme";
 
@@ -71,5 +72,21 @@ describe("adminThemeWriteSchema", () => {
     ["a Category slug where a uuid belongs", { categoryId: "television" }],
   ])("refuses a Theme with %s", (_case, incomplete) => {
     expect(adminThemeWriteSchema.safeParse({ ...write, ...incomplete }).success).toBe(false);
+  });
+});
+
+describe("adminThemeStagingSchema", () => {
+  it("carries the switch alone", () => {
+    expect(adminThemeStagingSchema.parse({ published: true })).toEqual({ published: true });
+  });
+
+  it("ignores the authoring fields staging never touches", () => {
+    expect(adminThemeStagingSchema.parse({ published: false, ...write })).toEqual({
+      published: false,
+    });
+  });
+
+  it.each([{}, { published: "true" }, { published: null }])("rejects %o", (staging) => {
+    expect(adminThemeStagingSchema.safeParse(staging).success).toBe(false);
   });
 });
