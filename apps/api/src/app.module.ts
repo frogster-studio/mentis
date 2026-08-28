@@ -6,6 +6,7 @@ import { DatabaseModule } from "./_database/database.module";
 import { CatalogModule } from "./catalog/modules/catalog.module";
 import { HttpErrorFilter } from "./common/http-error.filter";
 import { CompetitionModule } from "./competition/modules/competition.module";
+import { CurationModule } from "./curation/modules/curation.module";
 import { HealthController } from "./health/health.controller";
 import { PlayerModule } from "./player/modules/player.module";
 
@@ -16,6 +17,7 @@ import { PlayerModule } from "./player/modules/player.module";
     ThrottlerModule.forRoot([]),
     CatalogModule,
     CompetitionModule,
+    CurationModule,
     PlayerModule,
   ],
   controllers: [HealthController],
