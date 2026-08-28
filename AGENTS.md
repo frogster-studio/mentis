@@ -10,7 +10,7 @@ packages/answer-matching/ # @mentis/answer-matching — the Cash judge + Carré 
 packages/contracts/       # @mentis/contracts — zod request/response schemas the API publishes
 ```
 
-Before working inside an app, read its `AGENTS.md`. The repo has one bounded context — Quiz play, whose normative glossary is [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md); the API deliberately has none — it publishes that vocabulary rather than owning one, and admin is an empty shell awaiting the quiz-content back-office.
+Before working inside an app, read its `AGENTS.md`. The repo has two bounded contexts, mapped in [CONTEXT-MAP.md](CONTEXT-MAP.md) — Quiz play ([apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md)) and Catalog curation ([apps/admin/CONTEXT.md](apps/admin/CONTEXT.md)); the API deliberately has none — it publishes those vocabularies rather than owning one.
 
 Instructions live in `AGENTS.md` alone; every `CLAUDE.md` here is a one-line `@AGENTS.md` import, so each rule is written once and every agent reads it.
 
@@ -40,7 +40,7 @@ Default vocabulary — the five canonical roles used verbatim (`needs-triage`, `
 
 ### Domain docs
 
-Single context — Quiz play, defined in `apps/mobile/CONTEXT.md`, decisions in `docs/adr/`. See `docs/agents/domain.md`.
+Two contexts mapped in `CONTEXT-MAP.md` — Quiz play (`apps/mobile/CONTEXT.md`) and Catalog curation (`apps/admin/CONTEXT.md`), decisions in `docs/adr/`. See `docs/agents/domain.md`.
 
 ### Conventions
 
