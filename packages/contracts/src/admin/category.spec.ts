@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { adminCategoryListResponseSchema } from "./category";
+import { adminCategoryListResponseSchema, adminCategoryWriteSchema } from "./category";
 
 const category = {
   id: "3f1d0d3a-0000-4000-8000-000000000001",
@@ -40,5 +40,28 @@ describe("adminCategoryListResponseSchema", () => {
     expect(
       adminCategoryListResponseSchema.safeParse([{ ...category, id: "histoire" }]).success,
     ).toBe(false);
+  });
+});
+
+const write = { name: "Histoire", color: "#6d4c41", icon: "history-edu" };
+
+describe("adminCategoryWriteSchema", () => {
+  it("keeps the presentation the Editor picked, trimmed", () => {
+    expect(adminCategoryWriteSchema.parse({ ...write, name: "  Histoire  " })).toEqual(write);
+  });
+
+  it("never carries a slug: it is derived from the name, never authored", () => {
+    expect(adminCategoryWriteSchema.parse({ ...write, slug: "cinema" })).toEqual(write);
+  });
+
+  it.each(["#6D4C41", "#6d4c4", "6d4c41", "brown", ""])("refuses the color %o", (color) => {
+    expect(adminCategoryWriteSchema.safeParse({ ...write, color }).success).toBe(false);
+  });
+
+  it.each([
+    ["a blank name", { name: "   " }],
+    ["a blank icon", { icon: "  " }],
+  ])("refuses a Category with %s", (_case, incomplete) => {
+    expect(adminCategoryWriteSchema.safeParse({ ...write, ...incomplete }).success).toBe(false);
   });
 });

@@ -1,6 +1,8 @@
 import {
+  type AdminCategoryWrite,
   type AdminQuestionWrite,
   adminCategoryListResponseSchema,
+  adminCategoryResponseSchema,
   adminQuestionListResponseSchema,
   adminQuestionResponseSchema,
   adminThemeListResponseSchema,
@@ -37,6 +39,27 @@ export function useThemeQuestions(themeId: string | null) {
     queryFn: () =>
       getFromApi("/questions", adminQuestionListResponseSchema, { themeId: themeId ?? "" }),
     enabled: themeId !== null,
+  });
+}
+
+type AuthoredCategory = { id?: string; category: AdminCategoryWrite };
+
+export function useSaveCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, category }: AuthoredCategory) =>
+      id === undefined
+        ? sendToApi("POST", "/categories", category, adminCategoryResponseSchema)
+        : sendToApi("PATCH", `/categories/${id}`, category, adminCategoryResponseSchema),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: curationKeys.categories }),
+  });
+}
+
+export function useDeleteCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteFromApi(`/categories/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: curationKeys.categories }),
   });
 }
 

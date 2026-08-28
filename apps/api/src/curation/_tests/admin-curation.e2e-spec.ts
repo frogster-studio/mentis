@@ -11,12 +11,20 @@ import { ThemeEntity } from "../../_database/entities/theme.entity";
 import { stubDataSource, testEnv } from "../../_tests/test-env";
 import { AppModule } from "../../app.module";
 import { JWKS } from "../../auth/jwks";
-import { CurationRepository } from "../repositories/curation.repository";
+import {
+  CategoryHoldsThemesError,
+  CategoryNameTakenError,
+  CurationRepository,
+} from "../repositories/curation.repository";
+import { slugify } from "../utils/slugify";
 
 const PLAYER_ID = "11111111-1111-4111-8111-111111111111";
 const EDITOR_ID = "22222222-2222-4222-8222-222222222222";
 const TELEVISION = "3f1d0d3a-0000-4000-8000-000000000001";
 const HISTOIRE = "3f1d0d3a-0000-4000-8000-000000000002";
+const MUSIQUE = "3f1d0d3a-0000-4000-8000-000000000003";
+const AUTHORED_CATEGORY = "3f1d0d3a-0000-4000-8000-000000000004";
+const UNKNOWN_CATEGORY = "3f1d0d3a-0000-4000-8000-00000000ffff";
 const SIMPSON = "5c2e0d3a-0000-4000-8000-000000000001";
 const BROUILLON = "5c2e0d3a-0000-4000-8000-000000000002";
 const CAPITALE = "9a3e0d3a-0000-4000-8000-000000000001";
@@ -40,7 +48,7 @@ const category = (
 ): CategoryEntity =>
   Object.assign(new CategoryEntity(), {
     id,
-    slug: name.toLowerCase(),
+    slug: slugify(name),
     name,
     color,
     icon,
@@ -50,6 +58,7 @@ const category = (
 const storedCategories = [
   category(TELEVISION, "Télévision", "#8e24aa", "tv", "2026-08-01T10:00:00.000Z"),
   category(HISTOIRE, "Histoire", "#6d4c41", "history-edu", "2026-08-20T10:00:00.000Z"),
+  category(MUSIQUE, "Musique", "#1e88e5", "music-note", "2026-08-10T10:00:00.000Z"),
 ];
 
 const theme = (
@@ -99,12 +108,42 @@ const storedQuestions = [
   question(BROUILLON_QUESTION, BROUILLON, false, "2026-08-23T10:00:00.000Z"),
 ];
 
+let liveCategories: CategoryEntity[] = [];
 let liveQuestions: QuestionEntity[] = [];
 
 // Stands in for Postgres at the repository seam: the SQL itself is proven by the live smoke.
 const fakeCurationRepository = {
   async listCategories() {
-    return newestFirst(storedCategories);
+    return newestFirst(liveCategories);
+  },
+  async createCategory(authored) {
+    if (liveCategories.some((row) => row.slug === authored.slug)) {
+      throw new CategoryNameTakenError();
+    }
+    const created = Object.assign(new CategoryEntity(), authored, {
+      id: AUTHORED_CATEGORY,
+      createdAt: new Date("2026-08-24T10:00:00.000Z"),
+    });
+    liveCategories.push(created);
+    return created;
+  },
+  async updateCategory(authored) {
+    const stored = liveCategories.find((row) => row.id === authored.id);
+    if (stored === undefined) {
+      return null;
+    }
+    const updated = Object.assign(new CategoryEntity(), stored, authored);
+    liveCategories = liveCategories.map((row) => (row.id === updated.id ? updated : row));
+    return updated;
+  },
+  async deleteCategory(id) {
+    if (storedThemes.some((row) => row.categoryId === id)) {
+      throw new CategoryHoldsThemesError();
+    }
+    const remaining = liveCategories.filter((row) => row.id !== id);
+    const wasDeleted = remaining.length < liveCategories.length;
+    liveCategories = remaining;
+    return wasDeleted;
   },
   async listThemes() {
     return newestFirst(storedThemes).map((entity) => ({
@@ -144,6 +183,9 @@ const fakeCurationRepository = {
 } satisfies Pick<
   CurationRepository,
   | "listCategories"
+  | "createCategory"
+  | "updateCategory"
+  | "deleteCategory"
   | "listThemes"
   | "listQuestions"
   | "createQuestion"
@@ -160,10 +202,15 @@ const AUTHORED_QUESTION = {
   misspellings: ["Camberra"],
 };
 
+const AUTHORED_CATEGORY_WRITE = { name: "Ciné & Séries", color: "#00897b", icon: "movie" };
+
 const WRITE_ROUTES = [
   { method: "POST", path: "/admin/questions", body: AUTHORED_QUESTION },
   { method: "PATCH", path: `/admin/questions/${CAPITALE}`, body: AUTHORED_QUESTION },
   { method: "DELETE", path: `/admin/questions/${CAPITALE}`, body: undefined },
+  { method: "POST", path: "/admin/categories", body: AUTHORED_CATEGORY_WRITE },
+  { method: "PATCH", path: `/admin/categories/${MUSIQUE}`, body: AUTHORED_CATEGORY_WRITE },
+  { method: "DELETE", path: `/admin/categories/${MUSIQUE}`, body: undefined },
 ];
 
 const LIST_ROUTES = ["/admin/categories", "/admin/themes", `/admin/questions?themeId=${SIMPSON}`];
@@ -191,6 +238,7 @@ describe("admin curation routes e2e", () => {
     });
 
   beforeEach(() => {
+    liveCategories = [...storedCategories];
     liveQuestions = [...storedQuestions];
   });
 
@@ -249,9 +297,10 @@ describe("admin curation routes e2e", () => {
     expect((await asEditor(path)).status).toBe(200);
   });
 
-  it("GET /admin/categories serves every Category, newest first", async () => {
+  it("GET /admin/categories serves every Category, newest first, slug held back", async () => {
     expect(await (await asEditor("/admin/categories")).json()).toEqual([
       { id: HISTOIRE, name: "Histoire", color: "#6d4c41", icon: "history-edu" },
+      { id: MUSIQUE, name: "Musique", color: "#1e88e5", icon: "music-note" },
       { id: TELEVISION, name: "Télévision", color: "#8e24aa", icon: "tv" },
     ]);
   });
@@ -405,6 +454,138 @@ describe("admin curation routes e2e", () => {
         method,
         path: "/admin/questions/les-simpson",
         body: method === "PATCH" ? AUTHORED_QUESTION : undefined,
+      },
+      editorToken,
+    );
+
+    expect(response.status).toBe(400);
+    expect(errorResponseSchema.parse(await response.json()).code).toBe("VALIDATION_FAILED");
+  });
+  it("POST /admin/categories tops the column with a Category carrying no slug", async () => {
+    const response = await write(WRITE_ROUTES[3], editorToken);
+
+    expect(response.status).toBe(201);
+    expect(await response.json()).toEqual({
+      id: AUTHORED_CATEGORY,
+      name: "Ciné & Séries",
+      color: "#00897b",
+      icon: "movie",
+    });
+    const listed = await (await asEditor("/admin/categories")).json();
+    expect(listed.map((row: { id: string }) => row.id)[0]).toBe(AUTHORED_CATEGORY);
+  });
+
+  it("POST /admin/categories refuses a name the stored slugs already answer to", async () => {
+    await write(WRITE_ROUTES[3], editorToken);
+
+    const response = await write(
+      {
+        method: "POST",
+        path: "/admin/categories",
+        body: { ...AUTHORED_CATEGORY_WRITE, name: "Cine Series" },
+      },
+      editorToken,
+    );
+
+    expect(response.status).toBe(409);
+    expect(errorResponseSchema.parse(await response.json()).code).toBe("CONFLICT");
+  });
+
+  it.each([
+    ["an uppercase hex", { color: "#00897B" }],
+    ["a named color", { color: "teal" }],
+    ["a short hex", { color: "#abc" }],
+    ["a blank name", { name: "   " }],
+    ["a blank icon", { icon: "" }],
+    ["a name no slug can be built from", { name: "!?…" }],
+  ])("POST /admin/categories with %s → 400 VALIDATION_FAILED", async (_case, invalid) => {
+    const response = await write(
+      {
+        method: "POST",
+        path: "/admin/categories",
+        body: { ...AUTHORED_CATEGORY_WRITE, ...invalid },
+      },
+      editorToken,
+    );
+
+    expect(response.status).toBe(400);
+  });
+
+  it("PATCH /admin/categories/:id rewrites its presentation", async () => {
+    const response = await write(WRITE_ROUTES[4], editorToken);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      id: MUSIQUE,
+      name: "Ciné & Séries",
+      color: "#00897b",
+      icon: "movie",
+    });
+  });
+
+  it("PATCH /admin/categories/:id leaves the slug the name was born with", async () => {
+    await write(
+      {
+        method: "PATCH",
+        path: `/admin/categories/${MUSIQUE}`,
+        body: { ...AUTHORED_CATEGORY_WRITE, name: "Cinéma" },
+      },
+      editorToken,
+    );
+
+    const response = await write(
+      {
+        method: "POST",
+        path: "/admin/categories",
+        body: { ...AUTHORED_CATEGORY_WRITE, name: "Musique" },
+      },
+      editorToken,
+    );
+
+    expect(response.status).toBe(409);
+  });
+
+  it("DELETE /admin/categories/:id drops an empty Category from the column", async () => {
+    const response = await write(WRITE_ROUTES[5], editorToken);
+
+    expect(response.status).toBe(204);
+    const listed = await (await asEditor("/admin/categories")).json();
+    expect(listed.map((row: { id: string }) => row.id)).toEqual([HISTOIRE, TELEVISION]);
+  });
+
+  it("DELETE /admin/categories/:id on a Category still holding Themes → 409 CONFLICT", async () => {
+    const response = await write(
+      { method: "DELETE", path: `/admin/categories/${HISTOIRE}`, body: undefined },
+      editorToken,
+    );
+
+    expect(response.status).toBe(409);
+    expect(errorResponseSchema.parse(await response.json()).code).toBe("CONFLICT");
+  });
+
+  it.each(["PATCH", "DELETE"])(
+    "%s /admin/categories on an unknown id → 404 NOT_FOUND",
+    async (method) => {
+      const response = await write(
+        {
+          method,
+          path: `/admin/categories/${UNKNOWN_CATEGORY}`,
+          body: method === "PATCH" ? AUTHORED_CATEGORY_WRITE : undefined,
+        },
+        editorToken,
+      );
+
+      expect(response.status).toBe(404);
+      expect(errorResponseSchema.parse(await response.json()).code).toBe("NOT_FOUND");
+    },
+  );
+
+  it.each(["PATCH", "DELETE"])("%s /admin/categories on a malformed id → 400", async (method) => {
+    const response = await write(
+      {
+        method,
+        path: "/admin/categories/histoire",
+        body: method === "PATCH" ? AUTHORED_CATEGORY_WRITE : undefined,
       },
       editorToken,
     );

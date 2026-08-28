@@ -16,13 +16,11 @@ import { readyLabel } from "../staging-labels";
 import type { Question, Theme } from "../types";
 import { Badge } from "./badge";
 import { Chips } from "./chips";
+import { CONTROL } from "./control";
 import { Field } from "./field";
 import { TonalButton } from "./tonal-button";
 
 const SLOT_LABELS = Array.from({ length: ANSWER_SLOTS }, (_slot, index) => `Answer ${index + 1}`);
-
-const CONTROL =
-  "w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-sky-400";
 
 interface QuestionFormProps {
   question?: Question;

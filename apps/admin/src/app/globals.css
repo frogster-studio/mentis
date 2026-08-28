@@ -3,6 +3,7 @@
 @theme inline {
   --font-sans: var(--font-sans);
   --font-heading: var(--font-heading);
+  --font-icons: var(--font-icons);
 }
 
 @layer base {

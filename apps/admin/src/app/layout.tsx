@@ -20,6 +20,15 @@ const lexend = localFont({
   display: "swap",
 });
 
+// Curation previews Category glyphs, so the icon webfont ships beside the glyphmap it is indexed by.
+const materialIcons = localFont({
+  src: "../../public/fonts/material-icons.ttf",
+  variable: "--font-icons",
+  weight: "400",
+  display: "block",
+  preload: false,
+});
+
 export const metadata: Metadata = {
   title: "Mentis",
   description: "Mentis back-office",
@@ -27,7 +36,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: PropsWithChildren) {
   return (
-    <html lang="en" className={`${poppins.variable} ${lexend.variable} h-full antialiased`}>
+    <html
+      lang="en"
+      className={`${poppins.variable} ${lexend.variable} ${materialIcons.variable} h-full antialiased`}
+    >
       <body className="h-full flex flex-col">
         <Providers>{children}</Providers>
       </body>

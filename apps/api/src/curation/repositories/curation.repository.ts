@@ -1,9 +1,19 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { type DeepPartial, Repository } from "typeorm";
+import { type DeepPartial, QueryFailedError, Repository } from "typeorm";
 import { CategoryEntity } from "../../_database/entities/category.entity";
 import { QuestionEntity } from "../../_database/entities/question.entity";
 import { ThemeEntity } from "../../_database/entities/theme.entity";
+
+const UNIQUE_VIOLATION = "23505";
+const THEME_FK_VIOLATION = "23503";
+
+export class CategoryNameTakenError extends Error {}
+export class CategoryHoldsThemesError extends Error {}
+
+const isDriverError = (error: unknown, code: string): boolean =>
+  error instanceof QueryFailedError &&
+  (error.driverError as { code?: string } | undefined)?.code === code;
 
 // An aggregate composes its entity rather than restating it: only the computed columns are named.
 export interface CuratedTheme {
@@ -44,6 +54,36 @@ export class CurationRepository {
       questionCount: Number(raw[index].questionCount),
       readyQuestionCount: Number(raw[index].readyQuestionCount),
     }));
+  }
+
+  async createCategory(category: DeepPartial<CategoryEntity>): Promise<CategoryEntity> {
+    try {
+      return await this.categories.save(this.categories.create(category));
+    } catch (error) {
+      // Two names slugify to one key often enough that the collision is the Editor's, not a crash.
+      if (isDriverError(error, UNIQUE_VIOLATION)) {
+        throw new CategoryNameTakenError();
+      }
+      throw error;
+    }
+  }
+
+  async updateCategory(category: DeepPartial<CategoryEntity>): Promise<CategoryEntity | null> {
+    const merged = await this.categories.preload(category);
+    return merged === undefined ? null : this.categories.save(merged);
+  }
+
+  // The Theme relation is RESTRICT, so Postgres itself is the guard against orphaning a Category.
+  async deleteCategory(id: string): Promise<boolean> {
+    try {
+      const { affected } = await this.categories.delete({ id });
+      return (affected ?? 0) > 0;
+    } catch (error) {
+      if (isDriverError(error, THEME_FK_VIOLATION)) {
+        throw new CategoryHoldsThemesError();
+      }
+      throw error;
+    }
   }
 
   createQuestion(question: DeepPartial<QuestionEntity>): Promise<QuestionEntity> {

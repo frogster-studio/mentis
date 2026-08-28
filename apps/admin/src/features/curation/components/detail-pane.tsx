@@ -1,5 +1,5 @@
-import type { Category, Question, Theme } from "../types";
-import { CategoryDetail } from "./category-detail";
+import type { Authoring, Category, Question, Theme } from "../types";
+import { CategoryForm } from "./category-form";
 import { Column } from "./column";
 import { QuestionForm } from "./question-form";
 import { ThemeDetail } from "./theme-detail";
@@ -10,8 +10,11 @@ interface DetailPaneProps {
   question?: Question;
   themes: Theme[];
   isCategoryVisible: boolean;
-  isCreatingQuestion: boolean;
-  onQuestionDirtyChange: (isDirty: boolean) => void;
+  categoryThemeCount: number | null;
+  authoring: Authoring;
+  onDirtyChange: (isDirty: boolean) => void;
+  onCategorySaved: (category: Category) => void;
+  onCategoryDeleted: () => void;
   onQuestionSaved: (question: Question) => void;
   onQuestionDeleted: () => void;
 }
@@ -22,37 +25,49 @@ export const DetailPane = ({
   question,
   themes,
   isCategoryVisible,
-  isCreatingQuestion,
-  onQuestionDirtyChange,
+  categoryThemeCount,
+  authoring,
+  onDirtyChange,
+  onCategorySaved,
+  onCategoryDeleted,
   onQuestionSaved,
   onQuestionDeleted,
 }: DetailPaneProps) => {
-  const authored = isCreatingQuestion ? undefined : question;
-  const isAuthoring = isCreatingQuestion || question !== undefined;
-  const hasSelection = isAuthoring || Boolean(theme ?? category);
+  const showsQuestionForm = authoring === "question" || question !== undefined;
+  const showsCategoryForm =
+    !showsQuestionForm && (authoring === "category" || (category !== undefined && !theme));
+  const showsThemeDetail = !showsQuestionForm && !showsCategoryForm && theme !== undefined;
 
   return (
     <Column
       title="Details"
-      isEmpty={!hasSelection}
+      isEmpty={!showsQuestionForm && !showsCategoryForm && !showsThemeDetail}
       emptyLabel="Select a Category, a Theme or a Question to see it here."
     >
       <div className="flex flex-col gap-5 p-4">
-        {isAuthoring ? (
+        {showsQuestionForm ? (
           <QuestionForm
-            key={authored?.id ?? "new-question"}
-            question={authored}
+            key={authoring === "question" ? "new-question" : question?.id}
+            question={authoring === "question" ? undefined : question}
             themes={themes}
             selectedThemeId={theme?.id ?? null}
-            onDirtyChange={onQuestionDirtyChange}
+            onDirtyChange={onDirtyChange}
             onSaved={onQuestionSaved}
             onDeleted={onQuestionDeleted}
           />
         ) : null}
-        {!isAuthoring && theme ? <ThemeDetail theme={theme} category={category} /> : null}
-        {!isAuthoring && !theme && category ? (
-          <CategoryDetail category={category} isVisible={isCategoryVisible} />
+        {showsCategoryForm ? (
+          <CategoryForm
+            key={authoring === "category" ? "new-category" : category?.id}
+            category={authoring === "category" ? undefined : category}
+            isVisible={isCategoryVisible}
+            themeCount={categoryThemeCount}
+            onDirtyChange={onDirtyChange}
+            onSaved={onCategorySaved}
+            onDeleted={onCategoryDeleted}
+          />
         ) : null}
+        {showsThemeDetail ? <ThemeDetail theme={theme} category={category} /> : null}
       </div>
     </Column>
   );

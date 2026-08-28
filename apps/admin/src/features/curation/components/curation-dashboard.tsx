@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useCategories, useThemeQuestions, useThemes } from "../api";
 import {
+  NO_SELECTION,
   readSelection,
   resolveSelection,
   type Selection,
@@ -15,7 +16,7 @@ import {
   visibleCategoryIds,
 } from "../selection";
 import { publishedLabel, readyLabel, visibleLabel } from "../staging-labels";
-import type { Question } from "../types";
+import type { Authoring, Category, Question } from "../types";
 import { Badge } from "./badge";
 import { Column } from "./column";
 import { DetailPane } from "./detail-pane";
@@ -24,8 +25,8 @@ import { TonalButton } from "./tonal-button";
 
 export const CurationDashboard = () => {
   const searchParams = useSearchParams();
-  const [isCreatingQuestion, setIsCreatingQuestion] = useState(false);
-  const [isQuestionDirty, setIsQuestionDirty] = useState(false);
+  const [authoring, setAuthoring] = useState<Authoring>(null);
+  const [isFormDirty, setIsFormDirty] = useState(false);
   const categories = useCategories();
   const themes = useThemes();
 
@@ -43,13 +44,13 @@ export const CurationDashboard = () => {
   };
 
   const mayLeaveForm = (): boolean =>
-    !isQuestionDirty || window.confirm("This Question has unsaved changes. Leave anyway?");
+    !isFormDirty || window.confirm("This form has unsaved changes. Leave anyway?");
 
   const goTo = (next: Selection) => {
     if (!mayLeaveForm()) {
       return;
     }
-    setIsCreatingQuestion(false);
+    setAuthoring(null);
     navigate(next);
   };
 
@@ -57,13 +58,21 @@ export const CurationDashboard = () => {
     if (!mayLeaveForm()) {
       return;
     }
-    setIsCreatingQuestion(true);
+    setAuthoring("question");
     navigate({ ...selection, questionId: null });
   };
 
+  const startCreatingCategory = () => {
+    if (!mayLeaveForm()) {
+      return;
+    }
+    setAuthoring("category");
+    navigate(NO_SELECTION);
+  };
+
   const onQuestionSaved = (saved: Question) => {
-    setIsQuestionDirty(false);
-    setIsCreatingQuestion(false);
+    setIsFormDirty(false);
+    setAuthoring(null);
     const theme = themes.data?.find(({ id }) => id === saved.themeId);
     navigate({
       categoryId: theme?.categoryId ?? selection.categoryId,
@@ -73,8 +82,20 @@ export const CurationDashboard = () => {
   };
 
   const onQuestionDeleted = () => {
-    setIsQuestionDirty(false);
+    setIsFormDirty(false);
     navigate({ ...selection, questionId: null });
+  };
+
+  const onCategorySaved = (saved: Category) => {
+    setIsFormDirty(false);
+    setAuthoring(null);
+    navigate(selectCategory(saved.id));
+  };
+
+  const onCategoryDeleted = () => {
+    setIsFormDirty(false);
+    setAuthoring(null);
+    navigate(NO_SELECTION);
   };
 
   const linkedQuery = selectionQuery(linkedSelection);
@@ -89,20 +110,20 @@ export const CurationDashboard = () => {
 
   // Back walks the selection history, so an authoring pane opened over the old one must close with it.
   useEffect(() => {
-    const closeAuthoring = () => setIsCreatingQuestion(false);
+    const closeAuthoring = () => setAuthoring(null);
     window.addEventListener("popstate", closeAuthoring);
     return () => window.removeEventListener("popstate", closeAuthoring);
   }, []);
 
   // The browser's own leave prompt: shallow routing never sees a tab closing or a typed URL.
   useEffect(() => {
-    if (!isQuestionDirty) return;
+    if (!isFormDirty) return;
 
     const warn = (event: BeforeUnloadEvent) => event.preventDefault();
     window.addEventListener("beforeunload", warn);
 
     return () => window.removeEventListener("beforeunload", warn);
-  }, [isQuestionDirty]);
+  }, [isFormDirty]);
 
   const visibleCategories = useMemo(() => visibleCategoryIds(themes.data ?? []), [themes.data]);
   const themesOfCategory = (themes.data ?? []).filter(
@@ -134,6 +155,7 @@ export const CurationDashboard = () => {
             isLoading={categories.isPending || themes.isPending}
             isEmpty={(categories.data ?? []).length === 0}
             emptyLabel="No Category yet."
+            create={{ label: "New Category", onSelect: startCreatingCategory }}
           >
             {(categories.data ?? []).map((category) => (
               <Row
@@ -200,8 +222,11 @@ export const CurationDashboard = () => {
             isCategoryVisible={
               selectedCategory ? visibleCategories.has(selectedCategory.id) : false
             }
-            isCreatingQuestion={isCreatingQuestion}
-            onQuestionDirtyChange={setIsQuestionDirty}
+            categoryThemeCount={themes.data === undefined ? null : themesOfCategory.length}
+            authoring={authoring}
+            onDirtyChange={setIsFormDirty}
+            onCategorySaved={onCategorySaved}
+            onCategoryDeleted={onCategoryDeleted}
             onQuestionSaved={onQuestionSaved}
             onQuestionDeleted={onQuestionDeleted}
           />
