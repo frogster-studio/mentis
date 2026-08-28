@@ -21,7 +21,7 @@ export class CurationRepository {
   ) {}
 
   listCategories(): Promise<CategoryEntity[]> {
-    return this.categories.find({ order: { createdAt: "DESC" } });
+    return this.categories.find({ order: { createdAt: "DESC", id: "DESC" } });
   }
 
   // Curation reads the Catalog whole, staged or not — both counts feed the dashboard's modals.
@@ -37,6 +37,7 @@ export class CurationRepository {
       // Grouping on the primary key carries every other Theme column with it.
       .groupBy("theme.id")
       .orderBy("theme.createdAt", "DESC")
+      .addOrderBy("theme.id", "DESC")
       .getRawAndEntities<{ questionCount: string; readyQuestionCount: string }>();
 
     return entities.map((entity, index) => ({
@@ -137,6 +138,6 @@ export class CurationRepository {
   }
 
   listQuestions(themeId: string): Promise<QuestionEntity[]> {
-    return this.questions.find({ where: { themeId }, order: { createdAt: "DESC" } });
+    return this.questions.find({ where: { themeId }, order: { createdAt: "DESC", id: "DESC" } });
   }
 }

@@ -32,10 +32,12 @@ const BROUILLON_QUESTION = "9a3e0d3a-0000-4000-8000-000000000004";
 const AUTHORED = "9a3e0d3a-0000-4000-8000-000000000005";
 const UNKNOWN_QUESTION = "9a3e0d3a-0000-4000-8000-00000000ffff";
 
-type Aged = { createdAt: Date };
+type Aged = { id: string; createdAt: Date };
 
 const newestFirst = <Row extends Aged>(rows: Row[]): Row[] =>
-  [...rows].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  [...rows].sort(
+    (a, b) => b.createdAt.getTime() - a.createdAt.getTime() || b.id.localeCompare(a.id),
+  );
 
 const category = (
   id: string,
@@ -369,6 +371,19 @@ describe("admin curation routes e2e", () => {
       { id: MUSIQUE, name: "Musique", color: "#1e88e5", icon: "music-note" },
       { id: TELEVISION, name: "Télévision", color: "#8e24aa", icon: "tv" },
     ]);
+  });
+
+  it("GET /admin/categories breaks a createdAt tie on the id, not on storage order", async () => {
+    const sameMoment = "2026-08-15T10:00:00.000Z";
+    liveCategories = [
+      category(HISTOIRE, "Histoire", "#6d4c41", "history-edu", sameMoment),
+      category(MUSIQUE, "Musique", "#1e88e5", "music-note", sameMoment),
+      category(TELEVISION, "Télévision", "#8e24aa", "tv", sameMoment),
+    ];
+
+    const listed = await (await asEditor("/admin/categories")).json();
+
+    expect(listed.map((row: { id: string }) => row.id)).toEqual([MUSIQUE, HISTOIRE, TELEVISION]);
   });
 
   it("GET /admin/themes serves unpublished Themes too, with both Question counts", async () => {
