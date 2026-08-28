@@ -21,7 +21,6 @@ import { Badge } from "./badge";
 import { Column } from "./column";
 import { DetailPane } from "./detail-pane";
 import { Row } from "./row";
-import { TonalButton } from "./tonal-button";
 
 export const CurationDashboard = () => {
   const searchParams = useSearchParams();
@@ -137,19 +136,17 @@ export const CurationDashboard = () => {
   const error = categories.error ?? themes.error ?? questions.error;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4">
+    <div className="flex min-h-0 flex-1 flex-col">
       {error ? (
-        <p role="alert" className="text-red-600 text-sm">
+        <p
+          role="alert"
+          className="shrink-0 border-red-200 border-b bg-red-50 px-6 py-2 text-red-700 text-sm"
+        >
           {error.message}
         </p>
       ) : null}
-      <div className="flex justify-end">
-        <TonalButton type="button" onClick={startCreatingQuestion}>
-          New Question
-        </TonalButton>
-      </div>
       <div className="min-h-0 flex-1 overflow-x-auto">
-        <div className="grid h-full min-w-[64rem] grid-cols-[1fr_1.5fr_1.8fr_1.4fr] gap-4">
+        <div className="grid h-full min-w-[78.5rem] grid-cols-[13rem_19.5rem_26rem_minmax(20rem,1fr)] divide-x divide-zinc-200">
           <Column
             title="Categories"
             isLoading={categories.isPending || themes.isPending}
@@ -180,6 +177,8 @@ export const CurationDashboard = () => {
             isLoading={themes.isPending}
             isEmpty={themesOfCategory.length === 0}
             emptyLabel={selection.categoryId ? "No Theme in this Category." : "Select a Category."}
+            // Themes are seeded, never authored here: the API publishes no create route yet.
+            create={{ label: "New Theme", onSelect: () => {} }}
           >
             {themesOfCategory.map((theme) => (
               <Row
@@ -201,6 +200,7 @@ export const CurationDashboard = () => {
             isLoading={questions.isPending && selection.themeId !== null}
             isEmpty={(questions.data ?? []).length === 0}
             emptyLabel={selection.themeId ? "No Question in this Theme." : "Select a Theme."}
+            create={{ label: "New Question", onSelect: startCreatingQuestion }}
           >
             {(questions.data ?? []).map((question) => (
               <Row

@@ -13,15 +13,21 @@ whitespace, one radius, 2–3 type sizes, Lexend headings / Poppins body.)
 - Header-level icon buttons are **40px** (`size-10`).
 
 ## Surfaces
-- Pages use a **canvas + surface** model: canvas `bg-zinc-50`, content surfaces
-  white with `border rounded-lg shadow-xs overflow-hidden`. No borderless full-bleed
-  content on white.
-- Page content is constrained to `max-w-7xl mx-auto`; only the header spans the viewport.
+- Two page shapes. A **workspace** (the curation dashboard) is full-bleed: no page
+  padding, columns run edge to edge and floor to ceiling under the header, fused into
+  one white plane divided by `divide-x divide-zinc-200` hairlines — no per-column
+  border, radius or shadow. A **focused page** (login) centers its content on the
+  `bg-zinc-50` canvas as a white `border rounded-lg shadow-xs` surface.
+- Workspace column widths are fixed multiples of the narrowest column, with the last
+  column taking the remainder (`minmax`); below their sum the workspace scrolls
+  horizontally rather than squeezing.
 - One radius everywhere: `rounded-lg`. Badges keep their pill shape.
 
 ## Buttons
 - Icon-only buttons always carry `aria-label` **and** a tooltip. Never a bare
-  unlabeled glyph.
+  unlabeled glyph. The tooltip is the native `title` attribute — no custom component.
+- A column's create action is a **`+` icon button in its header band**, inline SVG in
+  `currentColor`, never a text link.
 - **Tonal primary** recipe for icon-form primary actions: `bg-sky-100 text-sky-600` at
   rest → solid sky on hover. Soft sky tint means "primary/active".
 - Ghost icon buttons rest muted (`text-zinc-500`) and gain a subtle background on hover.
