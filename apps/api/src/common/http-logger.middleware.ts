@@ -19,13 +19,13 @@ export const httpLogger = (): RequestHandler => (request, response, next) => {
     return json(payload);
   };
 
-  // Bun never fires "close" on the response, so the request is the hook that spots an abort on both runtimes.
-  request.on("close", () => {
-    const aborted = !response.writableFinished;
-    const level = aborted ? "log" : levelOf(response.statusCode);
-    const outcome = aborted ? "ABORTED" : `${response.statusCode}`;
+  // Bun ends the request stream as soon as the body is read, so only the response says how it went.
+  response.on("finish", () => {
+    const level = levelOf(response.statusCode);
     const elapsed = Math.round(performance.now() - startedAt);
-    logger[level](`${request.method.padEnd(6)} ${request.originalUrl} ${outcome} ${elapsed}ms`);
+    logger[level](
+      `${request.method.padEnd(6)} ${request.originalUrl} ${response.statusCode} ${elapsed}ms`,
+    );
     if (level !== "log" && body !== undefined) {
       logger[level](JSON.stringify(body, null, 2));
     }
