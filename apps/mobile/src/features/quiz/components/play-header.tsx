@@ -1,19 +1,27 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { StyleSheet, View } from "react-native";
 import { NewButton } from "@/components/ui/new-button";
-import { CountdownRing } from "@/features/quiz/components/countdown-ring";
-import { remainingFraction, remainingSeconds } from "@/features/quiz/countdown";
+import { PlayCountdown } from "@/features/quiz/components/play-countdown";
+import { remainingSeconds } from "@/features/quiz/countdown";
 import { COLORS, CONTROL_ICON_SIZE, SPACE } from "@/theme/tokens";
 
 export interface PlayHeaderProps {
   showCrown: boolean;
   endsAt: number;
   now: number;
+  countdownFrozen: boolean;
   quitLabel: string;
   onQuit: () => void;
 }
 
-export const PlayHeader = ({ showCrown, endsAt, now, quitLabel, onQuit }: PlayHeaderProps) => {
+export const PlayHeader = ({
+  showCrown,
+  endsAt,
+  now,
+  countdownFrozen,
+  quitLabel,
+  onQuit,
+}: PlayHeaderProps) => {
   return (
     <View style={styles.row}>
       {showCrown ? (
@@ -23,23 +31,19 @@ export const PlayHeader = ({ showCrown, endsAt, now, quitLabel, onQuit }: PlayHe
           color={COLORS.primary}
         />
       ) : null}
-      <View style={styles.right}>
-        <CountdownRing
-          fraction={remainingFraction(endsAt, now)}
-          seconds={remainingSeconds(endsAt, now)}
-        />
-        <NewButton
-          layout="hug"
-          shape="full"
-          tone="default"
-          icon="close"
-          label={null}
-          accessibilityLabel={quitLabel}
-          onPress={onQuit}
-          disabled={false}
-          pending={false}
-        />
-      </View>
+      <PlayCountdown seconds={remainingSeconds(endsAt, now)} frozen={countdownFrozen} />
+      <View style={styles.spacer} />
+      <NewButton
+        layout="hug"
+        shape="full"
+        tone="default"
+        icon="close"
+        label={null}
+        accessibilityLabel={quitLabel}
+        onPress={onQuit}
+        disabled={false}
+        pending={false}
+      />
     </View>
   );
 };
@@ -50,11 +54,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: SPACE.lg,
     paddingTop: SPACE.lg,
-  },
-  right: {
-    marginLeft: "auto",
-    flexDirection: "row",
-    alignItems: "center",
     gap: SPACE.md,
+  },
+  spacer: {
+    flex: 1,
   },
 });

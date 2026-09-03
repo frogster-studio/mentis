@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from "react-native";
+import { Animated, KeyboardAvoidingView, Platform, StyleSheet, Text, View } from "react-native";
 import { ALL_SCREEN_EDGES, ScreenContainer } from "@/components/ui/screen-container";
 import { Squircle } from "@/components/ui/squircle";
 import { PlayProgressBar } from "@/features/quiz/components/play-progress-bar";
@@ -14,6 +14,8 @@ export interface PlayScreenProps {
   position: number;
   total: number;
   categoryColor: string;
+  collapsed: boolean;
+  questionOpacity: Animated.Value;
   header: ReactNode;
   footer: ReactNode;
 }
@@ -23,6 +25,8 @@ export const PlayScreen = ({
   position,
   total,
   categoryColor,
+  collapsed,
+  questionOpacity,
   header,
   footer,
 }: PlayScreenProps) => {
@@ -64,7 +68,15 @@ export const PlayScreen = ({
             <PlayProgressBar position={position} total={total} />
           </View>
           <Text style={styles.counter}>{`# ${position} / ${total}`}</Text>
-          <Text style={styles.questionText}>{questionText}</Text>
+          <Animated.View
+            style={[
+              styles.questionWrap,
+              collapsed && styles.questionCollapsed,
+              { opacity: questionOpacity },
+            ]}
+          >
+            <Text style={styles.questionText}>{questionText}</Text>
+          </Animated.View>
         </View>
         <View style={styles.flex} />
         {footer}
@@ -105,10 +117,16 @@ const styles = StyleSheet.create({
     marginTop: SPACE.xl,
     paddingHorizontal: SPACE.lg,
   },
+  questionWrap: {
+    marginTop: SPACE.sm,
+    overflow: "hidden",
+  },
+  questionCollapsed: {
+    height: 0,
+  },
   questionText: {
     ...TEXT.question,
     color: COLORS.ink,
-    marginTop: SPACE.sm,
     paddingHorizontal: SPACE.lg,
   },
 });

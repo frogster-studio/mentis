@@ -15,11 +15,6 @@ export function remainingSeconds(endsAt: number, now: number): number {
   return Math.ceil(remainingMs(endsAt, now) / 1000);
 }
 
-// Share of the Countdown still ahead, in [0, 1] — drives the ring's arc.
-export function remainingFraction(endsAt: number, now: number): number {
-  return Math.min(1, remainingMs(endsAt, now) / COUNTDOWN_DURATION_MS);
-}
-
 export function isExpired(endsAt: number, now: number): boolean {
   return now >= endsAt;
 }

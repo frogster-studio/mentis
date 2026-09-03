@@ -1,7 +1,7 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { StyleSheet, Text, View } from "react-native";
-import { CountdownRing } from "@/features/quiz/components/countdown-ring";
 import { HomeModeCard } from "@/features/quiz/components/home-mode-card";
+import { PlayCountdown } from "@/features/quiz/components/play-countdown";
 import {
   CASH_MODE_HOW,
   CASH_MODE_NAME,
@@ -18,8 +18,6 @@ import {
 import { TEXT } from "@/theme/text";
 import { COLORS, SPACE } from "@/theme/tokens";
 
-// A running arc reads as a timer; a full circle reads as a badge.
-const RING_PREVIEW_FRACTION = 0.75;
 const SWITCH_ICON_SIZE = 20;
 
 export const HomeEmptyState = () => {
@@ -27,7 +25,7 @@ export const HomeEmptyState = () => {
     <View style={styles.block}>
       <Text style={styles.title}>{HOME_EMPTY_TITLE}</Text>
       <View style={styles.setup}>
-        <CountdownRing fraction={RING_PREVIEW_FRACTION} seconds={COUNTDOWN_DURATION_SECONDS} />
+        <PlayCountdown seconds={COUNTDOWN_DURATION_SECONDS} frozen={false} />
         <Text style={styles.setupText}>{HOME_EMPTY_SETUP}</Text>
       </View>
       <HomeModeCard points={POINTS_CASH} name={CASH_MODE_NAME} how={CASH_MODE_HOW} icon="edit" />

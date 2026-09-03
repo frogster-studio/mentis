@@ -1,13 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { COUNTDOWN_DURATION_MS } from "./constants";
-import {
-  elapsedMs,
-  endTimestamp,
-  isExpired,
-  remainingFraction,
-  remainingMs,
-  remainingSeconds,
-} from "./countdown";
+import { elapsedMs, endTimestamp, isExpired, remainingMs, remainingSeconds } from "./countdown";
 
 const T0 = 1_760_000_000_000;
 const ENDS_AT = T0 + COUNTDOWN_DURATION_MS;
@@ -48,21 +41,6 @@ describe("remainingSeconds", () => {
   it("reaches 0 exactly at expiry", () => {
     expect(remainingSeconds(ENDS_AT, ENDS_AT)).toBe(0);
     expect(remainingSeconds(ENDS_AT, ENDS_AT + 1)).toBe(0);
-  });
-});
-
-describe("remainingFraction", () => {
-  it("is 1 at the start and 0 at expiry", () => {
-    expect(remainingFraction(ENDS_AT, T0)).toBe(1);
-    expect(remainingFraction(ENDS_AT, ENDS_AT)).toBe(0);
-  });
-
-  it("is proportional to the remaining time", () => {
-    expect(remainingFraction(ENDS_AT, T0 + COUNTDOWN_DURATION_MS / 2)).toBe(0.5);
-  });
-
-  it("clamps to 1 for a now earlier than the question start", () => {
-    expect(remainingFraction(ENDS_AT, T0 - 5_000)).toBe(1);
   });
 });
 
