@@ -30,6 +30,7 @@ import { currentQuestion, sessionScore } from "@/features/quiz/session-reducer";
 import { useStatsStore } from "@/features/quiz/stats-store";
 import { useQuizStore } from "@/features/quiz/store";
 import { usePlayClock } from "@/features/quiz/use-play-clock";
+import { useQuestionTransition } from "@/features/quiz/use-question-transition";
 import { useThemeReveal } from "@/features/quiz/use-theme-reveal";
 import { GUTTER, SPACE } from "@/theme/tokens";
 
@@ -70,6 +71,11 @@ export const SessionScreen = () => {
   // Stable per question (same array element), changes identity on each advance.
   const activeQuestion = session && isActive ? currentQuestion(session) : null;
   const now = usePlayClock(session?.endsAt ?? 0, isActive, expire);
+  // Lags question + position through the collapse/expand beat so the swap lands at the peak.
+  const transition = useQuestionTransition({
+    question: activeQuestion?.text ?? "",
+    position: answeredCount + 1,
+  });
 
   // The Questions can land mid-Reveal and no Countdown may run behind it, yet the Session must
   // exist in the very frame the Reveal ends — hence layout, so no stand-in screen paints between.
@@ -222,16 +228,19 @@ export const SessionScreen = () => {
   return (
     <>
       <PlayScreen
-        questionText={activeQuestion?.text ?? ""}
-        position={answeredCount + 1}
+        questionText={transition.question}
+        position={transition.position}
         total={session.questions.length}
         categoryColor={categoryColor}
+        collapsed={transition.collapsed}
+        questionOpacity={transition.opacity}
         header={
           <>
             <PlayHeader
               showCrown={false}
               endsAt={session.endsAt}
               now={now}
+              countdownFrozen={transition.countdownFrozen}
               quitLabel={QUIT_LABEL}
               onQuit={onRequestQuit}
             />

@@ -29,6 +29,7 @@ import { PlayHeader } from "@/features/quiz/components/play-header";
 import { PlayScreen } from "@/features/quiz/components/play-screen";
 import { ThemeReveal } from "@/features/quiz/components/theme-reveal";
 import { usePlayClock } from "@/features/quiz/use-play-clock";
+import { useQuestionTransition } from "@/features/quiz/use-question-transition";
 import { useThemeReveal } from "@/features/quiz/use-theme-reveal";
 import { isApiError } from "@/lib/api/client";
 import { GUTTER, SPACE } from "@/theme/tokens";
@@ -60,6 +61,11 @@ export const CompetitionScreen = () => {
   // An empty batch is only ever safe once the server holds the answers: never before it is queued.
   const isJudgeable = attempt?.status === "finalized" || queued !== undefined;
   const now = usePlayClock(play?.endsAt ?? 0, isActive, expire);
+  // Lags question + position through the collapse/expand beat so the swap lands at the peak.
+  const transition = useQuestionTransition({
+    question: isActive && play ? currentAttemptQuestion(play).text : "",
+    position: (play?.answers.length ?? 0) + 1,
+  });
   const transcript = useTranscript(owner, attempt?.id, isJudgeable);
   // The queue is acked the moment the batch lands, so the transcript itself holds the screen after.
   const showResults = isJudgeable || transcript.data !== undefined;
@@ -218,15 +224,18 @@ export const CompetitionScreen = () => {
   return (
     <>
       <PlayScreen
-        questionText={currentAttemptQuestion(play).text}
-        position={play.answers.length + 1}
+        questionText={transition.question}
+        position={transition.position}
         total={play.questions.length}
         categoryColor={attempt.category.color}
+        collapsed={transition.collapsed}
+        questionOpacity={transition.opacity}
         header={
           <PlayHeader
             showCrown={true}
             endsAt={play.endsAt}
             now={now}
+            countdownFrozen={transition.countdownFrozen}
             quitLabel={COMPETITION_QUIT_LABEL}
             onQuit={onRequestQuit}
           />
