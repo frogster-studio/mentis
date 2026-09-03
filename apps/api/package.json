@@ -6,7 +6,7 @@
     "dev": "bun --watch src/main.ts",
     "build": "bun run --filter @mentis/contracts --filter @mentis/answer-matching build && tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
-    "typeorm": "bun node_modules/typeorm/cli.js -d src/_database/datasource.cli.ts",
+    "typeorm": "bunx --bun typeorm -d src/_database/datasource.cli.ts",
     "migration:generate": "bun run typeorm migration:generate src/_database/migrations/migration",
     "migration:run": "bun run typeorm migration:run",
     "migration:revert": "bun run typeorm migration:revert",
