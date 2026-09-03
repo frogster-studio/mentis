@@ -7,7 +7,8 @@
     "apps/mobile": {
       "entry": ["src/app/**/*.tsx"],
       "project": ["src/**/*.{ts,tsx}", "scripts/**/*.ts", "*.{js,ts}"],
-      "ignoreDependencies": ["expo-updates", "react-native-purchases"]
+      "ignoreDependencies": ["expo-updates"],
+      "ignoreBinaries": ["adb"]
     },
     "apps/api": {
       "entry": [

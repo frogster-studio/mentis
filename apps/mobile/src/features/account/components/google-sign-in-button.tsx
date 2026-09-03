@@ -19,7 +19,10 @@ export const GoogleSignInButton = ({ onError }: GoogleSignInButtonProps) => {
       icon={null}
       accessibilityLabel={null}
       onPress={() => {
-        signInWithGoogle().catch(onError);
+        signInWithGoogle().catch((error) => {
+          console.error("Google sign-in failed", error);
+          onError();
+        });
       }}
       disabled={false}
     />

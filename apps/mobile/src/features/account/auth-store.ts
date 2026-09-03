@@ -2,6 +2,7 @@
 
 import type { Session } from "@supabase/supabase-js";
 import { create } from "zustand";
+import { syncPurchasesIdentity } from "@/lib/purchases";
 import { supabase } from "@/lib/supabase";
 
 type AuthStore = {
@@ -17,4 +18,5 @@ export const useAuthStore = create<AuthStore>(() => ({
 // Supabase emits INITIAL_SESSION right after this registers — that first event clears isLoading.
 supabase.auth.onAuthStateChange((_event, session) => {
   useAuthStore.setState({ session, isLoading: false });
+  syncPurchasesIdentity(session?.user.id ?? null);
 });

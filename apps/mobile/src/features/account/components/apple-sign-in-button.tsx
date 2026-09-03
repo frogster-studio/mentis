@@ -26,7 +26,10 @@ export const AppleSignInButton = ({ onError }: AppleSignInButtonProps) => {
       cornerRadius={RADIUS.base}
       style={styles.button}
       onPress={() => {
-        signInWithApple().catch(onError);
+        signInWithApple().catch((error) => {
+          console.error("Apple sign-in failed", error);
+          onError();
+        });
       }}
     />
   );

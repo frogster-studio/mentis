@@ -97,6 +97,8 @@ const config: ExpoConfig = {
     supabasePublishableKey: read("EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY"),
     googleWebClientId: read("EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID"),
     googleIosClientId: GOOGLE_IOS_CLIENT_ID,
+    revenueCatIosApiKey: read("EXPO_PUBLIC_REVENUECAT_IOS_API_KEY"),
+    revenueCatAndroidApiKey: read("EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY"),
   },
 };
 
