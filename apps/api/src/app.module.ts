@@ -9,6 +9,7 @@ import { CompetitionModule } from "./competition/modules/competition.module";
 import { CurationModule } from "./curation/modules/curation.module";
 import { HealthController } from "./health/health.controller";
 import { PlayerModule } from "./player/modules/player.module";
+import { PremiumModule } from "./premium/modules/premium.module";
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { PlayerModule } from "./player/modules/player.module";
     CompetitionModule,
     CurationModule,
     PlayerModule,
+    PremiumModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_FILTER, useClass: HttpErrorFilter }],
