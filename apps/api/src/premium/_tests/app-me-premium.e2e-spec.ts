@@ -1,4 +1,5 @@
 import { appPremiumResponseSchema } from "@mentis/contracts/app";
+import { PremiumEnvironmentEnum } from "@mentis/contracts/enums";
 import { errorResponseSchema } from "@mentis/contracts/shared";
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
@@ -103,7 +104,10 @@ describe("app me premium routes e2e", () => {
     const future = new Date(Date.now() + 60 * 60 * 1000);
     entitlements.set(
       PLAYER_A,
-      entitlementRow(PLAYER_A, { premiumUntil: future, environment: "SANDBOX" }),
+      entitlementRow(PLAYER_A, {
+        premiumUntil: future,
+        environment: PremiumEnvironmentEnum.SANDBOX,
+      }),
     );
 
     const response = await authed(tokenA, "/app/me/premium");
@@ -116,7 +120,7 @@ describe("app me premium routes e2e", () => {
       PLAYER_A,
       entitlementRow(PLAYER_A, {
         premiumUntil: new Date(Date.now() - 60 * 60 * 1000),
-        environment: "PRODUCTION",
+        environment: PremiumEnvironmentEnum.PRODUCTION,
       }),
     );
 
@@ -130,7 +134,7 @@ describe("app me premium routes e2e", () => {
       PLAYER_B,
       entitlementRow(PLAYER_B, {
         premiumUntil: new Date(Date.now() + 60 * 60 * 1000),
-        environment: "PRODUCTION",
+        environment: PremiumEnvironmentEnum.PRODUCTION,
       }),
     );
 

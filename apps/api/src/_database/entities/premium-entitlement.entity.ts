@@ -1,3 +1,4 @@
+import { PremiumEnvironmentEnum } from "@mentis/contracts/enums";
 import {
   BaseEntity,
   Column,
@@ -30,8 +31,8 @@ export class PremiumEntitlementEntity extends BaseEntity {
   premiumUntil: Date | null;
 
   // The store world backing premium, straight from RevenueCat; null whenever premium_until is.
-  @Column({ type: "enum", enum: ["SANDBOX", "PRODUCTION"], nullable: true })
-  environment: "SANDBOX" | "PRODUCTION" | null;
+  @Column({ type: "enum", enum: PremiumEnvironmentEnum, nullable: true })
+  environment: PremiumEnvironmentEnum | null;
 
   @UpdateDateColumn({ type: "timestamptz", name: "updated_at" })
   updatedAt: Date;

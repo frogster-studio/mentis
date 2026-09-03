@@ -14,7 +14,7 @@ export class PremiumService {
     const until = row?.premiumUntil ?? null;
 
     const active = until !== null && until.getTime() > Date.now();
-    
+
     return appPremiumResponseSchema.parse({
       active,
       until: active ? until.toISOString() : null,

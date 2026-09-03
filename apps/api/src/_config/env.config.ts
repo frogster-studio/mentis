@@ -15,6 +15,8 @@ const envSchema = z.object({
         .map((origin) => origin.trim())
         .filter((origin) => origin.length > 0),
     ),
+  REVENUECAT_WEBHOOK_AUTH: z.string().min(1),
+  REVENUECAT_REST_KEY: z.string().min(1),
 });
 
 export type Env = z.infer<typeof envSchema>;
