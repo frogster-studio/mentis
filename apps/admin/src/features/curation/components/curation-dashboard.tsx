@@ -20,6 +20,7 @@ import { isCategoryLastPublishedTheme, questionFloorBlocker } from "../staging";
 import { publishedLabel, readyLabel, visibleLabel } from "../staging-labels";
 import type { Authoring, Category, Question } from "../types";
 import { Badge } from "./badge";
+import { CategoryBadge } from "./category-badge";
 import { Column } from "./column";
 import { DetailPane } from "./detail-pane";
 import { FloorBlockDialog } from "./floor-block-dialog";
@@ -202,9 +203,10 @@ export const CurationDashboard = () => {
                 isSelected={category.id === selection.categoryId}
                 onSelect={() => goTo(selectCategory(category.id))}
               >
-                <span
-                  className="size-3 shrink-0 rounded-full border border-zinc-200"
-                  style={{ backgroundColor: category.color }}
+                <CategoryBadge
+                  color={category.color}
+                  icon={category.icon}
+                  className="size-6 text-sm"
                 />
                 <span className="flex-1 truncate">{category.name}</span>
                 <Badge isOn={visibleCategories.has(category.id)}>
