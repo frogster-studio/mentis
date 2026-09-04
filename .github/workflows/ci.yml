@@ -16,7 +16,16 @@ jobs:
       - run: bun run typecheck
       - run: bunx biome ci .
       - run: bun run test
+      # knip evaluates apps/mobile/app.config.ts, which reads these; the gitignored .env is absent in CI.
       - run: bunx knip
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_placeholder
+          EXPO_PUBLIC_API_URL: https://api.example.com
+          EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: placeholder.apps.googleusercontent.com
+          EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: placeholder.apps.googleusercontent.com
+          EXPO_PUBLIC_REVENUECAT_IOS_API_KEY: appl_placeholder
+          EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY: goog_placeholder
 
   admin-changed:
     if: github.event_name == 'push'
