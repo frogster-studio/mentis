@@ -1,5 +1,5 @@
 import { type PropsWithChildren, type ReactNode, useRef, useState } from "react";
-import { Animated, type LayoutChangeEvent, Platform, StyleSheet, Text, View } from "react-native";
+import { Animated, type LayoutChangeEvent, Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurBand } from "@/components/ui/blur-band";
 import { ScreenContainer } from "@/components/ui/screen-container";
@@ -7,9 +7,8 @@ import {
   ResultsHeaderBand,
   useResultsBandHeight,
 } from "@/features/quiz/components/results-header-band";
-import { RESULTS_SCORE_MAX_LABEL } from "@/features/quiz/constants";
-import { TEXT } from "@/theme/text";
-import { COLORS, GUTTER, SPACE } from "@/theme/tokens";
+import { ResultsHeaderCard } from "@/features/quiz/components/results-header-card";
+import { GUTTER, SPACE } from "@/theme/tokens";
 
 // Both bands pad their own inset, so the screen under them must not spend either one twice.
 const RESULTS_EDGES = ["left", "right"] as const;
@@ -22,12 +21,14 @@ const NATIVE_DRIVER = Platform.OS !== "web";
 export interface ResultsScreenProps {
   score: number;
   themeName: string;
+  outcomes: boolean[];
   footer: ReactNode;
 }
 
 export const ResultsScreen = ({
   score,
   themeName,
+  outcomes,
   children,
   footer,
 }: PropsWithChildren<ResultsScreenProps>) => {
@@ -62,14 +63,10 @@ export const ResultsScreen = ({
         contentContainerStyle={[styles.scrollContent, { paddingBottom: footerHeight }]}
       >
         <Animated.View
-          style={[styles.header, { paddingTop: insets.top + SPACE.xl, opacity: headerOpacity }]}
+          style={[styles.header, { paddingTop: insets.top + SPACE.xs, opacity: headerOpacity }]}
           onLayout={(event: LayoutChangeEvent) => setHeaderHeight(event.nativeEvent.layout.height)}
         >
-          <View style={styles.scoreBlock}>
-            <Text style={styles.score}>{score}</Text>
-            <Text style={styles.scoreMax}>{RESULTS_SCORE_MAX_LABEL}</Text>
-          </View>
-          <Text style={styles.theme}>{themeName}</Text>
+          <ResultsHeaderCard score={score} themeName={themeName} outcomes={outcomes} />
         </Animated.View>
         {children}
       </Animated.ScrollView>
@@ -95,27 +92,7 @@ const styles = StyleSheet.create({
     gap: SPACE.md,
   },
   header: {
-    alignItems: "center",
-    gap: SPACE.md,
-    paddingBottom: SPACE.xl,
-  },
-  scoreBlock: {
-    alignItems: "center",
-  },
-  score: {
-    ...TEXT.heroScore,
-    color: COLORS.primary,
-  },
-  // The numeral reserves descent space no digit ever uses, so the ceiling climbs back into it.
-  scoreMax: {
-    ...TEXT.caption,
-    marginTop: -SPACE.xl,
-    color: COLORS.inkMuted,
-  },
-  theme: {
-    ...TEXT.screenTitle,
-    color: COLORS.inkMuted,
-    textAlign: "center",
+    paddingBottom: SPACE.xs,
   },
   // The band draws its own absolute frame, so this layer only carries the fade.
   bandLayer: {

@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text } from "react-native";
-import { Button } from "@/components/ui/button";
+import { NewButton } from "@/components/ui/new-button";
 import { ResultCard } from "@/features/quiz/components/result-card";
 import { ResultsScreen } from "@/features/quiz/components/results-screen";
 import { RESULTS_HOME_LABEL, RESULTS_REPLAY_LABEL } from "@/features/quiz/constants";
@@ -29,9 +29,20 @@ export const SessionResults = ({
     <ResultsScreen
       score={sessionScore(answers)}
       themeName={themeName}
+      outcomes={answers.map((answer) => answer.correct)}
       footer={
         <>
-          <Button label={RESULTS_REPLAY_LABEL} onPress={onReplay} pending={false} />
+          <NewButton
+            layout="block"
+            shape="full"
+            tone="primary"
+            icon="play-circle-outline"
+            label={RESULTS_REPLAY_LABEL}
+            accessibilityLabel={null}
+            onPress={onReplay}
+            disabled={false}
+            pending={false}
+          />
           <Pressable
             style={({ pressed }) => [styles.homeLink, pressed && styles.pressed]}
             onPress={onGoHome}
@@ -44,10 +55,11 @@ export const SessionResults = ({
       {questions.map((question, index) => (
         <ResultCard
           key={question.id}
+          position={index + 1}
+          total={questions.length}
           questionText={question.text}
           canonicalAnswer={question.answer}
           answerText={answers[index].input}
-          mode={answers[index].mode}
           correct={answers[index].correct}
           points={answers[index].points}
         />
@@ -65,6 +77,7 @@ const styles = StyleSheet.create({
   pressed: PRESSED,
   homeLabel: {
     ...TEXT.label,
-    color: COLORS.inkMuted,
+    color: COLORS.ink,
+    textDecorationLine: "underline",
   },
 });

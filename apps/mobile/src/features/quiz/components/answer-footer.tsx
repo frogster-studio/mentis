@@ -12,6 +12,7 @@ import { COLORS, CONTROL_HEIGHT, CONTROL_ICON_SIZE, GUTTER, RADIUS, SPACE } from
 
 export interface AnswerFooterProps {
   play: QuestionPlay;
+  categoryColor: string;
   // Held by the screen, which blurs the field before raising the quit sheet.
   inputRef: RefObject<TextInput | null>;
   autoFocus: boolean;
@@ -23,6 +24,7 @@ export interface AnswerFooterProps {
 
 export const AnswerFooter = ({
   play,
+  categoryColor,
   inputRef,
   autoFocus,
   onInputChange,
@@ -40,24 +42,23 @@ export const AnswerFooter = ({
             <SquareButton
               key={choice}
               label={choice}
+              color={categoryColor}
               selected={play.selection === index}
               onPress={() => onSelect(index)}
             />
           ))}
         </View>
-        <View style={styles.confirmSlot}>
-          <NewButton
-            layout="block"
-            shape="full"
-            tone="default"
-            icon="arrow-right"
-            label={CONFIRM_LABEL}
-            accessibilityLabel={null}
-            onPress={onConfirm}
-            disabled={disabled}
-            pending={false}
-          />
-        </View>
+        <NewButton
+          layout="block"
+          shape="full"
+          tone="primary"
+          icon="check"
+          label={CONFIRM_LABEL}
+          accessibilityLabel={null}
+          onPress={onConfirm}
+          disabled={disabled}
+          pending={false}
+        />
       </View>
     );
   }
@@ -144,16 +145,13 @@ const styles = StyleSheet.create({
     marginHorizontal: SPACE.md,
   },
   squareFooter: {
-    gap: SPACE.md,
-    paddingHorizontal: GUTTER,
+    gap: SPACE.xxl,
+    paddingHorizontal: GUTTER + SPACE.lg,
     paddingBottom: SPACE.md,
   },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: SPACE.md,
-  },
-  confirmSlot: {
-    paddingHorizontal: SPACE.lg,
+    gap: SPACE.lg,
   },
 });
