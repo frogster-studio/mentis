@@ -5,7 +5,8 @@ import { COLORS, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
 
 const LABEL_MAX_LINES = 2;
 const TWO_LINE_TILE_HEIGHT = TEXT.body.lineHeight * LABEL_MAX_LINES + SPACE.md * 2;
-const REST_FACE_ALPHA = "66";
+// The Category colour is a tint over the white face, so ink stays legible on a dark Category.
+const TINT_ALPHA = "66";
 
 export interface SquareButtonProps {
   label: string;
@@ -25,12 +26,22 @@ export const SquareButton = ({ label, color, selected, onPress }: SquareButtonPr
     >
       <Squircle
         radius={RADIUS.base}
-        color={selected ? color : `${COLORS.face}${REST_FACE_ALPHA}`}
+        color={selected ? COLORS.face : `${COLORS.face}${TINT_ALPHA}`}
         borderColor={null}
         borderWidth={null}
         style={styles.face}
         corners="all"
       >
+        {selected ? (
+          <Squircle
+            radius={RADIUS.base}
+            color={`${color}${TINT_ALPHA}`}
+            borderColor={null}
+            borderWidth={null}
+            style={StyleSheet.absoluteFill}
+            corners="all"
+          />
+        ) : null}
         <Text
           style={[styles.label, selected && styles.labelSelected]}
           numberOfLines={LABEL_MAX_LINES}
