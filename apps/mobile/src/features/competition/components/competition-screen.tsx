@@ -243,6 +243,7 @@ export const CompetitionScreen = () => {
         footer={
           <AnswerFooter
             play={play}
+            categoryColor={attempt.category.color}
             inputRef={inputRef}
             autoFocus={!quitVisible}
             onInputChange={setInput}

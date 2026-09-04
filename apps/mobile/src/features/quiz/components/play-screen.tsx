@@ -7,7 +7,7 @@ import { TEXT } from "@/theme/text";
 import { COLORS, GUTTER, RADIUS, SPACE } from "@/theme/tokens";
 
 // The Reveal's wash carried into the session: the Category colour with a hex alpha appended.
-const BACKDROP_ALPHA = "38";
+const BACKDROP_ALPHA = "40";
 
 export interface PlayScreenProps {
   questionText: string;

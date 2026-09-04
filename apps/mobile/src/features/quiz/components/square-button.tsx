@@ -3,13 +3,18 @@ import { Squircle } from "@/components/ui/squircle";
 import { TEXT } from "@/theme/text";
 import { COLORS, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
 
+const LABEL_MAX_LINES = 2;
+const TWO_LINE_TILE_HEIGHT = TEXT.body.lineHeight * LABEL_MAX_LINES + SPACE.md * 2;
+const REST_FACE_ALPHA = "66";
+
 export interface SquareButtonProps {
   label: string;
+  color: string;
   selected: boolean;
   onPress: () => void;
 }
 
-export const SquareButton = ({ label, selected, onPress }: SquareButtonProps) => {
+export const SquareButton = ({ label, color, selected, onPress }: SquareButtonProps) => {
   return (
     <Pressable
       onPress={onPress}
@@ -19,14 +24,19 @@ export const SquareButton = ({ label, selected, onPress }: SquareButtonProps) =>
       style={({ pressed }) => [styles.root, pressed && styles.pressed]}
     >
       <Squircle
-        radius={RADIUS.sm}
-        color={selected ? COLORS.primary : COLORS.face}
-        borderColor={selected ? COLORS.primary : COLORS.stroke}
-        borderWidth={1}
+        radius={RADIUS.base}
+        color={selected ? color : `${COLORS.face}${REST_FACE_ALPHA}`}
+        borderColor={null}
+        borderWidth={null}
         style={styles.face}
         corners="all"
       >
-        <Text style={styles.label}>{label}</Text>
+        <Text
+          style={[styles.label, selected && styles.labelSelected]}
+          numberOfLines={LABEL_MAX_LINES}
+        >
+          {label}
+        </Text>
       </Squircle>
     </Pressable>
   );
@@ -38,18 +48,19 @@ const styles = StyleSheet.create({
     flexBasis: "45%",
   },
   pressed: PRESSED,
-  // flexGrow keeps the two cells of a row level while the taller label still sizes them.
   face: {
-    flexGrow: 1,
+    height: TWO_LINE_TILE_HEIGHT,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: SPACE.lg,
     paddingHorizontal: SPACE.sm,
   },
   label: {
-    ...TEXT.label,
-    color: COLORS.ink,
+    ...TEXT.body,
+    color: COLORS.inkMuted,
     textAlign: "center",
     userSelect: "none",
+  },
+  labelSelected: {
+    color: COLORS.ink,
   },
 });
