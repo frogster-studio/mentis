@@ -14,15 +14,17 @@ export const CompetitionResults = ({ transcript, onGoHome }: CompetitionResultsP
     <ResultsScreen
       score={transcript.score}
       themeName={transcript.themeName}
+      outcomes={transcript.answers.map((answer) => answer.correct)}
       footer={<Button label={COMPETITION_RESULTS_HOME_LABEL} onPress={onGoHome} pending={false} />}
     >
       {transcript.answers.map((answer) => (
         <ResultCard
           key={answer.position}
+          position={answer.position + 1}
+          total={transcript.answers.length}
           questionText={answer.questionText}
           canonicalAnswer={answer.canonicalAnswer}
           answerText={answer.rawInput ?? ""}
-          mode={answer.mode}
           correct={answer.correct}
           points={answer.points}
         />

@@ -24,7 +24,8 @@ export const ResultsHeaderBand = ({ score, themeName }: ResultsHeaderBandProps) 
     <BlurBand edge="top">
       <View style={[styles.row, { height: ROW_HEIGHT + insets.top, paddingTop: insets.top }]}>
         <Text style={styles.score}>
-          {score} <Text style={styles.max}>{RESULTS_SCORE_MAX_LABEL}</Text>
+          {score}
+          <Text style={styles.max}>{RESULTS_SCORE_MAX_LABEL}</Text>
         </Text>
         {/* The score holds its width and the Theme gives way, so a long name never pushes it out. */}
         <Text style={styles.theme} numberOfLines={1}>
@@ -45,7 +46,7 @@ const styles = StyleSheet.create({
   },
   score: {
     ...TEXT.label,
-    color: COLORS.primary,
+    color: COLORS.ink,
   },
   max: {
     ...TEXT.caption,

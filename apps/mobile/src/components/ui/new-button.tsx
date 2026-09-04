@@ -64,7 +64,7 @@ export const NewButton = ({
           style={[
             styles.face,
             label === null && styles.iconOnlyFace,
-            { borderRadius: radius, borderColor: palette.edge },
+            { borderRadius: radius, borderColor: palette.edge, backgroundColor: palette.face },
           ]}
         >
           {pending ? (
@@ -100,7 +100,6 @@ const styles = StyleSheet.create({
     height: CONTROL_SQUARE_SIZE,
   },
   face: {
-    backgroundColor: COLORS.face,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
