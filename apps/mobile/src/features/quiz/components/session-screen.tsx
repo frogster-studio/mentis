@@ -250,6 +250,7 @@ export const SessionScreen = () => {
         footer={
           <AnswerFooter
             play={session}
+            categoryColor={categoryColor}
             inputRef={inputRef}
             autoFocus={!quitVisible}
             onInputChange={setInput}
