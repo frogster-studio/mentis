@@ -29,11 +29,15 @@ import {
   SIGN_OUT_TITLE,
 } from "@/features/account/constants";
 import { deleteAccount } from "@/features/account/delete-account";
+import { PaywallSheet } from "@/features/premium/components/paywall-sheet";
+import { PremiumCard } from "@/features/premium/components/premium-card";
+import { useIsPremium } from "@/features/premium/use-is-premium";
 import { HomeEmptyState } from "@/features/quiz/components/home-empty-state";
 import { HomeThemeCard } from "@/features/quiz/components/home-theme-card";
 import { drainOutbox } from "@/features/quiz/outbox-sync";
 import { useTransferStore } from "@/features/quiz/transfer-store";
 import { useHomeCards } from "@/features/quiz/use-home-cards";
+import { PURCHASES_SUPPORTED } from "@/lib/purchases";
 import { TEXT } from "@/theme/text";
 import { COLORS, CONTROL_HEIGHT, GUTTER, PRESSED, SPACE } from "@/theme/tokens";
 
@@ -44,6 +48,8 @@ export const AccountScreen = () => {
   const [signOutVisible, setSignOutVisible] = useState(false);
   const [signInFailed, setSignInFailed] = useState(false);
   const [deleteVisible, setDeleteVisible] = useState(false);
+  const [paywallVisible, setPaywallVisible] = useState(false);
+  const isPremium = useIsPremium();
   // A failure leaves everything intact; the mutation's error state lets the Player retry.
   const accountDeletion = useMutation({ mutationFn: deleteAccount });
 
@@ -89,6 +95,9 @@ export const AccountScreen = () => {
             ) : (
               <Text style={styles.pitch}>{ACCOUNT_PITCH}</Text>
             )}
+            {user && PURCHASES_SUPPORTED && isPremium !== null ? (
+              <PremiumCard isPremium={isPremium} onOpenPaywall={() => setPaywallVisible(true)} />
+            ) : null}
             {showTransferNotice ? <TransferNotice /> : null}
             {isEmpty ? (
               <HomeEmptyState />
@@ -136,6 +145,8 @@ export const AccountScreen = () => {
           </View>
         </View>
       )}
+
+      <PaywallSheet visible={paywallVisible} onDismiss={() => setPaywallVisible(false)} />
 
       <ConfirmDialog
         visible={signOutVisible}
