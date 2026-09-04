@@ -20,3 +20,12 @@ export const PAYWALL_RESTORE_LABEL = "Restaurer mes achats";
 export const PAYWALL_RESTORE_PENDING_LABEL = "Restauration…";
 export const PAYWALL_RESTORE_ERROR = "La restauration a échoué.";
 export const PAYWALL_RESTORE_EMPTY = "Aucun achat à restaurer sur ce compte.";
+
+export const PAYWALL_ACTIVATION_TITLE = "Activation de votre abonnement";
+export const PAYWALL_ACTIVATION_MESSAGE = "Encore quelques secondes, on prépare votre Premium.";
+export const PAYWALL_ACTIVATION_PENDING =
+  "Activation en cours : votre Premium sera actif d'ici quelques instants.";
+export const PAYWALL_ACTIVATION_CLOSE_LABEL = "Fermer";
+
+export const ACTIVATION_POLL_INTERVAL_MS = 3_000;
+export const ACTIVATION_TIMEOUT_MS = 90_000;

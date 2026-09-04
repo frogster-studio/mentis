@@ -2,11 +2,20 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useMutation } from "@tanstack/react-query";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { NewButton } from "@/components/ui/new-button";
+import { QuietButton } from "@/components/ui/quiet-button";
 import { ScreenError } from "@/components/ui/screen-error";
 import { ScreenLoading } from "@/components/ui/screen-loading";
 import { Sheet } from "@/components/ui/sheet";
-import { purchasePremium, usePremiumOffering } from "@/features/premium/api";
 import {
+  awaitPremiumActivation,
+  purchasePremium,
+  usePremiumOffering,
+} from "@/features/premium/api";
+import { PremiumActivation } from "@/features/premium/components/premium-activation";
+import {
+  PAYWALL_ACTIVATION_CLOSE_LABEL,
+  PAYWALL_ACTIVATION_PENDING,
+  PAYWALL_ACTIVATION_TITLE,
   PAYWALL_FEATURES,
   PAYWALL_OFFERING_EMPTY,
   PAYWALL_OFFERING_ERROR,
@@ -33,11 +42,19 @@ export interface PaywallSheetProps {
 
 export const PaywallSheet = ({ visible, onDismiss }: PaywallSheetProps) => {
   const offering = usePremiumOffering(visible);
+  const activation = useMutation({
+    mutationFn: awaitPremiumActivation,
+    onSuccess: (isActive) => {
+      if (isActive) {
+        close();
+      }
+    },
+  });
   const purchase = useMutation({
     mutationFn: purchasePremium,
     onSuccess: (info) => {
       if (info) {
-        close();
+        activation.mutate();
       }
     },
   });
@@ -53,23 +70,42 @@ export const PaywallSheet = ({ visible, onDismiss }: PaywallSheetProps) => {
   function close() {
     purchase.reset();
     restore.reset();
+    activation.reset();
     onDismiss();
   }
 
   const pack = offering.data ?? null;
-  const isBusy = purchase.isPending || restore.isPending;
+  const isBusy = purchase.isPending || restore.isPending || activation.isPending;
   const restoreFoundNothing = restore.isSuccess && !isPremiumActive(restore.data);
+  // The webhook can outlast the wait: the Player leaves on a notice, never on a failure.
+  const activationOutranTheWait = activation.isSuccess && !activation.data;
 
   return (
     <Sheet
       visible={visible}
-      title={PAYWALL_TITLE}
+      title={
+        activation.isPending || activationOutranTheWait ? PAYWALL_ACTIVATION_TITLE : PAYWALL_TITLE
+      }
       message={null}
-      // Nothing dismisses mid-purchase.
+      // Nothing dismisses mid-purchase, nor while the activation is still being awaited.
       dismissible={!isBusy}
       onDismiss={close}
     >
-      {offering.isPending ? (
+      {activation.isPending ? (
+        <PremiumActivation />
+      ) : activationOutranTheWait ? (
+        <View style={styles.body}>
+          <Text style={styles.notice}>{PAYWALL_ACTIVATION_PENDING}</Text>
+          <QuietButton
+            layout="block"
+            label={PAYWALL_ACTIVATION_CLOSE_LABEL}
+            icon={null}
+            accessibilityLabel={null}
+            disabled={false}
+            onPress={close}
+          />
+        </View>
+      ) : offering.isPending ? (
         <ScreenLoading />
       ) : offering.isError ? (
         <ScreenError message={PAYWALL_OFFERING_ERROR} onRetry={() => offering.refetch()} />

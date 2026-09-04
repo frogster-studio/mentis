@@ -1,6 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import type { CustomerInfo, PurchasesPackage } from "react-native-purchases";
+import { pollUntilActive } from "@/features/premium/activation";
 import { premiumPackageOf } from "@/features/premium/entitlement";
+import { fetchPremium } from "@/features/premium/requests";
+import { api } from "@/lib/api";
 import { isPurchaseCancelled, purchasePackage, readOfferings } from "@/lib/purchases";
 
 export const premiumKeys = {
@@ -26,4 +29,13 @@ export async function purchasePremium(pack: PurchasesPackage): Promise<CustomerI
     }
     throw error;
   }
+}
+
+// A read alone: server truth is the webhook's to write, and this only watches it land.
+export function awaitPremiumActivation(): Promise<boolean> {
+  return pollUntilActive({
+    readIsActive: async () => (await fetchPremium(api)).active,
+    now: () => Date.now(),
+    wait: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  });
 }
