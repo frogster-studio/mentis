@@ -15,6 +15,8 @@ import {
 import { visibleLabel } from "../staging-labels";
 import type { Category } from "../types";
 import { Badge } from "./badge";
+import { CategoryBadge } from "./category-badge";
+import { ColorField } from "./color-field";
 import { CONTROL } from "./control";
 import { Field } from "./field";
 import { IconField } from "./icon-field";
@@ -96,19 +98,14 @@ export const CategoryForm = ({
       </Field>
 
       <Field label="Color">
-        <span className="flex items-center gap-2">
-          <input
-            type="color"
-            value={form.color}
-            onChange={(event) => edit({ color: event.target.value.toLowerCase() })}
-            aria-label="Color"
-            className="size-9 shrink-0 cursor-pointer rounded-lg border border-zinc-200 bg-white"
-          />
-          <span className="font-mono text-xs text-zinc-600">{form.color}</span>
-        </span>
+        <ColorField
+          value={form.color}
+          onChange={(color) => edit({ color })}
+          preview={<CategoryBadge color={form.color} icon={form.icon} className="size-9 text-xl" />}
+        />
         {isServableColor(form.color) ? null : (
           <p className="mt-2 text-xs text-zinc-500">
-            The stored color is not a lowercase #rrggbb — pick one to save.
+            Not a #rrggbb color — type or pick one to save.
           </p>
         )}
       </Field>
