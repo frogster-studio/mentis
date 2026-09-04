@@ -6,7 +6,7 @@ We rejected push-only (deriving `premium_until` from event payloads saves the RE
 
 ## Consequences
 
-- The API gains two RevenueCat secrets in `env.config`: the webhook's static `Authorization` value and an `sk_` REST key.
+- The API gains two RevenueCat secrets in `env.config` — the webhook's static `Authorization` value and an `sk_` V2 secret key — plus the project id the v2 REST path addresses.
 - A delivery that exhausts all five webhook retries leaves the mirror stale until the next event for that customer; the RevenueCat dashboard's event log is the backstop, accepted for MVP scale.
 - The new table gets the ADR 0003 locks (RLS on, zero policies) as hand-run SQL once the migration lands.
 - Premium checks work with RevenueCat fully down — only the mirror stops refreshing.

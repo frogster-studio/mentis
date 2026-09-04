@@ -5,7 +5,7 @@ import { Test } from "@nestjs/testing";
 import { getDataSourceToken } from "@nestjs/typeorm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { ENV } from "../../_config/env.config";
-import { REVENUECAT, type RevenueCatSubscriber } from "../../_config/revenuecat.config";
+import { REVENUECAT, type RevenueCatActiveEntitlementList } from "../../_config/revenuecat.config";
 import { SUPABASE } from "../../_config/supabase.config";
 import { stubDataSource, testEnv } from "../../_tests/test-env";
 import { AppModule } from "../../app.module";
@@ -17,11 +17,21 @@ const OWNER_A = "11111111-1111-4111-8111-111111111111";
 const OWNER_B = "22222222-2222-4222-8222-222222222222";
 
 let mirror: Map<string, EntitlementSnapshot>;
-let subscribers: Map<string, RevenueCatSubscriber>;
-const fetchSubscriber = vi.fn(
-  async (appUserId: string): Promise<RevenueCatSubscriber> =>
-    subscribers.get(appUserId) ?? { entitlements: {} },
+let customers: Map<string, RevenueCatActiveEntitlementList>;
+const fetchActiveEntitlements = vi.fn(
+  async (appUserId: string): Promise<RevenueCatActiveEntitlementList> =>
+    customers.get(appUserId) ?? { items: [] },
 );
+
+const PREMIUM_ID = "entl43b2c0b2fa";
+
+const fetchEntitlements = vi.fn(async () => ({
+  items: [{ id: PREMIUM_ID, lookup_key: "premium" }],
+}));
+
+const premiumEntitlement = (expires: Date): RevenueCatActiveEntitlementList => ({
+  items: [{ entitlement_id: PREMIUM_ID, expires_at: expires.getTime() }],
+});
 
 const fakePremiumRepository = {
   async upsertByOwner(owner: string, snapshot: EntitlementSnapshot) {
@@ -52,7 +62,7 @@ describe("revenuecat webhook e2e", () => {
       .overrideProvider(PremiumRepository)
       .useValue(fakePremiumRepository)
       .overrideProvider(REVENUECAT)
-      .useValue({ fetchSubscriber })
+      .useValue({ fetchEntitlements, fetchActiveEntitlements })
       .overrideProvider(SUPABASE)
       .useValue({})
       .overrideProvider(JWKS)
@@ -69,15 +79,16 @@ describe("revenuecat webhook e2e", () => {
 
   beforeEach(() => {
     mirror = new Map();
-    subscribers = new Map();
-    fetchSubscriber.mockClear();
+    customers = new Map();
+    fetchActiveEntitlements.mockClear();
+    fetchEntitlements.mockClear();
   });
 
   it("without the Authorization header → 401 UNAUTHENTICATED", async () => {
     const response = await post({ event: { app_user_id: OWNER_A } });
     expect(response.status).toBe(401);
     expect(errorResponseSchema.parse(await response.json()).code).toBe("UNAUTHENTICATED");
-    expect(fetchSubscriber).not.toHaveBeenCalled();
+    expect(fetchActiveEntitlements).not.toHaveBeenCalled();
     expect(mirror.size).toBe(0);
   });
 
@@ -87,7 +98,7 @@ describe("revenuecat webhook e2e", () => {
       { Authorization: "Bearer forged" },
     );
     expect(response.status).toBe(401);
-    expect(fetchSubscriber).not.toHaveBeenCalled();
+    expect(fetchActiveEntitlements).not.toHaveBeenCalled();
     expect(mirror.size).toBe(0);
   });
 
@@ -97,28 +108,29 @@ describe("revenuecat webhook e2e", () => {
       { Authorization: `${testEnv.REVENUECAT_WEBHOOK_AUTH}-extra` },
     );
     expect(response.status).toBe(401);
-    expect(fetchSubscriber).not.toHaveBeenCalled();
+    expect(fetchActiveEntitlements).not.toHaveBeenCalled();
   });
 
   it("a valid INITIAL_PURCHASE resyncs the owner and overwrites the mirror row", async () => {
-    const expires = "2027-01-01T00:00:00.000Z";
-    subscribers.set(OWNER_A, { entitlements: { premium: { expires_date: expires } } });
+    const expires = new Date("2027-01-01T00:00:00.000Z");
+    customers.set(OWNER_A, premiumEntitlement(expires));
 
     const response = await authorized({
       event: { type: "INITIAL_PURCHASE", app_user_id: OWNER_A, environment: "SANDBOX" },
     });
     expect(response.status).toBe(204);
-    expect(fetchSubscriber).toHaveBeenCalledExactlyOnceWith(OWNER_A);
+    expect(fetchActiveEntitlements).toHaveBeenCalledExactlyOnceWith(OWNER_A);
+    expect(fetchEntitlements).toHaveBeenCalledOnce();
     expect(mirror.get(OWNER_A)).toEqual({
-      premiumUntil: new Date(expires),
+      premiumUntil: expires,
       environment: PremiumEnvironmentEnum.SANDBOX,
     });
   });
 
   it("a TRANSFER resyncs both sides — the loser's row nulls out (premium and environment)", async () => {
-    const expires = "2027-01-01T00:00:00.000Z";
-    subscribers.set(OWNER_A, { entitlements: {} });
-    subscribers.set(OWNER_B, { entitlements: { premium: { expires_date: expires } } });
+    const expires = new Date("2027-01-01T00:00:00.000Z");
+    customers.set(OWNER_A, { items: [] });
+    customers.set(OWNER_B, premiumEntitlement(expires));
 
     const response = await authorized({
       event: {
@@ -129,10 +141,14 @@ describe("revenuecat webhook e2e", () => {
       },
     });
     expect(response.status).toBe(204);
-    expect(fetchSubscriber.mock.calls.map(([id]) => id).sort()).toEqual([OWNER_A, OWNER_B].sort());
+    expect(fetchActiveEntitlements.mock.calls.map(([id]) => id).sort()).toEqual(
+      [OWNER_A, OWNER_B].sort(),
+    );
+    // The lookup key resolves once per delivery, not once per owner.
+    expect(fetchEntitlements).toHaveBeenCalledOnce();
     expect(mirror.get(OWNER_A)).toEqual({ premiumUntil: null, environment: null });
     expect(mirror.get(OWNER_B)).toEqual({
-      premiumUntil: new Date(expires),
+      premiumUntil: expires,
       environment: PremiumEnvironmentEnum.PRODUCTION,
     });
   });
@@ -140,7 +156,8 @@ describe("revenuecat webhook e2e", () => {
   it("a malformed body is acknowledged and writes nothing", async () => {
     const response = await authorized({ garbage: "yes" });
     expect(response.status).toBe(204);
-    expect(fetchSubscriber).not.toHaveBeenCalled();
+    expect(fetchEntitlements).not.toHaveBeenCalled();
+    expect(fetchActiveEntitlements).not.toHaveBeenCalled();
     expect(mirror.size).toBe(0);
   });
 
@@ -149,7 +166,8 @@ describe("revenuecat webhook e2e", () => {
       event: { app_user_id: "$RCAnonymousID:abc", environment: "SANDBOX" },
     });
     expect(response.status).toBe(204);
-    expect(fetchSubscriber).not.toHaveBeenCalled();
+    expect(fetchEntitlements).not.toHaveBeenCalled();
+    expect(fetchActiveEntitlements).not.toHaveBeenCalled();
     expect(mirror.size).toBe(0);
   });
 });

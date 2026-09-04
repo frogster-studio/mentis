@@ -9,6 +9,7 @@ export const testEnv: Env = {
   CORS_ORIGINS: [],
   REVENUECAT_WEBHOOK_AUTH: "Bearer webhook-secret",
   REVENUECAT_REST_KEY: "sk_test_stub",
+  REVENUECAT_PROJECT_ID: "proj_test_stub",
 };
 
 // Stands in for Postgres the way the stub clients do: repositories are overridden per suite.

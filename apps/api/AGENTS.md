@@ -6,7 +6,7 @@ Deliberately **not** a bounded context, so no `CONTEXT.md`: a gateway publishes 
 
 ## Commands (run in `apps/api`)
 
-- `bun run dev` — watch mode (bun auto-loads `.env`; `cp .env.example .env` then fill the two secrets)
+- `bun run dev` — watch mode (bun auto-loads `.env`; `cp .env.example .env` then fill the secrets)
 - `bun run typecheck` — `tsc --noEmit`
 - `bun run test` — vitest, via SWC (esbuild cannot emit decorator metadata)
 - `bun run migration:generate` / `migration:run` / `migration:revert` — TypeORM CLI against `DATABASE_URL`; generate diffs the entities against the live schema, so it needs a reachable database — **Hugo runs these, never an agent**
@@ -120,4 +120,4 @@ Only those four are features. Everything below them is transversal spine — no 
 
 ## Environment
 
-`_config/env.config.ts` is the whole config surface: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `DATABASE_URL` (the session-pooler Postgres URL TypeORM connects through — the second secret), `CORS_ORIGINS` (comma-separated, default `""`, parsed to a list), `PORT` (default 3001 — dodges `next dev` on 3000). `NODE_ENV` is deliberately absent; the Dockerfile sets it for dependency perf paths and nothing in our code reads it. `.env.example` carries real public values, so `cp .env.example .env` plus the two secrets is a full local setup. Any commit that changes env consumption updates `.env.example` in the same commit.
+`_config/env.config.ts` is the whole config surface: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `DATABASE_URL` (the session-pooler Postgres URL TypeORM connects through — the second secret), `REVENUECAT_WEBHOOK_AUTH` and `REVENUECAT_REST_KEY` (the third and fourth secrets) with `REVENUECAT_PROJECT_ID` beside them, `CORS_ORIGINS` (comma-separated, default `""`, parsed to a list), `PORT` (default 3001 — dodges `next dev` on 3000). `NODE_ENV` is deliberately absent; the Dockerfile sets it for dependency perf paths and nothing in our code reads it. `.env.example` carries real public values, so `cp .env.example .env` plus the four secrets is a full local setup. Any commit that changes env consumption updates `.env.example` in the same commit.

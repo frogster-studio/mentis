@@ -17,6 +17,7 @@ const envSchema = z.object({
     ),
   REVENUECAT_WEBHOOK_AUTH: z.string().min(1),
   REVENUECAT_REST_KEY: z.string().min(1),
+  REVENUECAT_PROJECT_ID: z.string().min(1),
 });
 
 export type Env = z.infer<typeof envSchema>;
