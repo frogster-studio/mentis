@@ -1,17 +1,30 @@
 import {
   type AppCompetitionActiveAttemptResponse,
   type AppCompetitionAttemptResponse,
+  type AppCompetitionDayResponse,
   type AppCompetitionFinalizeInput,
+  type AppCompetitionIssueInput,
   type AppCompetitionStandingResponse,
   type AppCompetitionTranscriptResponse,
+  appCompetitionDayResponseSchema,
   COMPETITION_QUESTION_COUNT,
 } from "@mentis/contracts/app";
 import { QuizAnswerModeEnum } from "@mentis/contracts/enums";
-import { ConflictException, Inject, Injectable, NotFoundException } from "@nestjs/common";
-import type { CompetitionAttemptEntity } from "../../_database/entities/competition-attempt.entity";
+import {
+  ConflictException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
+import type {
+  CompetitionAttemptEntity,
+  CompetitionAttemptKind,
+} from "../../_database/entities/competition-attempt.entity";
 import type { DrawnQuestion } from "../../catalog/repositories/catalog.repository";
 import { CatalogService } from "../../catalog/services/catalog.service";
 import type { ThemeVisuals } from "../../catalog/types/theme-visuals";
+import { PremiumService } from "../../premium/services/premium.service";
 import {
   toAppCompetitionActiveAttemptResponse,
   toAppCompetitionAttemptResponse,
@@ -29,7 +42,9 @@ import {
   competitionDay,
   daysBefore,
   seasonBounds,
+  sharesSeason,
 } from "../utils/competition-day";
+import { offersCatchUp, offersReplay } from "../utils/day-offers";
 import { judgeAttempt } from "../utils/judge-attempt";
 
 const ROTATION_LOOKBACK_DAYS = 2;
@@ -39,37 +54,24 @@ export class CompetitionService {
   constructor(
     private readonly competitionRepository: CompetitionRepository,
     private readonly catalogService: CatalogService,
+    private readonly premiumService: PremiumService,
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
-  async issueInitialAttempt(owner: string): Promise<AppCompetitionAttemptResponse> {
-    const day = this.today();
-    await this.attemptsStillInPlay(owner, day);
-    const existing = await this.competitionRepository.findAttempt(owner, day, "initial");
-    if (existing !== null) {
-      return this.serveExistingAttempt(existing);
+  async issueAttempt(
+    owner: string,
+    { kind }: AppCompetitionIssueInput,
+  ): Promise<AppCompetitionAttemptResponse> {
+    const today = this.today();
+    const inPlay = await this.attemptsStillInPlay(owner, today);
+    switch (kind) {
+      case "initial":
+        return this.issueInitialAttempt(owner, today, inPlay);
+      case "replay":
+        return this.issueReplay(owner, today, inPlay);
+      case "catchup":
+        return this.issueCatchUp(owner, today, inPlay);
     }
-
-    const theme = await this.drawTheme(owner, day);
-    const questions = await this.catalogService.drawFromTheme(theme.id, COMPETITION_QUESTION_COUNT);
-    const issued = await this.competitionRepository.issue({
-      owner,
-      day,
-      kind: "initial",
-      themeId: theme.id,
-      themeName: theme.name,
-      questionIds: questions.map((question) => question.id),
-    });
-    if (issued !== null) {
-      return toAppCompetitionAttemptResponse({ attempt: issued, theme, questions });
-    }
-
-    // Two devices asked at once: the insert the day's Attempt shut out serves the winner's draw.
-    const winner = await this.competitionRepository.findAttempt(owner, day, "initial");
-    if (winner === null) {
-      throw new Error("competition attempt disappeared after a lost issuance race");
-    }
-    return this.serveExistingAttempt(winner);
   }
 
   async readActiveAttempt(owner: string): Promise<AppCompetitionActiveAttemptResponse> {
@@ -80,6 +82,22 @@ export class CompetitionService {
     return toAppCompetitionActiveAttemptResponse(await this.servedAttempt(current));
   }
 
+  async readDay(owner: string): Promise<AppCompetitionDayResponse> {
+    const today = this.today();
+    await this.attemptsStillInPlay(owner, today);
+    const yesterday = daysBefore(today, 1);
+    const [todays, yesterdays] = await Promise.all([
+      this.competitionRepository.findAttemptsOnDay(owner, today),
+      this.competitionRepository.findAttemptsOnDay(owner, yesterday),
+    ]);
+    return appCompetitionDayResponseSchema.parse({
+      day: today,
+      replay: offersReplay(todays),
+      catchup: offersCatchUp(yesterdays, sharesSeason(today, yesterday)),
+    });
+  }
+
+  // Premium was checked at issuance: a subscription lapsing mid-session never voids the Attempt.
   async finalizeAttempt(
     owner: string,
     attemptId: string,
@@ -126,6 +144,107 @@ export class CompetitionService {
     );
   }
 
+  private async issueInitialAttempt(
+    owner: string,
+    day: string,
+    inPlay: CompetitionAttemptEntity[],
+  ): Promise<AppCompetitionAttemptResponse> {
+    const existing = await this.competitionRepository.findAttempt(owner, day, "initial");
+    if (existing !== null) {
+      return this.serveExistingAttempt(existing);
+    }
+    this.refuseWhileInPlay(inPlay);
+    return this.issueDrawn(owner, "initial", day, day);
+  }
+
+  // A Replay follows the day's judged initial Attempt, on a Theme the day has not seen.
+  private async issueReplay(
+    owner: string,
+    day: string,
+    inPlay: CompetitionAttemptEntity[],
+  ): Promise<AppCompetitionAttemptResponse> {
+    const existing = await this.competitionRepository.findAttempt(owner, day, "replay");
+    if (existing !== null) {
+      return this.serveExistingAttempt(existing);
+    }
+    const initial = await this.competitionRepository.findAttempt(owner, day, "initial");
+    if (initial === null || initial.status !== "finalized") {
+      throw new ConflictException({ message: "A Replay follows today's judged initial Attempt" });
+    }
+    this.refuseWhileInPlay(inPlay);
+    await this.requirePremium(owner);
+    return this.issueDrawn(owner, "replay", day, day);
+  }
+
+  // A Catch-up fills an empty yesterday of the same season, drawn around today's rotation window.
+  private async issueCatchUp(
+    owner: string,
+    today: string,
+    inPlay: CompetitionAttemptEntity[],
+  ): Promise<AppCompetitionAttemptResponse> {
+    const yesterday = daysBefore(today, 1);
+    const existing = await this.competitionRepository.findAttempt(owner, yesterday, "catchup");
+    if (existing !== null) {
+      return this.serveExistingAttempt(existing);
+    }
+    if (!sharesSeason(today, yesterday)) {
+      throw new ConflictException({ message: "A Catch-up never crosses a season edge" });
+    }
+    const yesterdays = await this.competitionRepository.findAttemptsOnDay(owner, yesterday);
+    if (yesterdays.length > 0) {
+      throw new ConflictException({
+        message: `Competition Day ${yesterday} already holds an Attempt`,
+      });
+    }
+    this.refuseWhileInPlay(inPlay);
+    await this.requirePremium(owner);
+    return this.issueDrawn(owner, "catchup", yesterday, today);
+  }
+
+  private async issueDrawn(
+    owner: string,
+    kind: CompetitionAttemptKind,
+    day: string,
+    rotationDay: string,
+  ): Promise<AppCompetitionAttemptResponse> {
+    const theme = await this.drawTheme(owner, rotationDay);
+    const questions = await this.catalogService.drawFromTheme(theme.id, COMPETITION_QUESTION_COUNT);
+    const issued = await this.competitionRepository.issue({
+      owner,
+      day,
+      kind,
+      themeId: theme.id,
+      themeName: theme.name,
+      questionIds: questions.map((question) => question.id),
+    });
+    if (issued !== null) {
+      return toAppCompetitionAttemptResponse({ attempt: issued, theme, questions });
+    }
+
+    // Two devices asked at once: the insert the day's Attempt shut out serves the winner's draw.
+    const winner = await this.competitionRepository.findAttempt(owner, day, kind);
+    if (winner === null) {
+      throw new Error("competition attempt disappeared after a lost issuance race");
+    }
+    return this.serveExistingAttempt(winner);
+  }
+
+  // One Attempt in play at a time: a second chance never starts over the one the Player is on.
+  private refuseWhileInPlay(inPlay: CompetitionAttemptEntity[]): void {
+    if (inPlay.length > 0) {
+      throw new ConflictException({ message: "An Attempt is still in play" });
+    }
+  }
+
+  private async requirePremium(owner: string): Promise<void> {
+    if (!(await this.premiumService.isActive(owner))) {
+      throw new ForbiddenException({
+        code: "PREMIUM_REQUIRED",
+        message: "Replay and Catch-up are Premium Attempts",
+      });
+    }
+  }
+
   private today(): string {
     return competitionDay(this.clock());
   }
@@ -136,10 +255,10 @@ export class CompetitionService {
     day: string,
   ): Promise<CompetitionAttemptEntity[]> {
     const active = await this.competitionRepository.findActiveAttempts(owner);
-    await Promise.all(
-      active.filter((attempt) => attempt.day < day).map((attempt) => this.zeroFinalize(attempt)),
-    );
-    return active.filter((attempt) => attempt.day >= day);
+    // Alive until the Paris midnight after its issuance — a Catch-up is issued the day after its own.
+    const isDead = (attempt: CompetitionAttemptEntity) => competitionDay(attempt.issuedAt) < day;
+    await Promise.all(active.filter(isDead).map((attempt) => this.zeroFinalize(attempt)));
+    return active.filter((attempt) => !isDead(attempt));
   }
 
   // Zeros need no answer material, so a Question the Catalog dropped can never block a burial.
@@ -229,6 +348,7 @@ export class CompetitionService {
     });
   }
 
+  // A Catch-up must dodge J-2 and today's Themes, which is today's own window: one draw serves every kind.
   private async drawTheme(owner: string, day: string): Promise<DrawnTheme> {
     const [eligible, played] = await Promise.all([
       this.eligibleThemes(),

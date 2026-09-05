@@ -1,14 +1,10 @@
-import { Pressable, StyleSheet, Text } from "react-native";
 import { NewButton } from "@/components/ui/new-button";
 import { ResultCard } from "@/features/quiz/components/result-card";
+import { ResultsHomeLink } from "@/features/quiz/components/results-home-link";
 import { ResultsScreen } from "@/features/quiz/components/results-screen";
 import { RESULTS_HOME_LABEL, RESULTS_REPLAY_LABEL } from "@/features/quiz/constants";
 import { type SessionAnswer, sessionScore } from "@/features/quiz/session-reducer";
-import { TEXT } from "@/theme/text";
-import { COLORS, PRESSED, SPACE } from "@/theme/tokens";
 import type { Question } from "@/types/quiz";
-
-const HOME_LINK_HEIGHT = TEXT.label.lineHeight + SPACE.md * 2;
 
 export interface SessionResultsProps {
   themeName: string;
@@ -43,12 +39,7 @@ export const SessionResults = ({
             disabled={false}
             pending={false}
           />
-          <Pressable
-            style={({ pressed }) => [styles.homeLink, pressed && styles.pressed]}
-            onPress={onGoHome}
-          >
-            <Text style={styles.homeLabel}>{RESULTS_HOME_LABEL}</Text>
-          </Pressable>
+          <ResultsHomeLink label={RESULTS_HOME_LABEL} onPress={onGoHome} />
         </>
       }
     >
@@ -67,17 +58,3 @@ export const SessionResults = ({
     </ResultsScreen>
   );
 };
-
-const styles = StyleSheet.create({
-  homeLink: {
-    height: HOME_LINK_HEIGHT,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  pressed: PRESSED,
-  homeLabel: {
-    ...TEXT.label,
-    color: COLORS.ink,
-    textDecorationLine: "underline",
-  },
-});

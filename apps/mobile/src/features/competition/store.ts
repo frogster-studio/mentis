@@ -15,7 +15,7 @@ type CompetitionStore = {
   select: (index: number) => void;
   confirm: (now: number) => void;
   expire: (now: number) => void;
-  clearAttempt: () => void;
+  clearAttempt: (id: string) => void;
 };
 
 export const useCompetitionStore = create<CompetitionStore>((set) => {
@@ -34,6 +34,7 @@ export const useCompetitionStore = create<CompetitionStore>((set) => {
     select: (index) => apply({ type: "select", index }),
     confirm: (now) => apply({ type: "confirm", now }),
     expire: (now) => apply({ type: "expire", now }),
-    clearAttempt: () => set({ attempt: null }),
+    // Scoped to one id: the screen that leaves must not wipe the Replay the next one started.
+    clearAttempt: (id) => set((state) => (state.attempt?.id === id ? { attempt: null } : {})),
   };
 });

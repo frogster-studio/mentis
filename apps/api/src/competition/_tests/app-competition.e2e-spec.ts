@@ -1,8 +1,13 @@
 import { COMPETITION_POINTS, COMPETITION_QUESTION_COUNT } from "@mentis/contracts/app";
-import { QuizAnswerModeEnum, UserAnswerMatchedViaEnum } from "@mentis/contracts/enums";
+import {
+  PremiumEnvironmentEnum,
+  QuizAnswerModeEnum,
+  UserAnswerMatchedViaEnum,
+} from "@mentis/contracts/enums";
 import { errorResponseSchema } from "@mentis/contracts/shared";
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
+import { ThrottlerStorage } from "@nestjs/throttler";
 import { getDataSourceToken } from "@nestjs/typeorm";
 import { createLocalJWKSet, exportJWK, generateKeyPair, type JWTPayload, SignJWT } from "jose";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -10,8 +15,10 @@ import { ENV } from "../../_config/env.config";
 import { CompetitionAnswerEntity } from "../../_database/entities/competition-answer.entity";
 import {
   CompetitionAttemptEntity,
+  type CompetitionAttemptKind,
   type CompetitionFinalizeReason,
 } from "../../_database/entities/competition-attempt.entity";
+import { PremiumEntitlementEntity } from "../../_database/entities/premium-entitlement.entity";
 import { stubDataSource, testEnv } from "../../_tests/test-env";
 import { AppModule } from "../../app.module";
 import { JWKS } from "../../auth/jwks";
@@ -20,6 +27,7 @@ import {
   type DrawnQuestion,
 } from "../../catalog/repositories/catalog.repository";
 import { THEME_IMAGES_BUCKET } from "../../catalog/utils/theme-image-url";
+import { PremiumRepository } from "../../premium/repositories/premium.repository";
 import { CompetitionRepository } from "../repositories/competition.repository";
 import type { FinalizedOutcome } from "../types/finalized-outcome";
 import type { NewCompetitionAnswer } from "../types/new-competition-answer";
@@ -28,7 +36,6 @@ import { competitionDay, daysBefore } from "../utils/competition-day";
 
 const PLAYER_A = "11111111-1111-4111-8111-111111111111";
 const PLAYER_B = "22222222-2222-4222-8222-222222222222";
-const ISSUED_ATTEMPT = "30000000-0000-4000-8000-000000000001";
 const attemptId = (index: number) => `30000000-0000-4000-8000-${String(index).padStart(12, "0")}`;
 
 const themeQuestions = (themeId: string, themeName: string, count: number): DrawnQuestion[] =>
@@ -109,11 +116,15 @@ const servedIds = (themeId: string) =>
     .slice(0, COMPETITION_QUESTION_COUNT)
     .map((question) => question.id);
 
-const attemptRow = (overrides: Partial<CompetitionAttemptEntity> = {}): CompetitionAttemptEntity =>
-  Object.assign(new CompetitionAttemptEntity(), {
+// Issued on its own day unless said otherwise — only a Catch-up is issued the day after its own.
+const attemptRow = (
+  overrides: Partial<CompetitionAttemptEntity> = {},
+): CompetitionAttemptEntity => {
+  const day = overrides.day ?? "2026-08-20";
+  return Object.assign(new CompetitionAttemptEntity(), {
     id: attemptId(99),
     owner: PLAYER_A,
-    day: "2026-08-20",
+    day,
     kind: "initial",
     status: "active",
     themeId: "alpha",
@@ -121,10 +132,20 @@ const attemptRow = (overrides: Partial<CompetitionAttemptEntity> = {}): Competit
     questionIds: servedIds("alpha"),
     finalizeReason: null,
     score: null,
-    issuedAt: new Date("2026-08-20T08:00:00.000Z"),
+    issuedAt: new Date(`${day}T08:00:00.000Z`),
     finalizedAt: null,
     ...overrides,
   });
+};
+
+const HOUR_MS = 60 * 60 * 1000;
+
+// The suite fires more than one Player's minute allows, so the limiter stands aside here.
+const unlimitedThrottlerStorage = {
+  async increment() {
+    return { totalHits: 0, timeToExpire: 0, isBlocked: false, timeToBlockExpire: 0 };
+  },
+} satisfies ThrottlerStorage;
 
 const PARIS_AFTERNOON = new Date("2026-08-20T12:00:00.000Z");
 let now = PARIS_AFTERNOON;
@@ -137,6 +158,7 @@ let unreadyQuestionIds: string[] = [];
 let racingAttempt: CompetitionAttemptEntity | null = null;
 let answerRows: NewCompetitionAnswer[] = [];
 let racingFinalize: FinalizedOutcome | null = null;
+let premiumUntilByOwner = new Map<string, Date>();
 
 const servedQuestions = () =>
   QUESTIONS.filter(
@@ -205,12 +227,19 @@ const fakeCompetitionRepository = {
     if (clash) {
       return null;
     }
-    const stored = attemptRow({ ...attempt, id: ISSUED_ATTEMPT });
+    const stored = attemptRow({
+      ...attempt,
+      id: attemptId(100 + issuedAttempts.length),
+      issuedAt: now,
+    });
     attemptRows.push(stored);
     return stored;
   },
   async findOwnedAttempt(id, owner) {
     return attemptRows.find((row) => row.id === id && row.owner === owner) ?? null;
+  },
+  async findAttemptsOnDay(owner, day) {
+    return attemptRows.filter((row) => row.owner === owner && row.day === day);
   },
   async findActiveAttempts(owner) {
     return attemptRows
@@ -247,11 +276,36 @@ const fakeCompetitionRepository = {
   | "themeIdsPlayedBetween"
   | "issue"
   | "findOwnedAttempt"
+  | "findAttemptsOnDay"
   | "findActiveAttempts"
   | "findAnswers"
   | "findFinalizedDayScores"
   | "finalize"
 >;
+
+const fakePremiumRepository = {
+  async findByOwner(owner) {
+    const premiumUntil = premiumUntilByOwner.get(owner);
+    if (premiumUntil === undefined) {
+      return null;
+    }
+    return Object.assign(new PremiumEntitlementEntity(), {
+      id: attemptId(90),
+      owner,
+      premiumUntil,
+      environment: PremiumEnvironmentEnum.SANDBOX,
+    });
+  },
+} satisfies Pick<PremiumRepository, "findByOwner">;
+
+// Every Question of the pool answers to its own pattern, so a drawn Attempt can be played perfectly.
+const correctBatch = (body: { themeId: string; questions: { id: string }[] }) =>
+  body.questions.map((question, position) => ({
+    questionId: question.id,
+    mode: QuizAnswerModeEnum.CASH,
+    rawInput: `reponse-${body.themeId}-${position}`,
+    clientElapsedMs: 1000 + position,
+  }));
 
 const applyFinalize = (
   id: string,
@@ -278,14 +332,23 @@ describe("app competition routes e2e", () => {
   let tokenB: string;
   const today = competitionDay(PARIS_AFTERNOON);
 
-  const issue = (token: string) =>
+  const issue = (token: string, kind: CompetitionAttemptKind = "initial") =>
     fetch(`${baseUrl}/app/me/competition/attempts`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ kind }),
     });
 
-  const issued = async (token: string) => {
-    const response = await issue(token);
+  const issued = async (token: string, kind: CompetitionAttemptKind = "initial") => {
+    const response = await issue(token, kind);
+    expect(response.status).toBe(200);
+    return await response.json();
+  };
+
+  const readDay = async (token: string) => {
+    const response = await fetch(`${baseUrl}/app/me/competition/day`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     expect(response.status).toBe(200);
     return await response.json();
   };
@@ -341,6 +404,10 @@ describe("app competition routes e2e", () => {
       .useValue(fakeCatalogRepository)
       .overrideProvider(CompetitionRepository)
       .useValue(fakeCompetitionRepository)
+      .overrideProvider(PremiumRepository)
+      .useValue(fakePremiumRepository)
+      .overrideProvider(ThrottlerStorage)
+      .useValue(unlimitedThrottlerStorage)
       .overrideProvider(CLOCK)
       .useValue(() => now)
       .overrideProvider(JWKS)
@@ -366,6 +433,7 @@ describe("app competition routes e2e", () => {
     racingAttempt = null;
     answerRows = [];
     racingFinalize = null;
+    premiumUntilByOwner = new Map();
   });
 
   it("POST /app/me/competition/attempts without a token → 401 UNAUTHENTICATED", async () => {
@@ -451,7 +519,15 @@ describe("app competition routes e2e", () => {
     attemptRows.push(
       attemptRow({ id: attemptId(2), day: daysBefore(today, 1), themeId: "alpha" }),
       attemptRow({ id: attemptId(3), day: daysBefore(today, 2), themeId: "beta" }),
-      attemptRow({ id: attemptId(4), day: today, kind: "replay", themeId: "gamma" }),
+      attemptRow({
+        id: attemptId(4),
+        day: today,
+        kind: "replay",
+        themeId: "gamma",
+        status: "finalized",
+        finalizeReason: "completed",
+        score: 10,
+      }),
     );
 
     const body = await issued(tokenA);
@@ -494,7 +570,15 @@ describe("app competition routes e2e", () => {
       attemptRow({ id: attemptId(8), day: daysBefore(today, 1), themeId: "alpha" }),
       attemptRow({ id: attemptId(9), day: daysBefore(today, 1), kind: "replay", themeId: "beta" }),
       attemptRow({ id: attemptId(10), day: daysBefore(today, 2), themeId: "gamma" }),
-      attemptRow({ id: attemptId(11), day: today, kind: "replay", themeId: "delta" }),
+      attemptRow({
+        id: attemptId(11),
+        day: today,
+        kind: "replay",
+        themeId: "delta",
+        status: "finalized",
+        finalizeReason: "completed",
+        score: 10,
+      }),
     );
 
     const body = await issued(tokenA);
@@ -1082,6 +1166,362 @@ describe("app competition routes e2e", () => {
         seasonTotal: 25,
         days: [{ day: today, score: 25 }],
       });
+    });
+  });
+
+  describe("replay", () => {
+    const judgedInitial = (score = 20) =>
+      attemptRow({
+        id: attemptId(40),
+        day: today,
+        status: "finalized",
+        finalizeReason: "completed",
+        score,
+      });
+
+    beforeEach(() => {
+      premiumUntilByOwner.set(PLAYER_A, new Date(Date.now() + HOUR_MS));
+    });
+
+    it("refuses a free Account with 403 PREMIUM_REQUIRED, and issues nothing", async () => {
+      premiumUntilByOwner.clear();
+      attemptRows.push(judgedInitial());
+
+      const response = await issue(tokenA, "replay");
+      expect(response.status).toBe(403);
+      expect(errorResponseSchema.parse(await response.json()).code).toBe("PREMIUM_REQUIRED");
+      expect(issuedAttempts).toEqual([]);
+      expect(attemptRows).toHaveLength(1);
+    });
+
+    it("a lapsed subscription is free tier at once — a past expiry is refused the same way", async () => {
+      premiumUntilByOwner.set(PLAYER_A, new Date(Date.now() - HOUR_MS));
+      attemptRows.push(judgedInitial());
+
+      expect((await issue(tokenA, "replay")).status).toBe(403);
+      expect(issuedAttempts).toEqual([]);
+    });
+
+    it("follows the judged initial only: none today, or one still in play, is refused", async () => {
+      expect((await issue(tokenA, "replay")).status).toBe(409);
+
+      attemptRows.push(attemptRow({ id: attemptId(41), day: today }));
+      const response = await issue(tokenA, "replay");
+      expect(response.status).toBe(409);
+      expect(errorResponseSchema.parse(await response.json()).code).toBe("CONFLICT");
+      expect(issuedAttempts).toEqual([]);
+    });
+
+    it("issues a second Attempt on a fresh Theme, attributed to today", async () => {
+      attemptRows.push(judgedInitial());
+
+      const body = await issued(tokenA, "replay");
+      expect(body).toMatchObject({ day: today, kind: "replay", status: "active" });
+      expect(body.themeId).not.toBe("alpha");
+      expect(body.questions).toHaveLength(COMPETITION_QUESTION_COUNT);
+      expect(draws).toEqual([{ themeId: body.themeId, count: COMPETITION_QUESTION_COUNT }]);
+      expect(attemptRows[1]).toMatchObject({ owner: PLAYER_A, day: today, kind: "replay" });
+    });
+
+    it("draws around the initial's Theme as it does around the two days before", async () => {
+      attemptRows.push(
+        judgedInitial(),
+        attemptRow({ id: attemptId(41), day: daysBefore(today, 1), themeId: "beta" }),
+        attemptRow({ id: attemptId(42), day: daysBefore(today, 2), themeId: "gamma" }),
+      );
+
+      expect((await issued(tokenA, "replay")).themeId).toBe("delta");
+    });
+
+    it("re-asking the same day serves the same Replay — one per Competition Day", async () => {
+      attemptRows.push(judgedInitial());
+      const first = await issued(tokenA, "replay");
+      draws = [];
+      issuedAttempts = [];
+
+      const second = await issued(tokenA, "replay");
+      expect(second).toEqual(first);
+      expect(draws).toEqual([]);
+      expect(issuedAttempts).toEqual([]);
+      expect(attemptRows).toHaveLength(2);
+    });
+
+    it("the day keeps the best of its two Attempts through the standing", async () => {
+      attemptRows.push(judgedInitial(20));
+      const body = await issued(tokenA, "replay");
+
+      const response = await finalize(tokenA, correctBatch(body), body.id);
+      expect(response.status).toBe(200);
+      expect((await response.json()).score).toBe(
+        COMPETITION_POINTS.cash * COMPETITION_QUESTION_COUNT,
+      );
+      expect(await standing(tokenA)).toMatchObject({
+        seasonTotal: 50,
+        days: [{ day: today, score: 50 }],
+      });
+    });
+
+    it("a Replay scoring worse leaves the day on its initial score", async () => {
+      attemptRows.push(judgedInitial(20));
+      const body = await issued(tokenA, "replay");
+
+      expect((await finalize(tokenA, [], body.id)).status).toBe(200);
+      expect(await standing(tokenA)).toMatchObject({ days: [{ day: today, score: 20 }] });
+    });
+
+    it("a subscription lapsing mid-session still resumes and judges the Replay it issued", async () => {
+      attemptRows.push(judgedInitial());
+      const body = await issued(tokenA, "replay");
+      premiumUntilByOwner.clear();
+
+      expect((await readActiveBody(tokenA)).attempt).toMatchObject({
+        id: body.id,
+        kind: "replay",
+      });
+      expect((await finalize(tokenA, correctBatch(body), body.id)).status).toBe(200);
+    });
+
+    it("is refused while another Attempt is still in play", async () => {
+      attemptRows.push(
+        judgedInitial(),
+        attemptRow({
+          id: attemptId(42),
+          day: daysBefore(today, 1),
+          kind: "catchup",
+          issuedAt: now,
+        }),
+      );
+
+      expect((await issue(tokenA, "replay")).status).toBe(409);
+      expect(issuedAttempts).toEqual([]);
+    });
+
+    it("two devices asking at once share the single Replay the day allows", async () => {
+      attemptRows.push(judgedInitial());
+      racingAttempt = attemptRow({
+        id: attemptId(43),
+        day: today,
+        kind: "replay",
+        themeId: "beta",
+        themeName: "Beta",
+        questionIds: servedIds("beta"),
+      });
+
+      const body = await issued(tokenA, "replay");
+      expect(body.id).toBe(attemptId(43));
+      expect(attemptRows).toHaveLength(2);
+    });
+  });
+
+  describe("catch-up", () => {
+    const yesterday = daysBefore(today, 1);
+
+    beforeEach(() => {
+      premiumUntilByOwner.set(PLAYER_A, new Date(Date.now() + HOUR_MS));
+    });
+
+    it("refuses a free Account with 403 PREMIUM_REQUIRED, and issues nothing", async () => {
+      premiumUntilByOwner.clear();
+
+      const response = await issue(tokenA, "catchup");
+      expect(response.status).toBe(403);
+      expect(errorResponseSchema.parse(await response.json()).code).toBe("PREMIUM_REQUIRED");
+      expect(issuedAttempts).toEqual([]);
+    });
+
+    it("fills an empty yesterday only: any Attempt already there is refused", async () => {
+      attemptRows.push(
+        attemptRow({
+          id: attemptId(44),
+          day: yesterday,
+          status: "finalized",
+          finalizeReason: "quit",
+          score: 5,
+        }),
+      );
+
+      const response = await issue(tokenA, "catchup");
+      expect(response.status).toBe(409);
+      expect(errorResponseSchema.parse(await response.json()).code).toBe("CONFLICT");
+      expect(issuedAttempts).toEqual([]);
+    });
+
+    it("is refused on the first day of a month — yesterday belongs to another season", async () => {
+      now = new Date("2026-09-01T12:00:00.000Z");
+
+      expect((await issue(tokenA, "catchup")).status).toBe(409);
+      expect(issuedAttempts).toEqual([]);
+    });
+
+    it("issues an Attempt attributed to yesterday, drawn around J-2 and today's Themes", async () => {
+      attemptRows.push(
+        attemptRow({
+          id: attemptId(45),
+          day: daysBefore(today, 2),
+          status: "finalized",
+          finalizeReason: "completed",
+          score: 10,
+        }),
+        attemptRow({
+          id: attemptId(46),
+          day: today,
+          status: "finalized",
+          finalizeReason: "completed",
+          score: 10,
+          themeId: "beta",
+          themeName: "Beta",
+          questionIds: servedIds("beta"),
+        }),
+      );
+
+      const body = await issued(tokenA, "catchup");
+      expect(body).toMatchObject({ day: yesterday, kind: "catchup", status: "active" });
+      expect(["gamma", "delta"]).toContain(body.themeId);
+      expect(attemptRows[2]).toMatchObject({ owner: PLAYER_A, day: yesterday, kind: "catchup" });
+    });
+
+    it("stays in play until tomorrow's Paris midnight, not yesterday's", async () => {
+      const body = await issued(tokenA, "catchup");
+
+      now = new Date("2026-08-20T21:59:59.000Z");
+      expect((await readActiveBody(tokenA)).attempt).toMatchObject({
+        id: body.id,
+        kind: "catchup",
+      });
+      expect(attemptRows[0].status).toBe("active");
+
+      now = new Date("2026-08-20T22:00:00.000Z");
+      expect(await readActiveBody(tokenA)).toEqual({ attempt: null });
+      expect(attemptRows[0]).toMatchObject({
+        status: "finalized",
+        finalizeReason: "expired",
+        day: yesterday,
+      });
+    });
+
+    it("re-asking serves the same Catch-up — yesterday admits one, and no Replay of it", async () => {
+      const first = await issued(tokenA, "catchup");
+      draws = [];
+
+      expect(await issued(tokenA, "catchup")).toEqual(first);
+      expect(draws).toEqual([]);
+      expect(attemptRows).toHaveLength(1);
+    });
+
+    it("lands its points on yesterday through the standing", async () => {
+      const body = await issued(tokenA, "catchup");
+
+      expect((await finalize(tokenA, correctBatch(body), body.id)).status).toBe(200);
+      expect(await standing(tokenA)).toEqual({
+        season: "2026-08",
+        seasonTotal: 50,
+        days: [{ day: yesterday, score: 50 }],
+      });
+    });
+
+    it("a subscription lapsing mid-session still judges the Catch-up it issued", async () => {
+      const body = await issued(tokenA, "catchup");
+      premiumUntilByOwner.clear();
+
+      expect((await finalize(tokenA, correctBatch(body), body.id)).status).toBe(200);
+      expect(attemptRows[0]).toMatchObject({ status: "finalized", finalizeReason: "completed" });
+    });
+
+    it("is refused while today's Attempt is still in play", async () => {
+      attemptRows.push(attemptRow({ id: attemptId(47), day: today }));
+
+      expect((await issue(tokenA, "catchup")).status).toBe(409);
+      expect(issuedAttempts).toEqual([]);
+    });
+
+    it("holds the door for one Attempt: a fresh initial waits until the Catch-up is judged", async () => {
+      await issued(tokenA, "catchup");
+      issuedAttempts = [];
+
+      expect((await issue(tokenA, "initial")).status).toBe(409);
+      expect(issuedAttempts).toEqual([]);
+    });
+
+    it("two devices asking at once share the single Catch-up yesterday allows", async () => {
+      racingAttempt = attemptRow({
+        id: attemptId(48),
+        day: yesterday,
+        kind: "catchup",
+        issuedAt: now,
+      });
+
+      const body = await issued(tokenA, "catchup");
+      expect(body.id).toBe(attemptId(48));
+      expect(attemptRows).toHaveLength(1);
+    });
+  });
+
+  describe("day", () => {
+    const yesterday = daysBefore(today, 1);
+    const judged = (index: number, day: string, kind: CompetitionAttemptKind = "initial") =>
+      attemptRow({
+        id: attemptId(index),
+        day,
+        kind,
+        status: "finalized",
+        finalizeReason: "completed",
+        score: 10,
+      });
+
+    it("GET /app/me/competition/day without a token → 401 UNAUTHENTICATED", async () => {
+      const response = await fetch(`${baseUrl}/app/me/competition/day`);
+      expect(response.status).toBe(401);
+      expect(errorResponseSchema.parse(await response.json()).code).toBe("UNAUTHENTICATED");
+    });
+
+    it("a fresh Player: no Replay before the initial is judged, a Catch-up for the empty yesterday", async () => {
+      expect(await readDay(tokenA)).toEqual({ day: today, replay: false, catchup: true });
+    });
+
+    it("offers the Replay once the initial is judged, and withdraws it once the Replay is", async () => {
+      attemptRows.push(attemptRow({ id: attemptId(60), day: today }));
+      expect((await readDay(tokenA)).replay).toBe(false);
+
+      attemptRows = [judged(61, today)];
+      expect((await readDay(tokenA)).replay).toBe(true);
+
+      attemptRows.push(attemptRow({ id: attemptId(62), day: today, kind: "replay" }));
+      expect((await readDay(tokenA)).replay).toBe(true);
+
+      attemptRows = [judged(61, today), judged(63, today, "replay")];
+      expect((await readDay(tokenA)).replay).toBe(false);
+    });
+
+    it("withholds the Catch-up once yesterday holds an Attempt, but keeps one still in play", async () => {
+      attemptRows.push(judged(64, yesterday));
+      expect((await readDay(tokenA)).catchup).toBe(false);
+
+      attemptRows = [
+        attemptRow({ id: attemptId(65), day: yesterday, kind: "catchup", issuedAt: now }),
+      ];
+      expect((await readDay(tokenA)).catchup).toBe(true);
+
+      attemptRows = [judged(66, yesterday, "catchup")];
+      expect((await readDay(tokenA)).catchup).toBe(false);
+    });
+
+    it("withholds the Catch-up on the first day of a month", async () => {
+      now = new Date("2026-09-01T12:00:00.000Z");
+
+      expect(await readDay(tokenA)).toEqual({ day: "2026-09-01", replay: false, catchup: false });
+    });
+
+    it("buries a dead day before answering, so the day it filled offers no Catch-up", async () => {
+      attemptRows.push(attemptRow({ id: JUDGED_ATTEMPT, day: yesterday, questionIds: JUDGED_IDS }));
+
+      expect(await readDay(tokenA)).toEqual({ day: today, replay: false, catchup: false });
+      expect(attemptRows[0]).toMatchObject({ status: "finalized", finalizeReason: "expired" });
+    });
+
+    it("never reads another Player's day", async () => {
+      attemptRows.push(judged(67, today), judged(68, yesterday));
+
+      expect(await readDay(tokenB)).toEqual({ day: today, replay: false, catchup: true });
     });
   });
 });

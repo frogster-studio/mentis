@@ -1,11 +1,14 @@
 import {
   type AppCompetitionActiveAttemptResponse,
   type AppCompetitionAttemptResponse,
+  type AppCompetitionDayResponse,
   type AppCompetitionFinalizeInput,
+  type AppCompetitionIssueInput,
   type AppCompetitionStandingResponse,
   type AppCompetitionTranscriptResponse,
   appCompetitionAttemptIdSchema,
   appCompetitionFinalizeInputSchema,
+  appCompetitionIssueInputSchema,
 } from "@mentis/contracts/app";
 import {
   Body,
@@ -28,11 +31,20 @@ import { CompetitionService } from "../services/competition.service";
 export class CompetitionController {
   constructor(private readonly competitionService: CompetitionService) {}
 
-  // A Competition Day holds one initial Attempt, so asking twice reads the first back — never a 201.
+  // A Competition Day holds one Attempt per kind, so asking twice reads it back — never a 201.
   @Post("attempts")
   @HttpCode(HttpStatus.OK)
-  issueInitialAttempt(@Req() request: AuthedRequest): Promise<AppCompetitionAttemptResponse> {
-    return this.competitionService.issueInitialAttempt(request.user.id);
+  issueAttempt(
+    @Req() request: AuthedRequest,
+    @Body(new ZodValidationPipe(appCompetitionIssueInputSchema)) input: AppCompetitionIssueInput,
+  ): Promise<AppCompetitionAttemptResponse> {
+    return this.competitionService.issueAttempt(request.user.id, input);
+  }
+
+  // What today still allows beyond the initial, so the phone offers only what the API would issue.
+  @Get("day")
+  readDay(@Req() request: AuthedRequest): Promise<AppCompetitionDayResponse> {
+    return this.competitionService.readDay(request.user.id);
   }
 
   // A crashed session resumes here: the Questions as issued, none of the answers played.

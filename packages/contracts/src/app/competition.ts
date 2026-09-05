@@ -10,6 +10,7 @@ const MAX_SCORE = COMPETITION_QUESTION_COUNT * COMPETITION_POINTS.cash;
 const MAX_SEASON_SCORE = MAX_SCORE * 31;
 
 const competitionAttemptKindSchema = z.enum(["initial", "replay", "catchup"]);
+export type AppCompetitionAttemptKind = z.infer<typeof competitionAttemptKindSchema>;
 
 const competitionQuestionSchema = z.object({
   id: z.string(),
@@ -53,6 +54,10 @@ const competitionAnswerInputSchema = z.object({
 
 export const appCompetitionAttemptIdSchema = z.uuid();
 
+// Replay and Catch-up are asked for by kind; the API alone decides whether the day allows them.
+export const appCompetitionIssueInputSchema = z.object({ kind: competitionAttemptKindSchema });
+export type AppCompetitionIssueInput = z.infer<typeof appCompetitionIssueInputSchema>;
+
 // The served prefix, index for position: the phone resolves in order, so a short batch is a quit.
 export const appCompetitionFinalizeInputSchema = z.object({
   answers: z.array(competitionAnswerInputSchema).max(COMPETITION_QUESTION_COUNT),
@@ -91,6 +96,14 @@ export type AppCompetitionTranscriptResponse = z.infer<
 
 // A season is the Europe/Paris calendar month an Attempt's Competition Day falls in.
 const competitionSeasonSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
+
+// What today allows beyond the initial Attempt — premium is not folded in, the issuance gates it.
+export const appCompetitionDayResponseSchema = z.object({
+  day: z.iso.date(),
+  replay: z.boolean(),
+  catchup: z.boolean(),
+});
+export type AppCompetitionDayResponse = z.infer<typeof appCompetitionDayResponseSchema>;
 
 export const appCompetitionStandingResponseSchema = z.object({
   season: competitionSeasonSchema,

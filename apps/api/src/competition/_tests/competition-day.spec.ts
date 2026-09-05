@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { competitionDay, daysBefore, seasonBounds } from "../utils/competition-day";
+import { competitionDay, daysBefore, seasonBounds, sharesSeason } from "../utils/competition-day";
 
 describe("competitionDay", () => {
   it("reads the Europe/Paris date, not the server's", () => {
@@ -45,5 +45,12 @@ describe("seasonBounds", () => {
     expect(seasonBounds(competitionDay(new Date("2026-08-31T22:30:00.000Z"))).season).toBe(
       "2026-09",
     );
+  });
+});
+
+describe("sharesSeason", () => {
+  it("holds inside a month and breaks at its first day", () => {
+    expect(sharesSeason("2026-08-20", "2026-08-19")).toBe(true);
+    expect(sharesSeason("2026-08-01", "2026-07-31")).toBe(false);
   });
 });

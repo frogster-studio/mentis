@@ -1,6 +1,7 @@
 import {
   appCompetitionActiveAttemptResponseSchema,
   appCompetitionAttemptResponseSchema,
+  appCompetitionDayResponseSchema,
   appCompetitionTranscriptResponseSchema,
 } from "@mentis/contracts/app";
 import { QuizAnswerModeEnum } from "@mentis/contracts/enums";
@@ -9,6 +10,8 @@ import { type ApiClient, createApiClient } from "@/lib/api/client";
 import type { PlayedAnswer } from "./attempt-reducer";
 import {
   activeAttemptRequest,
+  dayRequest,
+  fetchCompetitionDay,
   finalizeAttemptRequest,
   issueAttemptRequest,
   resumeOrIssueAttempt,
@@ -82,7 +85,8 @@ describe("the competition paths", () => {
   it("all sit under the guarded /app/me prefix, so every call carries the token", async () => {
     for (const request of [
       activeAttemptRequest,
-      issueAttemptRequest,
+      dayRequest,
+      issueAttemptRequest("initial"),
       finalizeAttemptRequest(ATTEMPT_ID, []),
     ]) {
       expect(request.path.startsWith("/app/me/")).toBe(true);
@@ -94,10 +98,12 @@ describe("the competition paths", () => {
       method: "GET",
       path: "/app/me/competition/attempts/active",
     });
-    expect(issueAttemptRequest).toStrictEqual({
+    expect(issueAttemptRequest("replay")).toStrictEqual({
       method: "POST",
       path: "/app/me/competition/attempts",
+      body: { kind: "replay" },
     });
+    expect(dayRequest).toStrictEqual({ method: "GET", path: "/app/me/competition/day" });
     expect(finalizeAttemptRequest(ATTEMPT_ID, []).path).toBe(
       `/app/me/competition/attempts/${ATTEMPT_ID}/finalize`,
     );
@@ -162,7 +168,10 @@ describe("what issuance may put on the device", () => {
   it("keeps only the id, the text and the pre-shuffled grid", async () => {
     const { api } = client(ISSUED_BODY);
 
-    const attempt = await api.requestJson(issueAttemptRequest, appCompetitionAttemptResponseSchema);
+    const attempt = await api.requestJson(
+      issueAttemptRequest("initial"),
+      appCompetitionAttemptResponseSchema,
+    );
 
     expect(Object.keys(attempt.questions[0]).sort()).toStrictEqual(["id", "squareChoices", "text"]);
   });
@@ -193,7 +202,7 @@ describe("the Attempt a Player is handed on arrival", () => {
   it("resumes the one already under way, so dying mid-Reveal spends it and no draw replaces it", async () => {
     const { api, calls } = client({ attempt: ISSUED_BODY });
 
-    const attempt = await resumeOrIssueAttempt(api);
+    const attempt = await resumeOrIssueAttempt(api, "initial");
 
     expect(attempt.id).toBe(ATTEMPT_ID);
     expect(calls).toHaveLength(1);
@@ -203,9 +212,50 @@ describe("the Attempt a Player is handed on arrival", () => {
   it("draws a fresh one only for a Player holding none", async () => {
     const { api, calls } = client({ attempt: null }, ISSUED_BODY);
 
-    const attempt = await resumeOrIssueAttempt(api);
+    const attempt = await resumeOrIssueAttempt(api, "initial");
 
     expect(attempt.id).toBe(ATTEMPT_ID);
     expect(calls.map((call) => call.init.method)).toStrictEqual(["GET", "POST"]);
+    expect(JSON.parse(String(calls[1].init.body))).toStrictEqual({ kind: "initial" });
+  });
+
+  it("asks for the kind it was opened on, and nothing else", async () => {
+    const { api, calls } = client({ attempt: null }, { ...ISSUED_BODY, kind: "catchup" });
+
+    const attempt = await resumeOrIssueAttempt(api, "catchup");
+
+    expect(attempt.kind).toBe("catchup");
+    expect(JSON.parse(String(calls[1].init.body))).toStrictEqual({ kind: "catchup" });
+  });
+
+  it("resumes whatever is in play, whatever kind was asked for — one Attempt at a time", async () => {
+    const { api, calls } = client({ attempt: { ...ISSUED_BODY, kind: "replay" } });
+
+    const attempt = await resumeOrIssueAttempt(api, "catchup");
+
+    expect(attempt.kind).toBe("replay");
+    expect(calls).toHaveLength(1);
+  });
+});
+
+describe("what the day still allows", () => {
+  it("reads the Competition Day with its Replay and Catch-up offers, and nothing more", async () => {
+    const { api, calls } = client({
+      day: "2026-08-21",
+      replay: true,
+      catchup: false,
+      premium: true,
+    });
+
+    const day = await fetchCompetitionDay(api);
+
+    expect(day).toStrictEqual({ day: "2026-08-21", replay: true, catchup: false });
+    expect(calls[0].url).toBe(`${BASE_URL}/app/me/competition/day`);
+  });
+
+  it("refuses a day the API did not shape", async () => {
+    const { api } = client({ day: "2026-08-21", replay: "yes", catchup: false });
+
+    await expect(api.requestJson(dayRequest, appCompetitionDayResponseSchema)).rejects.toThrow();
   });
 });

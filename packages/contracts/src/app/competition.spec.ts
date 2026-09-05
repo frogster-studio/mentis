@@ -3,7 +3,9 @@ import { QuizAnswerModeEnum, UserAnswerMatchedViaEnum } from "../enums";
 import {
   appCompetitionActiveAttemptResponseSchema,
   appCompetitionAttemptResponseSchema,
+  appCompetitionDayResponseSchema,
   appCompetitionFinalizeInputSchema,
+  appCompetitionIssueInputSchema,
   appCompetitionStandingResponseSchema,
   appCompetitionTranscriptResponseSchema,
   COMPETITION_POINTS,
@@ -291,6 +293,36 @@ describe("appCompetitionStandingResponseSchema", () => {
   it("rejects a total above what a month of Attempts can hold", () => {
     expect(
       appCompetitionStandingResponseSchema.safeParse(standing({ seasonTotal: 1551 })).success,
+    ).toBe(false);
+  });
+});
+
+describe("appCompetitionIssueInputSchema", () => {
+  it("accepts each of the three Attempt kinds", () => {
+    for (const kind of ["initial", "replay", "catchup"]) {
+      expect(appCompetitionIssueInputSchema.parse({ kind })).toEqual({ kind });
+    }
+  });
+
+  it("rejects a kind the day never holds, and a missing one", () => {
+    expect(appCompetitionIssueInputSchema.safeParse({ kind: "bonus" }).success).toBe(false);
+    expect(appCompetitionIssueInputSchema.safeParse({}).success).toBe(false);
+  });
+});
+
+describe("appCompetitionDayResponseSchema", () => {
+  it("carries the Competition Day and what it still allows", () => {
+    const day = { day: "2026-08-20", replay: true, catchup: false };
+    expect(appCompetitionDayResponseSchema.parse(day)).toEqual(day);
+  });
+
+  it("rejects a day that is not a plain Europe/Paris date", () => {
+    expect(
+      appCompetitionDayResponseSchema.safeParse({
+        day: "2026-08-20T00:00:00.000Z",
+        replay: false,
+        catchup: false,
+      }).success,
     ).toBe(false);
   });
 });

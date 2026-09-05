@@ -31,6 +31,10 @@ export class CompetitionRepository {
     return this.attempts.findOneBy({ id, owner });
   }
 
+  findAttemptsOnDay(owner: string, day: string): Promise<CompetitionAttemptEntity[]> {
+    return this.attempts.find({ where: { owner, day }, order: { issuedAt: "ASC" } });
+  }
+
   // Newest first: the Attempt the Player is on leads, and any older one below it is a dead day.
   findActiveAttempts(owner: string): Promise<CompetitionAttemptEntity[]> {
     return this.attempts.find({ where: { owner, status: "active" }, order: { issuedAt: "DESC" } });

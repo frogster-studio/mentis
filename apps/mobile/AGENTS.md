@@ -41,7 +41,7 @@
   // ❌ Animated.timing on a row face's opacity when the selection changes
   ```
 - Answer judging and the Carré shuffle come from `@mentis/answer-matching` (source-first like contracts), never re-implemented here — the API judges competition with the same code.
-- **`APP_VARIANT` (`development` by default, `production`) is the only environment switch.** `app.config.ts` reads `.env.${APP_VARIANT}` itself and republishes it through `extra`, so the native identity and the credentials cannot drift; the app reads them off `Constants.expoConfig.extra`, never `process.env`, and `NODE_ENV` decides nothing.
+- **`APP_VARIANT` (`development` by default, `production`) is the only environment switch.** `app.config.ts` reads `.env.${APP_VARIANT}` itself and republishes it through `extra`, so the native identity and the credentials cannot drift; the app reads them off `Constants.expoConfig.extra`, never `process.env`, and `NODE_ENV` decides nothing. On EAS Build no `.env` file exists: the values come from the EAS-hosted `preview` and `production` environments that `eas.json` names per profile, so a new `EXPO_PUBLIC_*` key goes there too or the build fails at config time.
 - Install a dependency in the issue that first uses it (keeps knip green). Add it with `bun add` in `apps/mobile`.
 
 ## Structure

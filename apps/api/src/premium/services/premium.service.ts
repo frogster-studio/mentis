@@ -6,18 +6,23 @@ import { PremiumRepository } from "../repositories/premium.repository";
 export class PremiumService {
   constructor(private readonly premiumRepository: PremiumRepository) {}
 
-  /**
-   * ADR 0006: this read is a local premium_until > now comparison, never a RevenueCat call.
-   */
   async read(owner: string): Promise<AppPremiumResponse> {
+    const until = await this.activeUntil(owner);
+    return appPremiumResponseSchema.parse({
+      active: until !== null,
+      until: until === null ? null : until.toISOString(),
+    });
+  }
+
+  // The gate every premium action shares: evaluated at the moment of the action, never cached.
+  async isActive(owner: string): Promise<boolean> {
+    return (await this.activeUntil(owner)) !== null;
+  }
+
+  // ADR 0006: a local premium_until > now compare, never a RevenueCat call.
+  private async activeUntil(owner: string): Promise<Date | null> {
     const row = await this.premiumRepository.findByOwner(owner);
     const until = row?.premiumUntil ?? null;
-
-    const active = until !== null && until.getTime() > Date.now();
-
-    return appPremiumResponseSchema.parse({
-      active,
-      until: active ? until.toISOString() : null,
-    });
+    return until !== null && until.getTime() > Date.now() ? until : null;
   }
 }

@@ -1,4 +1,4 @@
-import { Redirect, useRouter } from "expo-router";
+import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { StyleSheet, type TextInput, View } from "react-native";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -7,23 +7,27 @@ import { ALL_SCREEN_EDGES, ScreenContainer } from "@/components/ui/screen-contai
 import { ScreenError } from "@/components/ui/screen-error";
 import { ScreenLoading } from "@/components/ui/screen-loading";
 import { useAuthStore } from "@/features/account/auth-store";
-import { useTodayAttempt, useTranscript } from "@/features/competition/api";
+import { useAttempt, useCompetitionDay, useTranscript } from "@/features/competition/api";
+import { attemptKindFromParam } from "@/features/competition/attempt-kind";
 import { currentAttemptQuestion } from "@/features/competition/attempt-reducer";
 import { CompetitionResults } from "@/features/competition/components/competition-results";
 import {
   COMPETITION_ERROR,
   COMPETITION_EXPIRED_ERROR,
   COMPETITION_JUDGE_ERROR,
+  COMPETITION_PREMIUM_ERROR,
   COMPETITION_QUIT_CANCEL_LABEL,
   COMPETITION_QUIT_CONFIRM_LABEL,
   COMPETITION_QUIT_LABEL,
   COMPETITION_QUIT_MESSAGE,
   COMPETITION_QUIT_TITLE,
+  COMPETITION_UNAVAILABLE_ERROR,
 } from "@/features/competition/constants";
 import { queuedFinalize } from "@/features/competition/finalize-outbox";
 import { useFinalizeOutboxStore } from "@/features/competition/finalize-outbox-store";
 import { drainFinalizeOutbox } from "@/features/competition/finalize-sync";
 import { useCompetitionStore } from "@/features/competition/store";
+import { PaywallSheet } from "@/features/premium/components/paywall-sheet";
 import { AnswerFooter } from "@/features/quiz/components/answer-footer";
 import { PlayHeader } from "@/features/quiz/components/play-header";
 import { PlayScreen } from "@/features/quiz/components/play-screen";
@@ -32,13 +36,17 @@ import { usePlayClock } from "@/features/quiz/use-play-clock";
 import { useQuestionTransition } from "@/features/quiz/use-question-transition";
 import { useThemeReveal } from "@/features/quiz/use-theme-reveal";
 import { isApiError } from "@/lib/api/client";
+import { PURCHASES_SUPPORTED } from "@/lib/purchases";
 import { GUTTER, SPACE } from "@/theme/tokens";
 
 export const CompetitionScreen = () => {
   const router = useRouter();
+  const { kind: kindParam } = useLocalSearchParams<{ kind?: string }>();
+  const kind = attemptKindFromParam(kindParam);
   const owner = useAuthStore((state) => state.session?.user.id);
   const isAuthLoading = useAuthStore((state) => state.isLoading);
-  const { data: attempt, isError, refetch } = useTodayAttempt(owner);
+  const { data: attempt, isError, error, refetch } = useAttempt(owner, kind);
+  const day = useCompetitionDay(owner);
 
   const play = useCompetitionStore((state) => state.attempt);
   const startAttempt = useCompetitionStore((state) => state.startAttempt);
@@ -56,6 +64,9 @@ export const CompetitionScreen = () => {
   const inputRef = useRef<TextInput>(null);
   const enqueuedRef = useRef(false);
   const [quitVisible, setQuitVisible] = useState(false);
+  const [paywallVisible, setPaywallVisible] = useState(false);
+  const premiumRequired = isApiError(error, "PREMIUM_REQUIRED");
+  const unavailable = isApiError(error, "CONFLICT");
 
   const isActive = play?.status === "active";
   // An empty batch is only ever safe once the server holds the answers: never before it is queued.
@@ -85,8 +96,23 @@ export const CompetitionScreen = () => {
     }
   }, [isRevealDone, attempt, startAttempt]);
 
-  // Leaving the screen abandons the local play only: the Attempt stays active and resumes blank.
-  useEffect(() => clearAttempt, [clearAttempt]);
+  // Leaving abandons only its own local play: the Attempt stays active and resumes blank.
+  const attemptId = attempt?.id;
+  useEffect(
+    () => () => {
+      if (attemptId !== undefined) {
+        clearAttempt(attemptId);
+      }
+    },
+    [attemptId, clearAttempt],
+  );
+
+  // The refusal itself opens the paywall: a Premium Attempt was asked for, so the way in is shown.
+  useEffect(() => {
+    if (premiumRequired && PURCHASES_SUPPORTED) {
+      setPaywallVisible(true);
+    }
+  }, [premiumRequired]);
 
   // The ref guards re-renders, so the finalize batch is queued exactly once.
   useEffect(() => {
@@ -165,9 +191,19 @@ export const CompetitionScreen = () => {
 
   if (showResults) {
     if (transcript.data) {
+      // Only the judged initial earns a Replay, and only while the API still offers one today.
+      const offersReplay = transcript.data.kind === "initial" && day.data?.replay === true;
       return (
         <>
-          <CompetitionResults transcript={transcript.data} onGoHome={goHome} />
+          <CompetitionResults
+            transcript={transcript.data}
+            onReplay={
+              offersReplay
+                ? () => router.replace({ pathname: "/competition", params: { kind: "replay" } })
+                : null
+            }
+            onGoHome={goHome}
+          />
           {quitConfirm}
         </>
       );
@@ -193,7 +229,20 @@ export const CompetitionScreen = () => {
   if (isError) {
     return (
       <>
-        {framed(<ScreenError message={COMPETITION_ERROR} onRetry={() => void refetch()} />)}
+        {framed(
+          <ScreenError
+            message={
+              premiumRequired
+                ? COMPETITION_PREMIUM_ERROR
+                : unavailable
+                  ? COMPETITION_UNAVAILABLE_ERROR
+                  : COMPETITION_ERROR
+            }
+            // A day that refused the kind will refuse it again; a paywall or a blip may not.
+            onRetry={unavailable ? null : () => void refetch()}
+          />,
+        )}
+        <PaywallSheet visible={paywallVisible} onDismiss={() => setPaywallVisible(false)} />
         {quitConfirm}
       </>
     );

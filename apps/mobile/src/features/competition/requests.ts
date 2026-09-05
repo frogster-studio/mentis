@@ -1,21 +1,30 @@
 // Every competition call in one place, its client injected, so the wire sequence is testable alone.
 
 import {
+  type AppCompetitionAttemptKind,
   type AppCompetitionAttemptResponse,
+  type AppCompetitionDayResponse,
   appCompetitionActiveAttemptResponseSchema,
   appCompetitionAttemptResponseSchema,
+  appCompetitionDayResponseSchema,
 } from "@mentis/contracts/app";
 import type { ApiClient, ApiRequest } from "@/lib/api/client";
 import type { PlayedAnswer } from "./attempt-reducer";
 
-const ATTEMPTS_PATH = "/app/me/competition/attempts";
+const COMPETITION_PATH = "/app/me/competition";
+const ATTEMPTS_PATH = `${COMPETITION_PATH}/attempts`;
 
 export const activeAttemptRequest: ApiRequest = {
   method: "GET",
   path: `${ATTEMPTS_PATH}/active`,
 };
 
-export const issueAttemptRequest: ApiRequest = { method: "POST", path: ATTEMPTS_PATH };
+export const dayRequest: ApiRequest = { method: "GET", path: `${COMPETITION_PATH}/day` };
+
+// The kind alone travels: whether the day and the Account's Premium allow it is the API's call.
+export function issueAttemptRequest(kind: AppCompetitionAttemptKind): ApiRequest {
+  return { method: "POST", path: ATTEMPTS_PATH, body: { kind } };
+}
 
 // The served prefix and nothing else: raw input, self-reported mode, elapsed — no verdict.
 export function finalizeAttemptRequest(attemptId: string, answers: PlayedAnswer[]): ApiRequest {
@@ -26,11 +35,18 @@ export function finalizeAttemptRequest(attemptId: string, answers: PlayedAnswer[
   };
 }
 
-// A crashed session resumes on its own Questions; only a Player holding none is issued a draw.
-export async function resumeOrIssueAttempt(api: ApiClient): Promise<AppCompetitionAttemptResponse> {
+// A crashed session resumes on its own Questions whatever their kind; holding none earns a draw.
+export async function resumeOrIssueAttempt(
+  api: ApiClient,
+  kind: AppCompetitionAttemptKind,
+): Promise<AppCompetitionAttemptResponse> {
   const { attempt } = await api.requestJson(
     activeAttemptRequest,
     appCompetitionActiveAttemptResponseSchema,
   );
-  return attempt ?? api.requestJson(issueAttemptRequest, appCompetitionAttemptResponseSchema);
+  return attempt ?? api.requestJson(issueAttemptRequest(kind), appCompetitionAttemptResponseSchema);
+}
+
+export function fetchCompetitionDay(api: ApiClient): Promise<AppCompetitionDayResponse> {
+  return api.requestJson(dayRequest, appCompetitionDayResponseSchema);
 }

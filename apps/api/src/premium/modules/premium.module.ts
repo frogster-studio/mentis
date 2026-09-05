@@ -12,5 +12,6 @@ import { RevenueCatResyncService } from "../services/revenuecat-resync.service";
   imports: [ConfigModule, TypeOrmModule.forFeature([PremiumEntitlementEntity])],
   controllers: [PremiumController, RevenueCatWebhookController],
   providers: [PremiumRepository, PremiumService, RevenueCatResyncService],
+  exports: [PremiumService],
 })
 export class PremiumModule {}

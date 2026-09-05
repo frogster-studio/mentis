@@ -24,6 +24,9 @@ export const seasonBounds = (day: string): { season: string; from: string; to: s
   return { season, from: `${season}-01`, to: lastDay.toISOString().slice(0, 10) };
 };
 
+export const sharesSeason = (day: string, other: string): boolean =>
+  seasonBounds(day).season === seasonBounds(other).season;
+
 // A Competition Day keeps the best of the Attempts it holds — a Replay only ever lifts the day.
 export const bestScorePerDay = (scores: DayScore[]): DayScore[] => {
   const best = new Map<string, number>();
