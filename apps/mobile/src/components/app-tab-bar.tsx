@@ -1,8 +1,8 @@
 import type { BottomTabBarProps } from "expo-router/js-tabs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, type LayoutRectangle, Pressable, StyleSheet, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TAB_TRANSITION_EASING, TAB_TRANSITION_MS } from "@/components/tab-transition";
+import { useBottomChromeGap } from "@/components/ui/screen-container";
 import { Squircle } from "@/components/ui/squircle";
 import { TEXT } from "@/theme/text";
 import { COLORS, CONTROL_ICON_SIZE, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
@@ -23,10 +23,11 @@ const TRAVEL = {
 
 // The bar floats over the screen, so a tab screen pads its content by the whole thing.
 export function useAppTabBarHeight() {
-  return bottomGap(useSafeAreaInsets().bottom) + BAR_HEIGHT;
+  return useBottomChromeGap() + BAR_HEIGHT;
 }
 
-export const AppTabBar = ({ state, descriptors, navigation, insets }: BottomTabBarProps) => {
+export const AppTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
+  const bottomGap = useBottomChromeGap();
   const [frames, setFrames] = useState<Record<string, TriggerFrame>>({});
   const activeFrame = frames[state.routes[state.index].key];
   const chip = useChipTravel(activeFrame);
@@ -42,7 +43,7 @@ export const AppTabBar = ({ state, descriptors, navigation, insets }: BottomTabB
   }, []);
 
   return (
-    <View style={[styles.overlay, { paddingBottom: bottomGap(insets.bottom) }]}>
+    <View style={[styles.overlay, { paddingBottom: bottomGap }]}>
       <Squircle
         radius={RADIUS.lg}
         color={COLORS.quiet}
@@ -124,11 +125,6 @@ function useChipTravel(frame: TriggerFrame | undefined) {
   }, [x, measuredWidth, left, width]);
 
   return { left, width };
-}
-
-// A phone with no home indicator would otherwise sit the bar flat on the screen edge.
-function bottomGap(inset: number): number {
-  return Math.max(inset, SPACE.lg);
 }
 
 const styles = StyleSheet.create({

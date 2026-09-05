@@ -11,8 +11,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { MAX_CONTENT_WIDTH } from "@/components/ui/screen-container";
+import { MAX_CONTENT_WIDTH, useBottomChromeGap } from "@/components/ui/screen-container";
 import { AnimatedChevrons } from "@/features/quiz/components/animated-chevrons";
 import { PICKER_START_LABEL, PICKER_SWIPE_LABEL } from "@/features/quiz/constants";
 import { useColorCrossFade } from "@/features/quiz/use-color-cross-fade";
@@ -36,7 +35,7 @@ export interface SwipableButtonProps {
 }
 
 export const SwipableButton = ({ color, start }: SwipableButtonProps) => {
-  const insets = useSafeAreaInsets();
+  const bottomGap = useBottomChromeGap();
   const fill = useColorCrossFade(color);
   const reveal = useFade(color !== null);
   const [innerWidth, setInnerWidth] = useState(0);
@@ -57,7 +56,7 @@ export const SwipableButton = ({ color, start }: SwipableButtonProps) => {
   );
 
   return (
-    <View style={[styles.overlay, { paddingBottom: Math.max(insets.bottom, SPACE.lg) }]}>
+    <View style={[styles.overlay, { paddingBottom: bottomGap }]}>
       <View style={styles.band}>
         <View style={styles.track}>
           {fill.base ? (

@@ -113,7 +113,7 @@ Database migrations live in `apps/api/src/_database/migrations/` (shared with th
 - **`Sheet`** is the bottom-sheet surface — `@lodev09/react-native-true-sheet` behind it, never hand-rolled, and the only module importing it. Prefer it to a `Modal` wherever a sheet genuinely fits, which is most places — but modals are not banned, so reach for one where centering truly reads better.
 - **`AppHeader`** is the tab screens' whole card — greeting row, divider, title — so nothing in it rides the tab slide: the title cross-fades in place, in a slot that hugs it. Scrolling slides the title half up behind the greeting row until the card is a plain rounded header, so a tab screen pads by `useAppHeaderHeight()` and feeds the header through `useTabScroll()`. Every screen sits on `ScreenContainer`'s grid paper.
 - Pushed screens draw their own header row: `QuietButton` circle left (chevron = back, X = quit), `TEXT.screenTitle` centered, balancing spacer right. Wherever content scrolls beneath chrome — headers, CTA bands — that chrome is the blur-band recipe, never a hard clip.
-- **Overlaid chrome owns its safe-area inset.** A band pinned over content runs to the screen edge and pads its own row by the inset; the screen under it drops that edge from `ScreenContainer` and pads content by the chrome's full height.
+- **Overlaid chrome owns its safe-area inset.** A band pinned over content runs to the screen edge and pads its own row by the inset; the screen under it drops that edge from `ScreenContainer` and pads content by the chrome's full height. Floating bottom chrome pads by `useBottomChromeGap()`, which adds Android's room over the bare navigation bar.
 
   ```tsx
   // ✅ <ScreenContainer edges={TAB_SCREEN_EDGES}> + paddingTop: useAppHeaderHeight()

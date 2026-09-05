@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { parseEnv } from "node:util";
 import type { ExpoConfig } from "expo/config";
+import { AndroidConfig, type ConfigPlugin, withAndroidStyles } from "expo/config-plugins";
 
 const VARIANT = process.env.APP_VARIANT ?? "development";
 const IS_PRODUCTION = VARIANT === "production";
@@ -26,6 +27,27 @@ const read = (key: string): string => {
 const GOOGLE_IOS_CLIENT_ID = read("EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID");
 // Google's iOS URL scheme is the client id's leading segment reversed onto the Google domain.
 const IOS_URL_SCHEME = `com.googleusercontent.apps.${GOOGLE_IOS_CLIENT_ID.split(".")[0]}`;
+
+// Android would otherwise scrim the three-button navigation bar and draw both bars' icons white.
+const SYSTEM_BAR_STYLE_ITEMS = {
+  "android:enforceNavigationBarContrast": "false",
+  "android:windowLightNavigationBar": "true",
+  "android:windowLightStatusBar": "true",
+};
+
+const withSystemBarsOnPaper: ConfigPlugin = (expoConfig) =>
+  withAndroidStyles(expoConfig, (styles) => {
+    const parent = AndroidConfig.Styles.getAppThemeGroup();
+    for (const [name, value] of Object.entries(SYSTEM_BAR_STYLE_ITEMS)) {
+      styles.modResults = AndroidConfig.Styles.assignStylesValue(styles.modResults, {
+        add: true,
+        name,
+        value,
+        parent,
+      });
+    }
+    return styles;
+  });
 
 const config: ExpoConfig = {
   name: APP_NAME,
@@ -102,4 +124,4 @@ const config: ExpoConfig = {
   },
 };
 
-export default config;
+export default withSystemBarsOnPaper(config);

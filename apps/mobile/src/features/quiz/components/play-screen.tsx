@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Animated, KeyboardAvoidingView, Platform, StyleSheet, Text, View } from "react-native";
+import { Animated, KeyboardAvoidingView, StyleSheet, Text, View } from "react-native";
 import { ALL_SCREEN_EDGES, ScreenContainer } from "@/components/ui/screen-container";
 import { Squircle } from "@/components/ui/squircle";
 import { PlayProgressBar } from "@/features/quiz/components/play-progress-bar";
@@ -42,10 +42,8 @@ export const PlayScreen = ({
         />
       }
     >
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
+      {/* Edge-to-edge Android never resizes for the keyboard, so the padding is the only lift. */}
+      <KeyboardAvoidingView style={styles.flex} behavior="padding">
         <View style={styles.card}>
           <Squircle
             radius={RADIUS.xl}

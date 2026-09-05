@@ -1,8 +1,12 @@
 import type { PropsWithChildren, ReactNode } from "react";
-import { StyleSheet, View } from "react-native";
-import { SafeAreaView, type SafeAreaViewProps } from "react-native-safe-area-context";
+import { Platform, StyleSheet, View } from "react-native";
+import {
+  SafeAreaView,
+  type SafeAreaViewProps,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { PaperBackground } from "@/components/ui/paper-background";
-import { COLORS } from "@/theme/tokens";
+import { COLORS, SPACE } from "@/theme/tokens";
 
 // Desktop web must not stretch edge-to-edge; on phones the cap never engages.
 export const MAX_CONTENT_WIDTH = 480;
@@ -12,6 +16,14 @@ export const TAB_SCREEN_EDGES = ["left", "right"] as const;
 
 // SafeAreaView's own default, written out so no screen inherits an edge set it never chose.
 export const ALL_SCREEN_EDGES = ["top", "right", "bottom", "left"] as const;
+
+// Apple's inset already holds room over the home indicator; Android's is the bare navigation bar.
+const NAVIGATION_BAR_ROOM = Platform.OS === "android" ? SPACE.md : 0;
+
+// Floating bottom chrome pads by this, so it never sits flat on the bar or the screen edge.
+export function useBottomChromeGap(): number {
+  return Math.max(useSafeAreaInsets().bottom + NAVIGATION_BAR_ROOM, SPACE.lg);
+}
 
 export interface ScreenContainerProps {
   edges: SafeAreaViewProps["edges"];
