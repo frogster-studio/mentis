@@ -101,7 +101,7 @@ Out of scope
       "pseudoKey lowercases and nothing else; the derived default always satisfies the contract's pseudo schema",
       "bun run test passes in @mentis/api"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "api",
