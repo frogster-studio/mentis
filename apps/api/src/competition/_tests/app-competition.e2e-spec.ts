@@ -19,6 +19,7 @@ import {
   type CompetitionFinalizeReason,
 } from "../../_database/entities/competition-attempt.entity";
 import { CompetitionStandingEntity } from "../../_database/entities/competition-standing.entity";
+import { PlayerProfileEntity } from "../../_database/entities/player-profile.entity";
 import { PremiumEntitlementEntity } from "../../_database/entities/premium-entitlement.entity";
 import { stubDataSource, testEnv } from "../../_tests/test-env";
 import { AppModule } from "../../app.module";
@@ -28,6 +29,8 @@ import {
   type DrawnQuestion,
 } from "../../catalog/repositories/catalog.repository";
 import { THEME_IMAGES_BUCKET } from "../../catalog/utils/theme-image-url";
+import { ProfileRepository } from "../../player/repositories/profile.repository";
+import { DIGIT_DRAW } from "../../player/utils/digit-draw";
 import { PremiumRepository } from "../../premium/repositories/premium.repository";
 import { CompetitionRepository } from "../repositories/competition.repository";
 import type { FinalizedOutcome } from "../types/finalized-outcome";
@@ -163,6 +166,10 @@ let premiumUntilByOwner = new Map<string, Date>();
 let standingRows: CompetitionStandingEntity[] = [];
 let standingWrites = 0;
 let pseudoKeys = new Map<string, string>();
+let profileRows: PlayerProfileEntity[] = [];
+let digitsDrawn = 0;
+// Records what issuance did in order, so the naming can be proven to precede the draw.
+let issuanceSteps: string[] = [];
 
 const servedQuestions = () =>
   QUESTIONS.filter(
@@ -189,6 +196,7 @@ const fakeCatalogRepository = {
   },
   async drawRandomQuestions(themeId, count) {
     draws.push({ themeId, count });
+    issuanceSteps.push("draw");
     return servedQuestions()
       .filter((question) => question.themeId === themeId)
       .slice(0, count);
@@ -310,6 +318,33 @@ const fakePremiumRepository = {
     });
   },
 } satisfies Pick<PremiumRepository, "findByOwner">;
+
+const fakeProfileRepository = {
+  async findByOwner(owner) {
+    return profileRows.find((row) => row.owner === owner) ?? null;
+  },
+  async findByPseudoKey(pseudoKey) {
+    return profileRows.find((row) => row.pseudoKey === pseudoKey) ?? null;
+  },
+  async insertIfAbsent(profile) {
+    issuanceSteps.push("profile");
+    const clashes = profileRows.some(
+      (row) => row.owner === profile.owner || row.pseudoKey === profile.pseudoKey,
+    );
+    if (!clashes) {
+      profileRows.push(Object.assign(new PlayerProfileEntity(), profile));
+    }
+  },
+  async updateByOwner(owner, profile) {
+    const row = profileRows.find((existing) => existing.owner === owner);
+    if (row !== undefined) {
+      Object.assign(row, profile);
+    }
+  },
+} satisfies Pick<
+  ProfileRepository,
+  "findByOwner" | "findByPseudoKey" | "insertIfAbsent" | "updateByOwner"
+>;
 
 // Every Question of the pool answers to its own pattern, so a drawn Attempt can be played perfectly.
 const correctBatch = (body: { themeId: string; questions: { id: string }[] }) =>
@@ -440,6 +475,11 @@ describe("app competition routes e2e", () => {
       .useValue(fakeCompetitionRepository)
       .overrideProvider(PremiumRepository)
       .useValue(fakePremiumRepository)
+      .overrideProvider(ProfileRepository)
+      .useValue(fakeProfileRepository)
+      // A fresh draw per default keeps two Accounts from racing for the same pseudo.
+      .overrideProvider(DIGIT_DRAW)
+      .useValue(() => (digitsDrawn += 1))
       .overrideProvider(ThrottlerStorage)
       .useValue(unlimitedThrottlerStorage)
       .overrideProvider(CLOCK)
@@ -474,6 +514,34 @@ describe("app competition routes e2e", () => {
       [PLAYER_A, "alpha"],
       [PLAYER_B, "beta"],
     ]);
+    profileRows = [];
+    digitsDrawn = 0;
+    issuanceSteps = [];
+  });
+
+  describe("profile at issuance", () => {
+    it("names the Account from its token before drawing its first Attempt", async () => {
+      await issued(tokenA);
+
+      expect(profileRows).toMatchObject([
+        { owner: PLAYER_A, pseudo: "Joueur00001", pseudoKey: "joueur00001" },
+      ]);
+      expect(issuanceSteps).toEqual(["profile", "draw"]);
+    });
+
+    it("leaves the pseudo an already named Account holds", async () => {
+      profileRows.push(
+        Object.assign(new PlayerProfileEntity(), {
+          owner: PLAYER_A,
+          pseudo: "Champion",
+          pseudoKey: "champion",
+        }),
+      );
+
+      expect((await issued(tokenA)).day).toBe(today);
+      expect(profileRows).toMatchObject([{ owner: PLAYER_A, pseudo: "Champion" }]);
+      expect(issuanceSteps).toEqual(["draw"]);
+    });
   });
 
   describe("standings writes", () => {

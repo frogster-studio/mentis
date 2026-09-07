@@ -38,7 +38,7 @@ export class CompetitionController {
     @Req() request: AuthedRequest,
     @Body(new ZodValidationPipe(appCompetitionIssueInputSchema)) input: AppCompetitionIssueInput,
   ): Promise<AppCompetitionAttemptResponse> {
-    return this.competitionService.issueAttempt(request.user.id, input);
+    return this.competitionService.issueAttempt(request.user.id, request.user.claims, input);
   }
 
   // What today still allows beyond the initial, so the phone offers only what the API would issue.

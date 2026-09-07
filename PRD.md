@@ -128,7 +128,7 @@ Out of scope
       "With a profile row, issuance behaves exactly as before",
       "The existing competition e2e stays green with a fake profile repository"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "api",

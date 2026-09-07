@@ -17,6 +17,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
+import type { JWTPayload } from "jose";
 import type {
   CompetitionAttemptEntity,
   CompetitionAttemptKind,
@@ -24,6 +25,7 @@ import type {
 import type { DrawnQuestion } from "../../catalog/repositories/catalog.repository";
 import { CatalogService } from "../../catalog/services/catalog.service";
 import type { ThemeVisuals } from "../../catalog/types/theme-visuals";
+import { ProfileService } from "../../player/services/profile.service";
 import { PremiumService } from "../../premium/services/premium.service";
 import {
   toAppCompetitionActiveAttemptResponse,
@@ -50,13 +52,17 @@ export class CompetitionService {
     private readonly competitionRepository: CompetitionRepository,
     private readonly catalogService: CatalogService,
     private readonly premiumService: PremiumService,
+    private readonly profileService: ProfileService,
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
+  // An Attempt is a future Leaderboard row, so the Account is named before it is ever drawn.
   async issueAttempt(
     owner: string,
+    claims: JWTPayload,
     { kind }: AppCompetitionIssueInput,
   ): Promise<AppCompetitionAttemptResponse> {
+    await this.profileService.ensureProfile(owner, claims);
     const today = this.today();
     const inPlay = await this.attemptsStillInPlay(owner, today);
     switch (kind) {
