@@ -36,6 +36,7 @@ for ((i=1; i<=ITERATIONS; i++)); do
   case "$CLI" in
     claude)
       claude -p --permission-mode acceptEdits \
+        --model claude-opus-5 --effort high \
         --allowedTools "Bash(bun run *),Bash(bunx *),Bash(git add *),Bash(git commit *)" \
         --disallowedTools "Bash(bun run migration:generate*),Bash(git push *)" \
         --max-turns 200 \
