@@ -9,12 +9,16 @@ The person playing. Plays anonymously by default; signing into an Account is opt
 _Avoid_: user
 
 **Account**:
-The optional cross-platform identity a Player signs into with Google or Apple. It exists to carry stats across devices and to ground future social features (leaderboards, battles); solo play never requires one. French UI label: « Compte ».
+The optional cross-platform identity a Player signs into with Google or Apple. It exists to carry stats across devices and to compete under a Pseudo; solo play never requires one. French UI label: « Compte ».
 _Avoid_: user, profile, login
 
 **Premium**:
 The paid tier of an Account — one auto-renewable monthly subscription (€2.99, no trial) bought through the stores, never available to an anonymous Player. Requires only a signed-in Account, no pseudo. Eligibility is evaluated at the moment of the action against the entitlement's expiry: lapsed means free tier immediately, but never mid-session; store grace periods count as active. French UI label: « Premium ».
 _Avoid_: subscriber, pro, VIP
+
+**Pseudo**:
+The public name an Account competes under — unique across Accounts regardless of case, 3 to 20 characters from letters, digits and underscore. Born as a default (first name plus five random digits) the first time it is needed, changeable at any time; the Leaderboard always shows the current one. French UI label: « pseudo ».
+_Avoid_: username, display name, nickname, handle
 
 **Quiz Session**:
 One practice run of 10 Questions drawn from a single Theme chosen by the player. It is Finished once all 10 Questions have resolved; only Finished sessions produce a score (revealed at the end) and feed Theme Averages. French UI label: « partie ».
@@ -43,6 +47,18 @@ _Avoid_: makeup, late play
 **Competition Day**:
 The Europe/Paris calendar date an Attempt is attributed to. It bounds the 50-point cap, the Theme rotation and the once-per-kind rule — whatever the Player's own timezone.
 _Avoid_: day (alone)
+
+**Season**:
+The Europe/Paris calendar month a Competition Day falls in. An Account's Season Total is the sum of its best score on each Competition Day of the Season, kept per Account from its first finalized Attempt of the Season. French UI label: « saison ».
+_Avoid_: month (alone), period
+
+**Leaderboard**:
+The Season's Accounts ordered by Season Total, shown under their Pseudo alone: equal totals share a rank with no tie-break, and an Account is ranked from its first finalized Attempt of the Season. Public — a signed-out Player sees it too. French UI label: « Classement ».
+_Avoid_: ranking, scoreboard, ladder
+
+**Standing**:
+An Account's own place in the Leaderboard — rank, Season Total, number of ranked Accounts and the Leaderboard page it sits on; none before its first finalized Attempt of the Season. Shown in the Compétition tab's header.
+_Avoid_: my score, position
 
 **Theme**:
 A narrow, specific subject (« Marie Antoinette », « Les Simpson », « Chocolats ») — never as broad as its Category. Every Question belongs to exactly one Theme; every Theme belongs to exactly one Category and has exactly one image. The pool of Themes grows over time. French UI label: « Thème ».
