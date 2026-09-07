@@ -182,17 +182,19 @@ Out of scope
     "description": "Seam: profile read, pseudo write, standing read, leaderboard page read",
     "steps": [
       "Request builders and parsers in features/account/requests.ts (profile, pseudo), features/competition/requests.ts (standing) and features/world/requests.ts (leaderboard page), the shape of the existing competition requests",
-      "react-query hooks and keys beside each feature's siblings: useProfile, useSetPseudo, useStanding, useLeaderboardPage(page); the leaderboard read sends no Authorization header",
+      "Query keys beside each feature's siblings: competitionKeys.standing and worldKeys.leaderboard(Page); the leaderboard read sends no Authorization header",
+      "Each react-query hook lands in the item that first renders it — knip drops an export nothing consumes, and a hook cannot be covered by a test here",
       "pushFinalize invalidates the standing and leaderboard keys beside the day key",
       "Builders and parsers covered by vitest like requests.test.ts, including a 409 surfacing as an ApiError with code PSEUDO_TAKEN",
       "bun run typecheck and bun run test pass in @mentis/mobile"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
     "description": "The pseudo Sheet",
     "steps": [
+      "useProfile and useSetPseudo, with the profile key, join features/account/api.ts here — the first item that renders them",
       "PseudoSheet in features/account/components on the house Sheet: title « Ton pseudo », one TextInput prefilled with the current pseudo, one NewButton « Valider » with pending, French copy in features/account/constants.ts",
       "A pure isValidPseudo mirrors the contract and is unit tested; an invalid value shows « 3 à 20 caractères : lettres, chiffres ou _ » and disables Valider",
       "409 shows « Ce pseudo est déjà pris »; any other failure shows a French error; the Sheet is not dismissible while pending",
@@ -206,6 +208,7 @@ Out of scope
     "description": "AppHeader shows the pseudo and the Standing on the Compétition tab",
     "steps": [
       "On /world the greeting slot renders the pseudo alone, the whole slot a bare Pressable dimmed with PRESSED that opens PseudoSheet; empty when signed out; / keeps « Salut Prénom ! »",
+      "useStanding joins features/competition/api.ts here — the first item that renders it",
       "On /world the title reads « 12e sur 340 · 412 pts » when signed in and ranked, « Compétition » when signed out, unranked, loading or failed; the swap rides the existing title cross-fade",
       "Pure formatRank (1er, 2e, 3e, 21e) and standingTitle helpers unit tested",
       "No new styling constant"
@@ -216,6 +219,7 @@ Out of scope
     "category": "mobile",
     "description": "The leaderboard list on the Compétition tab",
     "steps": [
+      "useLeaderboardPage(page) joins features/world/api.ts here — the first item that renders it",
       "WorldScreen keeps the competition cards above and renders the leaderboard below; the tab scrolls and feeds the header collapse through useTabScroll",
       "Opens on the Standing's page when signed in and ranked, else page 1; a row shows rank, pseudo and « 412 pts »; the caller's own row is highlighted with an existing color role",
       "ScreenLoading while a page loads, ScreenError with retry on failure, « Personne n'est encore classé ce mois-ci. » when pageCount is 0",

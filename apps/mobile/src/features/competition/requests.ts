@@ -4,9 +4,11 @@ import {
   type AppCompetitionAttemptKind,
   type AppCompetitionAttemptResponse,
   type AppCompetitionDayResponse,
+  type AppCompetitionStandingResponse,
   appCompetitionActiveAttemptResponseSchema,
   appCompetitionAttemptResponseSchema,
   appCompetitionDayResponseSchema,
+  appCompetitionStandingResponseSchema,
 } from "@mentis/contracts/app";
 import type { ApiClient, ApiRequest } from "@/lib/api/client";
 import type { PlayedAnswer } from "./attempt-reducer";
@@ -20,6 +22,8 @@ export const activeAttemptRequest: ApiRequest = {
 };
 
 export const dayRequest: ApiRequest = { method: "GET", path: `${COMPETITION_PATH}/day` };
+
+export const standingRequest: ApiRequest = { method: "GET", path: `${COMPETITION_PATH}/standing` };
 
 // The kind alone travels: whether the day and the Account's Premium allow it is the API's call.
 export function issueAttemptRequest(kind: AppCompetitionAttemptKind): ApiRequest {
@@ -49,4 +53,9 @@ export async function resumeOrIssueAttempt(
 
 export function fetchCompetitionDay(api: ApiClient): Promise<AppCompetitionDayResponse> {
   return api.requestJson(dayRequest, appCompetitionDayResponseSchema);
+}
+
+// The read buries the Account's dead days first, so a silent Attempt is already counted here.
+export function fetchStanding(api: ApiClient): Promise<AppCompetitionStandingResponse> {
+  return api.requestJson(standingRequest, appCompetitionStandingResponseSchema);
 }
