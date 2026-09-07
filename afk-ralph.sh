@@ -49,7 +49,9 @@ for ((i=1; i<=ITERATIONS; i++)); do
       ;;
   esac
 
-  git push origin HEAD
+  if [ "$CLI" = "claude" ]; then
+    git push origin HEAD
+  fi
 
   if grep -q "<promise>COMPLETE</promise>" "$LAST"; then
     echo "PRD complete after $i iterations."
