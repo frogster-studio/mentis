@@ -23,7 +23,7 @@ Season and Leaderboard
 - The Leaderboard is public: a signed-out Player reads it. It shows pseudos and totals alone.
 
 Standings storage
-- `competition_standings`: `owner` FK to `auth.users` with cascade, `season` varchar 7 (`YYYY-MM`), `total` integer, `created_at`, `updated_at`; unique `(owner, season)`; index `(season, total DESC)`.
+- `competition_standings`: `owner` FK to `auth.users` with cascade, `season` varchar 7 (`YYYY-MM`), `total` integer, `created_at`, `updated_at`; unique `(owner, season)`; index `(season, total)` scanned backward for `total DESC` within a fixed Season (TypeORM 1.1's PostgreSQL generator does not emit per-column index directions).
 - The row is written inside the finalize transaction, the lazy zero-finalize of a dead day included: the owner's total for that Attempt's Season is recomputed from every finalized Attempt of the Season and upserted. Never incremented, so the write is idempotent and self-healing.
 - No backfill: there are no users.
 - Ranks, pages and counts are derived at read from this table, never stored.
@@ -73,11 +73,11 @@ Out of scope
     "steps": [
       "player-profile.entity.ts and competition-standing.entity.ts beside their siblings under apps/api/src/_database/entities, the shape of premium-entitlement.entity.ts: BaseEntity, generated uuid, owner FK to auth.users with onDelete CASCADE, timestamps",
       "player_profiles: pseudo varchar 20, pseudo_key varchar 20, @Unique on owner and on pseudo_key, named in the siblings' style",
-      "competition_standings: season varchar 7, total integer, @Unique on (owner, season), @Index on (season, total DESC)",
+      "competition_standings: season varchar 7, total integer, @Unique on (owner, season), @Index on (season, total) supporting total DESC by backward scan within a fixed Season",
       "bun run typecheck passes",
       "Do NOT run migration:generate; write in progress.txt that the human must generate the migration"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "contracts",

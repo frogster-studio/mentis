@@ -1,0 +1,5 @@
+2026-09-07 — Done: player_profiles and competition_standings entities (schema item).
+Decisions: copied PremiumEntitlementEntity shape; named uniques, auth.users owner cascades, UUID ids, timestamps. Existing entity glob registers both. TypeORM 1.1 PostgreSQL generator cannot emit DESC; (season, total) index supports descending totals via backward scan with season fixed; PRD records adjustment.
+Files: apps/api/src/_database/entities/{player-profile,competition-standing}.entity.ts; PRD.md; progress.txt.
+Validation: root bun run check green (849 tests, all typechecks, Knip, Biome); offline TypeORM metadata confirms columns, uniques, index and cascades. Run metadata probes from apps/api for its decorator tsconfig.
+Next: human must run migration:generate in apps/api, review/commit migration, apply dashboard locks per ADR 0003; no migration command run here. PRD's service_role table grants conflict with ADR 0003's owner-only privileges; follow the ADR lock. Contracts remain undone. Existing ralph-once.sh edit excluded from commit.
