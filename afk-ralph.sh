@@ -42,8 +42,7 @@ for ((i=1; i<=ITERATIONS; i++)); do
         "@PRD.md @progress.txt @AGENTS.md $TASK" | tee "$LAST"
       ;;
     codex)
-      codex exec -s workspace-write -a never --ephemeral \
-        -c "sandbox_workspace_write.writable_roots=[\"$PWD/.git\"]" \
+      codex exec -m gpt-6-astra --dangerously-bypass-approvals-and-sandbox --ephemeral \
         -o "$LAST" \
         "Read PRD.md and progress.txt. $TASK"
       ;;
