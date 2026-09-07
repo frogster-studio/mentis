@@ -3,12 +3,12 @@ import {
   type AppCompetitionActiveAttemptResponse,
   type AppCompetitionAttemptResponse,
   type AppCompetitionDayResponse,
-  type AppCompetitionStandingResponse,
+  type AppCompetitionStandingLegacyResponse,
   type AppCompetitionTranscriptResponse,
   appCompetitionActiveAttemptResponseSchema,
   appCompetitionAttemptResponseSchema,
   appCompetitionDayResponseSchema,
-  appCompetitionStandingResponseSchema,
+  appCompetitionStandingLegacyResponseSchema,
   appCompetitionTranscriptResponseSchema,
 } from "@mentis/contracts/app";
 import type { CompetitionAttemptEntity } from "../../_database/entities/competition-attempt.entity";
@@ -99,9 +99,9 @@ export const toAppCompetitionDayResponse = (
       .map(({ id, kind, score }) => ({ id, kind, score: score ?? 0 })),
   });
 
-export const toAppCompetitionStandingResponse = (
+export const toAppCompetitionStandingLegacyResponse = (
   season: string,
   seasonTotal: number,
   days: DayScore[],
-): AppCompetitionStandingResponse =>
-  appCompetitionStandingResponseSchema.parse({ season, seasonTotal, days });
+): AppCompetitionStandingLegacyResponse =>
+  appCompetitionStandingLegacyResponseSchema.parse({ season, seasonTotal, days });

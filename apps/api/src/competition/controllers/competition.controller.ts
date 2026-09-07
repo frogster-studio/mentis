@@ -4,7 +4,7 @@ import {
   type AppCompetitionDayResponse,
   type AppCompetitionFinalizeInput,
   type AppCompetitionIssueInput,
-  type AppCompetitionStandingResponse,
+  type AppCompetitionStandingLegacyResponse,
   type AppCompetitionTranscriptResponse,
   appCompetitionAttemptIdSchema,
   appCompetitionFinalizeInputSchema,
@@ -55,7 +55,7 @@ export class CompetitionController {
 
   // Derived from the Attempts on every read — no day score or season total is ever stored.
   @Get("standing")
-  readStanding(@Req() request: AuthedRequest): Promise<AppCompetitionStandingResponse> {
+  readStanding(@Req() request: AuthedRequest): Promise<AppCompetitionStandingLegacyResponse> {
     return this.competitionService.readStanding(request.user.id);
   }
 

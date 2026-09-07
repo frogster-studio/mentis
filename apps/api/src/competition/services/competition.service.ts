@@ -4,7 +4,7 @@ import {
   type AppCompetitionDayResponse,
   type AppCompetitionFinalizeInput,
   type AppCompetitionIssueInput,
-  type AppCompetitionStandingResponse,
+  type AppCompetitionStandingLegacyResponse,
   type AppCompetitionTranscriptResponse,
   COMPETITION_QUESTION_COUNT,
 } from "@mentis/contracts/app";
@@ -28,7 +28,7 @@ import {
   toAppCompetitionActiveAttemptResponse,
   toAppCompetitionAttemptResponse,
   toAppCompetitionDayResponse,
-  toAppCompetitionStandingResponse,
+  toAppCompetitionStandingLegacyResponse,
   toAppCompetitionTranscriptResponse,
 } from "../mappers/competition.mapper";
 import { CompetitionRepository } from "../repositories/competition.repository";
@@ -128,7 +128,7 @@ export class CompetitionService {
     return toAppCompetitionTranscriptResponse({ ...served, attempt: finalized }, answers);
   }
 
-  async readStanding(owner: string): Promise<AppCompetitionStandingResponse> {
+  async readStanding(owner: string): Promise<AppCompetitionStandingLegacyResponse> {
     const today = this.today();
 
     await this.attemptsStillInPlay(owner, today);
@@ -138,7 +138,7 @@ export class CompetitionService {
 
     const days = bestScorePerDay(scores);
 
-    return toAppCompetitionStandingResponse(
+    return toAppCompetitionStandingLegacyResponse(
       season,
       days.reduce((total, day) => total + day.score, 0),
       days,

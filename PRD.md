@@ -90,7 +90,7 @@ Out of scope
       "The standing response requires season, seasonTotal, rank nullable, rankedCount, page nullable, and rejects a days field",
       "bun run test passes in @mentis/contracts"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "api",

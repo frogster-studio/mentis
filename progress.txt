@@ -3,3 +3,9 @@ Decisions: copied PremiumEntitlementEntity shape; named uniques, auth.users owne
 Files: apps/api/src/_database/entities/{player-profile,competition-standing}.entity.ts; PRD.md; progress.txt.
 Validation: root bun run check green (849 tests, all typechecks, Knip, Biome); offline TypeORM metadata confirms columns, uniques, index and cascades. Run metadata probes from apps/api for its decorator tsconfig.
 Next: human must run migration:generate in apps/api, review/commit migration, apply dashboard locks per ADR 0003; no migration command run here. PRD's service_role table grants conflict with ADR 0003's owner-only privileges; follow the ADR lock. Contracts remain undone. Existing ralph-once.sh edit excluded from commit.
+
+2026-09-07 — Done: App contracts (pseudo, profile, leaderboard page, reshaped Standing, PSEUDO_TAKEN, LEADERBOARD_PAGE_SIZE).
+Decisions: shared ASCII pseudo validation preserves casing; Standing requires rank/rankedCount/page and rejects days; leaderboard caps pages at 50 and strips private fields. Existing standing endpoint uses explicitly named StandingLegacy contract until its separate API item, preserving working behavior without fabricated ranks.
+Files: packages/contracts/src/app/{profile,competition}{,.spec}.ts, app/index.ts, shared/error{,.spec}.ts; API competition controller/service/mapper (legacy contract names only); PRD.md; progress.txt.
+Validation: root bun run check green (905 tests, all typechecks, Knip, Biome); contracts 176 tests.
+Next: pseudo utilities/profile integration remain undone. The standing API item must switch to AppCompetitionStandingResponse and remove the StandingLegacy schema/type, mapper and contract tests. Human migration generation/dashboard locks still pending; no migration command run. No push.

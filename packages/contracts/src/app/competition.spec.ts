@@ -6,11 +6,14 @@ import {
   appCompetitionDayResponseSchema,
   appCompetitionFinalizeInputSchema,
   appCompetitionIssueInputSchema,
+  appCompetitionLeaderboardPageResponseSchema,
+  appCompetitionStandingLegacyResponseSchema,
   appCompetitionStandingResponseSchema,
   appCompetitionTranscriptResponseSchema,
   COMPETITION_POINTS,
   COMPETITION_QUESTION_COUNT,
-} from "./competition";
+  LEADERBOARD_PAGE_SIZE,
+} from "./index";
 
 const question = (index: number, overrides: Record<string, unknown> = {}) => ({
   id: `q${index}`,
@@ -239,7 +242,7 @@ describe("appCompetitionTranscriptResponseSchema", () => {
   });
 });
 
-describe("appCompetitionStandingResponseSchema", () => {
+describe("appCompetitionStandingLegacyResponseSchema", () => {
   const standing = (overrides: Record<string, unknown> = {}) => ({
     season: "2026-08",
     seasonTotal: 45,
@@ -251,11 +254,11 @@ describe("appCompetitionStandingResponseSchema", () => {
   });
 
   it("carries the season, its day scores and their total", () => {
-    expect(appCompetitionStandingResponseSchema.parse(standing())).toEqual(standing());
+    expect(appCompetitionStandingLegacyResponseSchema.parse(standing())).toEqual(standing());
   });
 
   it("carries an empty season — the Player has played no Attempt this month", () => {
-    const parsed = appCompetitionStandingResponseSchema.parse(
+    const parsed = appCompetitionStandingLegacyResponseSchema.parse(
       standing({ seasonTotal: 0, days: [] }),
     );
     expect(parsed.days).toEqual([]);
@@ -263,7 +266,7 @@ describe("appCompetitionStandingResponseSchema", () => {
 
   it("rejects a day above the ten-Cash ceiling", () => {
     expect(
-      appCompetitionStandingResponseSchema.safeParse(
+      appCompetitionStandingLegacyResponseSchema.safeParse(
         standing({ days: [{ day: "2026-08-20", score: 51 }] }),
       ).success,
     ).toBe(false);
@@ -271,28 +274,29 @@ describe("appCompetitionStandingResponseSchema", () => {
 
   it("rejects a season that is not a plain Europe/Paris month", () => {
     expect(
-      appCompetitionStandingResponseSchema.safeParse(standing({ season: "2026-8" })).success,
+      appCompetitionStandingLegacyResponseSchema.safeParse(standing({ season: "2026-8" })).success,
     ).toBe(false);
     expect(
-      appCompetitionStandingResponseSchema.safeParse(standing({ season: "2026-08-20" })).success,
+      appCompetitionStandingLegacyResponseSchema.safeParse(standing({ season: "2026-08-20" }))
+        .success,
     ).toBe(false);
   });
 
   it("rejects a month no calendar holds", () => {
     expect(
-      appCompetitionStandingResponseSchema.safeParse(standing({ season: "2026-00" })).success,
+      appCompetitionStandingLegacyResponseSchema.safeParse(standing({ season: "2026-00" })).success,
     ).toBe(false);
     expect(
-      appCompetitionStandingResponseSchema.safeParse(standing({ season: "2026-13" })).success,
+      appCompetitionStandingLegacyResponseSchema.safeParse(standing({ season: "2026-13" })).success,
     ).toBe(false);
-    expect(appCompetitionStandingResponseSchema.parse(standing({ season: "2026-12" })).season).toBe(
-      "2026-12",
-    );
+    expect(
+      appCompetitionStandingLegacyResponseSchema.parse(standing({ season: "2026-12" })).season,
+    ).toBe("2026-12");
   });
 
   it("rejects a total above what a month of Attempts can hold", () => {
     expect(
-      appCompetitionStandingResponseSchema.safeParse(standing({ seasonTotal: 1551 })).success,
+      appCompetitionStandingLegacyResponseSchema.safeParse(standing({ seasonTotal: 1551 })).success,
     ).toBe(false);
   });
 });
@@ -341,6 +345,136 @@ describe("appCompetitionDayResponseSchema", () => {
     ).toBe(false);
     expect(
       appCompetitionDayResponseSchema.safeParse(day({ ...dayAttempt, kind: "bonus" })).success,
+    ).toBe(false);
+  });
+});
+
+const rankedStanding = (overrides: Record<string, unknown> = {}) => ({
+  season: "2026-09",
+  seasonTotal: 412,
+  rank: 12,
+  rankedCount: 340,
+  page: 1,
+  ...overrides,
+});
+
+describe("appCompetitionStandingResponseSchema", () => {
+  it("carries the Account's rank, population and page", () => {
+    expect(appCompetitionStandingResponseSchema.parse(rankedStanding())).toEqual(rankedStanding());
+  });
+
+  it("accepts an unranked Account while retaining the ranked population", () => {
+    const standing = rankedStanding({ seasonTotal: 0, rank: null, page: null });
+    expect(appCompetitionStandingResponseSchema.parse(standing)).toEqual(standing);
+  });
+
+  it("accepts a ranked Account with a zero total", () => {
+    expect(
+      appCompetitionStandingResponseSchema.safeParse(rankedStanding({ seasonTotal: 0 })).success,
+    ).toBe(true);
+  });
+
+  it.each(["season", "seasonTotal", "rank", "rankedCount", "page"])("requires %s", (field) => {
+    const standing: Record<string, unknown> = rankedStanding();
+    delete standing[field];
+    expect(appCompetitionStandingResponseSchema.safeParse(standing).success).toBe(false);
+  });
+
+  it("rejects days even when all Standing fields are present", () => {
+    expect(
+      appCompetitionStandingResponseSchema.safeParse(rankedStanding({ days: [] })).success,
+    ).toBe(false);
+  });
+
+  it.each([
+    { season: "2026-13" },
+    { seasonTotal: -1 },
+    { seasonTotal: 1.5 },
+    { seasonTotal: 1551 },
+    { rank: -1 },
+    { rank: 0 },
+    { rank: 1.5 },
+    { rankedCount: -1 },
+    { rankedCount: 1.5 },
+    { page: 0 },
+    { page: 1.5 },
+  ])("rejects invalid Standing fields: %j", (overrides) => {
+    expect(appCompetitionStandingResponseSchema.safeParse(rankedStanding(overrides)).success).toBe(
+      false,
+    );
+  });
+});
+
+const leaderboardPage = (overrides: Record<string, unknown> = {}) => ({
+  season: "2026-09",
+  page: 1,
+  pageCount: 1,
+  entries: [{ rank: 1, pseudo: "Player_42", seasonTotal: 412 }],
+  ...overrides,
+});
+
+describe("appCompetitionLeaderboardPageResponseSchema", () => {
+  it("carries a page's public Standing fields alone", () => {
+    const parsed = appCompetitionLeaderboardPageResponseSchema.parse(
+      leaderboardPage({
+        entries: [{ rank: 1, pseudo: "Player_42", seasonTotal: 412, owner: "private-account" }],
+      }),
+    );
+    expect(parsed).toEqual(leaderboardPage());
+  });
+
+  it("accepts an empty Season and a page beyond the last page", () => {
+    for (const page of [
+      leaderboardPage({ pageCount: 0, entries: [] }),
+      leaderboardPage({ page: 3, pageCount: 2, entries: [] }),
+    ]) {
+      expect(appCompetitionLeaderboardPageResponseSchema.parse(page)).toEqual(page);
+    }
+  });
+
+  it("caps a page at the published size of 50", () => {
+    expect(LEADERBOARD_PAGE_SIZE).toBe(50);
+    const entry = { rank: 1, pseudo: "Player_42", seasonTotal: 412 };
+    const entries = Array.from({ length: LEADERBOARD_PAGE_SIZE }, () => entry);
+    expect(
+      appCompetitionLeaderboardPageResponseSchema.safeParse(leaderboardPage({ entries })).success,
+    ).toBe(true);
+    expect(
+      appCompetitionLeaderboardPageResponseSchema.safeParse(
+        leaderboardPage({ entries: [...entries, entry] }),
+      ).success,
+    ).toBe(false);
+  });
+
+  it.each([
+    { rank: -1 },
+    { rank: 0 },
+    { rank: 1.5 },
+    { pseudo: "Éléonore" },
+    { seasonTotal: -1 },
+    { seasonTotal: 1.5 },
+    { seasonTotal: 1551 },
+  ])("rejects invalid entries: %j", (overrides) => {
+    expect(
+      appCompetitionLeaderboardPageResponseSchema.safeParse(
+        leaderboardPage({
+          entries: [{ rank: 1, pseudo: "Player_42", seasonTotal: 0, ...overrides }],
+        }),
+      ).success,
+    ).toBe(false);
+  });
+
+  it.each([
+    { season: "2026-9" },
+    { season: "2026-00" },
+    { season: "2026-09-01" },
+    { page: 0 },
+    { page: 1.5 },
+    { pageCount: -1 },
+    { pageCount: 1.5 },
+  ])("rejects invalid pagination fields: %j", (overrides) => {
+    expect(
+      appCompetitionLeaderboardPageResponseSchema.safeParse(leaderboardPage(overrides)).success,
     ).toBe(false);
   });
 });
