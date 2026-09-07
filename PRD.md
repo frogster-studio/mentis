@@ -117,7 +117,7 @@ Out of scope
       "Invalid body answers 400",
       "e2e through the Nest testing module with a fake repository, the shape of app-me.e2e-spec.ts"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "api",

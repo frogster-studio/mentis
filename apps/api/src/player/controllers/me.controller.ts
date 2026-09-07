@@ -1,7 +1,10 @@
 import {
   type AppAccountStatsResponse,
+  type AppProfileResponse,
+  type AppPseudoInput,
   type AppQuizSessionPushInput,
   type AppStatBaselinePushInput,
+  appPseudoInputSchema,
   appQuizSessionPushInputSchema,
   appStatBaselinePushInputSchema,
 } from "@mentis/contracts/app";
@@ -13,6 +16,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Put,
   Req,
   UseGuards,
 } from "@nestjs/common";
@@ -20,11 +24,29 @@ import { type AuthedRequest, SupabaseUserGuard } from "../../auth/supabase-user.
 import { AuthenticatedThrottlerGuard } from "../../common/rate-limit.guard";
 import { ZodValidationPipe } from "../../common/zod-validation.pipe";
 import { PlayerService } from "../services/player.service";
+import { ProfileService } from "../services/profile.service";
 
 @Controller("app/me")
 @UseGuards(SupabaseUserGuard, AuthenticatedThrottlerGuard)
 export class MeController {
-  constructor(private readonly playerService: PlayerService) {}
+  constructor(
+    private readonly playerService: PlayerService,
+    private readonly profileService: ProfileService,
+  ) {}
+
+  // Reading the profile is what creates the default pseudo, so this never answers an empty one.
+  @Get("profile")
+  profile(@Req() request: AuthedRequest): Promise<AppProfileResponse> {
+    return this.profileService.ensureProfile(request.user.id, request.user.claims);
+  }
+
+  @Put("pseudo")
+  setPseudo(
+    @Req() request: AuthedRequest,
+    @Body(new ZodValidationPipe(appPseudoInputSchema)) input: AppPseudoInput,
+  ): Promise<AppProfileResponse> {
+    return this.profileService.setPseudo(request.user.id, input.pseudo);
+  }
 
   @Get("stats")
   stats(@Req() request: AuthedRequest): Promise<AppAccountStatsResponse> {

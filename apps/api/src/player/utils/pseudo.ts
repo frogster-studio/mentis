@@ -1,5 +1,5 @@
 const PSEUDO_NAME_LENGTH = 15;
-const PSEUDO_DIGIT_COUNT = 5;
+export const PSEUDO_DIGIT_COUNT = 5;
 const PSEUDO_FALLBACK_NAME = "Joueur";
 
 export const pseudoKey = (pseudo: string): string => pseudo.toLowerCase();
