@@ -311,8 +311,10 @@ describe("appCompetitionIssueInputSchema", () => {
 });
 
 describe("appCompetitionDayResponseSchema", () => {
-  it("carries the Competition Day and what it still allows", () => {
-    const day = { day: "2026-08-20", replay: true, catchup: false };
+  const dayAttempt = { id: "3f1d4d1e-0f4a-4c9b-9a1a-8f5c2b7d6e01", kind: "initial", score: 20 };
+
+  it("carries the Competition Day, what it still allows and the Attempts it judged", () => {
+    const day = { day: "2026-08-20", replay: true, catchup: false, attempts: [dayAttempt] };
     expect(appCompetitionDayResponseSchema.parse(day)).toEqual(day);
   });
 
@@ -322,7 +324,23 @@ describe("appCompetitionDayResponseSchema", () => {
         day: "2026-08-20T00:00:00.000Z",
         replay: false,
         catchup: false,
+        attempts: [],
       }).success,
+    ).toBe(false);
+  });
+
+  it("rejects a judged Attempt above the ten-Cash ceiling or of an unknown kind", () => {
+    const day = (attempt: object) => ({
+      day: "2026-08-20",
+      replay: false,
+      catchup: false,
+      attempts: [attempt],
+    });
+    expect(
+      appCompetitionDayResponseSchema.safeParse(day({ ...dayAttempt, score: 51 })).success,
+    ).toBe(false);
+    expect(
+      appCompetitionDayResponseSchema.safeParse(day({ ...dayAttempt, kind: "bonus" })).success,
     ).toBe(false);
   });
 });

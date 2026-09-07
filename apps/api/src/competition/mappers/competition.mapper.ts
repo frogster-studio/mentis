@@ -2,13 +2,16 @@ import { squareChoices } from "@mentis/answer-matching";
 import {
   type AppCompetitionActiveAttemptResponse,
   type AppCompetitionAttemptResponse,
+  type AppCompetitionDayResponse,
   type AppCompetitionStandingResponse,
   type AppCompetitionTranscriptResponse,
   appCompetitionActiveAttemptResponseSchema,
   appCompetitionAttemptResponseSchema,
+  appCompetitionDayResponseSchema,
   appCompetitionStandingResponseSchema,
   appCompetitionTranscriptResponseSchema,
 } from "@mentis/contracts/app";
+import type { CompetitionAttemptEntity } from "../../_database/entities/competition-attempt.entity";
 import type { DayScore } from "../types/day-score";
 import type { NewCompetitionAnswer } from "../types/new-competition-answer";
 import type { ServedAttempt } from "../types/served-attempt";
@@ -79,6 +82,22 @@ export const toAppCompetitionTranscriptResponse = (
     }),
   });
 };
+
+// Only the judged Attempts travel: the one still in play is the resume read's to serve.
+export const toAppCompetitionDayResponse = (
+  day: string,
+  replay: boolean,
+  catchup: boolean,
+  todays: CompetitionAttemptEntity[],
+): AppCompetitionDayResponse =>
+  appCompetitionDayResponseSchema.parse({
+    day,
+    replay,
+    catchup,
+    attempts: todays
+      .filter((attempt) => attempt.status === "finalized")
+      .map(({ id, kind, score }) => ({ id, kind, score: score ?? 0 })),
+  });
 
 export const toAppCompetitionStandingResponse = (
   season: string,

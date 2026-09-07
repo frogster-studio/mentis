@@ -240,21 +240,28 @@ describe("the Attempt a Player is handed on arrival", () => {
 
 describe("what the day still allows", () => {
   it("reads the Competition Day with its Replay and Catch-up offers, and nothing more", async () => {
+    const judged = { id: ATTEMPT_ID, kind: "initial", score: 20 };
     const { api, calls } = client({
       day: "2026-08-21",
       replay: true,
       catchup: false,
+      attempts: [judged],
       premium: true,
     });
 
     const day = await fetchCompetitionDay(api);
 
-    expect(day).toStrictEqual({ day: "2026-08-21", replay: true, catchup: false });
+    expect(day).toStrictEqual({
+      day: "2026-08-21",
+      replay: true,
+      catchup: false,
+      attempts: [judged],
+    });
     expect(calls[0].url).toBe(`${BASE_URL}/app/me/competition/day`);
   });
 
   it("refuses a day the API did not shape", async () => {
-    const { api } = client({ day: "2026-08-21", replay: "yes", catchup: false });
+    const { api } = client({ day: "2026-08-21", replay: "yes", catchup: false, attempts: [] });
 
     await expect(api.requestJson(dayRequest, appCompetitionDayResponseSchema)).rejects.toThrow();
   });

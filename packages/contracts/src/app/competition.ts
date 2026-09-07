@@ -97,11 +97,20 @@ export type AppCompetitionTranscriptResponse = z.infer<
 // A season is the Europe/Paris calendar month an Attempt's Competition Day falls in.
 const competitionSeasonSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
 
+// Today's judged Attempts in issuance order: the phone opens on the best and reads each by id.
+const competitionDayAttemptSchema = z.object({
+  id: z.uuid(),
+  kind: competitionAttemptKindSchema,
+  score: z.number().int().min(0).max(MAX_SCORE),
+});
+export type AppCompetitionDayAttempt = z.infer<typeof competitionDayAttemptSchema>;
+
 // What today allows beyond the initial Attempt — premium is not folded in, the issuance gates it.
 export const appCompetitionDayResponseSchema = z.object({
   day: z.iso.date(),
   replay: z.boolean(),
   catchup: z.boolean(),
+  attempts: z.array(competitionDayAttemptSchema),
 });
 export type AppCompetitionDayResponse = z.infer<typeof appCompetitionDayResponseSchema>;
 

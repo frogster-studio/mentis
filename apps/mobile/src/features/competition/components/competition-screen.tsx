@@ -1,3 +1,4 @@
+import type { AppCompetitionAttemptKind } from "@mentis/contracts/app";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { StyleSheet, type TextInput, View } from "react-native";
@@ -8,7 +9,7 @@ import { ScreenError } from "@/components/ui/screen-error";
 import { ScreenLoading } from "@/components/ui/screen-loading";
 import { useAuthStore } from "@/features/account/auth-store";
 import { useAttempt, useCompetitionDay, useTranscript } from "@/features/competition/api";
-import { attemptKindFromParam } from "@/features/competition/attempt-kind";
+import { attemptKindFromParam, entryAttemptKind } from "@/features/competition/attempt-kind";
 import { currentAttemptQuestion } from "@/features/competition/attempt-reducer";
 import { CompetitionResults } from "@/features/competition/components/competition-results";
 import {
@@ -42,11 +43,13 @@ import { GUTTER, SPACE } from "@/theme/tokens";
 export const CompetitionScreen = () => {
   const router = useRouter();
   const { kind: kindParam } = useLocalSearchParams<{ kind?: string }>();
-  const kind = attemptKindFromParam(kindParam);
   const owner = useAuthStore((state) => state.session?.user.id);
   const isAuthLoading = useAuthStore((state) => state.isLoading);
-  const { data: attempt, isError, error, refetch } = useAttempt(owner, kind);
   const day = useCompetitionDay(owner);
+  // Settled once from the day read and never re-derived: a finalize must not swap the screen's kind.
+  const [entryKind, setEntryKind] = useState<AppCompetitionAttemptKind | undefined>(undefined);
+  const kind = kindParam === undefined ? entryKind : attemptKindFromParam(kindParam);
+  const { data: attempt, isError, error, refetch } = useAttempt(owner, kind);
 
   const play = useCompetitionStore((state) => state.attempt);
   const startAttempt = useCompetitionStore((state) => state.startAttempt);
@@ -83,6 +86,13 @@ export const CompetitionScreen = () => {
   // The server draws the Theme, so the Reveal can only start once its Attempt has landed.
   const isRevealable = attempt?.status === "active" && !showResults;
   const { isDone: isRevealDone, secondsLeft } = useThemeReveal(isRevealable);
+
+  const isDaySettled = day.data !== undefined || day.isError;
+  useEffect(() => {
+    if (entryKind === undefined && isDaySettled) {
+      setEntryKind(entryAttemptKind(day.data));
+    }
+  }, [entryKind, isDaySettled, day.data]);
 
   // Layout, so the play exists in the very frame the Reveal ends and no stand-in screen paints.
   useLayoutEffect(() => {
@@ -191,16 +201,25 @@ export const CompetitionScreen = () => {
 
   if (showResults) {
     if (transcript.data) {
+      const shownTranscript = transcript.data;
       // Only the judged initial earns a Replay, and only while the API still offers one today.
-      const offersReplay = transcript.data.kind === "initial" && day.data?.replay === true;
+      const offersReplay = shownTranscript.kind === "initial" && day.data?.replay === true;
+      // A Catch-up's day holds it alone, so only today's own list can name a second Attempt.
+      const other =
+        day.data?.day === shownTranscript.day
+          ? day.data.attempts.find((judged) => judged.id !== shownTranscript.id)
+          : undefined;
+      const openKind = (target: AppCompetitionAttemptKind) =>
+        router.replace({ pathname: "/competition", params: { kind: target } });
       return (
         <>
           <CompetitionResults
-            transcript={transcript.data}
-            onReplay={
-              offersReplay
-                ? () => router.replace({ pathname: "/competition", params: { kind: "replay" } })
-                : null
+            transcript={shownTranscript}
+            onReplay={offersReplay ? () => openKind("replay") : null}
+            otherAttempt={
+              other === undefined
+                ? null
+                : { score: other.score, onShow: () => openKind(other.kind) }
             }
             onGoHome={goHome}
           />

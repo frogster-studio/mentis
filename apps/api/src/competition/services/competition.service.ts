@@ -6,7 +6,6 @@ import {
   type AppCompetitionIssueInput,
   type AppCompetitionStandingResponse,
   type AppCompetitionTranscriptResponse,
-  appCompetitionDayResponseSchema,
   COMPETITION_QUESTION_COUNT,
 } from "@mentis/contracts/app";
 import { QuizAnswerModeEnum } from "@mentis/contracts/enums";
@@ -28,6 +27,7 @@ import { PremiumService } from "../../premium/services/premium.service";
 import {
   toAppCompetitionActiveAttemptResponse,
   toAppCompetitionAttemptResponse,
+  toAppCompetitionDayResponse,
   toAppCompetitionStandingResponse,
   toAppCompetitionTranscriptResponse,
 } from "../mappers/competition.mapper";
@@ -90,11 +90,12 @@ export class CompetitionService {
       this.competitionRepository.findAttemptsOnDay(owner, today),
       this.competitionRepository.findAttemptsOnDay(owner, yesterday),
     ]);
-    return appCompetitionDayResponseSchema.parse({
-      day: today,
-      replay: offersReplay(todays),
-      catchup: offersCatchUp(yesterdays, sharesSeason(today, yesterday)),
-    });
+    return toAppCompetitionDayResponse(
+      today,
+      offersReplay(todays),
+      offersCatchUp(yesterdays, sharesSeason(today, yesterday)),
+      todays,
+    );
   }
 
   // Premium was checked at issuance: a subscription lapsing mid-session never voids the Attempt.

@@ -1458,14 +1458,19 @@ describe("app competition routes e2e", () => {
 
   describe("day", () => {
     const yesterday = daysBefore(today, 1);
-    const judged = (index: number, day: string, kind: CompetitionAttemptKind = "initial") =>
+    const judged = (
+      index: number,
+      day: string,
+      kind: CompetitionAttemptKind = "initial",
+      score = 10,
+    ) =>
       attemptRow({
         id: attemptId(index),
         day,
         kind,
         status: "finalized",
         finalizeReason: "completed",
-        score: 10,
+        score,
       });
 
     it("GET /app/me/competition/day without a token → 401 UNAUTHENTICATED", async () => {
@@ -1475,7 +1480,12 @@ describe("app competition routes e2e", () => {
     });
 
     it("a fresh Player: no Replay before the initial is judged, a Catch-up for the empty yesterday", async () => {
-      expect(await readDay(tokenA)).toEqual({ day: today, replay: false, catchup: true });
+      expect(await readDay(tokenA)).toEqual({
+        day: today,
+        replay: false,
+        catchup: true,
+        attempts: [],
+      });
     });
 
     it("offers the Replay once the initial is judged, and withdraws it once the Replay is", async () => {
@@ -1505,23 +1515,60 @@ describe("app competition routes e2e", () => {
       expect((await readDay(tokenA)).catchup).toBe(false);
     });
 
+    it("lists today's judged Attempts with their scores, the one still in play left out", async () => {
+      attemptRows.push(
+        judged(70, today, "initial", 20),
+        attemptRow({ id: attemptId(71), day: today, kind: "replay" }),
+      );
+      expect((await readDay(tokenA)).attempts).toEqual([
+        { id: attemptId(70), kind: "initial", score: 20 },
+      ]);
+
+      attemptRows = [judged(70, today, "initial", 20), judged(72, today, "replay", 35)];
+      expect((await readDay(tokenA)).attempts).toEqual([
+        { id: attemptId(70), kind: "initial", score: 20 },
+        { id: attemptId(72), kind: "replay", score: 35 },
+      ]);
+    });
+
+    it("keeps yesterday's Attempts out of today's list, a judged Catch-up included", async () => {
+      attemptRows.push(judged(73, yesterday), judged(74, yesterday, "catchup"));
+
+      expect((await readDay(tokenA)).attempts).toEqual([]);
+    });
+
     it("withholds the Catch-up on the first day of a month", async () => {
       now = new Date("2026-09-01T12:00:00.000Z");
 
-      expect(await readDay(tokenA)).toEqual({ day: "2026-09-01", replay: false, catchup: false });
+      expect(await readDay(tokenA)).toEqual({
+        day: "2026-09-01",
+        replay: false,
+        catchup: false,
+        attempts: [],
+      });
     });
 
     it("buries a dead day before answering, so the day it filled offers no Catch-up", async () => {
       attemptRows.push(attemptRow({ id: JUDGED_ATTEMPT, day: yesterday, questionIds: JUDGED_IDS }));
 
-      expect(await readDay(tokenA)).toEqual({ day: today, replay: false, catchup: false });
+      expect(await readDay(tokenA)).toEqual({
+        day: today,
+        replay: false,
+        catchup: false,
+        attempts: [],
+      });
       expect(attemptRows[0]).toMatchObject({ status: "finalized", finalizeReason: "expired" });
     });
 
     it("never reads another Player's day", async () => {
       attemptRows.push(judged(67, today), judged(68, yesterday));
 
-      expect(await readDay(tokenB)).toEqual({ day: today, replay: false, catchup: true });
+      expect(await readDay(tokenB)).toEqual({
+        day: today,
+        replay: false,
+        catchup: true,
+        attempts: [],
+      });
     });
   });
 });

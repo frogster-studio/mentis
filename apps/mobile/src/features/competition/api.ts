@@ -4,7 +4,7 @@ import {
   type AppCompetitionTranscriptResponse,
   appCompetitionTranscriptResponseSchema,
 } from "@mentis/contracts/app";
-import { useQuery } from "@tanstack/react-query";
+import { skipToken, useQuery } from "@tanstack/react-query";
 import { prefetchThemeImages } from "@/features/quiz/theme-image-cache";
 import { api } from "@/lib/api";
 import { queryClient } from "@/lib/query-client";
@@ -20,15 +20,21 @@ export const competitionKeys = {
   transcript: (attemptId: string) => ["competition", "transcript", attemptId] as const,
 };
 
-export function useAttempt(playerId: string | undefined, kind: AppCompetitionAttemptKind) {
+export function useAttempt(
+  playerId: string | undefined,
+  kind: AppCompetitionAttemptKind | undefined,
+) {
   return useQuery({
-    queryKey: competitionKeys.attempt(playerId ?? "", kind),
-    queryFn: async () => {
-      const attempt = await resumeOrIssueAttempt(api, kind);
-      // The drawn Theme may be newer than any cached list, so issuance itself warms its image.
-      prefetchThemeImages([attempt.imageUrl]);
-      return attempt;
-    },
+    queryKey: competitionKeys.attempt(playerId ?? "", kind ?? "initial"),
+    queryFn:
+      kind === undefined
+        ? skipToken
+        : async () => {
+            const attempt = await resumeOrIssueAttempt(api, kind);
+            // The drawn Theme may be newer than any cached list, so issuance itself warms its image.
+            prefetchThemeImages([attempt.imageUrl]);
+            return attempt;
+          },
     enabled: playerId !== undefined,
     // The Attempt is fixed at issuance, so re-serving it mid-play would restart the Countdown.
     staleTime: Number.POSITIVE_INFINITY,
