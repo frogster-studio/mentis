@@ -125,6 +125,12 @@ export const appCompetitionStandingResponseSchema = z.strictObject({
 });
 export type AppCompetitionStandingResponse = z.infer<typeof appCompetitionStandingResponseSchema>;
 
+// A signed-out Player asks for the Leaderboard, not for a page of it.
+export const appCompetitionLeaderboardQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+});
+export type AppCompetitionLeaderboardQuery = z.infer<typeof appCompetitionLeaderboardQuerySchema>;
+
 const competitionLeaderboardEntrySchema = z.object({
   rank: z.number().int().positive(),
   pseudo: appPseudoSchema,

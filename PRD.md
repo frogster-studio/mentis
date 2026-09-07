@@ -163,7 +163,7 @@ Out of scope
       "Response parsed through the contract: season, page, pageCount, entries with rank, pseudo, seasonTotal",
       "e2e without a token: 60 Accounts fill pages 1 and 2 with ranks continuing across the page edge; equal totals share a rank and order by pseudo; page 3 answers empty entries with pageCount 2; page 0 answers 400; an empty season answers pageCount 0 and no entries; a renamed pseudo shows its new value"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "docs",

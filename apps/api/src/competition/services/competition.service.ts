@@ -4,8 +4,11 @@ import {
   type AppCompetitionDayResponse,
   type AppCompetitionFinalizeInput,
   type AppCompetitionIssueInput,
+  type AppCompetitionLeaderboardPageResponse,
+  type AppCompetitionLeaderboardQuery,
   type AppCompetitionStandingResponse,
   type AppCompetitionTranscriptResponse,
+  appCompetitionLeaderboardPageResponseSchema,
   appCompetitionStandingResponseSchema,
   COMPETITION_QUESTION_COUNT,
 } from "@mentis/contracts/app";
@@ -42,7 +45,12 @@ import { CLOCK } from "../utils/clock";
 import { competitionDay, daysBefore, seasonBounds, sharesSeason } from "../utils/competition-day";
 import { offersCatchUp, offersReplay } from "../utils/day-offers";
 import { judgeAttempt } from "../utils/judge-attempt";
-import { leaderboardPage, positionFromRank, rankFromGreaterCount } from "../utils/leaderboard";
+import {
+  leaderboardPage,
+  leaderboardPageCount,
+  positionFromRank,
+  rankFromGreaterCount,
+} from "../utils/leaderboard";
 
 const ROTATION_LOOKBACK_DAYS = 2;
 
@@ -144,6 +152,23 @@ export class CompetitionService {
       rank,
       rankedCount,
       page: rank === null ? null : leaderboardPage(positionFromRank(rank, precedingTieCount)),
+    });
+  }
+
+  // Public and Season-wide, so no Attempt is buried here: a page shows what finalizes already wrote.
+  async readLeaderboardPage({
+    page,
+  }: AppCompetitionLeaderboardQuery): Promise<AppCompetitionLeaderboardPageResponse> {
+    const { season } = seasonBounds(this.today());
+    const { entries, rankedCount } = await this.competitionRepository.findLeaderboardPage(
+      season,
+      page,
+    );
+    return appCompetitionLeaderboardPageResponseSchema.parse({
+      season,
+      page,
+      pageCount: leaderboardPageCount(rankedCount),
+      entries: entries.map(({ rank, pseudo, total }) => ({ rank, pseudo, seasonTotal: total })),
     });
   }
 

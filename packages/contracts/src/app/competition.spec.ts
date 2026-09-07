@@ -7,6 +7,7 @@ import {
   appCompetitionFinalizeInputSchema,
   appCompetitionIssueInputSchema,
   appCompetitionLeaderboardPageResponseSchema,
+  appCompetitionLeaderboardQuerySchema,
   appCompetitionStandingResponseSchema,
   appCompetitionTranscriptResponseSchema,
   COMPETITION_POINTS,
@@ -343,6 +344,23 @@ describe("appCompetitionStandingResponseSchema", () => {
       false,
     );
   });
+});
+
+describe("appCompetitionLeaderboardQuerySchema", () => {
+  it("opens on the first page when no page is asked for", () => {
+    expect(appCompetitionLeaderboardQuerySchema.parse({})).toEqual({ page: 1 });
+  });
+
+  it("reads the page a query string carries", () => {
+    expect(appCompetitionLeaderboardQuerySchema.parse({ page: "7" })).toEqual({ page: 7 });
+  });
+
+  it.each([{ page: "0" }, { page: "-1" }, { page: "1.5" }, { page: "" }, { page: "deux" }])(
+    "rejects %j",
+    (query) => {
+      expect(appCompetitionLeaderboardQuerySchema.safeParse(query).success).toBe(false);
+    },
+  );
 });
 
 const leaderboardPage = (overrides: Record<string, unknown> = {}) => ({

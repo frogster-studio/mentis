@@ -1,3 +1,4 @@
+import { LEADERBOARD_PAGE_SIZE } from "@mentis/contracts/app";
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Between, EntityManager, Repository } from "typeorm";
@@ -10,6 +11,7 @@ import {
 import { CompetitionStandingEntity } from "../../_database/entities/competition-standing.entity";
 import { PlayerProfileEntity } from "../../_database/entities/player-profile.entity";
 import type { FinalizedOutcome } from "../types/finalized-outcome";
+import type { LeaderboardEntry } from "../types/leaderboard-entry";
 import type { NewAttempt } from "../types/new-attempt";
 import { seasonBounds, seasonTotal } from "../utils/competition-day";
 
@@ -114,6 +116,45 @@ export class CompetitionRepository {
       rankedCount: Number(raw[0]?.rankedCount ?? 0),
       greaterCount: Number(raw[0]?.greaterCount ?? 0),
       precedingTieCount: Number(raw[0]?.precedingTieCount ?? 0),
+    };
+  }
+
+  async findLeaderboardPage(
+    season: string,
+    page: number,
+  ): Promise<{ entries: LeaderboardEntry[]; rankedCount: number }> {
+    const [rows, rankedCount] = await Promise.all([
+      this.attempts.manager
+        .createQueryBuilder()
+        .select("page.rank", "rank")
+        .addSelect("page.pseudo", "pseudo")
+        .addSelect("page.total", "total")
+        // Ranked over the rows the asked page needs, so a shared rank survives the page edge.
+        .from(
+          (ranked) =>
+            ranked
+              .select("RANK() OVER (ORDER BY standing.total DESC)", "rank")
+              .addSelect("profile.pseudo", "pseudo")
+              .addSelect("profile.pseudoKey", "pseudo_key")
+              .addSelect("standing.total", "total")
+              .from(CompetitionStandingEntity, "standing")
+              .innerJoin(PlayerProfileEntity, "profile", "profile.owner = standing.owner")
+              .where("standing.season = :season")
+              .orderBy("standing.total", "DESC")
+              .addOrderBy("profile.pseudoKey", "ASC")
+              .limit(LEADERBOARD_PAGE_SIZE * page),
+          "page",
+        )
+        .orderBy("page.total", "DESC")
+        .addOrderBy("page.pseudo_key", "ASC")
+        .offset(LEADERBOARD_PAGE_SIZE * (page - 1))
+        .setParameter("season", season)
+        .getRawMany<{ rank: string; pseudo: string; total: number }>(),
+      this.attempts.manager.countBy(CompetitionStandingEntity, { season }),
+    ]);
+    return {
+      entries: rows.map(({ rank, pseudo, total }) => ({ rank: Number(rank), pseudo, total })),
+      rankedCount,
     };
   }
 

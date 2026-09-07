@@ -7,6 +7,7 @@ import { CatalogModule } from "../../catalog/modules/catalog.module";
 import { PlayerModule } from "../../player/modules/player.module";
 import { PremiumModule } from "../../premium/modules/premium.module";
 import { CompetitionController } from "../controllers/competition.controller";
+import { LeaderboardController } from "../controllers/leaderboard.controller";
 import { CompetitionRepository } from "../repositories/competition.repository";
 import { CompetitionService } from "../services/competition.service";
 import { CLOCK, systemClock } from "../utils/clock";
@@ -20,7 +21,7 @@ import { CLOCK, systemClock } from "../utils/clock";
     PremiumModule,
     PlayerModule,
   ],
-  controllers: [CompetitionController],
+  controllers: [CompetitionController, LeaderboardController],
   providers: [CompetitionRepository, CompetitionService, { provide: CLOCK, useValue: systemClock }],
 })
 export class CompetitionModule {}

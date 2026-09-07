@@ -1,4 +1,8 @@
-import { COMPETITION_POINTS, COMPETITION_QUESTION_COUNT } from "@mentis/contracts/app";
+import {
+  COMPETITION_POINTS,
+  COMPETITION_QUESTION_COUNT,
+  LEADERBOARD_PAGE_SIZE,
+} from "@mentis/contracts/app";
 import {
   PremiumEnvironmentEnum,
   QuizAnswerModeEnum,
@@ -165,11 +169,24 @@ let racingFinalize: FinalizedOutcome | null = null;
 let premiumUntilByOwner = new Map<string, Date>();
 let standingRows: CompetitionStandingEntity[] = [];
 let standingWrites = 0;
-let pseudoKeys = new Map<string, string>();
 let profileRows: PlayerProfileEntity[] = [];
 let digitsDrawn = 0;
 // Records what issuance did in order, so the naming can be proven to precede the draw.
 let issuanceSteps: string[] = [];
+
+// Names an Account, or renames the one already named: the Leaderboard joins this at read.
+const named = (owner: string, pseudo: string) => {
+  const profile = { owner, pseudo, pseudoKey: pseudo.toLowerCase() };
+  const existing = profileRows.find((row) => row.owner === owner);
+  if (existing === undefined) {
+    profileRows.push(Object.assign(new PlayerProfileEntity(), profile));
+    return;
+  }
+  Object.assign(existing, profile);
+};
+
+const pseudoKeyOf = (owner: string) =>
+  profileRows.find((row) => row.owner === owner)?.pseudoKey ?? "";
 
 const servedQuestions = () =>
   QUESTIONS.filter(
@@ -275,10 +292,27 @@ const fakeCompetitionRepository = {
         entity === null
           ? 0
           : rows.filter(
-              (row) =>
-                row.total === entity.total &&
-                (pseudoKeys.get(row.owner) ?? "") < (pseudoKeys.get(owner) ?? ""),
+              (row) => row.total === entity.total && pseudoKeyOf(row.owner) < pseudoKeyOf(owner),
             ).length,
+    };
+  },
+  // Mirrors the join: a standing whose Account is unnamed ranks nobody, yet the Season still counts it.
+  async findLeaderboardPage(season, page) {
+    const rows = standingRows.filter((row) => row.season === season);
+    const ordered = rows
+      .filter((row) => profileRows.some((profile) => profile.owner === row.owner))
+      .sort(
+        (left, right) =>
+          right.total - left.total || (pseudoKeyOf(left.owner) < pseudoKeyOf(right.owner) ? -1 : 1),
+      );
+    const offset = LEADERBOARD_PAGE_SIZE * (page - 1);
+    return {
+      entries: ordered.slice(offset, offset + LEADERBOARD_PAGE_SIZE).map((row) => ({
+        rank: 1 + ordered.filter((other) => other.total > row.total).length,
+        pseudo: profileRows.find((profile) => profile.owner === row.owner)?.pseudo ?? "",
+        total: row.total,
+      })),
+      rankedCount: rows.length,
     };
   },
   async finalize(id, outcome) {
@@ -301,6 +335,7 @@ const fakeCompetitionRepository = {
   | "findActiveAttempts"
   | "findAnswers"
   | "findStanding"
+  | "findLeaderboardPage"
   | "finalize"
 >;
 
@@ -510,10 +545,6 @@ describe("app competition routes e2e", () => {
     premiumUntilByOwner = new Map();
     standingRows = [];
     standingWrites = 0;
-    pseudoKeys = new Map([
-      [PLAYER_A, "alpha"],
-      [PLAYER_B, "beta"],
-    ]);
     profileRows = [];
     digitsDrawn = 0;
     issuanceSteps = [];
@@ -1261,17 +1292,19 @@ describe("app competition routes e2e", () => {
     });
 
     it("shares ranks across the page edge, ordering tied positions by the current pseudo key", async () => {
+      named(PLAYER_A, "Alpha");
+      named(PLAYER_B, "Beta");
       ranked(PLAYER_B, 10);
       for (let index = 0; index < 49; index += 1) {
         const owner = attemptId(index);
         ranked(owner, 10);
-        pseudoKeys.set(owner, `ami${String(index).padStart(2, "0")}`);
+        named(owner, `Ami${String(index).padStart(2, "0")}`);
       }
       ranked(PLAYER_A, 10);
       expect(await standing(tokenA)).toMatchObject({ rank: 1, page: 1, rankedCount: 51 });
       expect(await standing(tokenB)).toMatchObject({ rank: 1, page: 2, rankedCount: 51 });
 
-      pseudoKeys.set(PLAYER_B, "aaa");
+      named(PLAYER_B, "Aaa");
       expect(await standing(tokenB)).toMatchObject({ rank: 1, page: 1 });
     });
 
@@ -1338,6 +1371,120 @@ describe("app competition routes e2e", () => {
         page: 1,
         rankedCount: 1,
       });
+    });
+  });
+
+  describe("leaderboard", () => {
+    const rank = (index: number, total: number, season = "2026-08") => {
+      const owner = attemptId(200 + index);
+      named(owner, `Ami${String(index).padStart(2, "0")}`);
+      standingRows.push(Object.assign(new CompetitionStandingEntity(), { owner, season, total }));
+    };
+
+    const readPage = async (query = "") => {
+      const response = await fetch(`${baseUrl}/app/competition/leaderboard${query}`);
+      expect(response.status).toBe(200);
+      return await response.json();
+    };
+
+    it("serves the Season's first page to a Player holding no token", async () => {
+      for (let index = 0; index < 60; index += 1) {
+        rank(index, 60 - index);
+      }
+
+      const body = await readPage();
+      expect(body).toMatchObject({ season: "2026-08", page: 1, pageCount: 2 });
+      expect(body.entries).toHaveLength(LEADERBOARD_PAGE_SIZE);
+      expect(body.entries[0]).toEqual({ rank: 1, pseudo: "Ami00", seasonTotal: 60 });
+      expect(body.entries[49]).toEqual({ rank: 50, pseudo: "Ami49", seasonTotal: 11 });
+    });
+
+    it("continues the ranks onto the next page", async () => {
+      for (let index = 0; index < 60; index += 1) {
+        rank(index, 60 - index);
+      }
+
+      const body = await readPage("?page=2");
+      expect(body).toMatchObject({ season: "2026-08", page: 2, pageCount: 2 });
+      expect(body.entries).toHaveLength(10);
+      expect(body.entries[0]).toEqual({ rank: 51, pseudo: "Ami50", seasonTotal: 10 });
+      expect(body.entries[9]).toEqual({ rank: 60, pseudo: "Ami59", seasonTotal: 1 });
+    });
+
+    it("shares a rank between equal totals, ordering them by pseudo", async () => {
+      rank(0, 10);
+      rank(1, 20);
+      rank(2, 10);
+
+      expect((await readPage()).entries).toEqual([
+        { rank: 1, pseudo: "Ami01", seasonTotal: 20 },
+        { rank: 2, pseudo: "Ami00", seasonTotal: 10 },
+        { rank: 2, pseudo: "Ami02", seasonTotal: 10 },
+      ]);
+    });
+
+    it("answers a page beyond the last with no entries and the true page count", async () => {
+      for (let index = 0; index < 60; index += 1) {
+        rank(index, 60 - index);
+      }
+
+      expect(await readPage("?page=3")).toEqual({
+        season: "2026-08",
+        page: 3,
+        pageCount: 2,
+        entries: [],
+      });
+    });
+
+    it("has no page at all before any Account is ranked", async () => {
+      expect(await readPage()).toEqual({
+        season: "2026-08",
+        page: 1,
+        pageCount: 0,
+        entries: [],
+      });
+    });
+
+    it("leaves another Season's standings out of the current one", async () => {
+      rank(0, 10);
+      rank(1, 20, "2026-07");
+
+      expect(await readPage()).toMatchObject({
+        pageCount: 1,
+        entries: [{ rank: 1, pseudo: "Ami00", seasonTotal: 10 }],
+      });
+    });
+
+    it.each(["?page=0", "?page=-1", "?page=1.5", "?page=deux"])(
+      "refuses %s with 400 VALIDATION_FAILED",
+      async (query) => {
+        const response = await fetch(`${baseUrl}/app/competition/leaderboard${query}`);
+        expect(response.status).toBe(400);
+        expect(errorResponseSchema.parse(await response.json()).code).toBe("VALIDATION_FAILED");
+      },
+    );
+
+    it("shows the pseudo an Account has just taken", async () => {
+      named(PLAYER_A, "Champion");
+      standingRows.push(
+        Object.assign(new CompetitionStandingEntity(), {
+          owner: PLAYER_A,
+          season: "2026-08",
+          total: 30,
+        }),
+      );
+      expect((await readPage()).entries).toEqual([
+        { rank: 1, pseudo: "Champion", seasonTotal: 30 },
+      ]);
+
+      const renamed = await fetch(`${baseUrl}/app/me/pseudo`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${tokenA}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ pseudo: "Nouveau" }),
+      });
+      expect(renamed.status).toBe(200);
+
+      expect((await readPage()).entries).toEqual([{ rank: 1, pseudo: "Nouveau", seasonTotal: 30 }]);
     });
   });
 
