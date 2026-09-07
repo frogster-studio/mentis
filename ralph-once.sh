@@ -32,8 +32,7 @@ case "$CLI" in
       "@PRD.md @progress.txt @AGENTS.md $TASK"
     ;;
   codex)
-    codex -s workspace-write -a on-request \
-      -c "sandbox_workspace_write.writable_roots=[\"$PWD/.git\"]" \
+    codex -m gpt-6-astra -s danger-full-access -a never \
       "Read PRD.md and progress.txt. $TASK"
     ;;
 esac
