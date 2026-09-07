@@ -175,7 +175,7 @@ Out of scope
       "apps/api/AGENTS.md lists premium/ in the structure block and says five features",
       "bun run format leaves the files unchanged"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
