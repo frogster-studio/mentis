@@ -1,14 +1,16 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Between, Repository } from "typeorm";
+import { Between, EntityManager, Repository } from "typeorm";
 import { CompetitionAnswerEntity } from "../../_database/entities/competition-answer.entity";
 import {
   CompetitionAttemptEntity,
   type CompetitionAttemptKind,
 } from "../../_database/entities/competition-attempt.entity";
+import { CompetitionStandingEntity } from "../../_database/entities/competition-standing.entity";
 import type { DayScore } from "../types/day-score";
 import type { FinalizedOutcome } from "../types/finalized-outcome";
 import type { NewAttempt } from "../types/new-attempt";
+import { seasonBounds, seasonTotal } from "../utils/competition-day";
 
 @Injectable()
 export class CompetitionRepository {
@@ -82,7 +84,7 @@ export class CompetitionRepository {
     attemptId: string,
     outcome: FinalizedOutcome,
   ): Promise<CompetitionAttemptEntity | null> {
-    return this.attempts.manager.transaction(async (manager) => {
+    return this.attempts.manager.transaction("READ COMMITTED", async (manager) => {
       const claimed = await manager
         .createQueryBuilder()
         .update(CompetitionAttemptEntity)
@@ -103,7 +105,40 @@ export class CompetitionRepository {
         .into(CompetitionAnswerEntity)
         .values(outcome.answers)
         .execute();
-      return manager.findOneByOrFail(CompetitionAttemptEntity, { id: attemptId });
+      const attempt = await manager.findOneByOrFail(CompetitionAttemptEntity, { id: attemptId });
+      await this.recomputeStanding(manager, attempt);
+      return attempt;
     });
+  }
+
+  private async recomputeStanding(
+    manager: EntityManager,
+    attempt: CompetitionAttemptEntity,
+  ): Promise<void> {
+    const { season, from, to } = seasonBounds(attempt.day);
+    const where = { owner: attempt.owner, season };
+    await manager
+      .createQueryBuilder()
+      .insert()
+      .into(CompetitionStandingEntity)
+      .values({ ...where, total: 0 })
+      .orIgnore()
+      .execute();
+    // Serialize this Account's Season writes before reading the newly committed Attempts.
+    await manager.findOneOrFail(CompetitionStandingEntity, {
+      where,
+      lock: { mode: "pessimistic_write" },
+    });
+    const attempts = await manager.find(CompetitionAttemptEntity, {
+      where: { owner: attempt.owner, status: "finalized", day: Between(from, to) },
+    });
+    await manager.upsert(
+      CompetitionStandingEntity,
+      {
+        ...where,
+        total: seasonTotal(attempts.map((row) => ({ day: row.day, score: row.score ?? 0 }))),
+      },
+      ["owner", "season"],
+    );
   }
 }

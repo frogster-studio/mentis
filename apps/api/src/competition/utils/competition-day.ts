@@ -37,3 +37,6 @@ export const bestScorePerDay = (scores: DayScore[]): DayScore[] => {
     .map(([day, score]) => ({ day, score }))
     .sort((left, right) => left.day.localeCompare(right.day));
 };
+
+export const seasonTotal = (scores: DayScore[]): number =>
+  bestScorePerDay(scores).reduce((total, { score }) => total + score, 0);

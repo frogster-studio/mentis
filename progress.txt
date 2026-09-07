@@ -9,3 +9,9 @@ Decisions: shared ASCII pseudo validation preserves casing; Standing requires ra
 Files: packages/contracts/src/app/{profile,competition}{,.spec}.ts, app/index.ts, shared/error{,.spec}.ts; API competition controller/service/mapper (legacy contract names only); PRD.md; progress.txt.
 Validation: root bun run check green (905 tests, all typechecks, Knip, Biome); contracts 176 tests.
 Next: pseudo utilities/profile integration remain undone. The standing API item must switch to AppCompetitionStandingResponse and remove the StandingLegacy schema/type, mapper and contract tests. Human migration generation/dashboard locks still pending; no migration command run. No push.
+
+2026-09-07 — Done: Finalize writes the owner's standings row (integration item).
+Decisions: recompute the Season Total from finalized Attempts' daily bests inside finalize; insert an absent standing, lock its owner/Season row before aggregation, then upsert under READ COMMITTED to serialize concurrent finalizes. Lost claims write nothing; lazy expiration uses the same path and the Attempt's Season.
+Files: apps/api/src/competition/repositories/competition.repository.ts, utils/competition-day.ts, _tests/{competition-day.spec.ts,competition.repository.spec.ts,app-competition.e2e-spec.ts}; PRD.md; progress.txt.
+Validation: root bun run check green (915 tests, all typechecks, Knip, Biome). Fake-repository e2e covers 30→30→40, owner isolation, zero expiration, prior Season and lost claim; repository tests cover transaction scope, lock ordering and failure propagation. No live database verification.
+Next: standing read still uses the legacy contract; its API item must read materialized standings and remove StandingLegacy. Pseudo/profile and public leaderboard remain undone. Human must generate/review the pending schema migration and apply dashboard locks before deployment; no migration command run. No push.

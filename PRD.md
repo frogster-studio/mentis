@@ -140,7 +140,7 @@ Out of scope
       "e2e: a dead day buried by the lazy zero-finalize writes a row with total 0 for that Attempt's Season",
       "An Attempt attributed to the previous Season (a Catch-up across no season edge is impossible, so a plain previous-month row) updates that Season's row, not the current one"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "api",
