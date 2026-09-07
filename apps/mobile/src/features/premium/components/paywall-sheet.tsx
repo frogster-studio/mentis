@@ -62,7 +62,7 @@ export const PaywallSheet = ({ visible, onDismiss }: PaywallSheetProps) => {
     mutationFn: restorePurchases,
     onSuccess: (info) => {
       if (isPremiumActive(info)) {
-        close();
+        activation.mutate();
       }
     },
   });
