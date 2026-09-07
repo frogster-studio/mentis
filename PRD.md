@@ -228,7 +228,7 @@ Out of scope
       "The page is re-read when the tab gains focus",
       "No new styling constant"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
