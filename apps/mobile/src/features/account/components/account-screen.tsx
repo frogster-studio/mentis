@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { QuietButton } from "@/components/ui/quiet-button";
@@ -54,6 +54,13 @@ export const AccountScreen = () => {
   const accountDeletion = useMutation({ mutationFn: deleteAccount });
 
   const user = session?.user;
+  const userId = user?.id;
+  // Dev only: the id keys the Account's rows on the dashboards (premium mirror, RevenueCat customer).
+  useEffect(() => {
+    if (__DEV__ && userId !== undefined) {
+      console.log(`[Compte] user id: ${userId}`);
+    }
+  }, [userId]);
   const cards = useHomeCards();
   const transferred = useTransferStore((state) => state.transferred);
   const dismissed = useTransferStore((state) => state.dismissed);
