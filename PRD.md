@@ -239,7 +239,7 @@ Out of scope
       "A pure clampPage helper unit tested: a page beyond pageCount becomes the last page, pageCount 0 shows page 1 with every control disabled",
       "No new styling constant"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```

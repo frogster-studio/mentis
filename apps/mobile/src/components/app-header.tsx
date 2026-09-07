@@ -34,6 +34,11 @@ export function useAppHeaderHeight() {
   return useHeaderCardHeight(TITLE_HALF_HEIGHT);
 }
 
+// What the card still covers once its title half has slid away — where sticky content comes to rest.
+export function useCollapsedAppHeaderHeight() {
+  return useHeaderCardHeight(0);
+}
+
 export const AppHeader = () => {
   const router = useRouter();
   const pathname = usePathname();

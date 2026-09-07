@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { fetchLeaderboardPage } from "./requests";
 
@@ -12,5 +12,7 @@ export function useLeaderboardPage(page: number) {
   return useQuery({
     queryKey: worldKeys.leaderboardPage(page),
     queryFn: () => fetchLeaderboardPage(api, page),
+    // Turning a page keeps the previous one on screen, so the pager never gives way to a loader.
+    placeholderData: keepPreviousData,
   });
 }
