@@ -7,7 +7,6 @@ import {
   appCompetitionFinalizeInputSchema,
   appCompetitionIssueInputSchema,
   appCompetitionLeaderboardPageResponseSchema,
-  appCompetitionStandingLegacyResponseSchema,
   appCompetitionStandingResponseSchema,
   appCompetitionTranscriptResponseSchema,
   COMPETITION_POINTS,
@@ -238,65 +237,6 @@ describe("appCompetitionTranscriptResponseSchema", () => {
   it("rejects a score above the ten-Cash ceiling", () => {
     expect(
       appCompetitionTranscriptResponseSchema.safeParse(transcript({ score: 51 })).success,
-    ).toBe(false);
-  });
-});
-
-describe("appCompetitionStandingLegacyResponseSchema", () => {
-  const standing = (overrides: Record<string, unknown> = {}) => ({
-    season: "2026-08",
-    seasonTotal: 45,
-    days: [
-      { day: "2026-08-19", score: 20 },
-      { day: "2026-08-20", score: 25 },
-    ],
-    ...overrides,
-  });
-
-  it("carries the season, its day scores and their total", () => {
-    expect(appCompetitionStandingLegacyResponseSchema.parse(standing())).toEqual(standing());
-  });
-
-  it("carries an empty season — the Player has played no Attempt this month", () => {
-    const parsed = appCompetitionStandingLegacyResponseSchema.parse(
-      standing({ seasonTotal: 0, days: [] }),
-    );
-    expect(parsed.days).toEqual([]);
-  });
-
-  it("rejects a day above the ten-Cash ceiling", () => {
-    expect(
-      appCompetitionStandingLegacyResponseSchema.safeParse(
-        standing({ days: [{ day: "2026-08-20", score: 51 }] }),
-      ).success,
-    ).toBe(false);
-  });
-
-  it("rejects a season that is not a plain Europe/Paris month", () => {
-    expect(
-      appCompetitionStandingLegacyResponseSchema.safeParse(standing({ season: "2026-8" })).success,
-    ).toBe(false);
-    expect(
-      appCompetitionStandingLegacyResponseSchema.safeParse(standing({ season: "2026-08-20" }))
-        .success,
-    ).toBe(false);
-  });
-
-  it("rejects a month no calendar holds", () => {
-    expect(
-      appCompetitionStandingLegacyResponseSchema.safeParse(standing({ season: "2026-00" })).success,
-    ).toBe(false);
-    expect(
-      appCompetitionStandingLegacyResponseSchema.safeParse(standing({ season: "2026-13" })).success,
-    ).toBe(false);
-    expect(
-      appCompetitionStandingLegacyResponseSchema.parse(standing({ season: "2026-12" })).season,
-    ).toBe("2026-12");
-  });
-
-  it("rejects a total above what a month of Attempts can hold", () => {
-    expect(
-      appCompetitionStandingLegacyResponseSchema.safeParse(standing({ seasonTotal: 1551 })).success,
     ).toBe(false);
   });
 });

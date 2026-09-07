@@ -4,8 +4,9 @@ import {
   type AppCompetitionDayResponse,
   type AppCompetitionFinalizeInput,
   type AppCompetitionIssueInput,
-  type AppCompetitionStandingLegacyResponse,
+  type AppCompetitionStandingResponse,
   type AppCompetitionTranscriptResponse,
+  appCompetitionStandingResponseSchema,
   COMPETITION_QUESTION_COUNT,
 } from "@mentis/contracts/app";
 import { QuizAnswerModeEnum } from "@mentis/contracts/enums";
@@ -28,7 +29,6 @@ import {
   toAppCompetitionActiveAttemptResponse,
   toAppCompetitionAttemptResponse,
   toAppCompetitionDayResponse,
-  toAppCompetitionStandingLegacyResponse,
   toAppCompetitionTranscriptResponse,
 } from "../mappers/competition.mapper";
 import { CompetitionRepository } from "../repositories/competition.repository";
@@ -37,15 +37,10 @@ import type { DrawnTheme } from "../types/drawn-theme";
 import type { NewCompetitionAnswer } from "../types/new-competition-answer";
 import type { ServedAttempt } from "../types/served-attempt";
 import { CLOCK } from "../utils/clock";
-import {
-  bestScorePerDay,
-  competitionDay,
-  daysBefore,
-  seasonBounds,
-  sharesSeason,
-} from "../utils/competition-day";
+import { competitionDay, daysBefore, seasonBounds, sharesSeason } from "../utils/competition-day";
 import { offersCatchUp, offersReplay } from "../utils/day-offers";
 import { judgeAttempt } from "../utils/judge-attempt";
+import { leaderboardPage, positionFromRank, rankFromGreaterCount } from "../utils/leaderboard";
 
 const ROTATION_LOOKBACK_DAYS = 2;
 
@@ -128,21 +123,22 @@ export class CompetitionService {
     return toAppCompetitionTranscriptResponse({ ...served, attempt: finalized }, answers);
   }
 
-  async readStanding(owner: string): Promise<AppCompetitionStandingLegacyResponse> {
+  async readStanding(owner: string): Promise<AppCompetitionStandingResponse> {
     const today = this.today();
 
     await this.attemptsStillInPlay(owner, today);
 
-    const { season, from, to } = seasonBounds(today);
-    const scores = await this.competitionRepository.findFinalizedDayScores(owner, from, to);
-
-    const days = bestScorePerDay(scores);
-
-    return toAppCompetitionStandingLegacyResponse(
+    const { season } = seasonBounds(today);
+    const { entity, greaterCount, precedingTieCount, rankedCount } =
+      await this.competitionRepository.findStanding(owner, season);
+    const rank = entity === null ? null : rankFromGreaterCount(greaterCount);
+    return appCompetitionStandingResponseSchema.parse({
       season,
-      days.reduce((total, day) => total + day.score, 0),
-      days,
-    );
+      seasonTotal: entity?.total ?? 0,
+      rank,
+      rankedCount,
+      page: rank === null ? null : leaderboardPage(positionFromRank(rank, precedingTieCount)),
+    });
   }
 
   private async issueInitialAttempt(

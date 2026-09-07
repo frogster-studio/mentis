@@ -1,13 +1,14 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Between, EntityManager, Repository } from "typeorm";
+import { AuthUserEntity } from "../../_database/entities/auth-user.entity";
 import { CompetitionAnswerEntity } from "../../_database/entities/competition-answer.entity";
 import {
   CompetitionAttemptEntity,
   type CompetitionAttemptKind,
 } from "../../_database/entities/competition-attempt.entity";
 import { CompetitionStandingEntity } from "../../_database/entities/competition-standing.entity";
-import type { DayScore } from "../types/day-score";
+import { PlayerProfileEntity } from "../../_database/entities/player-profile.entity";
 import type { FinalizedOutcome } from "../types/finalized-outcome";
 import type { NewAttempt } from "../types/new-attempt";
 import { seasonBounds, seasonTotal } from "../utils/competition-day";
@@ -54,13 +55,66 @@ export class CompetitionRepository {
     return rows.map((row) => row.themeId);
   }
 
-  // A day scores its best Attempt, so every finalized row the season holds is a candidate.
-  async findFinalizedDayScores(owner: string, from: string, to: string): Promise<DayScore[]> {
-    const rows = await this.attempts.find({
-      where: { owner, status: "finalized", day: Between(from, to) },
-      select: { day: true, score: true },
-    });
-    return rows.map((row) => ({ day: row.day, score: row.score ?? 0 }));
+  async findStanding(
+    owner: string,
+    season: string,
+  ): Promise<{
+    entity: CompetitionStandingEntity | null;
+    greaterCount: number;
+    precedingTieCount: number;
+    rankedCount: number;
+  }> {
+    // The Account anchors the read so an absent standing still carries the Season's ranked count.
+    const { entities, raw } = await this.attempts.manager
+      .createQueryBuilder<AuthUserEntity & { standing: CompetitionStandingEntity | null }>(
+        AuthUserEntity,
+        "account",
+      )
+      .leftJoinAndMapOne(
+        "account.standing",
+        CompetitionStandingEntity,
+        "standing",
+        "standing.owner = account.id AND standing.season = :season",
+      )
+      .leftJoin(PlayerProfileEntity, "profile", "profile.owner = account.id")
+      .addSelect(
+        (query) =>
+          query
+            .select("COUNT(*)")
+            .from(CompetitionStandingEntity, "ranked")
+            .where("ranked.season = :season"),
+        "rankedCount",
+      )
+      .addSelect(
+        (query) =>
+          query
+            .select("COUNT(*)")
+            .from(CompetitionStandingEntity, "better")
+            .where("better.season = :season AND better.total > standing.total"),
+        "greaterCount",
+      )
+      .addSelect(
+        (query) =>
+          query
+            .select("COUNT(*)")
+            .from(CompetitionStandingEntity, "tied")
+            .innerJoin(PlayerProfileEntity, "tiedProfile", "tiedProfile.owner = tied.owner")
+            .where("tied.season = :season AND tied.total = standing.total")
+            .andWhere("tiedProfile.pseudoKey < profile.pseudoKey"),
+        "precedingTieCount",
+      )
+      .where("account.id = :owner", { owner, season })
+      .getRawAndEntities<{
+        rankedCount: string;
+        greaterCount: string;
+        precedingTieCount: string;
+      }>();
+    return {
+      entity: entities[0]?.standing ?? null,
+      rankedCount: Number(raw[0]?.rankedCount ?? 0),
+      greaterCount: Number(raw[0]?.greaterCount ?? 0),
+      precedingTieCount: Number(raw[0]?.precedingTieCount ?? 0),
+    };
   }
 
   // ON CONFLICT DO NOTHING: an empty return means another device won the day's single Attempt.

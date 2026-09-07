@@ -151,7 +151,7 @@ Out of scope
       "Response parsed through the reshaped contract: season, seasonTotal, rank, rankedCount, page; days is gone from the mapper",
       "e2e: two Accounts with different totals rank 1 and 2 with rankedCount 2; equal totals share rank 1 and their pages follow pseudo_key order; a caller without a finalized Attempt gets seasonTotal 0, rank null, page null and the true rankedCount; 401 unauthenticated"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "api",

@@ -116,15 +116,6 @@ export const appCompetitionDayResponseSchema = z.object({
 });
 export type AppCompetitionDayResponse = z.infer<typeof appCompetitionDayResponseSchema>;
 
-export const appCompetitionStandingLegacyResponseSchema = z.object({
-  season: competitionSeasonSchema,
-  seasonTotal: z.number().int().min(0).max(MAX_SEASON_SCORE),
-  days: z.array(z.object({ day: z.iso.date(), score: z.number().int().min(0).max(MAX_SCORE) })),
-});
-export type AppCompetitionStandingLegacyResponse = z.infer<
-  typeof appCompetitionStandingLegacyResponseSchema
->;
-
 export const appCompetitionStandingResponseSchema = z.strictObject({
   season: competitionSeasonSchema,
   seasonTotal: z.number().int().min(0).max(MAX_SEASON_SCORE),

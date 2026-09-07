@@ -162,6 +162,7 @@ let racingFinalize: FinalizedOutcome | null = null;
 let premiumUntilByOwner = new Map<string, Date>();
 let standingRows: CompetitionStandingEntity[] = [];
 let standingWrites = 0;
+let pseudoKeys = new Map<string, string>();
 
 const servedQuestions = () =>
   QUESTIONS.filter(
@@ -255,13 +256,22 @@ const fakeCompetitionRepository = {
       .sort((left, right) => left.position - right.position)
       .map((row) => Object.assign(new CompetitionAnswerEntity(), row));
   },
-  async findFinalizedDayScores(owner, from, to) {
-    return attemptRows
-      .filter(
-        (row) =>
-          row.owner === owner && row.status === "finalized" && row.day >= from && row.day <= to,
-      )
-      .map((row) => ({ day: row.day, score: row.score ?? 0 }));
+  async findStanding(owner, season) {
+    const rows = standingRows.filter((row) => row.season === season);
+    const entity = rows.find((row) => row.owner === owner) ?? null;
+    return {
+      entity,
+      rankedCount: rows.length,
+      greaterCount: entity === null ? 0 : rows.filter((row) => row.total > entity.total).length,
+      precedingTieCount:
+        entity === null
+          ? 0
+          : rows.filter(
+              (row) =>
+                row.total === entity.total &&
+                (pseudoKeys.get(row.owner) ?? "") < (pseudoKeys.get(owner) ?? ""),
+            ).length,
+    };
   },
   async finalize(id, outcome) {
     // The other device's finalize landed between this one's read and its own write.
@@ -282,7 +292,7 @@ const fakeCompetitionRepository = {
   | "findAttemptsOnDay"
   | "findActiveAttempts"
   | "findAnswers"
-  | "findFinalizedDayScores"
+  | "findStanding"
   | "finalize"
 >;
 
@@ -460,6 +470,10 @@ describe("app competition routes e2e", () => {
     premiumUntilByOwner = new Map();
     standingRows = [];
     standingWrites = 0;
+    pseudoKeys = new Map([
+      [PLAYER_A, "alpha"],
+      [PLAYER_B, "beta"],
+    ]);
   });
 
   describe("standings writes", () => {
@@ -1127,25 +1141,8 @@ describe("app competition routes e2e", () => {
   });
 
   describe("standing", () => {
-    let scoredAttempts = 0;
-    beforeEach(() => {
-      scoredAttempts = 0;
-    });
-
-    const scored = (
-      day: string,
-      score: number,
-      overrides: Partial<CompetitionAttemptEntity> = {},
-    ) => {
-      scoredAttempts += 1;
-      return attemptRow({
-        id: attemptId(50 + scoredAttempts),
-        day,
-        status: "finalized",
-        finalizeReason: "completed",
-        score,
-        ...overrides,
-      });
+    const ranked = (owner: string, total: number, season = "2026-08") => {
+      standingRows.push(Object.assign(new CompetitionStandingEntity(), { owner, season, total }));
     };
 
     it("GET /app/me/competition/standing without a token → 401 UNAUTHENTICATED", async () => {
@@ -1154,115 +1151,124 @@ describe("app competition routes e2e", () => {
       expect(errorResponseSchema.parse(await response.json()).code).toBe("UNAUTHENTICATED");
     });
 
-    it("reports an empty season before the Player's first Attempt", async () => {
-      expect(await standing(tokenA)).toEqual({ season: "2026-08", seasonTotal: 0, days: [] });
-    });
-
-    it("keeps the better of the day's two Attempts, and a quit's partial score competes", async () => {
-      attemptRows.push(
-        scored(today, 20),
-        scored(today, 35, { kind: "replay", finalizeReason: "quit" }),
-        scored(daysBefore(today, 1), 15, { finalizeReason: "quit" }),
-      );
-
+    it("reports an empty Season before any Account is ranked", async () => {
       expect(await standing(tokenA)).toEqual({
         season: "2026-08",
-        seasonTotal: 50,
-        days: [
-          { day: daysBefore(today, 1), score: 15 },
-          { day: today, score: 35 },
-        ],
+        seasonTotal: 0,
+        rank: null,
+        page: null,
+        rankedCount: 0,
       });
     });
 
-    it("keeps the initial Attempt when the Replay scored worse", async () => {
-      attemptRows.push(scored(today, 40), scored(today, 5, { kind: "replay" }));
-
-      expect(await standing(tokenA)).toMatchObject({
-        seasonTotal: 40,
-        days: [{ day: today, score: 40 }],
-      });
-    });
-
-    it("lands Catch-up points on yesterday's Competition Day", async () => {
-      const yesterday = daysBefore(today, 1);
-      attemptRows.push(scored(today, 10), scored(yesterday, 25, { kind: "catchup" }));
-
+    it("returns the ranked count to an Account without a finalized Attempt", async () => {
+      ranked(PLAYER_B, 30);
+      attemptRows.push(attemptRow({ issuedAt: now }));
       expect(await standing(tokenA)).toEqual({
         season: "2026-08",
-        seasonTotal: 35,
-        days: [
-          { day: yesterday, score: 25 },
-          { day: today, score: 10 },
-        ],
+        seasonTotal: 0,
+        rank: null,
+        page: null,
+        rankedCount: 1,
       });
     });
 
-    it("counts no Attempt still in play, and buries a past-day one at 0 first", async () => {
-      attemptRows.push(
-        scored(today, 30),
-        attemptRow({ id: JUDGED_ATTEMPT, day: daysBefore(today, 1), questionIds: JUDGED_IDS }),
-      );
-
+    it("ranks Accounts by their stored totals and exposes no private fields or days", async () => {
+      ranked(PLAYER_A, 30);
+      ranked(PLAYER_B, 50);
       expect(await standing(tokenA)).toEqual({
         season: "2026-08",
         seasonTotal: 30,
-        days: [
-          { day: daysBefore(today, 1), score: 0 },
-          { day: today, score: 30 },
-        ],
+        rank: 2,
+        page: 1,
+        rankedCount: 2,
       });
-    });
-
-    it("sums this month alone — the season stops at the Europe/Paris month edges", async () => {
-      attemptRows.push(
-        scored("2026-07-31", 50),
-        scored("2026-08-01", 20),
-        scored("2026-08-31", 30),
-        scored("2026-09-01", 45),
-      );
-
-      expect(await standing(tokenA)).toEqual({
+      expect(await standing(tokenB)).toEqual({
         season: "2026-08",
         seasonTotal: 50,
-        days: [
-          { day: "2026-08-01", score: 20 },
-          { day: "2026-08-31", score: 30 },
-        ],
+        rank: 1,
+        page: 1,
+        rankedCount: 2,
       });
     });
 
-    it("turns the season over at the Europe/Paris month edge, not the UTC one", async () => {
-      attemptRows.push(scored("2026-08-31", 30), scored("2026-09-01", 45));
+    it("shares ranks across the page edge, ordering tied positions by the current pseudo key", async () => {
+      ranked(PLAYER_B, 10);
+      for (let index = 0; index < 49; index += 1) {
+        const owner = attemptId(index);
+        ranked(owner, 10);
+        pseudoKeys.set(owner, `ami${String(index).padStart(2, "0")}`);
+      }
+      ranked(PLAYER_A, 10);
+      expect(await standing(tokenA)).toMatchObject({ rank: 1, page: 1, rankedCount: 51 });
+      expect(await standing(tokenB)).toMatchObject({ rank: 1, page: 2, rankedCount: 51 });
 
+      pseudoKeys.set(PLAYER_B, "aaa");
+      expect(await standing(tokenB)).toMatchObject({ rank: 1, page: 1 });
+    });
+
+    it("skips shared ranks when the next total is lower", async () => {
+      ranked(PLAYER_A, 5);
+      ranked(PLAYER_B, 10);
+      ranked(attemptId(1), 10);
+      expect(await standing(tokenA)).toMatchObject({ rank: 3, page: 1, rankedCount: 3 });
+    });
+
+    it("buries a silent Attempt before reading, ranking even a zero total", async () => {
+      attemptRows.push(attemptRow({ day: daysBefore(today, 1) }));
+      expect(await standing(tokenA)).toEqual({
+        season: "2026-08",
+        seasonTotal: 0,
+        rank: 1,
+        page: 1,
+        rankedCount: 1,
+      });
+      expect(standingWrites).toBe(1);
+    });
+
+    it("turns totals, ranks and counts over at the Paris month edge", async () => {
+      ranked(PLAYER_A, 30);
+      ranked(PLAYER_B, 50);
+      ranked(PLAYER_A, 45, "2026-09");
       now = new Date("2026-08-31T21:59:59.000Z");
-      expect(await standing(tokenA)).toMatchObject({ season: "2026-08", seasonTotal: 30 });
-
-      now = new Date("2026-08-31T22:00:00.000Z");
-      expect(await standing(tokenA)).toMatchObject({ season: "2026-09", seasonTotal: 45 });
-    });
-
-    it("another Player's Attempts never enter this Player's season", async () => {
-      attemptRows.push(scored(today, 30), scored(today, 50, { owner: PLAYER_B }));
-
-      expect(await standing(tokenA)).toMatchObject({
+      expect(await standing(tokenA)).toEqual({
+        season: "2026-08",
         seasonTotal: 30,
-        days: [{ day: today, score: 30 }],
+        rank: 2,
+        page: 1,
+        rankedCount: 2,
       });
-      expect(await standing(tokenB)).toMatchObject({
-        seasonTotal: 50,
-        days: [{ day: today, score: 50 }],
+      now = new Date("2026-08-31T22:00:00.000Z");
+      expect(await standing(tokenA)).toEqual({
+        season: "2026-09",
+        seasonTotal: 45,
+        rank: 1,
+        page: 1,
+        rankedCount: 1,
+      });
+      expect(await standing(tokenB)).toMatchObject({ rank: null, page: null, rankedCount: 1 });
+    });
+
+    it("does not rank a previous Season's expired Attempt in the current Season", async () => {
+      attemptRows.push(attemptRow({ day: "2026-07-31" }));
+      expect(await standing(tokenA)).toEqual({
+        season: "2026-08",
+        seasonTotal: 0,
+        rank: null,
+        page: null,
+        rankedCount: 0,
       });
     });
 
-    it("derives at read: the Attempt finalized between two reads is in the second", async () => {
-      expect(await standing(tokenA)).toMatchObject({ seasonTotal: 0 });
-
-      attemptRows.push(scored(today, 25));
-
+    it("reflects a finalize on the next read without a cache", async () => {
+      const attempt = await issued(tokenA);
+      expect(await standing(tokenA)).toMatchObject({ rank: null, rankedCount: 0 });
+      expect((await finalize(tokenA, correctBatch(attempt), attempt.id)).status).toBe(200);
       expect(await standing(tokenA)).toMatchObject({
-        seasonTotal: 25,
-        days: [{ day: today, score: 25 }],
+        seasonTotal: 50,
+        rank: 1,
+        page: 1,
+        rankedCount: 1,
       });
     });
   });
@@ -1355,7 +1361,9 @@ describe("app competition routes e2e", () => {
       );
       expect(await standing(tokenA)).toMatchObject({
         seasonTotal: 50,
-        days: [{ day: today, score: 50 }],
+        rank: 1,
+        page: 1,
+        rankedCount: 1,
       });
     });
 
@@ -1364,7 +1372,12 @@ describe("app competition routes e2e", () => {
       const body = await issued(tokenA, "replay");
 
       expect((await finalize(tokenA, [], body.id)).status).toBe(200);
-      expect(await standing(tokenA)).toMatchObject({ days: [{ day: today, score: 20 }] });
+      expect(await standing(tokenA)).toMatchObject({
+        seasonTotal: 20,
+        rank: 1,
+        page: 1,
+        rankedCount: 1,
+      });
     });
 
     it("a subscription lapsing mid-session still resumes and judges the Replay it issued", async () => {
@@ -1513,7 +1526,9 @@ describe("app competition routes e2e", () => {
       expect(await standing(tokenA)).toEqual({
         season: "2026-08",
         seasonTotal: 50,
-        days: [{ day: yesterday, score: 50 }],
+        rank: 1,
+        page: 1,
+        rankedCount: 1,
       });
     });
 
