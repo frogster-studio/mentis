@@ -57,7 +57,14 @@ const config: ExpoConfig = {
   icon: "./assets/images/icon.png",
   scheme: APP_SCHEME,
   userInterfaceStyle: "light",
-  ios: { icon: "./assets/expo.icon", bundleIdentifier: BUNDLE_IDENTIFIER, usesAppleSignIn: true },
+  ios: {
+    icon: "./assets/expo.icon",
+    bundleIdentifier: BUNDLE_IDENTIFIER,
+    usesAppleSignIn: true,
+    infoPlist: {
+      ITSAppUsesNonExemptEncryption: false,
+    },
+  },
   android: {
     adaptiveIcon: {
       backgroundColor: "#FFFFFF",
