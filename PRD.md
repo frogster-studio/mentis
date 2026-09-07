@@ -199,9 +199,10 @@ Out of scope
       "A pure isValidPseudo mirrors the contract and is unit tested; an invalid value shows « 3 à 20 caractères : lettres, chiffres ou _ » and disables Valider",
       "409 shows « Ce pseudo est déjà pris »; any other failure shows a French error; the Sheet is not dismissible while pending",
       "Success invalidates the profile query and closes the Sheet",
+      "« Compte » is its first renderer — knip drops a component nothing mounts: signed in, the pseudo under the email, a bare Pressable dimmed with PRESSED that opens the Sheet; anonymous Players see no change",
       "No new styling constant: styles compose existing tokens only"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
@@ -236,16 +237,6 @@ Out of scope
       "A pager row sticky under the cards: « Début », « ‹ », « 12 / 340 », « › », « Fin »; bare Pressable taps dimmed with PRESSED, disabled at the bounds",
       "« Ma page » appears only when the caller is ranked and the shown page is not the Standing's page",
       "A pure clampPage helper unit tested: a page beyond pageCount becomes the last page, pageCount 0 shows page 1 with every control disabled",
-      "No new styling constant"
-    ],
-    "passes": false
-  },
-  {
-    "category": "mobile",
-    "description": "« Compte » shows the pseudo",
-    "steps": [
-      "Signed in: the pseudo under the email, a bare Pressable dimmed with PRESSED that opens PseudoSheet",
-      "Anonymous Players see no change",
       "No new styling constant"
     ],
     "passes": false

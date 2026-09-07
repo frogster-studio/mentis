@@ -6,10 +6,12 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { QuietButton } from "@/components/ui/quiet-button";
 import { ALL_SCREEN_EDGES, ScreenContainer } from "@/components/ui/screen-container";
 import { ScreenLoading } from "@/components/ui/screen-loading";
+import { useProfile } from "@/features/account/api";
 import { signOut } from "@/features/account/auth";
 import { useAuthStore } from "@/features/account/auth-store";
 import { AppleSignInButton } from "@/features/account/components/apple-sign-in-button";
 import { GoogleSignInButton } from "@/features/account/components/google-sign-in-button";
+import { PseudoSheet } from "@/features/account/components/pseudo-sheet";
 import { TransferNotice } from "@/features/account/components/transfer-notice";
 import {
   ACCOUNT_BACK_LABEL,
@@ -49,6 +51,7 @@ export const AccountScreen = () => {
   const [signInFailed, setSignInFailed] = useState(false);
   const [deleteVisible, setDeleteVisible] = useState(false);
   const [paywallVisible, setPaywallVisible] = useState(false);
+  const [pseudoVisible, setPseudoVisible] = useState(false);
   const isPremium = useIsPremium();
   // A failure leaves everything intact; the mutation's error state lets the Player retry.
   const accountDeletion = useMutation({ mutationFn: deleteAccount });
@@ -61,6 +64,7 @@ export const AccountScreen = () => {
       console.log(`[Compte] user id: ${userId}`);
     }
   }, [userId]);
+  const profile = useProfile(userId);
   const cards = useHomeCards();
   const transferred = useTransferStore((state) => state.transferred);
   const dismissed = useTransferStore((state) => state.dismissed);
@@ -96,9 +100,17 @@ export const AccountScreen = () => {
           >
             {/* The provider is never shown in v1: the email is the identity. */}
             {user ? (
-              user.email ? (
-                <Text style={styles.email}>{user.email}</Text>
-              ) : null
+              <View style={styles.identity}>
+                {user.email ? <Text style={styles.email}>{user.email}</Text> : null}
+                {profile.data ? (
+                  <Pressable
+                    style={({ pressed }) => pressed && styles.pressed}
+                    onPress={() => setPseudoVisible(true)}
+                  >
+                    <Text style={styles.pseudo}>{profile.data.pseudo}</Text>
+                  </Pressable>
+                ) : null}
+              </View>
             ) : (
               <Text style={styles.pitch}>{ACCOUNT_PITCH}</Text>
             )}
@@ -154,6 +166,14 @@ export const AccountScreen = () => {
       )}
 
       <PaywallSheet visible={paywallVisible} onDismiss={() => setPaywallVisible(false)} />
+
+      {userId ? (
+        <PseudoSheet
+          playerId={userId}
+          visible={pseudoVisible}
+          onDismiss={() => setPseudoVisible(false)}
+        />
+      ) : null}
 
       <ConfirmDialog
         visible={signOutVisible}
@@ -224,8 +244,15 @@ const styles = StyleSheet.create({
     ...TEXT.cardTitle,
     color: COLORS.ink,
   },
+  identity: {
+    gap: SPACE.xxs,
+  },
   email: {
     ...TEXT.body,
+    color: COLORS.ink,
+  },
+  pseudo: {
+    ...TEXT.cardTitle,
     color: COLORS.ink,
   },
   footer: {
