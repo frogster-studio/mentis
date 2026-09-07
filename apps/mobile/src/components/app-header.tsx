@@ -1,26 +1,29 @@
 import type { User } from "@supabase/supabase-js";
 import { usePathname, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Animated, StyleSheet, Text, View } from "react-native";
+import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 import { HEADER_DIVIDER_HEIGHT, HeaderCard, useHeaderCardHeight } from "@/components/header-card";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { useTabScrollOffset } from "@/components/tab-scroll";
 import { TAB_TRANSITION_EASING, TAB_TRANSITION_MS } from "@/components/tab-transition";
 import { NewButton } from "@/components/ui/new-button";
+import { useProfile } from "@/features/account/api";
 import { useAuthStore } from "@/features/account/auth-store";
+import { PseudoSheet } from "@/features/account/components/pseudo-sheet";
 import { ACCOUNT_TITLE } from "@/features/account/constants";
+import { useStanding } from "@/features/competition/api";
+import { standingTitle } from "@/features/competition/standing-title";
 import { HOME_TITLE } from "@/features/quiz/constants";
 import { WORLD_TITLE } from "@/features/world/constants";
 import { TEXT } from "@/theme/text";
-import { COLORS, CONTROL_SQUARE_SIZE, SPACE } from "@/theme/tokens";
+import { COLORS, CONTROL_SQUARE_SIZE, PRESSED, SPACE } from "@/theme/tokens";
 
 const GREETING = "Salut";
 const GREETING_SUFFIX = "!";
 
-const TAB_TITLES = [
-  { path: "/", title: HOME_TITLE },
-  { path: "/world", title: WORLD_TITLE },
-] as const;
+const HOME_PATH = "/";
+const WORLD_PATH = "/world";
+const TAB_PATHS: readonly string[] = [HOME_PATH, WORLD_PATH];
 
 // « Un peu d'entrainement ? » is the tallest title, so the card the screens pad for is its card.
 const TITLE_LINES = 2;
@@ -33,63 +36,93 @@ export function useAppHeaderHeight() {
 
 export const AppHeader = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const user = useAuthStore((state) => state.session?.user);
+  const playerId = user?.id;
   const scrollOffset = useTabScrollOffset();
-  const { titleMix, slotHeight, measureTitle } = useTitleSwap();
+  const profile = useProfile(playerId);
+  const standing = useStanding(playerId);
+  const [pseudoVisible, setPseudoVisible] = useState(false);
+  const { titleMix, slotHeight, measureTitle } = useTitleSwap(pathname);
+
+  const titles: Record<string, string> = {
+    [HOME_PATH]: HOME_TITLE,
+    [WORLD_PATH]: standingTitle(standing.data) ?? WORLD_TITLE,
+  };
 
   return (
-    <HeaderCard
-      collapseHeight={TITLE_HALF_HEIGHT}
-      scrollOffset={scrollOffset}
-      mask={null}
-      topRow={
-        <>
-          <ProfileAvatar photoUrl={metadataString(user, "avatar_url") ?? null} />
+    <>
+      <HeaderCard
+        collapseHeight={TITLE_HALF_HEIGHT}
+        scrollOffset={scrollOffset}
+        mask={null}
+        topRow={
+          <>
+            <ProfileAvatar photoUrl={metadataString(user, "avatar_url") ?? null} />
 
-          <View style={styles.greetingSlot}>
-            <Text style={styles.greeting}>{greetingFor(firstNameOf(user))}</Text>
-          </View>
-          <NewButton
-            layout="hug"
-            shape="full"
-            tone="default"
-            disabled={false}
-            pending={false}
-            icon="menu"
-            label={null}
-            accessibilityLabel={ACCOUNT_TITLE}
-            onPress={() => router.push("/account")}
-          />
-        </>
-      }
-    >
-      <View style={styles.titleHalf}>
-        <Animated.View style={[styles.titleSlot, { height: slotHeight }]}>
-          {TAB_TITLES.map(({ path, title }, index) => (
-            <Animated.Text
-              key={path}
-              numberOfLines={TITLE_LINES}
-              onLayout={(event) => measureTitle(path, event.nativeEvent.layout.height)}
-              style={[styles.title, { opacity: titleOpacityAt(titleMix, index) }]}
-            >
-              {title}
-            </Animated.Text>
-          ))}
-        </Animated.View>
-      </View>
-    </HeaderCard>
+            {pathname === WORLD_PATH ? (
+              <Pressable
+                style={({ pressed }) => [styles.greetingSlot, pressed && styles.pressed]}
+                disabled={playerId === undefined}
+                onPress={() => setPseudoVisible(true)}
+              >
+                {/* The Competition names the Player by pseudo, so the greeting has no place here. */}
+                <Text style={styles.greeting}>{profile.data?.pseudo ?? ""}</Text>
+              </Pressable>
+            ) : (
+              <View style={styles.greetingSlot}>
+                <Text style={styles.greeting}>{greetingFor(firstNameOf(user))}</Text>
+              </View>
+            )}
+            <NewButton
+              layout="hug"
+              shape="full"
+              tone="default"
+              disabled={false}
+              pending={false}
+              icon="menu"
+              label={null}
+              accessibilityLabel={ACCOUNT_TITLE}
+              onPress={() => router.push("/account")}
+            />
+          </>
+        }
+      >
+        <View style={styles.titleHalf}>
+          <Animated.View style={[styles.titleSlot, { height: slotHeight }]}>
+            {TAB_PATHS.map((path, index) => (
+              <Animated.Text
+                key={path}
+                numberOfLines={TITLE_LINES}
+                onLayout={(event) => measureTitle(path, event.nativeEvent.layout.height)}
+                style={[styles.title, { opacity: titleOpacityAt(titleMix, index) }]}
+              >
+                {titles[path]}
+              </Animated.Text>
+            ))}
+          </Animated.View>
+        </View>
+      </HeaderCard>
+
+      {playerId === undefined ? null : (
+        <PseudoSheet
+          playerId={playerId}
+          visible={pseudoVisible}
+          onDismiss={() => setPseudoVisible(false)}
+        />
+      )}
+    </>
   );
 };
 
 // The card never rides the tab slide, so its title is the only thing that crosses tabs.
-function useTitleSwap() {
-  const pathname = usePathname();
+function useTitleSwap(pathname: string) {
   const titleMix = useRef(new Animated.Value(0)).current;
   const slotHeight = useRef(new Animated.Value(TITLE_SLOT_HEIGHT)).current;
   const [heights, setHeights] = useState<Record<string, number>>({});
   const measured = useRef(false);
-  const index = TAB_TITLES.findIndex((tab) => tab.path === pathname);
-  const activeHeight = index === -1 ? undefined : heights[TAB_TITLES[index].path];
+  const index = TAB_PATHS.indexOf(pathname);
+  const activeHeight = index === -1 ? undefined : heights[TAB_PATHS[index]];
 
   const measureTitle = useCallback((path: string, height: number) => {
     setHeights((current) => (current[path] === height ? current : { ...current, [path]: height }));
@@ -159,6 +192,7 @@ const styles = StyleSheet.create({
     ...TEXT.body,
     color: COLORS.ink,
   },
+  pressed: PRESSED,
   titleHalf: {
     paddingBottom: SPACE.lg,
   },

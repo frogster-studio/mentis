@@ -17,3 +17,6 @@ export const COMPETITION_QUIT_MESSAGE =
 export const COMPETITION_QUIT_CANCEL_LABEL = "Ne pas quitter";
 export const COMPETITION_QUIT_CONFIRM_LABEL = "Oui, quitter";
 export const COMPETITION_RESULTS_HOME_LABEL = "Retour à l'accueil";
+export const STANDING_FIRST_RANK_SUFFIX = "er";
+export const STANDING_RANK_SUFFIX = "e";
+export const STANDING_RANK_OF = "sur";

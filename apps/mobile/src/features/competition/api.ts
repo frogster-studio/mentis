@@ -11,7 +11,12 @@ import { api } from "@/lib/api";
 import { queryClient } from "@/lib/query-client";
 import { isPermanentRefusal, queuedFinalize } from "./finalize-outbox";
 import { useFinalizeOutboxStore } from "./finalize-outbox-store";
-import { fetchCompetitionDay, finalizeAttemptRequest, resumeOrIssueAttempt } from "./requests";
+import {
+  fetchCompetitionDay,
+  fetchStanding,
+  finalizeAttemptRequest,
+  resumeOrIssueAttempt,
+} from "./requests";
 
 export const competitionKeys = {
   attempts: (playerId: string) => ["competition", "attempt", playerId] as const,
@@ -50,6 +55,15 @@ export function useCompetitionDay(playerId: string | undefined) {
   return useQuery({
     queryKey: competitionKeys.day(playerId ?? ""),
     queryFn: () => fetchCompetitionDay(api),
+    enabled: playerId !== undefined,
+  });
+}
+
+// Re-read on every mount: another Account finalizing moves the rank without this phone doing a thing.
+export function useStanding(playerId: string | undefined) {
+  return useQuery({
+    queryKey: competitionKeys.standing(playerId ?? ""),
+    queryFn: () => fetchStanding(api),
     enabled: playerId !== undefined,
   });
 }

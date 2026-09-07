@@ -214,7 +214,7 @@ Out of scope
       "Pure formatRank (1er, 2e, 3e, 21e) and standingTitle helpers unit tested",
       "No new styling constant"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
