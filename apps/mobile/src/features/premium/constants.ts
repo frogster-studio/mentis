@@ -9,15 +9,19 @@ export const PAYWALL_FEATURES = [
   "Rejouez la compétition quotidienne",
   "Lancez la compétition quotidienne de la veille",
 ];
+export const PAYWALL_SKIP_LABEL = "Passer";
+export const PAYWALL_PLAN_LABEL = "Abonnement mensuel";
 export const PAYWALL_PRICE_PERIOD = "/ mois";
-export const PAYWALL_PURCHASE_LABEL = "S'abonner";
+export const PAYWALL_RENEWAL_NOTICE = "Renouvellement automatique, annulable à tout moment";
+export const PAYWALL_PURCHASE_LABEL = "Continuer";
 export const PAYWALL_PURCHASE_ERROR = "L'achat n'a pas abouti. Réessayez dans un instant.";
 export const PAYWALL_OFFERING_ERROR = "Impossible de charger l'offre.";
 export const PAYWALL_OFFERING_EMPTY = "Aucune offre n'est disponible pour le moment.";
-export const PAYWALL_RESTORE_LABEL = "Restaurer mes achats";
-export const PAYWALL_RESTORE_PENDING_LABEL = "Restauration…";
-export const PAYWALL_RESTORE_ERROR = "La restauration a échoué.";
-export const PAYWALL_RESTORE_EMPTY = "Aucun achat à restaurer sur ce compte.";
+export const PAYWALL_TERMS_LABEL = "Conditions générales de vente";
+export const PAYWALL_CONTACT_LABEL = "Contact";
+
+// Placeholder until the real terms and contact pages exist.
+export const PAYWALL_LINK_URL = "https://google.com";
 
 export const PAYWALL_ACTIVATION_TITLE = "Activation de votre abonnement";
 export const PAYWALL_ACTIVATION_MESSAGE = "Encore quelques secondes, on prépare votre Premium.";

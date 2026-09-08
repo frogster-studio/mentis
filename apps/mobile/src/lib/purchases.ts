@@ -42,8 +42,6 @@ export const readCustomerInfo = (): Promise<CustomerInfo> => Purchases.getCustom
 export const purchasePackage = (pack: PurchasesPackage): Promise<CustomerInfo> =>
   Purchases.purchasePackage(pack).then((result) => result.customerInfo);
 
-export const restorePurchases = (): Promise<CustomerInfo> => Purchases.restorePurchases();
-
 export const isPurchaseCancelled = (error: unknown): boolean =>
   (error as PurchasesError | null)?.code ===
   Purchases.PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR;

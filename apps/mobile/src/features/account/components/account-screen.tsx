@@ -31,7 +31,7 @@ import {
   SIGN_OUT_TITLE,
 } from "@/features/account/constants";
 import { deleteAccount } from "@/features/account/delete-account";
-import { PaywallSheet } from "@/features/premium/components/paywall-sheet";
+import { PaywallModal } from "@/features/premium/components/paywall-modal";
 import { PremiumCard } from "@/features/premium/components/premium-card";
 import { useIsPremium } from "@/features/premium/use-is-premium";
 import { HomeEmptyState } from "@/features/quiz/components/home-empty-state";
@@ -165,7 +165,7 @@ export const AccountScreen = () => {
         </View>
       )}
 
-      <PaywallSheet visible={paywallVisible} onDismiss={() => setPaywallVisible(false)} />
+      <PaywallModal visible={paywallVisible} onDismiss={() => setPaywallVisible(false)} />
 
       {userId ? (
         <PseudoSheet
