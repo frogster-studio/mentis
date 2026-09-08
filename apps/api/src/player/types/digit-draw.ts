@@ -1,0 +1,1 @@
+export type DigitDraw = () => number;

@@ -14,6 +14,14 @@ export const SIGN_OUT_CANCEL_LABEL = "Annuler";
 
 export const SIGN_IN_ERROR = "La connexion a échoué.";
 
+export const PSEUDO_TITLE = "Ton pseudo";
+export const PSEUDO_PLACEHOLDER = "Ton pseudo";
+export const PSEUDO_SUBMIT_LABEL = "Valider";
+export const PSEUDO_RULE = "3 à 20 caractères : lettres, chiffres ou _";
+export const PSEUDO_TAKEN_ERROR = "Ce pseudo est déjà pris.";
+export const PSEUDO_ERROR = "Le changement de pseudo a échoué.";
+export const PSEUDO_LOAD_ERROR = "Ton pseudo n'a pas pu être chargé.";
+
 // A move, not a copy — declining keeps the stats on the device, re-offered at the next sign-in.
 export const TRANSFER_TITLE = "Récupère tes statistiques";
 export const TRANSFER_MESSAGE =

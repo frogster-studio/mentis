@@ -9,6 +9,13 @@ import {
   DELETE_ACCOUNT_MESSAGE,
   DELETE_ACCOUNT_TITLE,
   GOOGLE_SIGN_IN_LABEL,
+  PSEUDO_ERROR,
+  PSEUDO_LOAD_ERROR,
+  PSEUDO_PLACEHOLDER,
+  PSEUDO_RULE,
+  PSEUDO_SUBMIT_LABEL,
+  PSEUDO_TAKEN_ERROR,
+  PSEUDO_TITLE,
   SIGN_IN_ERROR,
   SIGN_OUT_CANCEL_LABEL,
   SIGN_OUT_CONFIRM_LABEL,
@@ -50,6 +57,13 @@ describe("account constants", () => {
       DELETE_ACCOUNT_CONFIRM_LABEL,
       DELETE_ACCOUNT_CANCEL_LABEL,
       DELETE_ACCOUNT_ERROR,
+      PSEUDO_TITLE,
+      PSEUDO_PLACEHOLDER,
+      PSEUDO_SUBMIT_LABEL,
+      PSEUDO_RULE,
+      PSEUDO_TAKEN_ERROR,
+      PSEUDO_ERROR,
+      PSEUDO_LOAD_ERROR,
     ];
     for (const copy of strings) {
       expect(copy.trim().length).toBeGreaterThan(0);
@@ -72,6 +86,16 @@ describe("account constants", () => {
 
   it("explains on the signed-out home that the stats now live on the compte", () => {
     expect(TRANSFER_DONE_HOME).toContain("compte");
+  });
+
+  it("states the pseudo rule the contract enforces, so the hint cannot drift from the 400", () => {
+    expect(PSEUDO_RULE).toContain("3 à 20");
+    expect(PSEUDO_RULE).toContain("_");
+  });
+
+  it("names the taken pseudo as its own failure, distinct from any other", () => {
+    expect(PSEUDO_TAKEN_ERROR).not.toBe(PSEUDO_ERROR);
+    expect(PSEUDO_TAKEN_ERROR).toContain("pris");
   });
 
   it("spells out exactly what account deletion erases, and that it cannot be undone", () => {

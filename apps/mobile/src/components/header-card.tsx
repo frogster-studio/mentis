@@ -22,7 +22,7 @@ export interface HeaderCardProps {
   // The full height of the collapsing half under the divider, divider included.
   collapseHeight: number;
   scrollOffset: Animated.Value;
-  // A screen that washes its paper must wash the status-bar strip the same way.
+  // A screen that washes its paper must wash the header's paper the same way.
   mask: ReactNode;
 }
 
@@ -33,56 +33,48 @@ export const HeaderCard = ({
   scrollOffset,
   mask,
 }: PropsWithChildren<HeaderCardProps>) => {
-  const insets = useSafeAreaInsets();
+  const cardTop = useSafeAreaInsets().top + CARD_TOP_GAP;
 
   const collapse = scrollOffset.interpolate({
     inputRange: [0, collapseHeight],
     outputRange: [0, -collapseHeight],
     extrapolate: "clamp",
   });
-  const bridgeOpacity = scrollOffset.interpolate({
-    inputRange: [collapseHeight - RADIUS.xl, collapseHeight],
-    outputRange: [1, 0],
-    extrapolate: "clamp",
-  });
 
   return (
     <View style={styles.overlay}>
-      {/* Content scrolls up into the status bar, so the paper carries on over it. */}
-      <View style={[styles.mask, { height: insets.top + CARD_TOP_GAP }]} pointerEvents="none">
+      {/* Content scrolls under the card, so the paper carries on over the band and hides it. */}
+      <View style={[styles.paper, { height: cardTop + HEADER_TOP_HALF_HEIGHT }]}>
         <PaperBackground />
         {mask}
       </View>
-      <View style={styles.band}>
-        <View style={styles.stack}>
-          <View style={styles.topHalf}>
+      <View style={[styles.card, { marginTop: cardTop }]}>
+        <View style={styles.topHalf}>
+          <Squircle
+            radius={RADIUS.xl}
+            color={COLORS.card}
+            style={styles.face}
+            corners="all"
+            borderColor={null}
+            borderWidth={null}
+          />
+          <View style={styles.row}>{topRow}</View>
+        </View>
+        {/* Runs under the face's corners, so the card reads as one while the half slides away. */}
+        <View style={styles.titleWindow}>
+          <Animated.View style={{ transform: [{ translateY: collapse }] }}>
             <Squircle
-              radius={RADIUS.xl}
+              radius={RADIUS.base}
+              corners="bottom"
               color={COLORS.card}
-              style={styles.topFace}
-              corners="all"
               borderColor={null}
               borderWidth={null}
-            />
-            <View style={styles.row}>{topRow}</View>
-          </View>
-          {/* Fills the card's bottom corners until the half has gone, so the join reads as one card. */}
-          <Animated.View style={[styles.bridge, { opacity: bridgeOpacity }]} pointerEvents="none" />
-          <View style={[styles.window, { height: collapseHeight }]}>
-            <Animated.View style={{ transform: [{ translateY: collapse }] }}>
-              <Squircle
-                radius={RADIUS.base}
-                corners="bottom"
-                color={COLORS.card}
-                borderColor={null}
-                borderWidth={null}
-                style={null}
-              >
-                <View style={styles.divider} />
-                {children}
-              </Squircle>
-            </Animated.View>
-          </View>
+              style={styles.titleHalf}
+            >
+              <View style={styles.divider} />
+              {children}
+            </Squircle>
+          </Animated.View>
         </View>
       </View>
     </View>
@@ -98,20 +90,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
     pointerEvents: "box-none",
   },
-  mask: {
-    width: "100%",
+  paper: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
     backgroundColor: COLORS.background,
+    pointerEvents: "none",
   },
-  band: {
+  card: {
     width: "100%",
     maxWidth: MAX_CONTENT_WIDTH,
     paddingHorizontal: GUTTER,
     pointerEvents: "box-none",
   },
-  stack: {
-    pointerEvents: "box-none",
+  topHalf: {
+    height: HEADER_TOP_HALF_HEIGHT,
+    paddingTop: SPACE.lg,
+    zIndex: 1,
   },
-  topFace: {
+  face: {
     position: "absolute",
     top: 0,
     left: 0,
@@ -119,27 +117,18 @@ const styles = StyleSheet.create({
     bottom: 0,
     pointerEvents: "none",
   },
-  topHalf: {
-    height: HEADER_TOP_HALF_HEIGHT,
-    paddingTop: SPACE.lg,
-    zIndex: 2,
-  },
   row: {
     flexDirection: "row",
     alignItems: "flex-start",
     paddingHorizontal: SPACE.lg,
   },
-  bridge: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: HEADER_TOP_HALF_HEIGHT - RADIUS.xl,
-    height: RADIUS.xl,
-    backgroundColor: COLORS.card,
-    zIndex: 1,
-  },
-  window: {
+  titleWindow: {
+    marginTop: -RADIUS.xl,
     overflow: "hidden",
+    pointerEvents: "none",
+  },
+  titleHalf: {
+    paddingTop: RADIUS.xl,
   },
   divider: {
     height: HEADER_DIVIDER_HEIGHT,

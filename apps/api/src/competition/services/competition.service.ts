@@ -4,8 +4,12 @@ import {
   type AppCompetitionDayResponse,
   type AppCompetitionFinalizeInput,
   type AppCompetitionIssueInput,
+  type AppCompetitionLeaderboardPageResponse,
+  type AppCompetitionLeaderboardQuery,
   type AppCompetitionStandingResponse,
   type AppCompetitionTranscriptResponse,
+  appCompetitionLeaderboardPageResponseSchema,
+  appCompetitionStandingResponseSchema,
   COMPETITION_QUESTION_COUNT,
 } from "@mentis/contracts/app";
 import { QuizAnswerModeEnum } from "@mentis/contracts/enums";
@@ -16,6 +20,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
+import type { JWTPayload } from "jose";
 import type {
   CompetitionAttemptEntity,
   CompetitionAttemptKind,
@@ -23,12 +28,12 @@ import type {
 import type { DrawnQuestion } from "../../catalog/repositories/catalog.repository";
 import { CatalogService } from "../../catalog/services/catalog.service";
 import type { ThemeVisuals } from "../../catalog/types/theme-visuals";
+import { ProfileService } from "../../player/services/profile.service";
 import { PremiumService } from "../../premium/services/premium.service";
 import {
   toAppCompetitionActiveAttemptResponse,
   toAppCompetitionAttemptResponse,
   toAppCompetitionDayResponse,
-  toAppCompetitionStandingResponse,
   toAppCompetitionTranscriptResponse,
 } from "../mappers/competition.mapper";
 import { CompetitionRepository } from "../repositories/competition.repository";
@@ -37,15 +42,15 @@ import type { DrawnTheme } from "../types/drawn-theme";
 import type { NewCompetitionAnswer } from "../types/new-competition-answer";
 import type { ServedAttempt } from "../types/served-attempt";
 import { CLOCK } from "../utils/clock";
-import {
-  bestScorePerDay,
-  competitionDay,
-  daysBefore,
-  seasonBounds,
-  sharesSeason,
-} from "../utils/competition-day";
+import { competitionDay, daysBefore, seasonBounds, sharesSeason } from "../utils/competition-day";
 import { offersCatchUp, offersReplay } from "../utils/day-offers";
 import { judgeAttempt } from "../utils/judge-attempt";
+import {
+  leaderboardPage,
+  leaderboardPageCount,
+  positionFromRank,
+  rankFromGreaterCount,
+} from "../utils/leaderboard";
 
 const ROTATION_LOOKBACK_DAYS = 2;
 
@@ -55,13 +60,17 @@ export class CompetitionService {
     private readonly competitionRepository: CompetitionRepository,
     private readonly catalogService: CatalogService,
     private readonly premiumService: PremiumService,
+    private readonly profileService: ProfileService,
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
+  // An Attempt is a future Leaderboard row, so the Account is named before it is ever drawn.
   async issueAttempt(
     owner: string,
+    claims: JWTPayload,
     { kind }: AppCompetitionIssueInput,
   ): Promise<AppCompetitionAttemptResponse> {
+    await this.profileService.ensureProfile(owner, claims);
     const today = this.today();
     const inPlay = await this.attemptsStillInPlay(owner, today);
     switch (kind) {
@@ -133,16 +142,34 @@ export class CompetitionService {
 
     await this.attemptsStillInPlay(owner, today);
 
-    const { season, from, to } = seasonBounds(today);
-    const scores = await this.competitionRepository.findFinalizedDayScores(owner, from, to);
-
-    const days = bestScorePerDay(scores);
-
-    return toAppCompetitionStandingResponse(
+    const { season } = seasonBounds(today);
+    const { entity, greaterCount, precedingTieCount, rankedCount } =
+      await this.competitionRepository.findStanding(owner, season);
+    const rank = entity === null ? null : rankFromGreaterCount(greaterCount);
+    return appCompetitionStandingResponseSchema.parse({
       season,
-      days.reduce((total, day) => total + day.score, 0),
-      days,
+      seasonTotal: entity?.total ?? 0,
+      rank,
+      rankedCount,
+      page: rank === null ? null : leaderboardPage(positionFromRank(rank, precedingTieCount)),
+    });
+  }
+
+  // Public and Season-wide, so no Attempt is buried here: a page shows what finalizes already wrote.
+  async readLeaderboardPage({
+    page,
+  }: AppCompetitionLeaderboardQuery): Promise<AppCompetitionLeaderboardPageResponse> {
+    const { season } = seasonBounds(this.today());
+    const { entries, rankedCount } = await this.competitionRepository.findLeaderboardPage(
+      season,
+      page,
     );
+    return appCompetitionLeaderboardPageResponseSchema.parse({
+      season,
+      page,
+      pageCount: leaderboardPageCount(rankedCount),
+      entries: entries.map(({ rank, pseudo, total }) => ({ rank, pseudo, seasonTotal: total })),
+    });
   }
 
   private async issueInitialAttempt(

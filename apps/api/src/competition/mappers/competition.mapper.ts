@@ -3,16 +3,13 @@ import {
   type AppCompetitionActiveAttemptResponse,
   type AppCompetitionAttemptResponse,
   type AppCompetitionDayResponse,
-  type AppCompetitionStandingResponse,
   type AppCompetitionTranscriptResponse,
   appCompetitionActiveAttemptResponseSchema,
   appCompetitionAttemptResponseSchema,
   appCompetitionDayResponseSchema,
-  appCompetitionStandingResponseSchema,
   appCompetitionTranscriptResponseSchema,
 } from "@mentis/contracts/app";
 import type { CompetitionAttemptEntity } from "../../_database/entities/competition-attempt.entity";
-import type { DayScore } from "../types/day-score";
 import type { NewCompetitionAnswer } from "../types/new-competition-answer";
 import type { ServedAttempt } from "../types/served-attempt";
 import { seededRng } from "../utils/seeded-rng";
@@ -98,10 +95,3 @@ export const toAppCompetitionDayResponse = (
       .filter((attempt) => attempt.status === "finalized")
       .map(({ id, kind, score }) => ({ id, kind, score: score ?? 0 })),
   });
-
-export const toAppCompetitionStandingResponse = (
-  season: string,
-  seasonTotal: number,
-  days: DayScore[],
-): AppCompetitionStandingResponse =>
-  appCompetitionStandingResponseSchema.parse({ season, seasonTotal, days });

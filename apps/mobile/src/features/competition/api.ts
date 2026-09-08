@@ -6,17 +6,24 @@ import {
 } from "@mentis/contracts/app";
 import { skipToken, useQuery } from "@tanstack/react-query";
 import { prefetchThemeImages } from "@/features/quiz/theme-image-cache";
+import { worldKeys } from "@/features/world/api";
 import { api } from "@/lib/api";
 import { queryClient } from "@/lib/query-client";
 import { isPermanentRefusal, queuedFinalize } from "./finalize-outbox";
 import { useFinalizeOutboxStore } from "./finalize-outbox-store";
-import { fetchCompetitionDay, finalizeAttemptRequest, resumeOrIssueAttempt } from "./requests";
+import {
+  fetchCompetitionDay,
+  fetchStanding,
+  finalizeAttemptRequest,
+  resumeOrIssueAttempt,
+} from "./requests";
 
 export const competitionKeys = {
   attempts: (playerId: string) => ["competition", "attempt", playerId] as const,
   attempt: (playerId: string, kind: AppCompetitionAttemptKind) =>
     [...competitionKeys.attempts(playerId), kind] as const,
   day: (playerId: string) => ["competition", "day", playerId] as const,
+  standing: (playerId: string) => ["competition", "standing", playerId] as const,
   transcript: (attemptId: string) => ["competition", "transcript", attemptId] as const,
 };
 
@@ -52,6 +59,15 @@ export function useCompetitionDay(playerId: string | undefined) {
   });
 }
 
+// Re-read on every mount: another Account finalizing moves the rank without this phone doing a thing.
+export function useStanding(playerId: string | undefined) {
+  return useQuery({
+    queryKey: competitionKeys.standing(playerId ?? ""),
+    queryFn: () => fetchStanding(api),
+    enabled: playerId !== undefined,
+  });
+}
+
 // Idempotent by design: an Attempt whose batch already landed hands back its stored transcript.
 export async function pushFinalize(
   owner: string,
@@ -66,6 +82,9 @@ export async function pushFinalize(
   consumeAttempt(owner, attemptId);
   // A judged Attempt is what unlocks a Replay or fills a Catch-up, so the day is read again.
   void queryClient.invalidateQueries({ queryKey: competitionKeys.day(owner) });
+  // The judged score enters the Season Total, so rank, page and every ranking page move with it.
+  void queryClient.invalidateQueries({ queryKey: competitionKeys.standing(owner) });
+  void queryClient.invalidateQueries({ queryKey: worldKeys.leaderboard });
   return transcript;
 }
 

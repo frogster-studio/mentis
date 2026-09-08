@@ -2,6 +2,16 @@ import { describe, expect, it } from "vitest";
 import { errorResponseSchema } from "./error";
 
 describe("errorResponseSchema", () => {
+  it("accepts a pseudo collision", () => {
+    const envelope = {
+      statusCode: 409,
+      error: "Conflict",
+      message: "Pseudo already taken",
+      code: "PSEUDO_TAKEN",
+    };
+    expect(errorResponseSchema.parse(envelope)).toEqual(envelope);
+  });
+
   it("accepts the envelope with a known code", () => {
     const envelope = {
       statusCode: 404,

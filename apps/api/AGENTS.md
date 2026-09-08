@@ -34,9 +34,10 @@ Deliberately **not** a bounded context, so no `CONTEXT.md`: a gateway publishes 
 src/
   catalog/        # /app/themes + /app/questions: public Quiz play reads
     modules/ controllers/ services/ repositories/ mappers/ _tests/   # the layers of every feature
-  competition/    # /app/me/competition: Attempt issuance, resume and the judged finalize
+  competition/    # /app/me/competition: Attempt issuance, resume and the judged finalize; plus the public Leaderboard
   curation/       # /admin/*: the Editor's Catalog reads, staged content included
-  player/         # /app/me: stats, idempotent pushes, account deletion
+  player/         # /app/me: stats, idempotent pushes, the pseudo, account deletion
+  premium/        # /app/me/premium + the RevenueCat webhook: the mirrored entitlement
   _database/      # TypeORM: the module, the datasource options, entities/ — the schema source — and migrations/
   _tests/         # the shared harness plus the specs no feature owns (the bootstrap spine)
   auth/           # SupabaseUserGuard (401) and EditorGuard (403), plus the project JWKS
@@ -48,7 +49,7 @@ src/
   app.module.ts   # root module: feature imports, APP_FILTER
 ```
 
-Only those four are features. Everything below them is transversal spine — no layer subfolders there, just a `_tests/` where it has tests.
+Only those five are features. Everything below them is transversal spine — no layer subfolders there, just a `_tests/` where it has tests.
 
 ## Conventions
 

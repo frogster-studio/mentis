@@ -12,9 +12,11 @@ import {
   activeAttemptRequest,
   dayRequest,
   fetchCompetitionDay,
+  fetchStanding,
   finalizeAttemptRequest,
   issueAttemptRequest,
   resumeOrIssueAttempt,
+  standingRequest,
 } from "./requests";
 
 const BASE_URL = "https://api.test";
@@ -86,6 +88,7 @@ describe("the competition paths", () => {
     for (const request of [
       activeAttemptRequest,
       dayRequest,
+      standingRequest,
       issueAttemptRequest("initial"),
       finalizeAttemptRequest(ATTEMPT_ID, []),
     ]) {
@@ -104,6 +107,10 @@ describe("the competition paths", () => {
       body: { kind: "replay" },
     });
     expect(dayRequest).toStrictEqual({ method: "GET", path: "/app/me/competition/day" });
+    expect(standingRequest).toStrictEqual({
+      method: "GET",
+      path: "/app/me/competition/standing",
+    });
     expect(finalizeAttemptRequest(ATTEMPT_ID, []).path).toBe(
       `/app/me/competition/attempts/${ATTEMPT_ID}/finalize`,
     );
@@ -264,5 +271,57 @@ describe("what the day still allows", () => {
     const { api } = client({ day: "2026-08-21", replay: "yes", catchup: false, attempts: [] });
 
     await expect(api.requestJson(dayRequest, appCompetitionDayResponseSchema)).rejects.toThrow();
+  });
+});
+
+describe("where the Account stands this Season", () => {
+  it("reads its total, its rank and the page it sits on", async () => {
+    const { api, calls } = client({
+      season: "2026-09",
+      seasonTotal: 412,
+      rank: 12,
+      rankedCount: 340,
+      page: 1,
+    });
+
+    const standing = await fetchStanding(api);
+
+    expect(standing).toStrictEqual({
+      season: "2026-09",
+      seasonTotal: 412,
+      rank: 12,
+      rankedCount: 340,
+      page: 1,
+    });
+    expect(calls[0].url).toBe(`${BASE_URL}/app/me/competition/standing`);
+  });
+
+  it("reads an Account no finalized Attempt has ranked yet", async () => {
+    const { api } = client({
+      season: "2026-09",
+      seasonTotal: 0,
+      rank: null,
+      rankedCount: 340,
+      page: null,
+    });
+
+    const standing = await fetchStanding(api);
+
+    expect(standing.rank).toBeNull();
+    expect(standing.page).toBeNull();
+    expect(standing.rankedCount).toBe(340);
+  });
+
+  it("refuses a standing still carrying the days the contract dropped", async () => {
+    const { api } = client({
+      season: "2026-09",
+      seasonTotal: 412,
+      rank: 12,
+      rankedCount: 340,
+      page: 1,
+      days: 3,
+    });
+
+    await expect(fetchStanding(api)).rejects.toThrow();
   });
 });

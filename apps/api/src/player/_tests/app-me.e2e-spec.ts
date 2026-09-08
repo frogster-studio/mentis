@@ -7,12 +7,15 @@ import { createLocalJWKSet, exportJWK, generateKeyPair, type JWTPayload, SignJWT
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { ENV } from "../../_config/env.config";
 import { SUPABASE } from "../../_config/supabase.config";
+import { PlayerProfileEntity } from "../../_database/entities/player-profile.entity";
 import { QuizSessionEntity } from "../../_database/entities/quiz-session.entity";
 import { StatBaselineEntity } from "../../_database/entities/stat-baseline.entity";
 import { stubDataSource, testEnv } from "../../_tests/test-env";
 import { AppModule } from "../../app.module";
 import { JWKS } from "../../auth/jwks";
 import { AccountGoneError, PlayerRepository } from "../repositories/player.repository";
+import { ProfileRepository } from "../repositories/profile.repository";
+import { DIGIT_DRAW } from "../utils/digit-draw";
 
 const PLAYER_A = "11111111-1111-4111-8111-111111111111";
 const PLAYER_B = "22222222-2222-4222-8222-222222222222";
@@ -24,8 +27,10 @@ const SESSION_3 = "10000000-0000-4000-8000-000000000003";
 
 let sessionRows: QuizSessionEntity[] = [];
 let baselineRows: StatBaselineEntity[] = [];
+let profileRows: PlayerProfileEntity[] = [];
 let liveOwners = new Set<string>();
 let inserts: string[] = [];
+let draws: number[] = [];
 
 const sessionRow = (
   id: string,
@@ -55,6 +60,9 @@ const baselineRow = (
     sessionCount: 4,
     ...overrides,
   });
+
+const profileRow = (owner: string, pseudo: string): PlayerProfileEntity =>
+  Object.assign(new PlayerProfileEntity(), { owner, pseudo, pseudoKey: pseudo.toLowerCase() });
 
 // ON CONFLICT DO NOTHING and the owner FK, in memory: the SQL itself is proven by the live smoke.
 const insertIfAbsent = <Row extends { owner: string }>(
@@ -110,6 +118,33 @@ const fakePlayerRepository = {
   | "insertStatBaselinesIfAbsent"
 >;
 
+const fakeProfileRepository = {
+  async findByOwner(owner) {
+    return profileRows.find((row) => row.owner === owner) ?? null;
+  },
+  async findByPseudoKey(pseudoKey) {
+    return profileRows.find((row) => row.pseudoKey === pseudoKey) ?? null;
+  },
+  async insertIfAbsent(profile) {
+    inserts.push("player_profiles");
+    const clashes = profileRows.some(
+      (row) => row.owner === profile.owner || row.pseudoKey === profile.pseudoKey,
+    );
+    if (!clashes) {
+      profileRows.push(Object.assign(new PlayerProfileEntity(), profile));
+    }
+  },
+  async updateByOwner(owner, profile) {
+    const row = profileRows.find((existing) => existing.owner === owner);
+    if (row !== undefined) {
+      Object.assign(row, profile);
+    }
+  },
+} satisfies Pick<
+  ProfileRepository,
+  "findByOwner" | "findByPseudoKey" | "insertIfAbsent" | "updateByOwner"
+>;
+
 const stubSupabase = {
   auth: {
     admin: {
@@ -118,6 +153,7 @@ const stubSupabase = {
         liveOwners.delete(id);
         sessionRows = sessionRows.filter((row) => row.owner !== id);
         baselineRows = baselineRows.filter((row) => row.owner !== id);
+        profileRows = profileRows.filter((row) => row.owner !== id);
         return Promise.resolve({ data: { user: null }, error: null });
       },
     },
@@ -163,21 +199,25 @@ describe("app me routes e2e", () => {
   const push = (token: string, path: string, body: unknown) =>
     authed(token, path, { method: "POST", body: JSON.stringify(body) });
 
+  const put = (token: string, path: string, body: unknown) =>
+    authed(token, path, { method: "PUT", body: JSON.stringify(body) });
+
   beforeAll(async () => {
     const signingKey = await generateKeyPair("ES256", { extractable: true });
     const publicJwk = { ...(await exportJWK(signingKey.publicKey)), alg: "ES256", kid: "test-key" };
-    const mint = (sub: string): Promise<string> =>
+    const mint = (sub: string, fullName?: string): Promise<string> =>
       new SignJWT({
         iss: `${testEnv.SUPABASE_URL}/auth/v1`,
         aud: "authenticated",
         sub,
         role: "authenticated",
+        ...(fullName === undefined ? {} : { user_metadata: { full_name: fullName } }),
       } satisfies JWTPayload)
         .setProtectedHeader({ alg: "ES256", kid: "test-key" })
         .setIssuedAt()
         .setExpirationTime("1h")
         .sign(signingKey.privateKey);
-    tokenA = await mint(PLAYER_A);
+    tokenA = await mint(PLAYER_A, "Éléonore Dupont");
     tokenB = await mint(PLAYER_B);
 
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
@@ -187,6 +227,10 @@ describe("app me routes e2e", () => {
       .useValue(stubDataSource)
       .overrideProvider(PlayerRepository)
       .useValue(fakePlayerRepository)
+      .overrideProvider(ProfileRepository)
+      .useValue(fakeProfileRepository)
+      .overrideProvider(DIGIT_DRAW)
+      .useValue(() => draws.shift() ?? 0)
       .overrideProvider(SUPABASE)
       .useValue(stubSupabase)
       .overrideProvider(JWKS)
@@ -204,11 +248,15 @@ describe("app me routes e2e", () => {
   beforeEach(() => {
     sessionRows = [];
     baselineRows = [];
+    profileRows = [];
     liveOwners = new Set([PLAYER_A, PLAYER_B]);
     inserts = [];
+    draws = [];
   });
 
   it.each([
+    ["GET", "/app/me/profile"],
+    ["PUT", "/app/me/pseudo"],
     ["GET", "/app/me/stats"],
     ["POST", "/app/me/quiz-sessions"],
     ["POST", "/app/me/stat-baselines"],
@@ -218,6 +266,74 @@ describe("app me routes e2e", () => {
     expect(response.status).toBe(401);
     expect(errorResponseSchema.parse(await response.json()).code).toBe("UNAUTHENTICATED");
   });
+
+  it("GET /app/me/profile derives the default pseudo from full_name and keeps it", async () => {
+    draws = [48213, 70001];
+
+    const first = await authed(tokenA, "/app/me/profile");
+    expect(first.status).toBe(200);
+    expect(await first.json()).toEqual({ pseudo: "Eleonore48213" });
+
+    const second = await authed(tokenA, "/app/me/profile");
+    expect(await second.json()).toEqual({ pseudo: "Eleonore48213" });
+    expect(profileRows).toHaveLength(1);
+  });
+
+  it("GET /app/me/profile without a full_name claim falls back to Joueur", async () => {
+    draws = [55020];
+
+    const response = await authed(tokenB, "/app/me/profile");
+    expect(await response.json()).toEqual({ pseudo: "Joueur55020" });
+  });
+
+  it("GET /app/me/profile draws new digits when the default's key is taken", async () => {
+    profileRows.push(profileRow(PLAYER_B, "Eleonore48213"));
+    draws = [48213, 70001];
+
+    const response = await authed(tokenA, "/app/me/profile");
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ pseudo: "Eleonore70001" });
+    expect(inserts).toEqual(["player_profiles", "player_profiles"]);
+  });
+
+  it("PUT /app/me/pseudo names a Player who has no profile row yet", async () => {
+    const response = await put(tokenA, "/app/me/pseudo", { pseudo: "Nico_42" });
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ pseudo: "Nico_42" });
+    expect(profileRows).toEqual([profileRow(PLAYER_A, "Nico_42")]);
+  });
+
+  it("PUT /app/me/pseudo of a key another owner holds, any casing → 409 PSEUDO_TAKEN", async () => {
+    profileRows.push(profileRow(PLAYER_B, "Nico_42"));
+
+    const response = await put(tokenA, "/app/me/pseudo", { pseudo: "NICO_42" });
+    expect(response.status).toBe(409);
+    expect(errorResponseSchema.parse(await response.json()).code).toBe("PSEUDO_TAKEN");
+    expect(profileRows).toEqual([profileRow(PLAYER_B, "Nico_42")]);
+  });
+
+  it("PUT /app/me/pseudo of your own pseudo in another casing stores it as typed", async () => {
+    draws = [48213];
+    await authed(tokenA, "/app/me/profile");
+
+    const response = await put(tokenA, "/app/me/pseudo", { pseudo: "ELEONORE48213" });
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ pseudo: "ELEONORE48213" });
+
+    const after = await authed(tokenA, "/app/me/profile");
+    expect(await after.json()).toEqual({ pseudo: "ELEONORE48213" });
+    expect(profileRows).toHaveLength(1);
+  });
+
+  it.each([{ pseudo: "no" }, { pseudo: "Jean-Pierre" }, {}])(
+    "PUT /app/me/pseudo with %o → 400 VALIDATION_FAILED",
+    async (body) => {
+      const response = await put(tokenA, "/app/me/pseudo", body);
+      expect(response.status).toBe(400);
+      expect(errorResponseSchema.parse(await response.json()).code).toBe("VALIDATION_FAILED");
+      expect(profileRows).toEqual([]);
+    },
+  );
 
   it("GET /app/me/stats returns the owner's world, sessions finishedAt asc, owner off the wire", async () => {
     sessionRows.push(
@@ -359,14 +475,16 @@ describe("app me routes e2e", () => {
     },
   );
 
-  it("DELETE /app/me/account cascades both player tables and makes later pushes 410", async () => {
+  it("DELETE /app/me/account cascades the player tables and makes later pushes 410", async () => {
     sessionRows.push(sessionRow(SESSION_1, PLAYER_A), sessionRow(SESSION_2, PLAYER_B));
     baselineRows.push(baselineRow(PLAYER_A), baselineRow(PLAYER_B));
+    profileRows.push(profileRow(PLAYER_A, "Eleonore48213"), profileRow(PLAYER_B, "Nico_42"));
 
     const response = await authed(tokenA, "/app/me/account", { method: "DELETE" });
     expect(response.status).toBe(204);
     expect(sessionRows).toEqual([sessionRow(SESSION_2, PLAYER_B)]);
     expect(baselineRows).toEqual([baselineRow(PLAYER_B)]);
+    expect(profileRows).toEqual([profileRow(PLAYER_B, "Nico_42")]);
 
     const stranded = await push(tokenA, "/app/me/quiz-sessions", [pushedSession(SESSION_3)]);
     expect(stranded.status).toBe(410);

@@ -4,7 +4,11 @@ import { StyleSheet, useWindowDimensions, View } from "react-native";
 import { AppHeader } from "@/components/app-header";
 import { AppTabBar, TAB_ICON_SIZE } from "@/components/app-tab-bar";
 import { TabScrollProvider } from "@/components/tab-scroll";
-import { TAB_TRANSITION_EASING, TAB_TRANSITION_MS } from "@/components/tab-transition";
+import {
+  TAB_TRANSITION_EASING,
+  TAB_TRANSITION_MS,
+  watchTabProgress,
+} from "@/components/tab-transition";
 import { HOME_TAB_LABEL } from "@/features/quiz/constants";
 import { WORLD_TAB_LABEL } from "@/features/world/constants";
 import { COLORS } from "@/theme/tokens";
@@ -31,7 +35,7 @@ const TabsLayout = () => {
               sceneStyle: {
                 transform: [
                   {
-                    translateX: current.progress.interpolate({
+                    translateX: watchTabProgress(current.progress).interpolate({
                       inputRange: [-1, 0, 1],
                       outputRange: [-width, 0, width],
                     }),

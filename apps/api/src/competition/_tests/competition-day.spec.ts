@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { competitionDay, daysBefore, seasonBounds, sharesSeason } from "../utils/competition-day";
+import {
+  competitionDay,
+  daysBefore,
+  seasonBounds,
+  seasonTotal,
+  sharesSeason,
+} from "../utils/competition-day";
 
 describe("competitionDay", () => {
   it("reads the Europe/Paris date, not the server's", () => {
@@ -52,5 +58,23 @@ describe("sharesSeason", () => {
   it("holds inside a month and breaks at its first day", () => {
     expect(sharesSeason("2026-08-20", "2026-08-19")).toBe(true);
     expect(sharesSeason("2026-08-01", "2026-07-31")).toBe(false);
+  });
+});
+
+describe("seasonTotal", () => {
+  it("sums the best finalized score of each Competition Day, regardless of order", () => {
+    expect(
+      seasonTotal([
+        { day: "2026-08-21", score: 10 },
+        { day: "2026-08-20", score: 20 },
+        { day: "2026-08-20", score: 30 },
+        { day: "2026-08-22", score: 0 },
+      ]),
+    ).toBe(40);
+  });
+
+  it("counts no Attempts and zero-finalized Attempts as zero", () => {
+    expect(seasonTotal([])).toBe(0);
+    expect(seasonTotal([{ day: "2026-08-20", score: 0 }])).toBe(0);
   });
 });

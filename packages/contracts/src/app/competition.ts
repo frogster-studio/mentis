@@ -1,8 +1,10 @@
 import { z } from "zod";
 import { QuizAnswerModeEnum, UserAnswerMatchedViaEnum } from "../enums";
+import { appPseudoSchema } from "./profile";
 import { appCategorySchema } from "./theme";
 
 export const COMPETITION_QUESTION_COUNT = 10;
+export const LEADERBOARD_PAGE_SIZE = 50;
 // The self-reported mode alone prices a correct answer.
 export const COMPETITION_POINTS = { cash: 5, square: 2 } as const;
 
@@ -114,9 +116,33 @@ export const appCompetitionDayResponseSchema = z.object({
 });
 export type AppCompetitionDayResponse = z.infer<typeof appCompetitionDayResponseSchema>;
 
-export const appCompetitionStandingResponseSchema = z.object({
+export const appCompetitionStandingResponseSchema = z.strictObject({
   season: competitionSeasonSchema,
   seasonTotal: z.number().int().min(0).max(MAX_SEASON_SCORE),
-  days: z.array(z.object({ day: z.iso.date(), score: z.number().int().min(0).max(MAX_SCORE) })),
+  rank: z.number().int().positive().nullable(),
+  rankedCount: z.number().int().nonnegative(),
+  page: z.number().int().positive().nullable(),
 });
 export type AppCompetitionStandingResponse = z.infer<typeof appCompetitionStandingResponseSchema>;
+
+// A signed-out Player asks for the Leaderboard, not for a page of it.
+export const appCompetitionLeaderboardQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+});
+export type AppCompetitionLeaderboardQuery = z.infer<typeof appCompetitionLeaderboardQuerySchema>;
+
+const competitionLeaderboardEntrySchema = z.object({
+  rank: z.number().int().positive(),
+  pseudo: appPseudoSchema,
+  seasonTotal: z.number().int().min(0).max(MAX_SEASON_SCORE),
+});
+
+export const appCompetitionLeaderboardPageResponseSchema = z.object({
+  season: competitionSeasonSchema,
+  page: z.number().int().positive(),
+  pageCount: z.number().int().nonnegative(),
+  entries: z.array(competitionLeaderboardEntrySchema).max(LEADERBOARD_PAGE_SIZE),
+});
+export type AppCompetitionLeaderboardPageResponse = z.infer<
+  typeof appCompetitionLeaderboardPageResponseSchema
+>;

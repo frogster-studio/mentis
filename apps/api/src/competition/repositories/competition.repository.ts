@@ -1,14 +1,19 @@
+import { LEADERBOARD_PAGE_SIZE } from "@mentis/contracts/app";
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Between, Repository } from "typeorm";
+import { Between, EntityManager, Repository } from "typeorm";
+import { AuthUserEntity } from "../../_database/entities/auth-user.entity";
 import { CompetitionAnswerEntity } from "../../_database/entities/competition-answer.entity";
 import {
   CompetitionAttemptEntity,
   type CompetitionAttemptKind,
 } from "../../_database/entities/competition-attempt.entity";
-import type { DayScore } from "../types/day-score";
+import { CompetitionStandingEntity } from "../../_database/entities/competition-standing.entity";
+import { PlayerProfileEntity } from "../../_database/entities/player-profile.entity";
 import type { FinalizedOutcome } from "../types/finalized-outcome";
+import type { LeaderboardEntry } from "../types/leaderboard-entry";
 import type { NewAttempt } from "../types/new-attempt";
+import { seasonBounds, seasonTotal } from "../utils/competition-day";
 
 @Injectable()
 export class CompetitionRepository {
@@ -52,13 +57,105 @@ export class CompetitionRepository {
     return rows.map((row) => row.themeId);
   }
 
-  // A day scores its best Attempt, so every finalized row the season holds is a candidate.
-  async findFinalizedDayScores(owner: string, from: string, to: string): Promise<DayScore[]> {
-    const rows = await this.attempts.find({
-      where: { owner, status: "finalized", day: Between(from, to) },
-      select: { day: true, score: true },
-    });
-    return rows.map((row) => ({ day: row.day, score: row.score ?? 0 }));
+  async findStanding(
+    owner: string,
+    season: string,
+  ): Promise<{
+    entity: CompetitionStandingEntity | null;
+    greaterCount: number;
+    precedingTieCount: number;
+    rankedCount: number;
+  }> {
+    // The Account anchors the read so an absent standing still carries the Season's ranked count.
+    const { entities, raw } = await this.attempts.manager
+      .createQueryBuilder<AuthUserEntity & { standing: CompetitionStandingEntity | null }>(
+        AuthUserEntity,
+        "account",
+      )
+      .leftJoinAndMapOne(
+        "account.standing",
+        CompetitionStandingEntity,
+        "standing",
+        "standing.owner = account.id AND standing.season = :season",
+      )
+      .leftJoin(PlayerProfileEntity, "profile", "profile.owner = account.id")
+      .addSelect(
+        (query) =>
+          query
+            .select("COUNT(*)")
+            .from(CompetitionStandingEntity, "ranked")
+            .where("ranked.season = :season"),
+        "rankedCount",
+      )
+      .addSelect(
+        (query) =>
+          query
+            .select("COUNT(*)")
+            .from(CompetitionStandingEntity, "better")
+            .where("better.season = :season AND better.total > standing.total"),
+        "greaterCount",
+      )
+      .addSelect(
+        (query) =>
+          query
+            .select("COUNT(*)")
+            .from(CompetitionStandingEntity, "tied")
+            .innerJoin(PlayerProfileEntity, "tiedProfile", "tiedProfile.owner = tied.owner")
+            .where("tied.season = :season AND tied.total = standing.total")
+            .andWhere("tiedProfile.pseudoKey < profile.pseudoKey"),
+        "precedingTieCount",
+      )
+      .where("account.id = :owner", { owner, season })
+      .getRawAndEntities<{
+        rankedCount: string;
+        greaterCount: string;
+        precedingTieCount: string;
+      }>();
+    return {
+      entity: entities[0]?.standing ?? null,
+      rankedCount: Number(raw[0]?.rankedCount ?? 0),
+      greaterCount: Number(raw[0]?.greaterCount ?? 0),
+      precedingTieCount: Number(raw[0]?.precedingTieCount ?? 0),
+    };
+  }
+
+  async findLeaderboardPage(
+    season: string,
+    page: number,
+  ): Promise<{ entries: LeaderboardEntry[]; rankedCount: number }> {
+    const [rows, rankedCount] = await Promise.all([
+      this.attempts.manager
+        .createQueryBuilder()
+        .select("page.rank", "rank")
+        .addSelect("page.pseudo", "pseudo")
+        .addSelect("page.total", "total")
+        // Ranked over the rows the asked page needs, so a shared rank survives the page edge.
+        .from(
+          (ranked) =>
+            ranked
+              .select("RANK() OVER (ORDER BY standing.total DESC)", "rank")
+              .addSelect("profile.pseudo", "pseudo")
+              .addSelect("profile.pseudoKey", "pseudo_key")
+              .addSelect("standing.total", "total")
+              .from(CompetitionStandingEntity, "standing")
+              .innerJoin(PlayerProfileEntity, "profile", "profile.owner = standing.owner")
+              .where("standing.season = :season")
+              .orderBy("standing.total", "DESC")
+              .addOrderBy("profile.pseudoKey", "ASC")
+              .limit(LEADERBOARD_PAGE_SIZE * page),
+          "page",
+        )
+        .orderBy("page.total", "DESC")
+        .addOrderBy("page.pseudo_key", "ASC")
+        .offset(LEADERBOARD_PAGE_SIZE * (page - 1))
+        .setParameter("season", season)
+        .getRawMany<{ rank: string; pseudo: string; total: number }>(),
+      this.attempts.manager.countBy(CompetitionStandingEntity, { season }),
+    ]);
+    return {
+      entries: rows.map(({ rank, pseudo, total }) => ({ rank: Number(rank), pseudo, total })),
+      rankedCount,
+    };
   }
 
   // ON CONFLICT DO NOTHING: an empty return means another device won the day's single Attempt.
@@ -82,7 +179,7 @@ export class CompetitionRepository {
     attemptId: string,
     outcome: FinalizedOutcome,
   ): Promise<CompetitionAttemptEntity | null> {
-    return this.attempts.manager.transaction(async (manager) => {
+    return this.attempts.manager.transaction("READ COMMITTED", async (manager) => {
       const claimed = await manager
         .createQueryBuilder()
         .update(CompetitionAttemptEntity)
@@ -103,7 +200,40 @@ export class CompetitionRepository {
         .into(CompetitionAnswerEntity)
         .values(outcome.answers)
         .execute();
-      return manager.findOneByOrFail(CompetitionAttemptEntity, { id: attemptId });
+      const attempt = await manager.findOneByOrFail(CompetitionAttemptEntity, { id: attemptId });
+      await this.recomputeStanding(manager, attempt);
+      return attempt;
     });
+  }
+
+  private async recomputeStanding(
+    manager: EntityManager,
+    attempt: CompetitionAttemptEntity,
+  ): Promise<void> {
+    const { season, from, to } = seasonBounds(attempt.day);
+    const where = { owner: attempt.owner, season };
+    await manager
+      .createQueryBuilder()
+      .insert()
+      .into(CompetitionStandingEntity)
+      .values({ ...where, total: 0 })
+      .orIgnore()
+      .execute();
+    // Serialize this Account's Season writes before reading the newly committed Attempts.
+    await manager.findOneOrFail(CompetitionStandingEntity, {
+      where,
+      lock: { mode: "pessimistic_write" },
+    });
+    const attempts = await manager.find(CompetitionAttemptEntity, {
+      where: { owner: attempt.owner, status: "finalized", day: Between(from, to) },
+    });
+    await manager.upsert(
+      CompetitionStandingEntity,
+      {
+        ...where,
+        total: seasonTotal(attempts.map((row) => ({ day: row.day, score: row.score ?? 0 }))),
+      },
+      ["owner", "season"],
+    );
   }
 }
