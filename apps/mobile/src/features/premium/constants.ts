@@ -3,6 +3,10 @@ export const PREMIUM_PITCH = "Débloquez l'expérience Mentis complète.";
 export const PREMIUM_CTA_LABEL = "Devenir Premium";
 export const PREMIUM_ACTIVE_TITLE = "Compte Premium";
 export const PREMIUM_ACTIVE_MESSAGE = "Abonnement actif, merci !";
+export const PREMIUM_RESTORE_LABEL = "Restaurer mes achats";
+export const PREMIUM_RESTORE_PENDING_LABEL = "Restauration…";
+export const PREMIUM_RESTORE_ERROR = "La restauration a échoué.";
+export const PREMIUM_RESTORE_EMPTY = "Aucun achat à restaurer sur ce compte.";
 
 export const PAYWALL_TITLE = "Débloquez l'expérience Mentis complète";
 export const PAYWALL_FEATURES = [
