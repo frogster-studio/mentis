@@ -1,0 +1,5 @@
+2026-09-08 — Done: paywall announces only Replay and Catch-up; passes: true.
+Decision: remove two unshipped claims from existing PAYWALL_FEATURES; retain exact requested copy/order, no new abstraction or copy-only test.
+Files: apps/mobile/src/features/premium/constants.ts, PRD.md, progress.txt (created; absent initially).
+Validation: root bun run check green — all workspace typechecks, 993 tests, Knip, Biome; no auto-fixes.
+Blockers: none. Next: no pending code items; store/account setup remains in PRD human steps. No migration generated, no push.

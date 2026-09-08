@@ -6,10 +6,8 @@ export const PREMIUM_ACTIVE_MESSAGE = "Abonnement actif, merci !";
 
 export const PAYWALL_TITLE = "Débloquez l'expérience Mentis complète";
 export const PAYWALL_FEATURES = [
-  "Retirez des thèmes de la sélection automatique",
   "Rejouez la compétition quotidienne",
   "Lancez la compétition quotidienne de la veille",
-  "Practices personnalisés : multi-thèmes, 5 à 30 questions en une session",
 ];
 export const PAYWALL_PRICE_PERIOD = "/ mois";
 export const PAYWALL_PURCHASE_LABEL = "S'abonner";
