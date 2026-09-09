@@ -197,7 +197,7 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
 
 ## Human steps
 
-Each step carries its own proof; a step whose proof fails blocks the next one. Status: H1 open, H2 to H15 open.
+Each step carries its own proof; a step whose proof fails blocks the next one. Status: H1 done, H2 to H15 open.
 
 The loop commits and pushes on branch `feat/store-readiness`, in its draft PR. Nothing deploys before that PR merges into `main`: the merge is the gate between the last item and the proof of H3.
 
@@ -205,7 +205,7 @@ The loop commits and pushes on branch `feat/store-readiness`, in its draft PR. N
 
 - Postal address for the mentions légales, the SIREN, the Railway region of the API (Railway → service → Settings → Region).
 - Replace `<ADRESSE — H1>`, `<SIREN — H1>` and `<REGION RAILWAY — H1>` in the Decisions above.
-- Proof: no `— H1>` placeholder remains in this file.
+- Proof: no `— H1>` placeholder remains in the Decisions.
 
 ### H2. OVH: the support address
 
