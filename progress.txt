@@ -12,3 +12,14 @@ Decisions:
 Files: apps/web/** (new), knip.json, AGENTS.md, bun.lock, PRD.md, progress.txt.
 Proof: bun run --filter @mentis/web build -> out/index.html carries « Frogster Studio », the Mentis card, « bientôt », the four footer links. bun run check exit 0.
 Notes for next: next build rewrites apps/web/tsconfig.json (adds .next/dev/types) — committed as it landed. apps/web/out/ and next-env.d.ts gitignored. Item 2 (/legal) needs src/lib/publisher.ts.
+## Item 2 — /legal mentions légales (web) — DONE
+
+Found the work already in the tree, uncommitted, PRD already flipped: previous iteration died before step 3. Verified + committed it rather than stacking item 3 on top.
+Decisions:
+- src/lib/publisher.ts = a flat `as const` PUBLISHER object, no formatting helpers: /mentis/privacy and /mentis/terms will name the same controller from it (PRD "hard-coded in one module").
+- Field named `siret`, labelled « SIRET »: the PRD Decisions say « SIREN » but the value 94033623300017 is 14 digits = a SIRET. Kept the number, fixed the label. Flag for H4 review.
+- Host (Vercel Inc.) stays a local const in the page: it is the site's host, not the publisher's identity, and nothing else will read it.
+- Rows rendered by a local `Rows` <dl> component, phone as tel: and email as mailto:. Type scale unchanged (text-4xl / text-lg / text-sm), sky only on links.
+Files: apps/web/src/lib/publisher.ts (new), apps/web/src/app/legal/page.tsx (new), PRD.md.
+Proof: bun run check exit 0. build -> out/legal.html carries every editor field, the host, and the four footer links.
+Notes for next: item 3 (/mentis/privacy) is the next false, and the biggest — the whole data inventory. It should import PUBLISHER for the controller. ralph-once.sh is modified in the tree (Hugo's local sbx -> plain claude switch), left uncommitted on purpose.
