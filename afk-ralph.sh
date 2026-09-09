@@ -35,12 +35,12 @@ for ((i=1; i<=ITERATIONS; i++)); do
   : > "$LAST"
   case "$CLI" in
     claude)
-      claude -p --permission-mode acceptEdits \
+      claude -p "@PRD.md @progress.txt @AGENTS.md $TASK" \
+        --permission-mode acceptEdits \
         --model claude-opus-5 --effort high \
         --allowedTools "Bash(bun run *),Bash(bunx *),Bash(git add *),Bash(git commit *)" \
         --disallowedTools "Bash(bun run migration:generate*),Bash(git push *)" \
-        --max-turns 200 \
-        "@PRD.md @progress.txt @AGENTS.md $TASK" | tee "$LAST"
+        --max-turns 200 | tee "$LAST"
       ;;
     codex)
       codex exec -m gpt-6-astra --dangerously-bypass-approvals-and-sandbox --ephemeral \

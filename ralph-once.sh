@@ -26,11 +26,11 @@ This is production code. It must be maintainable. Fight entropy."
 
 case "$CLI" in
   claude)
-    claude --permission-mode acceptEdits \
+    claude "@PRD.md @progress.txt @AGENTS.md $TASK" \
+      --permission-mode acceptEdits \
       --model claude-opus-5 --effort high \
       --allowedTools "Bash(bun run *),Bash(bunx *),Bash(git add *),Bash(git commit *)" \
-      --disallowedTools "Bash(bun run migration:generate*),Bash(git push *)" \
-      "@PRD.md @progress.txt @AGENTS.md $TASK"
+      --disallowedTools "Bash(bun run migration:generate*),Bash(git push *)"
     ;;
   codex)
     codex -m gpt-6-astra -s danger-full-access -a never \
