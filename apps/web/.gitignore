@@ -1,0 +1,10 @@
+# next.js
+/.next/
+/out/
+/build/
+
+# vercel
+.vercel
+
+# generated types
+next-env.d.ts

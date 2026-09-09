@@ -1,11 +1,12 @@
 # Mentis monorepo
 
-Three apps sharing one Supabase project. **bun only** — never npm, pnpm, or yarn (`bun install`, `bun run`, `bunx`).
+Three apps sharing one Supabase project, plus the public web site. **bun only** — never npm, pnpm, or yarn (`bun install`, `bun run`, `bunx`).
 
 ```
 apps/admin/               # Next.js back-office (Vercel). App details: apps/admin/AGENTS.md
 apps/api/                 # NestJS REST gateway (Railway later) + the SHARED schema. App details: apps/api/AGENTS.md
 apps/mobile/              # Expo quiz app (EAS later). App details: apps/mobile/AGENTS.md
+apps/web/                 # Next.js static site frogster-studio.com (Vercel). App details: apps/web/AGENTS.md
 packages/answer-matching/ # @mentis/answer-matching — the Cash judge + Carré shuffle, phone and API
 packages/contracts/       # @mentis/contracts — zod request/response schemas the API publishes
 ```
@@ -20,7 +21,7 @@ Instructions live in `AGENTS.md` alone; every `CLAUDE.md` here is a one-line `@A
 - `bun run knip` — drop unused files/exports/deps, then format
 - `bun run typecheck` / `bun run test` — every workspace
 - `bun run check` — all of the above; **every piece of work must end with `check` green**
-- Single workspace: `bun run --filter @mentis/admin <script>` (also `@mentis/api`, `@mentis/mobile`, `@mentis/contracts`, `@mentis/answer-matching`)
+- Single workspace: `bun run --filter @mentis/admin <script>` (also `@mentis/api`, `@mentis/mobile`, `@mentis/web`, `@mentis/contracts`, `@mentis/answer-matching`)
 
 Biome and Knip are configured **only at the root** (`biome.json`, `knip.json`) — never add per-app configs or per-app lint scripts. Style: double quotes, 2-space indent, line width 100.
 

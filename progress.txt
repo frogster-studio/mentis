@@ -1,0 +1,14 @@
+## Item 1 — apps/web workspace exists (web) — DONE
+
+Done: @mentis/web, Next 16 static export (output: "export"), root page + shared footer.
+Decisions:
+- Footer lives in the root layout, not per page: every future page inherits it for free (PRD "every page shares that footer").
+- src/lib/routes.ts = the five paths (ROUTES named map + PAGE_PATHS list); footer labels stay in site-footer.tsx so routes.ts is paths only. Its spec asserts the five.
+- Footer already links /legal, /mentis/* — those pages arrive in items 2-5, so the links 404 until then. Deliberate: no typedRoutes, build is green.
+- Mark copied as an inline SVG component (currentColor, sky-500) rather than shared: no cross-app UI package exists, admin duplicates the wordmark the same way.
+- Type scale kept to three (text-4xl / text-lg / text-sm), zinc canvas + white card, rounded-lg only.
+- Fonts copied from apps/admin/public/fonts, wired with next/font/local. No env var, no API call anywhere in apps/web.
+- Registered the workspace where the repo already lists them: knip.json entry, root AGENTS.md tree + filter list, plus a short apps/web/AGENTS.md (+ one-line CLAUDE.md) pointing design rules at apps/admin/AGENTS.md.
+Files: apps/web/** (new), knip.json, AGENTS.md, bun.lock, PRD.md, progress.txt.
+Proof: bun run --filter @mentis/web build -> out/index.html carries « Frogster Studio », the Mentis card, « bientôt », the four footer links. bun run check exit 0.
+Notes for next: next build rewrites apps/web/tsconfig.json (adds .next/dev/types) — committed as it landed. apps/web/out/ and next-env.d.ts gitignored. Item 2 (/legal) needs src/lib/publisher.ts.

@@ -4,6 +4,7 @@
   "workspaces": {
     ".": {},
     "apps/admin": {},
+    "apps/web": {},
     "apps/mobile": {
       "entry": ["src/app/**/*.tsx"],
       "project": ["src/**/*.{ts,tsx}", "scripts/**/*.ts", "*.{js,ts}"],

@@ -88,7 +88,7 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
       "src/lib/routes.ts lists the five page paths and its vitest spec passes; knip.json carries an apps/web entry",
       "bun run check green from the repo root"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "web",
