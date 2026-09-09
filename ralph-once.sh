@@ -2,15 +2,8 @@
 set -e
 cd "$(dirname "$0")"
 
-CLI=claude
-for arg in "$@"; do
-  case "$arg" in
-    --cli=claude|--cli=codex) CLI="${arg#--cli=}" ;;
-    *) echo "Usage: $0 [--cli=claude|--cli=codex]"; exit 1 ;;
-  esac
-done
-
-TASK="1. Pick the next item with passes: false. Prioritize in this order: \
+TASK="
+1. Pick the next item with passes: false. Prioritize in this order: \
 schema and core abstractions, integration points, unknown unknowns, \
 standard features, polish. Not necessarily the first in the list. \
 2. Implement it. Keep the change small: one logical change, one commit. \
@@ -24,16 +17,7 @@ ONLY DO ONE ITEM AT A TIME. \
 Never run bun run migration:generate: the human does it. \
 This is production code. It must be maintainable. Fight entropy."
 
-case "$CLI" in
-  claude)
-    claude "@PRD.md @progress.txt @AGENTS.md $TASK" \
-      --permission-mode acceptEdits \
-      --model claude-opus-5 --effort high \
-      --allowedTools "Bash(bun run *),Bash(bunx *),Bash(git add *),Bash(git commit *)" \
-      --disallowedTools "Bash(bun run migration:generate*),Bash(git push *)"
-    ;;
-  codex)
-    codex -m gpt-6-astra -s danger-full-access -a never \
-      "Read PRD.md and progress.txt. $TASK"
-    ;;
-esac
+sbx run claude --name ralph . /Users/hugobayoud/prog/mentis -- \
+  --model claude-opus-5 --effort high \
+  --disallowedTools "Bash(bun run migration:generate*),Bash(git push *)" \
+  "@PRD.md @progress.txt @AGENTS.md $TASK"
