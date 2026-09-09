@@ -140,7 +140,7 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
       "The admin-changed and deploy-admin jobs are byte-identical to before",
       "The workflow parses: bunx yaml-lint or an equivalent YAML parse of .github/workflows/ci.yml succeeds; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
