@@ -99,7 +99,7 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
       "/legal is in the static export (out/legal.html or out/legal/index.html) and shares the site footer",
       "bun run check green from the repo root"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "web",
