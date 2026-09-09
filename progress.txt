@@ -48,3 +48,16 @@ Decisions:
 Files: apps/web/src/app/mentis/terms/page.tsx (new), PRD.md, progress.txt.
 Proof: bun run check exit 0 (typecheck 6/6, api 368 tests, mobile 254, knip + biome clean). build -> out/mentis/terms.html carries « Mentis Premium », 2,99, « 24 heures », App Store, Google Play, « Rejouer la compétition », rattrapage, « droit français », « 15 ans », « Dernière mise à jour », the support address, and the four footer links.
 Notes for next: the [::1] proxy fix from item 3 needs BOTH vars — NO_PROXY="$NO_PROXY,[::1]" no_proxy="$no_proxy,[::1]" bun run check. Setting the uppercase one alone still leaves 267 api e2e tests failing on 403; the lowercase one is what Node's fetch reads. Item 5 (/mentis/support) is the next false: mailto: + exactly four FAQ entries, and it must never print the Gmail address.
+## Item 5 — /mentis/support support address + FAQ (web) — DONE
+
+Done: apps/web/src/app/mentis/support/page.tsx — the mailto: contact and exactly four FAQ entries.
+Decisions:
+- Same page shape as the three pages before it (local array + inline <dl>, section wrapper class repeated). Verdict on the shared prose component, now that all five pages exist: not earned. The only shared bit is `flex flex-col gap-6` on <section>; the pages differ in every other way, and a wrapper component would hide the markup a legal reviewer reads.
+- The support address is read from PUBLISHER.email, never typed literally: /legal, /mentis/terms and this page all name the same contact, and the Gmail redirect target is nowhere in apps/web (grep on out/mentis/support.html: 0 hits).
+- FAQ answers reuse the app's own labels verbatim — « Supprimer mon compte » (features/account/constants.ts) and « Restaurer mes achats » (features/premium/constants.ts) — so a player follows the text word for word on screen.
+- Vouvoiement, like the terms page. Answer 2 names both stores (App Store on iPhone, Google Play on Android) and repeats the 24 h window: the support page is the one a reviewer opens from the store listing, so it must stand alone.
+- Answer 3 says the store, not Mentis, holds the proof of purchase — that is why the restore needs the same store account.
+- No shared LAST_UPDATED here: a FAQ is not a legal document, the PRD only dates privacy and terms.
+Files: apps/web/src/app/mentis/support/page.tsx (new), PRD.md, progress.txt.
+Proof: bun run check exit 0 (typecheck 6/6, api 368 tests, mobile 254, knip + biome clean). build -> out/mentis/support.html carries the mailto: link, exactly four <dt>, « Supprimer mon compte », « Restaurer mes achats », Google Play, the theme+question ask, zero occurrence of the Gmail address, and the four footer links.
+Notes for next: apps/web is now complete — all five pages exist and the footer links no longer 404. Item 6 (ci.yml deploy-web) is the next false and the last non-mobile one; it must leave admin-changed and deploy-admin byte-identical (diff the job blocks before/after) and needs vars.VERCEL_WEB_PROJECT_ID, which is H3 and still open — the job can land before the variable exists, it just fails until Hugo sets it. Keep running check with NO_PROXY="$NO_PROXY,[::1]" no_proxy="$no_proxy,[::1]".

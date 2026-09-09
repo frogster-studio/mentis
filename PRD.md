@@ -130,7 +130,7 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
       "Exactly four FAQ entries: supprimer mon compte, gérer ou résilier l'abonnement, restaurer un achat, signaler une question erronée — each answer matches the Decisions",
       "The page is in the static export and shares the site footer; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "ci",
