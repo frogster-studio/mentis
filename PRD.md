@@ -42,7 +42,7 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
 
 ### Mobile — legal surfaces
 
-- One shared module `src/lib/legal-links.ts` carries the three URLs (`https://frogster-studio.com/mentis/privacy`, `/mentis/terms`, `/mentis/support`) and `openExternalLink` (the in-app browser on native, `Linking.openURL` on web — today's `openLegal` in `legal-line.tsx`, moved). Feature copy stays in each feature's `constants.ts`.
+- `src/lib/legal-links.ts` carries the three URLs (`https://frogster-studio.com/mentis/privacy`, `/mentis/terms`, `/mentis/support`) and stays import-free, so vitest's node environment can read it. `openExternalLink` (the in-app browser on native, `Linking.openURL` on web — today's `openLegal` in `legal-line.tsx`, moved) sits beside it in `src/lib/open-external-link.ts`: it needs `expo-web-browser`, which cannot load outside a native runtime. Feature copy stays in each feature's `constants.ts`.
 - Onboarding: the sentence is unchanged; « Politique de confidentialité » opens the privacy URL, « Conditions d'utilisation » opens the terms URL. `LEGAL_URL` disappears.
 - Paywall (guideline 3.1.2): under « Restaurer mes achats », a footer in `TEXT.caption`-class muted text: « Abonnement mensuel renouvelé automatiquement au même prix, sauf annulation au moins 24 h avant la fin de la période. Gérez ou résiliez à tout moment dans les réglages de l'App Store. » — « de Google Play » replaces « de l'App Store » on Android — then two links « Conditions d'utilisation » · « Politique de confidentialité ». The store name is chosen by a pure function of `"ios" | "android"`; the web never shows the paywall.
 - Account screen (guideline 5.1.1): a footer of three quiet links — « Politique de confidentialité », « Conditions d'utilisation », « Support » — shown signed in and signed out, below the existing footer actions.
@@ -146,11 +146,11 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
     "category": "mobile",
     "description": "The onboarding sentence opens two distinct legal pages through a shared links module",
     "steps": [
-      "src/lib/legal-links.ts exports PRIVACY_URL, TERMS_URL, SUPPORT_URL under https://frogster-studio.com/mentis/ and openExternalLink; its vitest spec asserts the three URLs",
+      "src/lib/legal-links.ts exports PRIVACY_URL, TERMS_URL, SUPPORT_URL under https://frogster-studio.com/mentis/ and its vitest spec asserts the three URLs; src/lib/open-external-link.ts exports openExternalLink",
       "In legal-line.tsx the privacy label opens PRIVACY_URL and the terms label opens TERMS_URL; LEGAL_URL and https://hugobayoud.fr no longer exist in apps/mobile",
       "bun run check green from the repo root"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
