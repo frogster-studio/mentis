@@ -110,7 +110,7 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
       "The page states retention until Account deletion, the in-app deletion path, the five GDPR rights, the CNIL, the 15-year rule, and a « Dernière mise à jour » date",
       "The page is in the static export and shares the site footer; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "web",

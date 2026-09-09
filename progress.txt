@@ -23,3 +23,15 @@ Decisions:
 Files: apps/web/src/lib/publisher.ts (new), apps/web/src/app/legal/page.tsx (new), PRD.md.
 Proof: bun run check exit 0. build -> out/legal.html carries every editor field, the host, and the four footer links.
 Notes for next: item 3 (/mentis/privacy) is the next false, and the biggest — the whole data inventory. It should import PUBLISHER for the controller. ralph-once.sh is modified in the tree (Hugo's local sbx -> plain claude switch), left uncommitted on purpose.
+## Item 3 — /mentis/privacy privacy policy (web) — DONE
+
+Done: apps/web/src/app/mentis/privacy/page.tsx — the whole data inventory, the processors, retention, rights, age.
+Decisions:
+- One page file, three local `as const`-free arrays (COLLECTED_DATA, PROCESSORS, RIGHTS) rendered by inline <dl>/<ul>: same shape as /legal, no shared prose component yet — items 4 and 5 will say whether one is earned.
+- Controller sentence built from PUBLISHER (name, legal status, address, email): the identity is written once, /legal and this page read it.
+- LAST_UPDATED stays a local const, not shared with /mentis/terms: the two documents can legitimately change on different dates.
+- Vercel's "region" column says « Aucune donnée de compte ne lui est transmise » rather than a country — the site is static and the PRD promises « no data leaves the EU except RevenueCat »; naming the US for a host that receives nothing would contradict it.
+- Six processors = Supabase, Railway, Vercel, RevenueCat, Apple, Google. Six data types, each with the « fonctionnement de l'app » purpose stated once for the whole list.
+Files: apps/web/src/app/mentis/privacy/page.tsx (new), PRD.md.
+Proof: bun run check exit 0 (typecheck 6/6, tests 74 files, knip + biome clean). build -> out/mentis/privacy.html carries the controller email, the six types, the six processors, « clauses contractuelles », CNIL, « Supprimer mon compte », 15 ans, « Dernière mise à jour », and the four footer links.
+Notes for next: this sandbox is linux/arm64 while node_modules came from the macOS host, so every native binary was missing — lightningcss, @tailwindcss/oxide, @swc/core, oxc-parser, oxc-resolver, @biomejs/cli. Fixed by extracting the *-linux-arm64-gnu tarballs into node_modules (npm pack + tar, no package.json or bun.lock touched). Also: apps/api e2e tests 403 on every request because supertest talks to [::1] and the sandbox proxy's NO_PROXY only lists the unbracketed ::1 — run check with NO_PROXY="$NO_PROXY,[::1]". Item 4 (/mentis/terms) is the next false; it needs the same LAST_UPDATED treatment and the 2,99 €/monthly subscription block.
