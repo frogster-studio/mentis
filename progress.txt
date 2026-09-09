@@ -35,3 +35,16 @@ Decisions:
 Files: apps/web/src/app/mentis/privacy/page.tsx (new), PRD.md.
 Proof: bun run check exit 0 (typecheck 6/6, tests 74 files, knip + biome clean). build -> out/mentis/privacy.html carries the controller email, the six types, the six processors, « clauses contractuelles », CNIL, « Supprimer mon compte », 15 ans, « Dernière mise à jour », and the four footer links.
 Notes for next: this sandbox is linux/arm64 while node_modules came from the macOS host, so every native binary was missing — lightningcss, @tailwindcss/oxide, @swc/core, oxc-parser, oxc-resolver, @biomejs/cli. Fixed by extracting the *-linux-arm64-gnu tarballs into node_modules (npm pack + tar, no package.json or bun.lock touched). Also: apps/api e2e tests 403 on every request because supertest talks to [::1] and the sandbox proxy's NO_PROXY only lists the unbracketed ::1 — run check with NO_PROXY="$NO_PROXY,[::1]". Item 4 (/mentis/terms) is the next false; it needs the same LAST_UPDATED treatment and the 2,99 €/monthly subscription block.
+## Item 4 — /mentis/terms conditions d'utilisation (web) — DONE
+
+Done: apps/web/src/app/mentis/terms/page.tsx — nine sections, subscription block included.
+Decisions:
+- Same page shape as /legal and /mentis/privacy: local `as const`-free arrays + inline <dl>/<ul>, no shared prose component. Three pages in, the only real duplication is the section wrapper class — not worth a component yet; item 5 (/mentis/support) is the last chance to change that verdict.
+- The subscription facts (name, monthly, 2,99 €, no trial, renewal at the same price) sit in a labelled <dl> like /legal's identity rows; the legal sentence about the 24 h cancellation window, the store settings and Apple/Google refunds stays prose below it. A reviewer scanning for the price finds a table, not a paragraph.
+- Premium features named in the app's own words — « Rejouer la compétition » and « rattrapage » (features/quiz/constants.ts, features/competition/constants.ts) — so terms and app never drift into two vocabularies.
+- Terms link to the privacy page through ROUTES.privacy instead of a literal string: routes.ts is already the page list, and its spec now guards a real cross-page link.
+- LAST_UPDATED is a local const, deliberately not shared with privacy (same call as item 3: the two documents change on different dates).
+- Added two sections the PRD did not list — « Disponibilité et évolution » and « Propriété ». Standard for a paid app's terms, and their absence is what makes terms read as Apple's standard EULA, which the PRD forbids.
+Files: apps/web/src/app/mentis/terms/page.tsx (new), PRD.md, progress.txt.
+Proof: bun run check exit 0 (typecheck 6/6, api 368 tests, mobile 254, knip + biome clean). build -> out/mentis/terms.html carries « Mentis Premium », 2,99, « 24 heures », App Store, Google Play, « Rejouer la compétition », rattrapage, « droit français », « 15 ans », « Dernière mise à jour », the support address, and the four footer links.
+Notes for next: the [::1] proxy fix from item 3 needs BOTH vars — NO_PROXY="$NO_PROXY,[::1]" no_proxy="$no_proxy,[::1]" bun run check. Setting the uppercase one alone still leaves 267 api e2e tests failing on 403; the lowercase one is what Node's fetch reads. Item 5 (/mentis/support) is the next false: mailto: + exactly four FAQ entries, and it must never print the Gmail address.

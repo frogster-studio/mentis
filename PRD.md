@@ -120,7 +120,7 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
       "A subscription section states: Mentis Premium, monthly, 2,99 €, no trial, auto-renewal at the same price unless cancelled 24 h before the period ends, management and cancellation in the store settings, refunds by Apple or Google, Replay and Catch-up as the Premium features",
       "The page carries a « Dernière mise à jour » date, is in the static export and shares the site footer; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "web",
