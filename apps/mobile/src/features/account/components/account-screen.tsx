@@ -21,8 +21,12 @@ import {
   DELETE_ACCOUNT_CONFIRM_LABEL,
   DELETE_ACCOUNT_ERROR,
   DELETE_ACCOUNT_LABEL,
-  DELETE_ACCOUNT_MESSAGE,
   DELETE_ACCOUNT_TITLE,
+  deleteAccountMessage,
+  LEGAL_PRIVACY_LABEL,
+  LEGAL_SEPARATOR,
+  LEGAL_SUPPORT_LABEL,
+  LEGAL_TERMS_LABEL,
   SIGN_IN_ERROR,
   SIGN_OUT_CANCEL_LABEL,
   SIGN_OUT_CONFIRM_LABEL,
@@ -40,6 +44,8 @@ import { HomeThemeCard } from "@/features/quiz/components/home-theme-card";
 import { drainOutbox } from "@/features/quiz/outbox-sync";
 import { useTransferStore } from "@/features/quiz/transfer-store";
 import { useHomeCards } from "@/features/quiz/use-home-cards";
+import { PRIVACY_URL, SUPPORT_URL, TERMS_URL } from "@/lib/legal-links";
+import { openExternalLink } from "@/lib/open-external-link";
 import { PURCHASES_SUPPORTED } from "@/lib/purchases";
 import { TEXT } from "@/theme/text";
 import { COLORS, CONTROL_HEIGHT, GUTTER, PRESSED, SPACE } from "@/theme/tokens";
@@ -164,6 +170,33 @@ export const AccountScreen = () => {
                 <GoogleSignInButton onError={() => setSignInFailed(true)} />
               </>
             )}
+            {/* App Store 5.1.1: reachable in both states, so a signed-out reviewer finds them too. */}
+            <Text style={styles.legal}>
+              {/* The browser opening is the feedback, so the tap draws no highlight of its own. */}
+              <Text
+                style={styles.legalLink}
+                suppressHighlighting
+                onPress={() => openExternalLink(PRIVACY_URL)}
+              >
+                {LEGAL_PRIVACY_LABEL}
+              </Text>
+              {` ${LEGAL_SEPARATOR} `}
+              <Text
+                style={styles.legalLink}
+                suppressHighlighting
+                onPress={() => openExternalLink(TERMS_URL)}
+              >
+                {LEGAL_TERMS_LABEL}
+              </Text>
+              {` ${LEGAL_SEPARATOR} `}
+              <Text
+                style={styles.legalLink}
+                suppressHighlighting
+                onPress={() => openExternalLink(SUPPORT_URL)}
+              >
+                {LEGAL_SUPPORT_LABEL}
+              </Text>
+            </Text>
           </View>
         </View>
       )}
@@ -200,7 +233,7 @@ export const AccountScreen = () => {
       <ConfirmDialog
         visible={deleteVisible}
         title={DELETE_ACCOUNT_TITLE}
-        message={DELETE_ACCOUNT_MESSAGE}
+        message={deleteAccountMessage(isPremium)}
         confirmLabel={DELETE_ACCOUNT_CONFIRM_LABEL}
         cancelLabel={DELETE_ACCOUNT_CANCEL_LABEL}
         onCancel={() => setDeleteVisible(false)}
@@ -276,5 +309,14 @@ const styles = StyleSheet.create({
   deleteLabel: {
     ...TEXT.body,
     color: COLORS.danger,
+  },
+  legal: {
+    ...TEXT.caption,
+    color: COLORS.inkMuted,
+    textAlign: "center",
+  },
+  legalLink: {
+    ...TEXT.captionStrong,
+    color: COLORS.ink,
   },
 });

@@ -15,7 +15,7 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
 - `/`: the studio name « Frogster Studio », one sentence, one Mentis card (Mark, name, one line, store badges marked « bientôt » until the store links exist), a footer linking `/legal`, `/mentis/privacy`, `/mentis/terms`, `/mentis/support`. Every page shares that footer.
 - The publisher identity is hard-coded in one module (`src/lib/publisher.ts`): first name Hugo, last name Bayoud, sole trader (auto-entrepreneur — « Frogster Studio » is a trade name, not a legal entity), email `frogster.dev@gmail.com`, phone `06 98 35 28 92`, postal address `4 Place Duguesclin, 30000 Nîmes, France`, SIREN `94033623300017`. Publication director: Hugo Bayoud. The site is public, so the repo being public changes nothing.
 - Host named on `/legal`: Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, United States.
-- Support address: `support@frogster-studio.com`, the single contact for support and for every GDPR request. It is an OVH redirect to `frogster.dev@gmail.com` (H2); the site never shows the Gmail address.
+- Support address: `mentis@frogster-studio.com`, the single contact for support and for every GDPR request. It is an OVH redirect to `frogster.dev@gmail.com` (H2); the site never shows the Gmail address.
 - `/mentis/support`: the support address as a `mailto:` link, then exactly four FAQ entries — supprimer mon compte (Compte → « Supprimer mon compte », immediate and irreversible, everything erased), gérer ou résilier l'abonnement (App Store or Google Play subscription settings, never in the app), restaurer un achat (« Restaurer mes achats » on the paywall, same store account), signaler une question erronée (email with the theme and the question).
 
 ### Legal texts (written by the agent in French, reviewed by Hugo in H4)
@@ -30,7 +30,7 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
 - Anonymous play collects nothing: Device Stats never leave the device unless a Stats Transfer is accepted. No analytics, no crash reporting, no advertising SDK, no tracking.
 - Processors named, with their role and region: Supabase (authentication and data, Frankfurt, EU), Railway (API, region `EU West (Amsterdam, Netherlands)`), Vercel (the web site), RevenueCat (subscription state, United States — transfer covered by the European Commission's standard contractual clauses), Apple and Google (sign-in and payment under their own policies). No data leaves the EU except to RevenueCat.
 - Retention: Account data lives until the Account is deleted; deletion is immediate and cascades everything server-side; nothing is retained after. The public Leaderboard shows the Pseudo and Season Totals only, to signed-out Players too.
-- Rights: access, rectification, erasure (in-app deletion or by email), portability, objection; complaint to the CNIL. Controller: Hugo Bayoud, contact `support@frogster-studio.com`.
+- Rights: access, rectification, erasure (in-app deletion or by email), portability, objection; complaint to the CNIL. Controller: Hugo Bayoud, contact `mentis@frogster-studio.com`.
 - Age: anonymous play has no age condition; an Account requires 15 years or parental consent (French GDPR digital-consent age). Store age rating 4+. No age check in the app.
 - Terms of use are Frogster Studio's own, never Apple's standard EULA, and they cover the subscription: « Mentis Premium », monthly, €2.99, no trial, auto-renewing at the same price unless cancelled at least 24 hours before the period ends, managed and cancelled in the store's subscription settings, refunds handled by Apple or Google under their rules, Premium features named as Replay and Catch-up. They also state: anonymous play, Account optional, one Pseudo per Account (unique, changeable, shown publicly on the Leaderboard), fair play (no automation), the right to close an Account that abuses the competition, French law, the support contact.
 - Both documents carry a « Dernière mise à jour » date.
@@ -42,7 +42,7 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
 
 ### Mobile — legal surfaces
 
-- One shared module `src/lib/legal-links.ts` carries the three URLs (`https://frogster-studio.com/mentis/privacy`, `/mentis/terms`, `/mentis/support`) and `openExternalLink` (the in-app browser on native, `Linking.openURL` on web — today's `openLegal` in `legal-line.tsx`, moved). Feature copy stays in each feature's `constants.ts`.
+- `src/lib/legal-links.ts` carries the three URLs (`https://frogster-studio.com/mentis/privacy`, `/mentis/terms`, `/mentis/support`) and stays import-free, so vitest's node environment can read it. `openExternalLink` (the in-app browser on native, `Linking.openURL` on web — today's `openLegal` in `legal-line.tsx`, moved) sits beside it in `src/lib/open-external-link.ts`: it needs `expo-web-browser`, which cannot load outside a native runtime. Feature copy stays in each feature's `constants.ts`.
 - Onboarding: the sentence is unchanged; « Politique de confidentialité » opens the privacy URL, « Conditions d'utilisation » opens the terms URL. `LEGAL_URL` disappears.
 - Paywall (guideline 3.1.2): under « Restaurer mes achats », a footer in `TEXT.caption`-class muted text: « Abonnement mensuel renouvelé automatiquement au même prix, sauf annulation au moins 24 h avant la fin de la période. Gérez ou résiliez à tout moment dans les réglages de l'App Store. » — « de Google Play » replaces « de l'App Store » on Android — then two links « Conditions d'utilisation » · « Politique de confidentialité ». The store name is chosen by a pure function of `"ios" | "android"`; the web never shows the paywall.
 - Account screen (guideline 5.1.1): a footer of three quiet links — « Politique de confidentialité », « Conditions d'utilisation », « Support » — shown signed in and signed out, below the existing footer actions.
@@ -50,7 +50,7 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
 
 ### Mobile — avatar and manifest
 
-- `ProfileAvatar` shows the Pseudo's first character, upper-cased, in an existing `TEXT` style (never a new token) when a Pseudo is loaded, and today's neutral dot otherwise. It takes `initial: string | null`; `AppHeader` derives it from `useProfile`. `avatar_url` is no longer read anywhere; `https://picsum.photos` and `expo-image` leave the component. No network request is ever made for an avatar.
+- `ProfileAvatar` shows the Pseudo's first character, upper-cased, in an existing `TEXT` style (never a new token) when a Pseudo is loaded, and today's neutral dot otherwise. It takes `initial: string | null`; `AppHeader` derives it from `useProfile` through `profileInitial` in `src/components/profile-initial.ts` — its own import-free module, so the spec runs in vitest's node environment (item 7's lesson). `avatar_url` is no longer read anywhere; `https://picsum.photos` and `expo-image` leave the component. No network request is ever made for an avatar.
 - `app.config.ts` declares `ios.privacyManifests`: `NSPrivacyTracking: false`, `NSPrivacyCollectedDataTypes` = the six inventory types (`NSPrivacyCollectedDataTypeEmailAddress`, `…Name`, `…UserID`, `…DeviceID`, `…PurchaseHistory`, `…GameplayContent`), each linked (`NSPrivacyCollectedDataTypeLinked: true`), not tracking (`…Tracking: false`), purpose `NSPrivacyCollectedDataTypePurposeAppFunctionality`. Accessed-API reasons stay Expo's defaults.
 
 ### Test seams
@@ -88,7 +88,7 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
       "src/lib/routes.ts lists the five page paths and its vitest spec passes; knip.json carries an apps/web entry",
       "bun run check green from the repo root"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "web",
@@ -99,18 +99,18 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
       "/legal is in the static export (out/legal.html or out/legal/index.html) and shares the site footer",
       "bun run check green from the repo root"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "web",
     "description": "/mentis/privacy carries the privacy policy",
     "steps": [
-      "The page names the controller (Hugo Bayoud, support@frogster-studio.com), the six inventory data types with their purpose, the fact that anonymous play collects nothing, the absence of analytics, crash and advertising SDKs",
+      "The page names the controller (Hugo Bayoud, mentis@frogster-studio.com), the six inventory data types with their purpose, the fact that anonymous play collects nothing, the absence of analytics, crash and advertising SDKs",
       "The page names the six processors with role and region, states that only RevenueCat is outside the EU under standard contractual clauses",
       "The page states retention until Account deletion, the in-app deletion path, the five GDPR rights, the CNIL, the 15-year rule, and a « Dernière mise à jour » date",
       "The page is in the static export and shares the site footer; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "web",
@@ -120,17 +120,17 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
       "A subscription section states: Mentis Premium, monthly, 2,99 €, no trial, auto-renewal at the same price unless cancelled 24 h before the period ends, management and cancellation in the store settings, refunds by Apple or Google, Replay and Catch-up as the Premium features",
       "The page carries a « Dernière mise à jour » date, is in the static export and shares the site footer; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "web",
     "description": "/mentis/support carries the support address and the FAQ",
     "steps": [
-      "The page shows support@frogster-studio.com as a mailto: link and never the Gmail address",
+      "The page shows mentis@frogster-studio.com as a mailto: link and never the Gmail address",
       "Exactly four FAQ entries: supprimer mon compte, gérer ou résilier l'abonnement, restaurer un achat, signaler une question erronée — each answer matches the Decisions",
       "The page is in the static export and shares the site footer; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "ci",
@@ -140,17 +140,17 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
       "The admin-changed and deploy-admin jobs are byte-identical to before",
       "The workflow parses: bunx yaml-lint or an equivalent YAML parse of .github/workflows/ci.yml succeeds; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
     "description": "The onboarding sentence opens two distinct legal pages through a shared links module",
     "steps": [
-      "src/lib/legal-links.ts exports PRIVACY_URL, TERMS_URL, SUPPORT_URL under https://frogster-studio.com/mentis/ and openExternalLink; its vitest spec asserts the three URLs",
+      "src/lib/legal-links.ts exports PRIVACY_URL, TERMS_URL, SUPPORT_URL under https://frogster-studio.com/mentis/ and its vitest spec asserts the three URLs; src/lib/open-external-link.ts exports openExternalLink",
       "In legal-line.tsx the privacy label opens PRIVACY_URL and the terms label opens TERMS_URL; LEGAL_URL and https://hugobayoud.fr no longer exist in apps/mobile",
       "bun run check green from the repo root"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
@@ -160,7 +160,7 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
       "paywall-sheet.tsx renders that sentence under « Restaurer mes achats », then « Conditions d'utilisation » and « Politique de confidentialité » opening TERMS_URL and PRIVACY_URL through openExternalLink",
       "Copy lives in the premium constants.ts, styles use TEXT and COLORS tokens only; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
@@ -170,7 +170,7 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
       "Each link opens its URL from src/lib/legal-links.ts; labels live in the account constants.ts and are covered by constants.test.ts",
       "bun run check green from the repo root"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
@@ -180,7 +180,7 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
       "AppHeader passes the initial derived from useProfile's pseudo through a pure function with a vitest spec (empty or missing pseudo gives null)",
       "grep finds no picsum.photos, no avatar_url and no expo-image import in profile-avatar.tsx; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
@@ -190,31 +190,28 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
       "cd apps/mobile && bunx expo config --type prebuild --json | grep -c NSPrivacyCollectedDataType prints a count consistent with six entries",
       "bun run check green from the repo root"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```
 
 ## Human steps
 
-Each step carries its own proof; a step whose proof fails blocks the next one. Status: H1 open, H2 to H15 open.
+Each step carries its own proof; a step whose proof fails blocks the next one. Status: H1 done, H2 to H15 open.
+
+The loop commits and pushes on branch `feat/store-readiness`, in its draft PR. Nothing deploys before that PR merges into `main`: the merge is the gate between the last item and the proof of H3.
 
 ### H1. Give the three missing facts — before item 2
 
 - Postal address for the mentions légales, the SIREN, the Railway region of the API (Railway → service → Settings → Region).
 - Replace `<ADRESSE — H1>`, `<SIREN — H1>` and `<REGION RAILWAY — H1>` in the Decisions above.
-- Proof: no `— H1>` placeholder remains in this file.
+- Proof: no `— H1>` placeholder remains in the Decisions.
 
-### H2. OVH: the support address
-
-- Emails → Redirections: `support@frogster-studio.com` → `frogster.dev@gmail.com`.
-- Proof: a test email sent to the support address lands in the Gmail inbox.
-
-### H3. Vercel: the web project — before item 6 merges
+### H3. Vercel: the web project — before the PR merges
 
 - New project on the same Vercel account, Root Directory `apps/web`, framework Next.js, no env var.
 - GitHub → repository variables: `VERCEL_WEB_PROJECT_ID` = that project's id (`.vercel/project.json` after `vercel link`, or Project Settings → General).
-- Proof: after item 6 lands on `main`, the `deploy-web` job is green and the `*.vercel.app` preview shows the root page.
+- Proof: after the PR merges into `main`, the `deploy-web` job is green and the `*.vercel.app` preview shows the root page.
 
 ### H4. Review the legal texts — before H5
 

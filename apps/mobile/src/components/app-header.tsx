@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 import { HEADER_DIVIDER_HEIGHT, HeaderCard, useHeaderCardHeight } from "@/components/header-card";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { profileInitial } from "@/components/profile-initial";
 import { useTabScrollOffset } from "@/components/tab-scroll";
 import { TAB_TRANSITION_EASING, TAB_TRANSITION_MS } from "@/components/tab-transition";
 import { NewButton } from "@/components/ui/new-button";
@@ -63,7 +64,7 @@ export const AppHeader = () => {
         mask={null}
         topRow={
           <>
-            <ProfileAvatar photoUrl={metadataString(user, "avatar_url") ?? null} />
+            <ProfileAvatar initial={profileInitial(profile.data?.pseudo)} />
 
             {pathname === WORLD_PATH ? (
               <Pressable

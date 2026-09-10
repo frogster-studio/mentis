@@ -1,5 +1,41 @@
-2026-09-08 — Done: paywall announces only Replay and Catch-up; passes: true.
-Decision: remove two unshipped claims from existing PAYWALL_FEATURES; retain exact requested copy/order, no new abstraction or copy-only test.
-Files: apps/mobile/src/features/premium/constants.ts, PRD.md, progress.txt (created; absent initially).
-Validation: root bun run check green — all workspace typechecks, 993 tests, Knip, Biome; no auto-fixes.
-Blockers: none. Next: no pending code items; store/account setup remains in PRD human steps. No migration generated, no push.
+## PRD-2 Item 1 — /mentis/delete-account (web) — DONE
+
+Done: the sixth page of the site, the Play Console « Delete account URL » target, with both deletion paths.
+Decisions:
+- routes.ts gains deleteAccount: "/mentis/delete-account"; routes.test.ts asserts the six paths and that the new one stays under /mentis. SiteFooter untouched — Google wants the URL to land on the page itself, and the four legal links are enough.
+- src/lib/delete-account.ts is pure TS (no JSX, so vitest reaches it in the node environment): IN_APP_STEPS, DELETION_EMAIL_SUBJECT, DELETION_EMAIL_BODY_LINES, DELETION_EMAIL_BODY (the lines joined by \n) and buildDeletionMailto(address).
+- buildDeletionMailto uses encodeURIComponent, not URLSearchParams: the latter encodes a space as "+", which several mail clients paste literally into the subject.
+- The body is kept as lines, not one blob: the page renders one <p> per line and the spec asserts the six lines and the three identity fields separately.
+- copy-button.tsx is the site's first and only "use client" component. It guards on navigator.clipboard being absent and simply does nothing then — the address is also a mailto: link and the template is displayed in full, so nothing is lost.
+- The page names Mentis and PUBLISHER.tradeName, says the deletion is immediate and irreversible with no retention, lists what is erased (account, pseudo, scores, sessions, competition attempts and answers, standings, the Premium mirror) and what is not ours (the purchase record at Apple, Google, RevenueCat), and carries a card telling the Player to cancel the subscription in the store BEFORE deleting.
+- Email path: write from the Account's own address (that is the identity check Google permits), 30 days max, in practice a few days.
+Files: apps/web/src/app/mentis/delete-account/page.tsx (new), apps/web/src/components/copy-button.tsx (new), apps/web/src/lib/delete-account.ts (new), apps/web/src/lib/delete-account.test.ts (new), apps/web/src/lib/routes.ts, apps/web/src/lib/routes.test.ts, apps/web/AGENTS.md (five pages -> six), PRD-2.md, progress.txt.
+Proof: bun run --filter @mentis/web build lists /mentis/delete-account and emits out/mentis/delete-account.html. bun run check exit 0 (web 7 tests, mobile 263, api 368).
+Notes for next: the api e2e specs 403 under the sandbox proxy because app.getUrl() returns http://[::1]:port and NO_PROXY only bypasses the unbracketed ::1 — run with NO_PROXY="$NO_PROXY,[::1]" and all 368 pass. Not persisted to /etc/sandbox-persistent.sh: some clients read NO_PROXY entries as regexes, where [::1] is a character class matching every host. Item 2 links to ROUTES.deleteAccount from the support FAQ and the privacy erasure right.
+
+## PRD-2 Item 2 — the support FAQ and the privacy policy link to /mentis/delete-account — DONE
+
+Done: the two pages that already talk about deletion now point at the deletion page, so a Player who lands anywhere on the site reaches it.
+Decisions:
+- Both pages render their content from a data array of plain strings. Rather than break that shape, each entry gains an optional `link: { lead, href, label }`, rendered after the text as `{lead} <a>{label}</a>.` — one branch, no JSX in the data.
+- TypeScript normalises an array literal whose object literals differ by adding the missing property as optional, so no hand-written type is needed for the entries without a link; typecheck confirms it.
+- Plain `<a href={ROUTES.deleteAccount}>` with the sky-600 class, not next/link: prior art for a cross-link inside prose is apps/web/src/app/mentis/terms/page.tsx linking ROUTES.privacy. next/link stays for the footer nav.
+- Support, « Comment supprimer mon compte ? »: the answer already describes the in-app path, so the link's lead names the fallback — « Le détail des deux voies — depuis l'application, ou par email si vous ne l'avez plus : supprimer mon compte. »
+- Privacy: the link hangs on the RIGHTS entry « Droit à l'effacement », where the PRD asked for it, not on the « Conservation et suppression » section — the erasure right is the legal hook Google and the CNIL both read.
+- SiteFooter untouched: still exactly its four legal links, per the PRD decision that Google wants the URL to land on the deletion page itself.
+Files: apps/web/src/app/mentis/support/page.tsx, apps/web/src/app/mentis/privacy/page.tsx, PRD-2.md, progress.txt.
+Proof: bun run --filter @mentis/web build green; grep of out/mentis/support.html and out/mentis/privacy.html finds href="/mentis/delete-account" once in each. bun run check exit 0 (web 7, contracts 177, answer-matching 49, admin 145, mobile 263, api 368).
+Notes for next: the api e2e specs still need NO_PROXY="$NO_PROXY,[::1]" under the sandbox proxy — see Item 1's note. Item 3 is mobile: DELETE_ACCOUNT_MESSAGE becomes a function of isPremium in features/account/constants.ts, fed by the isPremium account-screen.tsx already reads from useIsPremium().
+
+## PRD-2 Item 3 — the in-app deletion confirmation warns a Premium Player — DONE
+
+Done: DELETE_ACCOUNT_MESSAGE becomes deleteAccountMessage(isPremium) in features/account/constants.ts, so a subscribed Player is told the store keeps billing after the Account is gone (App Store 3.1.2).
+Decisions:
+- The function takes `boolean | null`, the exact type useIsPremium() returns, so account-screen.tsx feeds it straight: `message={deleteAccountMessage(isPremium)}`. Null is the tier still loading and reads as false — the app never claims a subscription it has not confirmed.
+- The premium branch is the base message plus one sentence, never a rewritten message: the test asserts startsWith(deleteAccountMessage(false)), so the 5.1.1(v) wording (what is erased, irreversible) can never drift out of the Premium branch.
+- Copy keeps the screen's tutoiement — "Ton abonnement Mentis Premium n'est pas résilié pour autant : la facturation continue. Résilie-le dans les réglages d'abonnement de l'App Store ou de Google Play." Both stores are named in one sentence rather than switching on Platform: prior art subscriptionTermsSentence(platform) exists for the paywall, but a confirmation dialog is not the place for a platform seam, and the PRD asked for a pure function of isPremium alone.
+- DELETE_ACCOUNT_BASE_MESSAGE and DELETE_ACCOUNT_SUBSCRIPTION_SENTENCE are module-local, not exported: the message has exactly one public shape now, and knip stays green.
+- The existing "non-empty French copy" test now lists deleteAccountMessage(false) where the bare constant used to be.
+Files: apps/mobile/src/features/account/constants.ts, apps/mobile/src/features/account/constants.test.ts, apps/mobile/src/features/account/components/account-screen.tsx, PRD-2.md, progress.txt.
+Proof: bun run check exit 0 (web 7, contracts 177, answer-matching 49, admin 145, mobile 265, api 368).
+Notes for next: the api e2e 403s under the sandbox proxy need BOTH env vars, not just the uppercase one — export NO_PROXY="$NO_PROXY,[::1]" no_proxy="$no_proxy,[::1]"; with only NO_PROXY set, 267 specs still fail. Still not persisted to /etc/sandbox-persistent.sh (some clients read the entries as regexes, where [::1] matches every host). All three PRD-2 items now pass; what remains is human step H16 in the Play Console.

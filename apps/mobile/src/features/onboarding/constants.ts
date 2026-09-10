@@ -5,4 +5,3 @@ export const LEGAL_INTRO = `En appuyant sur ${ONBOARDING_START_LABEL}, vous acce
 export const LEGAL_PRIVACY_LABEL = "Politique de confidentialité";
 export const LEGAL_CONJUNCTION = " et nos ";
 export const LEGAL_TERMS_LABEL = "Conditions d'utilisation";
-export const LEGAL_URL = "https://hugobayoud.fr";

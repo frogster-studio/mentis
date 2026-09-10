@@ -1,6 +1,5 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import * as WebBrowser from "expo-web-browser";
-import { Linking, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import type { PurchasesPackage } from "react-native-purchases";
 import { NewButton } from "@/components/ui/new-button";
 import { Squircle } from "@/components/ui/squircle";
@@ -8,33 +7,28 @@ import { PaywallCrest } from "@/features/premium/components/paywall-crest";
 import { PaywallHeroGradient } from "@/features/premium/components/paywall-hero-gradient";
 import { PaywallIllustration } from "@/features/premium/components/paywall-illustration";
 import {
-  PAYWALL_CONTACT_LABEL,
   PAYWALL_FEATURES,
-  PAYWALL_LINK_URL,
+  PAYWALL_LEGAL_SEPARATOR,
   PAYWALL_PLAN_LABEL,
   PAYWALL_PRICE_PERIOD,
+  PAYWALL_PRIVACY_LINK_LABEL,
   PAYWALL_PURCHASE_ERROR,
   PAYWALL_PURCHASE_LABEL,
-  PAYWALL_RENEWAL_NOTICE,
   PAYWALL_SKIP_LABEL,
-  PAYWALL_TERMS_LABEL,
+  PAYWALL_TERMS_LINK_LABEL,
   PAYWALL_TITLE,
 } from "@/features/premium/constants";
+import { subscriptionTermsSentence } from "@/features/premium/subscription-terms";
+import { PRIVACY_URL, TERMS_URL } from "@/lib/legal-links";
+import { openExternalLink } from "@/lib/open-external-link";
 import { TEXT } from "@/theme/text";
 import { COLORS, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
 
 const FEATURE_ICON_SIZE = 24;
 const SKIP_TINT = "4D";
 const PLAN_LABEL_OVERLAP = SPACE.sm;
-
-// Web has no in-app sheet, and expo-web-browser opens a cramped popup window there instead of a tab.
-function openLink() {
-  if (Platform.OS === "web") {
-    void Linking.openURL(PAYWALL_LINK_URL);
-    return;
-  }
-  void WebBrowser.openBrowserAsync(PAYWALL_LINK_URL);
-}
+// The paywall never shows on web, so anything that is not Android buys through the App Store.
+const STORE_PLATFORM = Platform.OS === "android" ? "android" : "ios";
 
 export interface PaywallOfferProps {
   pack: PurchasesPackage;
@@ -113,7 +107,7 @@ export const PaywallOffer = ({
             <Text style={styles.priceValue}>{pack.product.priceString}</Text>
             <Text style={styles.pricePeriod}>{PAYWALL_PRICE_PERIOD}</Text>
           </View>
-          <Text style={styles.renewal}>{PAYWALL_RENEWAL_NOTICE}</Text>
+          <Text style={styles.terms}>{subscriptionTermsSentence(STORE_PLATFORM)}</Text>
 
           {purchaseFailed ? <Text style={styles.error}>{PAYWALL_PURCHASE_ERROR}</Text> : null}
 
@@ -131,14 +125,23 @@ export const PaywallOffer = ({
             />
           </View>
 
-          <View style={styles.links}>
-            <Pressable style={({ pressed }) => pressed && styles.pressed} onPress={openLink}>
-              <Text style={styles.link}>{PAYWALL_TERMS_LABEL}</Text>
-            </Pressable>
-            <Pressable style={({ pressed }) => pressed && styles.pressed} onPress={openLink}>
-              <Text style={styles.link}>{PAYWALL_CONTACT_LABEL}</Text>
-            </Pressable>
-          </View>
+          <Text style={styles.links}>
+            <Text
+              style={styles.link}
+              suppressHighlighting
+              onPress={() => openExternalLink(TERMS_URL)}
+            >
+              {PAYWALL_TERMS_LINK_LABEL}
+            </Text>
+            {` ${PAYWALL_LEGAL_SEPARATOR} `}
+            <Text
+              style={styles.link}
+              suppressHighlighting
+              onPress={() => openExternalLink(PRIVACY_URL)}
+            >
+              {PAYWALL_PRIVACY_LINK_LABEL}
+            </Text>
+          </Text>
         </Squircle>
       </View>
     </>
@@ -222,7 +225,7 @@ const styles = StyleSheet.create({
     ...TEXT.body,
     color: COLORS.inkMuted,
   },
-  renewal: {
+  terms: {
     ...TEXT.caption,
     marginTop: SPACE.xxs,
     color: COLORS.inkMuted,
@@ -238,10 +241,10 @@ const styles = StyleSheet.create({
     marginTop: SPACE.lg,
   },
   links: {
-    flexDirection: "row",
-    justifyContent: "center",
+    ...TEXT.label,
     marginTop: SPACE.lg,
-    gap: SPACE.xxl,
+    color: COLORS.inkMuted,
+    textAlign: "center",
   },
   link: {
     ...TEXT.label,

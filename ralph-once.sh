@@ -17,7 +17,4 @@ ONLY DO ONE ITEM AT A TIME. \
 Never run bun run migration:generate: the human does it. \
 This is production code. It must be maintainable. Fight entropy."
 
-sbx run claude --name ralph . /Users/hugobayoud/prog/mentis -- \
-  --model claude-opus-5 --effort high \
-  --disallowedTools "Bash(bun run migration:generate*),Bash(git push *)" \
-  "@PRD.md @progress.txt @AGENTS.md $TASK"
+claude --permission-mode auto "@PRD.md @progress.txt $TASK"

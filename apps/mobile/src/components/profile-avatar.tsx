@@ -1,20 +1,20 @@
-import { Image } from "expo-image";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import { TEXT } from "@/theme/text";
 import { COLORS, CONTROL_SQUARE_SIZE, RADIUS } from "@/theme/tokens";
 
 const HEAD_SIZE = 26;
 
 export interface ProfileAvatarProps {
-  photoUrl: string | null;
+  initial: string | null;
 }
 
-export const ProfileAvatar = ({ photoUrl }: ProfileAvatarProps) => {
+export const ProfileAvatar = ({ initial }: ProfileAvatarProps) => {
   return (
     <View style={styles.box}>
-      {photoUrl ? (
-        <Image source={"https://picsum.photos/200/300"} style={styles.photo} contentFit="cover" />
-      ) : (
+      {initial === null ? (
         <View style={styles.dot} />
+      ) : (
+        <Text style={styles.initial}>{initial}</Text>
       )}
     </View>
   );
@@ -28,15 +28,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.inkMuted,
     backgroundColor: COLORS.neutral,
-    overflow: "hidden",
-    position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  photo: { flex: 1 },
+  initial: {
+    ...TEXT.statValue,
+    color: COLORS.ink,
+  },
   dot: {
     backgroundColor: COLORS.face,
     height: HEAD_SIZE,
     width: HEAD_SIZE,
     borderRadius: RADIUS.round,
-    margin: "auto",
   },
 });

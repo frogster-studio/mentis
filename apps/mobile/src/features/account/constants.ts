@@ -37,8 +37,25 @@ export const TRANSFER_DONE_DISMISS_LABEL = "Fermer";
 // App Store 5.1.1(v) / GDPR: the confirmation names what is erased and that it cannot be undone.
 export const DELETE_ACCOUNT_LABEL = "Supprimer mon compte";
 export const DELETE_ACCOUNT_TITLE = "Supprimer ton compte ?";
-export const DELETE_ACCOUNT_MESSAGE =
+const DELETE_ACCOUNT_BASE_MESSAGE =
   "Ton compte et toutes tes statistiques enregistrées seront définitivement supprimés. Cette action est irréversible.";
+// App Store 3.1.2: deleting the Account leaves the subscription running — only the store ends it.
+const DELETE_ACCOUNT_SUBSCRIPTION_SENTENCE =
+  "Ton abonnement Mentis Premium n'est pas résilié pour autant : la facturation continue. Résilie-le dans les réglages d'abonnement de l'App Store ou de Google Play.";
+
+// Null is « not known yet », so the subscription sentence only shows on a confirmed Premium.
+export function deleteAccountMessage(isPremium: boolean | null): string {
+  return isPremium
+    ? `${DELETE_ACCOUNT_BASE_MESSAGE} ${DELETE_ACCOUNT_SUBSCRIPTION_SENTENCE}`
+    : DELETE_ACCOUNT_BASE_MESSAGE;
+}
+
 export const DELETE_ACCOUNT_CONFIRM_LABEL = "Supprimer";
 export const DELETE_ACCOUNT_CANCEL_LABEL = "Annuler";
 export const DELETE_ACCOUNT_ERROR = "La suppression a échoué.";
+
+// App Store 5.1.1: the legal pages stay reachable from inside the app, signed in or out.
+export const LEGAL_PRIVACY_LABEL = "Politique de confidentialité";
+export const LEGAL_TERMS_LABEL = "Conditions d'utilisation";
+export const LEGAL_SUPPORT_LABEL = "Support";
+export const LEGAL_SEPARATOR = "·";
