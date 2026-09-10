@@ -20,7 +20,7 @@ const lexend = localFont({
 
 export const metadata: Metadata = {
   title: "Frogster Studio",
-  description: "Frogster Studio conçoit des applications mobiles de jeu, dont Mentis.",
+  description: "BayouDev conçoit des applications mobiles de jeu, dont Mentis.",
 };
 
 export default function RootLayout({ children }: PropsWithChildren) {

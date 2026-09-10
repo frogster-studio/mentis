@@ -1,7 +1,7 @@
 export const PUBLISHER = {
   firstName: "Hugo",
   lastName: "Bayoud",
-  tradeName: "Frogster Studio",
+  tradeName: "BayouDev",
   legalStatus: "Entrepreneur individuel (auto-entrepreneur)",
   address: "4 Place Duguesclin, 30000 Nîmes, France",
   phone: "06 98 35 28 92",

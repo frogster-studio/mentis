@@ -67,9 +67,9 @@ export default function TermsPage() {
         <h2 className="text-lg">Le pseudo</h2>
         <p className="text-sm text-zinc-600">
           Chaque compte porte un pseudo, créé par l'application à la première connexion, unique
-          parmi tous les joueurs et modifiable à tout moment depuis l'écran Compte. Il est affiché
-          publiquement au classement, y compris aux visiteurs non connectés. Un pseudo injurieux,
-          trompeur, ou portant atteinte aux droits d'un tiers peut être modifié ou retiré.
+          parmi tous les joueurs et modifiable à tout moment. Il est affiché publiquement au
+          classement, y compris aux visiteurs non connectés. Un pseudo injurieux, trompeur, ou
+          portant atteinte aux droits d'un tiers peut être modifié ou retiré.
         </p>
       </section>
 
