@@ -28,7 +28,7 @@ import { queuedFinalize } from "@/features/competition/finalize-outbox";
 import { useFinalizeOutboxStore } from "@/features/competition/finalize-outbox-store";
 import { drainFinalizeOutbox } from "@/features/competition/finalize-sync";
 import { useCompetitionStore } from "@/features/competition/store";
-import { PaywallSheet } from "@/features/premium/components/paywall-sheet";
+import { PaywallModal } from "@/features/premium/components/paywall-modal";
 import { AnswerFooter } from "@/features/quiz/components/answer-footer";
 import { PlayHeader } from "@/features/quiz/components/play-header";
 import { PlayScreen } from "@/features/quiz/components/play-screen";
@@ -261,7 +261,7 @@ export const CompetitionScreen = () => {
             onRetry={unavailable ? null : () => void refetch()}
           />,
         )}
-        <PaywallSheet visible={paywallVisible} onDismiss={() => setPaywallVisible(false)} />
+        <PaywallModal visible={paywallVisible} onDismiss={() => setPaywallVisible(false)} />
         {quitConfirm}
       </>
     );
