@@ -111,3 +111,16 @@ Decisions:
 Files: apps/mobile/src/features/account/constants.ts, apps/mobile/src/features/account/constants.test.ts, apps/mobile/src/features/account/components/account-screen.tsx, PRD.md, progress.txt.
 Proof: bun run check exit 0 (typecheck 7/7, mobile 260 tests in 27 files — was 259 —, api 368, knip + biome clean).
 Notes for next: item 10 (ProfileAvatar) is the next false. It takes `initial: string | null`, so the pure derivation lives beside AppHeader (a `profileInitial(pseudo)` style function with its own spec — empty/missing pseudo -> null), and profile-avatar.tsx must lose picsum.photos, avatar_url and the expo-image import; check whether expo-image is still used elsewhere before knip decides it is an unused dependency. Keep running check with NO_PROXY="$NO_PROXY,[::1]" no_proxy="$no_proxy,[::1]".
+## Item 10 — the avatar shows the Pseudo's initial (mobile) — DONE
+
+Done: src/components/profile-initial.ts + spec, profile-avatar.tsx takes `initial: string | null`, AppHeader derives it from useProfile.
+Decisions:
+- The derivation is its own import-free module (profile-initial.ts) beside AppHeader, not a function inside app-header.tsx: that file imports react-native and expo-router, so a spec on it dies in vitest's node environment — item 7's lesson, applied without probing it again.
+- `profileInitial` trims before taking the first character: the Pseudo is free text and a leading space would render an empty circle that looks like a bug, not a missing Pseudo.
+- Source is the Pseudo from useProfile, never the Supabase `full_name`: the header's greeting already names the Account's first name, and the avatar must show what the Leaderboard shows. `metadataString` stays — `firstNameOf` still reads it.
+- TEXT.statValue (Inter Tight SemiBold 26) for the letter: the avatar box is CONTROL_SQUARE_SIZE = 60 and the neutral dot it replaces is 26 wide, so 26 is the size that keeps the same optical weight — TEXT.label at 14 would float in the circle. No new token, per the PRD.
+- The photo branch's `overflow: hidden` and `position: relative` left the box with the <Image>: nothing overflows any more, and the dot's `margin: "auto"` became alignItems/justifyContent center so the letter and the dot center identically.
+- expo-image stays a dependency — theme-image-cache.ts and theme-reveal.tsx still use it, so knip is green.
+Files: apps/mobile/src/components/profile-initial.ts (new), apps/mobile/src/components/profile-initial.test.ts (new), apps/mobile/src/components/profile-avatar.tsx, apps/mobile/src/components/app-header.tsx, PRD.md, progress.txt.
+Proof: bun run check exit 0 (typecheck 7/7, mobile 263 tests in 28 files — was 260 in 27 —, api 368, knip + biome clean). grep for picsum, avatar_url and expo-image across src/components: 0 hits.
+Notes for next: item 11 (ios.privacyManifests in app.config.ts) is the last false and the last item of the PRD. app.config.ts is the one file allowed local literals (static config), so the six NSPrivacyCollectedDataType entries go there verbatim — no constant module, no test. Its proof runs `bunx expo config --type prebuild --json` from apps/mobile, which needs the Expo CLI to resolve; if the sandbox chokes on it, a JSON parse of the config object is the fallback. Keep running check with NO_PROXY="$NO_PROXY,[::1]" no_proxy="$no_proxy,[::1]".

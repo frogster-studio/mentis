@@ -50,7 +50,7 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
 
 ### Mobile — avatar and manifest
 
-- `ProfileAvatar` shows the Pseudo's first character, upper-cased, in an existing `TEXT` style (never a new token) when a Pseudo is loaded, and today's neutral dot otherwise. It takes `initial: string | null`; `AppHeader` derives it from `useProfile`. `avatar_url` is no longer read anywhere; `https://picsum.photos` and `expo-image` leave the component. No network request is ever made for an avatar.
+- `ProfileAvatar` shows the Pseudo's first character, upper-cased, in an existing `TEXT` style (never a new token) when a Pseudo is loaded, and today's neutral dot otherwise. It takes `initial: string | null`; `AppHeader` derives it from `useProfile` through `profileInitial` in `src/components/profile-initial.ts` — its own import-free module, so the spec runs in vitest's node environment (item 7's lesson). `avatar_url` is no longer read anywhere; `https://picsum.photos` and `expo-image` leave the component. No network request is ever made for an avatar.
 - `app.config.ts` declares `ios.privacyManifests`: `NSPrivacyTracking: false`, `NSPrivacyCollectedDataTypes` = the six inventory types (`NSPrivacyCollectedDataTypeEmailAddress`, `…Name`, `…UserID`, `…DeviceID`, `…PurchaseHistory`, `…GameplayContent`), each linked (`NSPrivacyCollectedDataTypeLinked: true`), not tracking (`…Tracking: false`), purpose `NSPrivacyCollectedDataTypePurposeAppFunctionality`. Accessed-API reasons stay Expo's defaults.
 
 ### Test seams
@@ -180,7 +180,7 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
       "AppHeader passes the initial derived from useProfile's pseudo through a pure function with a vitest spec (empty or missing pseudo gives null)",
       "grep finds no picsum.photos, no avatar_url and no expo-image import in profile-avatar.tsx; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
