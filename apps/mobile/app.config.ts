@@ -35,6 +35,21 @@ const SYSTEM_BAR_STYLE_ITEMS = {
   "android:windowLightStatusBar": "true",
 };
 
+// Everything the app collects is tied to the Account and serves the app's own features alone.
+const COLLECTED_DATA_TYPES = [
+  "NSPrivacyCollectedDataTypeEmailAddress",
+  "NSPrivacyCollectedDataTypeName",
+  "NSPrivacyCollectedDataTypeUserID",
+  "NSPrivacyCollectedDataTypeDeviceID",
+  "NSPrivacyCollectedDataTypePurchaseHistory",
+  "NSPrivacyCollectedDataTypeGameplayContent",
+].map((dataType) => ({
+  NSPrivacyCollectedDataType: dataType,
+  NSPrivacyCollectedDataTypeLinked: true,
+  NSPrivacyCollectedDataTypeTracking: false,
+  NSPrivacyCollectedDataTypePurposes: ["NSPrivacyCollectedDataTypePurposeAppFunctionality"],
+}));
+
 const withSystemBarsOnPaper: ConfigPlugin = (expoConfig) =>
   withAndroidStyles(expoConfig, (styles) => {
     const parent = AndroidConfig.Styles.getAppThemeGroup();
@@ -63,6 +78,10 @@ const config: ExpoConfig = {
     usesAppleSignIn: true,
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
+    },
+    privacyManifests: {
+      NSPrivacyTracking: false,
+      NSPrivacyCollectedDataTypes: COLLECTED_DATA_TYPES,
     },
   },
   android: {

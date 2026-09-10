@@ -190,7 +190,7 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
       "cd apps/mobile && bunx expo config --type prebuild --json | grep -c NSPrivacyCollectedDataType prints a count consistent with six entries",
       "bun run check green from the repo root"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```
