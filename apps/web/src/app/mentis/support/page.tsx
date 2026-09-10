@@ -1,12 +1,18 @@
 import type { Metadata } from "next";
 
 import { PUBLISHER } from "@/lib/publisher";
+import { ROUTES } from "@/lib/routes";
 
 const FAQ = [
   {
     question: "Comment supprimer mon compte ?",
     answer:
       "Depuis l'application, ouvrez l'écran Compte puis « Supprimer mon compte ». La suppression est immédiate et irréversible : le compte, le pseudo, les scores et l'ensemble des données associées sont effacés. Rien n'est conservé, et l'application reste jouable sans compte.",
+    link: {
+      lead: "Le détail des deux voies — depuis l'application, ou par email si vous ne l'avez plus :",
+      href: ROUTES.deleteAccount,
+      label: "supprimer mon compte",
+    },
   },
   {
     question: "Comment gérer ou résilier mon abonnement ?",
@@ -51,7 +57,19 @@ export default function SupportPage() {
           {FAQ.map((entry) => (
             <div key={entry.question} className="flex flex-col gap-2">
               <dt className="text-sm text-zinc-900">{entry.question}</dt>
-              <dd className="text-sm text-zinc-600">{entry.answer}</dd>
+              <dd className="text-sm text-zinc-600">
+                {entry.answer}
+                {entry.link ? (
+                  <>
+                    {" "}
+                    {entry.link.lead}{" "}
+                    <a href={entry.link.href} className="text-sky-600 hover:underline">
+                      {entry.link.label}
+                    </a>
+                    .
+                  </>
+                ) : null}
+              </dd>
             </div>
           ))}
         </dl>

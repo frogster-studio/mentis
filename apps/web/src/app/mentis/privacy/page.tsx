@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { PUBLISHER } from "@/lib/publisher";
+import { ROUTES } from "@/lib/routes";
 
 const LAST_UPDATED = "9 septembre 2026";
 
@@ -70,11 +71,22 @@ const PROCESSORS = [
 ];
 
 const RIGHTS = [
-  "Droit d'accès : obtenir la liste des données liées à votre compte.",
-  "Droit de rectification : corriger une donnée inexacte, le pseudo se change dans l'application.",
-  "Droit à l'effacement : supprimer le compte dans l'application ou en écrivant à l'adresse de support.",
-  "Droit à la portabilité : recevoir vos données dans un format lisible par machine.",
-  "Droit d'opposition : vous opposer à un traitement pour un motif tenant à votre situation.",
+  { text: "Droit d'accès : obtenir la liste des données liées à votre compte." },
+  {
+    text: "Droit de rectification : corriger une donnée inexacte, le pseudo se change dans l'application.",
+  },
+  {
+    text: "Droit à l'effacement : supprimer le compte dans l'application ou en écrivant à l'adresse de support.",
+    link: {
+      lead: "La marche à suivre, dans les deux cas :",
+      href: ROUTES.deleteAccount,
+      label: "supprimer mon compte",
+    },
+  },
+  { text: "Droit à la portabilité : recevoir vos données dans un format lisible par machine." },
+  {
+    text: "Droit d'opposition : vous opposer à un traitement pour un motif tenant à votre situation.",
+  },
 ];
 
 export const metadata: Metadata = {
@@ -176,7 +188,19 @@ export default function PrivacyPage() {
         <h2 className="text-lg">Vos droits</h2>
         <ul className="flex flex-col gap-3 text-sm text-zinc-600">
           {RIGHTS.map((right) => (
-            <li key={right}>{right}</li>
+            <li key={right.text}>
+              {right.text}
+              {right.link ? (
+                <>
+                  {" "}
+                  {right.link.lead}{" "}
+                  <a href={right.link.href} className="text-sky-600 hover:underline">
+                    {right.link.label}
+                  </a>
+                  .
+                </>
+              ) : null}
+            </li>
           ))}
         </ul>
         <p className="text-sm text-zinc-600">

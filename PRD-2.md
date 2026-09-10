@@ -75,7 +75,7 @@ Goal: Play Console's « Delete account URL » field accepts a page of the studio
       "/mentis/privacy links to ROUTES.deleteAccount where it states the erasure right",
       "SiteFooter still carries exactly its four links; bun run check green from the repo root"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
