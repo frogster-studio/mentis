@@ -15,7 +15,7 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
 - `/`: the studio name « Frogster Studio », one sentence, one Mentis card (Mark, name, one line, store badges marked « bientôt » until the store links exist), a footer linking `/legal`, `/mentis/privacy`, `/mentis/terms`, `/mentis/support`. Every page shares that footer.
 - The publisher identity is hard-coded in one module (`src/lib/publisher.ts`): first name Hugo, last name Bayoud, sole trader (auto-entrepreneur — « Frogster Studio » is a trade name, not a legal entity), email `frogster.dev@gmail.com`, phone `06 98 35 28 92`, postal address `4 Place Duguesclin, 30000 Nîmes, France`, SIREN `94033623300017`. Publication director: Hugo Bayoud. The site is public, so the repo being public changes nothing.
 - Host named on `/legal`: Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, United States.
-- Support address: `support@frogster-studio.com`, the single contact for support and for every GDPR request. It is an OVH redirect to `frogster.dev@gmail.com` (H2); the site never shows the Gmail address.
+- Support address: `mentis@frogster-studio.com`, the single contact for support and for every GDPR request. It is an OVH redirect to `frogster.dev@gmail.com` (H2); the site never shows the Gmail address.
 - `/mentis/support`: the support address as a `mailto:` link, then exactly four FAQ entries — supprimer mon compte (Compte → « Supprimer mon compte », immediate and irreversible, everything erased), gérer ou résilier l'abonnement (App Store or Google Play subscription settings, never in the app), restaurer un achat (« Restaurer mes achats » on the paywall, same store account), signaler une question erronée (email with the theme and the question).
 
 ### Legal texts (written by the agent in French, reviewed by Hugo in H4)
@@ -30,7 +30,7 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
 - Anonymous play collects nothing: Device Stats never leave the device unless a Stats Transfer is accepted. No analytics, no crash reporting, no advertising SDK, no tracking.
 - Processors named, with their role and region: Supabase (authentication and data, Frankfurt, EU), Railway (API, region `EU West (Amsterdam, Netherlands)`), Vercel (the web site), RevenueCat (subscription state, United States — transfer covered by the European Commission's standard contractual clauses), Apple and Google (sign-in and payment under their own policies). No data leaves the EU except to RevenueCat.
 - Retention: Account data lives until the Account is deleted; deletion is immediate and cascades everything server-side; nothing is retained after. The public Leaderboard shows the Pseudo and Season Totals only, to signed-out Players too.
-- Rights: access, rectification, erasure (in-app deletion or by email), portability, objection; complaint to the CNIL. Controller: Hugo Bayoud, contact `support@frogster-studio.com`.
+- Rights: access, rectification, erasure (in-app deletion or by email), portability, objection; complaint to the CNIL. Controller: Hugo Bayoud, contact `mentis@frogster-studio.com`.
 - Age: anonymous play has no age condition; an Account requires 15 years or parental consent (French GDPR digital-consent age). Store age rating 4+. No age check in the app.
 - Terms of use are Frogster Studio's own, never Apple's standard EULA, and they cover the subscription: « Mentis Premium », monthly, €2.99, no trial, auto-renewing at the same price unless cancelled at least 24 hours before the period ends, managed and cancelled in the store's subscription settings, refunds handled by Apple or Google under their rules, Premium features named as Replay and Catch-up. They also state: anonymous play, Account optional, one Pseudo per Account (unique, changeable, shown publicly on the Leaderboard), fair play (no automation), the right to close an Account that abuses the competition, French law, the support contact.
 - Both documents carry a « Dernière mise à jour » date.
@@ -105,7 +105,7 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
     "category": "web",
     "description": "/mentis/privacy carries the privacy policy",
     "steps": [
-      "The page names the controller (Hugo Bayoud, support@frogster-studio.com), the six inventory data types with their purpose, the fact that anonymous play collects nothing, the absence of analytics, crash and advertising SDKs",
+      "The page names the controller (Hugo Bayoud, mentis@frogster-studio.com), the six inventory data types with their purpose, the fact that anonymous play collects nothing, the absence of analytics, crash and advertising SDKs",
       "The page names the six processors with role and region, states that only RevenueCat is outside the EU under standard contractual clauses",
       "The page states retention until Account deletion, the in-app deletion path, the five GDPR rights, the CNIL, the 15-year rule, and a « Dernière mise à jour » date",
       "The page is in the static export and shares the site footer; bun run check green"
@@ -126,7 +126,7 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
     "category": "web",
     "description": "/mentis/support carries the support address and the FAQ",
     "steps": [
-      "The page shows support@frogster-studio.com as a mailto: link and never the Gmail address",
+      "The page shows mentis@frogster-studio.com as a mailto: link and never the Gmail address",
       "Exactly four FAQ entries: supprimer mon compte, gérer ou résilier l'abonnement, restaurer un achat, signaler une question erronée — each answer matches the Decisions",
       "The page is in the static export and shares the site footer; bun run check green"
     ],
@@ -206,11 +206,6 @@ The loop commits and pushes on branch `feat/store-readiness`, in its draft PR. N
 - Postal address for the mentions légales, the SIREN, the Railway region of the API (Railway → service → Settings → Region).
 - Replace `<ADRESSE — H1>`, `<SIREN — H1>` and `<REGION RAILWAY — H1>` in the Decisions above.
 - Proof: no `— H1>` placeholder remains in the Decisions.
-
-### H2. OVH: the support address
-
-- Emails → Redirections: `support@frogster-studio.com` → `frogster.dev@gmail.com`.
-- Proof: a test email sent to the support address lands in the Gmail inbox.
 
 ### H3. Vercel: the web project — before the PR merges
 
