@@ -85,7 +85,7 @@ Goal: Play Console's « Delete account URL » field accepts a page of the studio
       "account-screen.tsx feeds it the isPremium it already reads from useIsPremium(); DELETE_ACCOUNT_MESSAGE is no longer used as a bare constant",
       "constants.test.ts covers both branches; bun run check green from the repo root"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```

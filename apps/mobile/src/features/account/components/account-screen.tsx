@@ -21,8 +21,8 @@ import {
   DELETE_ACCOUNT_CONFIRM_LABEL,
   DELETE_ACCOUNT_ERROR,
   DELETE_ACCOUNT_LABEL,
-  DELETE_ACCOUNT_MESSAGE,
   DELETE_ACCOUNT_TITLE,
+  deleteAccountMessage,
   LEGAL_PRIVACY_LABEL,
   LEGAL_SEPARATOR,
   LEGAL_SUPPORT_LABEL,
@@ -230,7 +230,7 @@ export const AccountScreen = () => {
       <ConfirmDialog
         visible={deleteVisible}
         title={DELETE_ACCOUNT_TITLE}
-        message={DELETE_ACCOUNT_MESSAGE}
+        message={deleteAccountMessage(isPremium)}
         confirmLabel={DELETE_ACCOUNT_CONFIRM_LABEL}
         cancelLabel={DELETE_ACCOUNT_CANCEL_LABEL}
         onCancel={() => setDeleteVisible(false)}

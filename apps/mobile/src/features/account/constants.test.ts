@@ -6,8 +6,8 @@ import {
   DELETE_ACCOUNT_CONFIRM_LABEL,
   DELETE_ACCOUNT_ERROR,
   DELETE_ACCOUNT_LABEL,
-  DELETE_ACCOUNT_MESSAGE,
   DELETE_ACCOUNT_TITLE,
+  deleteAccountMessage,
   GOOGLE_SIGN_IN_LABEL,
   LEGAL_PRIVACY_LABEL,
   LEGAL_SEPARATOR,
@@ -57,7 +57,7 @@ describe("account constants", () => {
       TRANSFER_DONE_HOME,
       DELETE_ACCOUNT_LABEL,
       DELETE_ACCOUNT_TITLE,
-      DELETE_ACCOUNT_MESSAGE,
+      deleteAccountMessage(false),
       DELETE_ACCOUNT_CONFIRM_LABEL,
       DELETE_ACCOUNT_CANCEL_LABEL,
       DELETE_ACCOUNT_ERROR,
@@ -107,9 +107,25 @@ describe("account constants", () => {
   });
 
   it("spells out exactly what account deletion erases, and that it cannot be undone", () => {
-    expect(DELETE_ACCOUNT_MESSAGE).toContain("compte");
-    expect(DELETE_ACCOUNT_MESSAGE).toContain("statistiques");
-    expect(DELETE_ACCOUNT_MESSAGE).toContain("irréversible");
+    const message = deleteAccountMessage(false);
+    expect(message).toContain("compte");
+    expect(message).toContain("statistiques");
+    expect(message).toContain("irréversible");
+  });
+
+  it("says nothing about a subscription to a Player who has none", () => {
+    expect(deleteAccountMessage(false)).not.toContain("abonnement");
+    // Null is the tier still loading: the sentence would be a claim the app cannot yet make.
+    expect(deleteAccountMessage(null)).toBe(deleteAccountMessage(false));
+  });
+
+  it("warns a Premium Player that the store keeps billing, and where to cancel (App Store 3.1.2)", () => {
+    const message = deleteAccountMessage(true);
+    expect(message.startsWith(deleteAccountMessage(false))).toBe(true);
+    expect(message).toContain("abonnement");
+    expect(message).toContain("facturation continue");
+    expect(message).toContain("App Store");
+    expect(message).toContain("Google Play");
   });
 
   it("names the three legal destinations the store review looks for (guideline 5.1.1)", () => {

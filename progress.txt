@@ -26,3 +26,16 @@ Decisions:
 Files: apps/web/src/app/mentis/support/page.tsx, apps/web/src/app/mentis/privacy/page.tsx, PRD-2.md, progress.txt.
 Proof: bun run --filter @mentis/web build green; grep of out/mentis/support.html and out/mentis/privacy.html finds href="/mentis/delete-account" once in each. bun run check exit 0 (web 7, contracts 177, answer-matching 49, admin 145, mobile 263, api 368).
 Notes for next: the api e2e specs still need NO_PROXY="$NO_PROXY,[::1]" under the sandbox proxy — see Item 1's note. Item 3 is mobile: DELETE_ACCOUNT_MESSAGE becomes a function of isPremium in features/account/constants.ts, fed by the isPremium account-screen.tsx already reads from useIsPremium().
+
+## PRD-2 Item 3 — the in-app deletion confirmation warns a Premium Player — DONE
+
+Done: DELETE_ACCOUNT_MESSAGE becomes deleteAccountMessage(isPremium) in features/account/constants.ts, so a subscribed Player is told the store keeps billing after the Account is gone (App Store 3.1.2).
+Decisions:
+- The function takes `boolean | null`, the exact type useIsPremium() returns, so account-screen.tsx feeds it straight: `message={deleteAccountMessage(isPremium)}`. Null is the tier still loading and reads as false — the app never claims a subscription it has not confirmed.
+- The premium branch is the base message plus one sentence, never a rewritten message: the test asserts startsWith(deleteAccountMessage(false)), so the 5.1.1(v) wording (what is erased, irreversible) can never drift out of the Premium branch.
+- Copy keeps the screen's tutoiement — "Ton abonnement Mentis Premium n'est pas résilié pour autant : la facturation continue. Résilie-le dans les réglages d'abonnement de l'App Store ou de Google Play." Both stores are named in one sentence rather than switching on Platform: prior art subscriptionTermsSentence(platform) exists for the paywall, but a confirmation dialog is not the place for a platform seam, and the PRD asked for a pure function of isPremium alone.
+- DELETE_ACCOUNT_BASE_MESSAGE and DELETE_ACCOUNT_SUBSCRIPTION_SENTENCE are module-local, not exported: the message has exactly one public shape now, and knip stays green.
+- The existing "non-empty French copy" test now lists deleteAccountMessage(false) where the bare constant used to be.
+Files: apps/mobile/src/features/account/constants.ts, apps/mobile/src/features/account/constants.test.ts, apps/mobile/src/features/account/components/account-screen.tsx, PRD-2.md, progress.txt.
+Proof: bun run check exit 0 (web 7, contracts 177, answer-matching 49, admin 145, mobile 265, api 368).
+Notes for next: the api e2e 403s under the sandbox proxy need BOTH env vars, not just the uppercase one — export NO_PROXY="$NO_PROXY,[::1]" no_proxy="$no_proxy,[::1]"; with only NO_PROXY set, 267 specs still fail. Still not persisted to /etc/sandbox-persistent.sh (some clients read the entries as regexes, where [::1] matches every host). All three PRD-2 items now pass; what remains is human step H16 in the Play Console.
