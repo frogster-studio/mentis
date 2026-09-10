@@ -1,6 +1,6 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useMutation } from "@tanstack/react-query";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { NewButton } from "@/components/ui/new-button";
 import { QuietButton } from "@/components/ui/quiet-button";
 import { ScreenError } from "@/components/ui/screen-error";
@@ -17,23 +17,31 @@ import {
   PAYWALL_ACTIVATION_PENDING,
   PAYWALL_ACTIVATION_TITLE,
   PAYWALL_FEATURES,
+  PAYWALL_LEGAL_SEPARATOR,
   PAYWALL_OFFERING_EMPTY,
   PAYWALL_OFFERING_ERROR,
   PAYWALL_PRICE_PERIOD,
+  PAYWALL_PRIVACY_LINK_LABEL,
   PAYWALL_PURCHASE_ERROR,
   PAYWALL_PURCHASE_LABEL,
   PAYWALL_RESTORE_EMPTY,
   PAYWALL_RESTORE_ERROR,
   PAYWALL_RESTORE_LABEL,
   PAYWALL_RESTORE_PENDING_LABEL,
+  PAYWALL_TERMS_LINK_LABEL,
   PAYWALL_TITLE,
 } from "@/features/premium/constants";
 import { isPremiumActive } from "@/features/premium/entitlement";
+import { subscriptionTermsSentence } from "@/features/premium/subscription-terms";
+import { PRIVACY_URL, TERMS_URL } from "@/lib/legal-links";
+import { openExternalLink } from "@/lib/open-external-link";
 import { restorePurchases } from "@/lib/purchases";
 import { TEXT } from "@/theme/text";
 import { COLORS, PRESSED, SPACE } from "@/theme/tokens";
 
 const FEATURE_ICON_SIZE = 18;
+// The paywall never shows on web, so anything that is not Android buys through the App Store.
+const STORE_PLATFORM = Platform.OS === "android" ? "android" : "ios";
 
 export interface PaywallSheetProps {
   visible: boolean;
@@ -157,6 +165,27 @@ export const PaywallSheet = ({ visible, onDismiss }: PaywallSheetProps) => {
               {restore.isPending ? PAYWALL_RESTORE_PENDING_LABEL : PAYWALL_RESTORE_LABEL}
             </Text>
           </Pressable>
+
+          <View style={styles.legal}>
+            <Text style={styles.terms}>{subscriptionTermsSentence(STORE_PLATFORM)}</Text>
+            <Text style={styles.terms}>
+              <Text
+                style={styles.legalLink}
+                suppressHighlighting
+                onPress={() => openExternalLink(TERMS_URL)}
+              >
+                {PAYWALL_TERMS_LINK_LABEL}
+              </Text>
+              {` ${PAYWALL_LEGAL_SEPARATOR} `}
+              <Text
+                style={styles.legalLink}
+                suppressHighlighting
+                onPress={() => openExternalLink(PRIVACY_URL)}
+              >
+                {PAYWALL_PRIVACY_LINK_LABEL}
+              </Text>
+            </Text>
+          </View>
         </View>
       )}
     </Sheet>
@@ -213,5 +242,17 @@ const styles = StyleSheet.create({
   restoreLabel: {
     ...TEXT.caption,
     color: COLORS.inkMuted,
+  },
+  legal: {
+    gap: SPACE.xs,
+  },
+  terms: {
+    ...TEXT.caption,
+    color: COLORS.inkMuted,
+    textAlign: "center",
+  },
+  legalLink: {
+    ...TEXT.captionStrong,
+    color: COLORS.ink,
   },
 });

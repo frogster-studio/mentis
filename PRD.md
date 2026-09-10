@@ -160,7 +160,7 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
       "paywall-sheet.tsx renders that sentence under « Restaurer mes achats », then « Conditions d'utilisation » and « Politique de confidentialité » opening TERMS_URL and PRIVACY_URL through openExternalLink",
       "Copy lives in the premium constants.ts, styles use TEXT and COLORS tokens only; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

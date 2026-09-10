@@ -27,3 +27,11 @@ export const PAYWALL_ACTIVATION_CLOSE_LABEL = "Fermer";
 
 export const ACTIVATION_POLL_INTERVAL_MS = 3_000;
 export const ACTIVATION_TIMEOUT_MS = 90_000;
+
+export const PAYWALL_TERMS_INTRO =
+  "Abonnement mensuel renouvelé automatiquement au même prix, sauf annulation au moins 24 h avant la fin de la période. Gérez ou résiliez à tout moment dans les réglages de";
+export const PAYWALL_TERMS_IOS_STORE = "l'App Store";
+export const PAYWALL_TERMS_ANDROID_STORE = "Google Play";
+export const PAYWALL_TERMS_LINK_LABEL = "Conditions d'utilisation";
+export const PAYWALL_PRIVACY_LINK_LABEL = "Politique de confidentialité";
+export const PAYWALL_LEGAL_SEPARATOR = "·";
