@@ -19,7 +19,7 @@ for ((i=1; i<=$1; i++)); do
   sbx exec -w "$PWD" ralph claude -p "@PRD.md @progress.txt @AGENTS.md $TASK" \
     --dangerously-skip-permissions \
     --model claude-opus-5 --effort high \
-    --disallowedTools "Bash(bun run migration:generate*),Bash(git push *)" \
+    --disallowedTools "Bash(bun run migration:*),Bash(git merge *),Bash(git push *)" \
     --max-turns 200 | tee "$LAST"
   git push origin HEAD
   grep -q "<promise>COMPLETE</promise>" "$LAST" && { echo "PRD complete after $i iterations."; exit 0; }
