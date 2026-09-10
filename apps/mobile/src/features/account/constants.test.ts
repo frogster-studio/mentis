@@ -9,6 +9,10 @@ import {
   DELETE_ACCOUNT_MESSAGE,
   DELETE_ACCOUNT_TITLE,
   GOOGLE_SIGN_IN_LABEL,
+  LEGAL_PRIVACY_LABEL,
+  LEGAL_SEPARATOR,
+  LEGAL_SUPPORT_LABEL,
+  LEGAL_TERMS_LABEL,
   PSEUDO_ERROR,
   PSEUDO_LOAD_ERROR,
   PSEUDO_PLACEHOLDER,
@@ -64,6 +68,10 @@ describe("account constants", () => {
       PSEUDO_TAKEN_ERROR,
       PSEUDO_ERROR,
       PSEUDO_LOAD_ERROR,
+      LEGAL_PRIVACY_LABEL,
+      LEGAL_TERMS_LABEL,
+      LEGAL_SUPPORT_LABEL,
+      LEGAL_SEPARATOR,
     ];
     for (const copy of strings) {
       expect(copy.trim().length).toBeGreaterThan(0);
@@ -102,5 +110,11 @@ describe("account constants", () => {
     expect(DELETE_ACCOUNT_MESSAGE).toContain("compte");
     expect(DELETE_ACCOUNT_MESSAGE).toContain("statistiques");
     expect(DELETE_ACCOUNT_MESSAGE).toContain("irréversible");
+  });
+
+  it("names the three legal destinations the store review looks for (guideline 5.1.1)", () => {
+    expect(LEGAL_PRIVACY_LABEL).toContain("confidentialité");
+    expect(LEGAL_TERMS_LABEL).toContain("Conditions");
+    expect(LEGAL_SUPPORT_LABEL).toBe("Support");
   });
 });

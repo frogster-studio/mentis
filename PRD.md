@@ -170,7 +170,7 @@ Goal: App Store Connect accepts « Add for Review » — Privacy Policy URL, Sup
       "Each link opens its URL from src/lib/legal-links.ts; labels live in the account constants.ts and are covered by constants.test.ts",
       "bun run check green from the repo root"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

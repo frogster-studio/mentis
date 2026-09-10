@@ -42,3 +42,9 @@ export const DELETE_ACCOUNT_MESSAGE =
 export const DELETE_ACCOUNT_CONFIRM_LABEL = "Supprimer";
 export const DELETE_ACCOUNT_CANCEL_LABEL = "Annuler";
 export const DELETE_ACCOUNT_ERROR = "La suppression a échoué.";
+
+// App Store 5.1.1: the legal pages stay reachable from inside the app, signed in or out.
+export const LEGAL_PRIVACY_LABEL = "Politique de confidentialité";
+export const LEGAL_TERMS_LABEL = "Conditions d'utilisation";
+export const LEGAL_SUPPORT_LABEL = "Support";
+export const LEGAL_SEPARATOR = "·";
