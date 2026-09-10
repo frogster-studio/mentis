@@ -22,7 +22,7 @@ const FAQ = [
   {
     question: "J'ai déjà payé, comment restaurer mon achat ?",
     answer:
-      "Sur l'écran de l'abonnement, appuyez sur « Restaurer mes achats ». L'appareil doit être connecté au même compte App Store ou Google Play que celui utilisé lors de l'achat : c'est le magasin, et non Mentis, qui détient la preuve de l'abonnement.",
+      "Dans l'application, connectez-vous puis ouvrez l'écran Compte et appuyez sur « Restaurer mes achats ». L'appareil doit être connecté au même compte App Store ou Google Play que celui utilisé lors de l'achat : c'est le magasin, et non Mentis, qui détient la preuve de l'abonnement.",
   },
   {
     question: "Une question du quiz est erronée, que faire ?",
