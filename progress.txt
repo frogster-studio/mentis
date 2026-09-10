@@ -1,137 +1,14 @@
-## Item 1 — apps/web workspace exists (web) — DONE
+## PRD-2 Item 1 — /mentis/delete-account (web) — DONE
 
-Done: @mentis/web, Next 16 static export (output: "export"), root page + shared footer.
+Done: the sixth page of the site, the Play Console « Delete account URL » target, with both deletion paths.
 Decisions:
-- Footer lives in the root layout, not per page: every future page inherits it for free (PRD "every page shares that footer").
-- src/lib/routes.ts = the five paths (ROUTES named map + PAGE_PATHS list); footer labels stay in site-footer.tsx so routes.ts is paths only. Its spec asserts the five.
-- Footer already links /legal, /mentis/* — those pages arrive in items 2-5, so the links 404 until then. Deliberate: no typedRoutes, build is green.
-- Mark copied as an inline SVG component (currentColor, sky-500) rather than shared: no cross-app UI package exists, admin duplicates the wordmark the same way.
-- Type scale kept to three (text-4xl / text-lg / text-sm), zinc canvas + white card, rounded-lg only.
-- Fonts copied from apps/admin/public/fonts, wired with next/font/local. No env var, no API call anywhere in apps/web.
-- Registered the workspace where the repo already lists them: knip.json entry, root AGENTS.md tree + filter list, plus a short apps/web/AGENTS.md (+ one-line CLAUDE.md) pointing design rules at apps/admin/AGENTS.md.
-Files: apps/web/** (new), knip.json, AGENTS.md, bun.lock, PRD.md, progress.txt.
-Proof: bun run --filter @mentis/web build -> out/index.html carries « Frogster Studio », the Mentis card, « bientôt », the four footer links. bun run check exit 0.
-Notes for next: next build rewrites apps/web/tsconfig.json (adds .next/dev/types) — committed as it landed. apps/web/out/ and next-env.d.ts gitignored. Item 2 (/legal) needs src/lib/publisher.ts.
-## Item 2 — /legal mentions légales (web) — DONE
-
-Found the work already in the tree, uncommitted, PRD already flipped: previous iteration died before step 3. Verified + committed it rather than stacking item 3 on top.
-Decisions:
-- src/lib/publisher.ts = a flat `as const` PUBLISHER object, no formatting helpers: /mentis/privacy and /mentis/terms will name the same controller from it (PRD "hard-coded in one module").
-- Field named `siret`, labelled « SIRET »: the PRD Decisions say « SIREN » but the value 94033623300017 is 14 digits = a SIRET. Kept the number, fixed the label. Flag for H4 review.
-- Host (Vercel Inc.) stays a local const in the page: it is the site's host, not the publisher's identity, and nothing else will read it.
-- Rows rendered by a local `Rows` <dl> component, phone as tel: and email as mailto:. Type scale unchanged (text-4xl / text-lg / text-sm), sky only on links.
-Files: apps/web/src/lib/publisher.ts (new), apps/web/src/app/legal/page.tsx (new), PRD.md.
-Proof: bun run check exit 0. build -> out/legal.html carries every editor field, the host, and the four footer links.
-Notes for next: item 3 (/mentis/privacy) is the next false, and the biggest — the whole data inventory. It should import PUBLISHER for the controller. ralph-once.sh is modified in the tree (Hugo's local sbx -> plain claude switch), left uncommitted on purpose.
-## Item 3 — /mentis/privacy privacy policy (web) — DONE
-
-Done: apps/web/src/app/mentis/privacy/page.tsx — the whole data inventory, the processors, retention, rights, age.
-Decisions:
-- One page file, three local `as const`-free arrays (COLLECTED_DATA, PROCESSORS, RIGHTS) rendered by inline <dl>/<ul>: same shape as /legal, no shared prose component yet — items 4 and 5 will say whether one is earned.
-- Controller sentence built from PUBLISHER (name, legal status, address, email): the identity is written once, /legal and this page read it.
-- LAST_UPDATED stays a local const, not shared with /mentis/terms: the two documents can legitimately change on different dates.
-- Vercel's "region" column says « Aucune donnée de compte ne lui est transmise » rather than a country — the site is static and the PRD promises « no data leaves the EU except RevenueCat »; naming the US for a host that receives nothing would contradict it.
-- Six processors = Supabase, Railway, Vercel, RevenueCat, Apple, Google. Six data types, each with the « fonctionnement de l'app » purpose stated once for the whole list.
-Files: apps/web/src/app/mentis/privacy/page.tsx (new), PRD.md.
-Proof: bun run check exit 0 (typecheck 6/6, tests 74 files, knip + biome clean). build -> out/mentis/privacy.html carries the controller email, the six types, the six processors, « clauses contractuelles », CNIL, « Supprimer mon compte », 15 ans, « Dernière mise à jour », and the four footer links.
-Notes for next: this sandbox is linux/arm64 while node_modules came from the macOS host, so every native binary was missing — lightningcss, @tailwindcss/oxide, @swc/core, oxc-parser, oxc-resolver, @biomejs/cli. Fixed by extracting the *-linux-arm64-gnu tarballs into node_modules (npm pack + tar, no package.json or bun.lock touched). Also: apps/api e2e tests 403 on every request because supertest talks to [::1] and the sandbox proxy's NO_PROXY only lists the unbracketed ::1 — run check with NO_PROXY="$NO_PROXY,[::1]". Item 4 (/mentis/terms) is the next false; it needs the same LAST_UPDATED treatment and the 2,99 €/monthly subscription block.
-## Item 4 — /mentis/terms conditions d'utilisation (web) — DONE
-
-Done: apps/web/src/app/mentis/terms/page.tsx — nine sections, subscription block included.
-Decisions:
-- Same page shape as /legal and /mentis/privacy: local `as const`-free arrays + inline <dl>/<ul>, no shared prose component. Three pages in, the only real duplication is the section wrapper class — not worth a component yet; item 5 (/mentis/support) is the last chance to change that verdict.
-- The subscription facts (name, monthly, 2,99 €, no trial, renewal at the same price) sit in a labelled <dl> like /legal's identity rows; the legal sentence about the 24 h cancellation window, the store settings and Apple/Google refunds stays prose below it. A reviewer scanning for the price finds a table, not a paragraph.
-- Premium features named in the app's own words — « Rejouer la compétition » and « rattrapage » (features/quiz/constants.ts, features/competition/constants.ts) — so terms and app never drift into two vocabularies.
-- Terms link to the privacy page through ROUTES.privacy instead of a literal string: routes.ts is already the page list, and its spec now guards a real cross-page link.
-- LAST_UPDATED is a local const, deliberately not shared with privacy (same call as item 3: the two documents change on different dates).
-- Added two sections the PRD did not list — « Disponibilité et évolution » and « Propriété ». Standard for a paid app's terms, and their absence is what makes terms read as Apple's standard EULA, which the PRD forbids.
-Files: apps/web/src/app/mentis/terms/page.tsx (new), PRD.md, progress.txt.
-Proof: bun run check exit 0 (typecheck 6/6, api 368 tests, mobile 254, knip + biome clean). build -> out/mentis/terms.html carries « Mentis Premium », 2,99, « 24 heures », App Store, Google Play, « Rejouer la compétition », rattrapage, « droit français », « 15 ans », « Dernière mise à jour », the support address, and the four footer links.
-Notes for next: the [::1] proxy fix from item 3 needs BOTH vars — NO_PROXY="$NO_PROXY,[::1]" no_proxy="$no_proxy,[::1]" bun run check. Setting the uppercase one alone still leaves 267 api e2e tests failing on 403; the lowercase one is what Node's fetch reads. Item 5 (/mentis/support) is the next false: mailto: + exactly four FAQ entries, and it must never print the Gmail address.
-## Item 5 — /mentis/support support address + FAQ (web) — DONE
-
-Done: apps/web/src/app/mentis/support/page.tsx — the mailto: contact and exactly four FAQ entries.
-Decisions:
-- Same page shape as the three pages before it (local array + inline <dl>, section wrapper class repeated). Verdict on the shared prose component, now that all five pages exist: not earned. The only shared bit is `flex flex-col gap-6` on <section>; the pages differ in every other way, and a wrapper component would hide the markup a legal reviewer reads.
-- The support address is read from PUBLISHER.email, never typed literally: /legal, /mentis/terms and this page all name the same contact, and the Gmail redirect target is nowhere in apps/web (grep on out/mentis/support.html: 0 hits).
-- FAQ answers reuse the app's own labels verbatim — « Supprimer mon compte » (features/account/constants.ts) and « Restaurer mes achats » (features/premium/constants.ts) — so a player follows the text word for word on screen.
-- Vouvoiement, like the terms page. Answer 2 names both stores (App Store on iPhone, Google Play on Android) and repeats the 24 h window: the support page is the one a reviewer opens from the store listing, so it must stand alone.
-- Answer 3 says the store, not Mentis, holds the proof of purchase — that is why the restore needs the same store account.
-- No shared LAST_UPDATED here: a FAQ is not a legal document, the PRD only dates privacy and terms.
-Files: apps/web/src/app/mentis/support/page.tsx (new), PRD.md, progress.txt.
-Proof: bun run check exit 0 (typecheck 6/6, api 368 tests, mobile 254, knip + biome clean). build -> out/mentis/support.html carries the mailto: link, exactly four <dt>, « Supprimer mon compte », « Restaurer mes achats », Google Play, the theme+question ask, zero occurrence of the Gmail address, and the four footer links.
-Notes for next: apps/web is now complete — all five pages exist and the footer links no longer 404. Item 6 (ci.yml deploy-web) is the next false and the last non-mobile one; it must leave admin-changed and deploy-admin byte-identical (diff the job blocks before/after) and needs vars.VERCEL_WEB_PROJECT_ID, which is H3 and still open — the job can land before the variable exists, it just fails until Hugo sets it. Keep running check with NO_PROXY="$NO_PROXY,[::1]" no_proxy="$no_proxy,[::1]".
-## Item 6 — ci.yml deploys apps/web (ci) — DONE
-
-Done: .github/workflows/ci.yml gains web-changed + deploy-web, appended after deploy-admin.
-Decisions:
-- Appended at the end of the file rather than interleaved (web-changed next to admin-changed): the PRD demands the admin jobs stay byte-identical, and a pure append makes that provable — `diff` before/after shows 0 removed lines, 47 added.
-- deploy-web mirrors deploy-admin line for line: same VERCEL_TOKEN secret, same VERCEL_ORG_ID, `bunx vercel@58 pull/build/deploy --prod`. Only VERCEL_PROJECT_ID differs (vars.VERCEL_WEB_PROJECT_ID) and the concurrency group (deploy-web, cancel-in-progress false).
-- The filter is apps/web/, bun.lock, ci.yml — deliberately no packages/contracts/ (admin has it): apps/web imports nothing from the workspace, it is a static site with no API call, so a contracts change can never alter its output.
-- Kept admin's "no usable base -> deploy rather than guess" branch verbatim: a first push or a force-push must not silently skip the site deploy either.
-- No working-directory anywhere: like admin, the Vercel project's own Root Directory (apps/web, set in H3) is what points the build at the workspace.
-Files: .github/workflows/ci.yml, PRD.md, progress.txt.
-Proof: `bun -e` + the repo's own `yaml` package parses ci.yml -> 5 jobs (check, admin-changed, deploy-admin, web-changed, deploy-web), deploy-web needs [check, web-changed], env carries VERCEL_WEB_PROJECT_ID. Filter regex tested against 7 paths: apps/web/**, bun.lock, ci.yml match; apps/admin, apps/mobile, packages/contracts, docs/ do not. diff /tmp/ci-before.yml -> additions only. bun run check exit 0 (typecheck 6/6, api 368 tests, mobile 254, knip + biome clean).
-Notes for next: deploy-web will fail on `vercel pull` until Hugo sets vars.VERCEL_WEB_PROJECT_ID (H3, still open) — expected, and only on pushes to main, so the PR stays green. All web + ci items are done; the five remaining are mobile. Item 7 (src/lib/legal-links.ts) is the next false and every later mobile item imports it, so build it first and keep the three URLs there alone. It must delete LEGAL_URL and every https://hugobayoud.fr occurrence in apps/mobile. Keep running check with NO_PROXY="$NO_PROXY,[::1]" no_proxy="$no_proxy,[::1]".
-## Item 7 — the shared legal links module (mobile) — DONE
-
-Done: src/lib/legal-links.ts + its spec, src/lib/open-external-link.ts, legal-line.tsx rewired, LEGAL_URL gone.
-Decisions:
-- **Split into two modules, against the PRD's "one shared module"** — and the PRD Decisions now say so. `openExternalLink` needs `expo-web-browser`, whose `expo-modules-core` import dies in vitest's node environment (`__DEV__ is not defined`, then `Cannot read properties of undefined (reading 'EventEmitter')` — it wants the native Expo global). Anything importing the URLs would have dragged that in, so the spec the PRD asks for could not exist. legal-links.ts is now import-free; open-external-link.ts holds the opener.
-- Probed the alternative first: aliasing `react-native` -> `react-native-web` in vitest.config.mts + `define: { __DEV__: "true" }`. react-native then loads, expo-web-browser still does not. Reverted — stubbing the Expo global to assert three string literals is test infrastructure bought at a bad price, and the alias would silently pin `Platform.OS` to "web" for every future spec. Item 8's store-name function is a pure function of "ios" | "android" precisely so it never needs Platform in a test.
-- The three URLs are built from one `SITE_URL` const, so the domain is written once; the spec still asserts the full literal strings, so a wrong base fails.
-- `openExternalLink(url)` is the old `openLegal` with the URL as a parameter — same web/native branch, same comment. The `suppressHighlighting` comment stayed on the links.
-- Arrow wrappers at the call sites (`onPress={() => openExternalLink(PRIVACY_URL)}`) rather than two named local functions: the sentence now opens two different pages, and a wrapper per link reads shorter than a helper per link.
-- SUPPORT_URL is exported but unused until item 9. Knip stays green because the vitest plugin treats *.test.ts as entries and the spec imports all three.
-Files: apps/mobile/src/lib/legal-links.ts (new), apps/mobile/src/lib/legal-links.test.ts (new), apps/mobile/src/lib/open-external-link.ts (new), apps/mobile/src/features/onboarding/components/legal-line.tsx, apps/mobile/src/features/onboarding/constants.ts, PRD.md, progress.txt.
-Proof: bun run check exit 0 (typecheck 7/7, mobile 255 tests in 26 files — was 254 —, api 368, knip + biome clean). grep for LEGAL_URL and hugobayoud across apps/mobile: 0 hits.
-Notes for next: item 8 (paywall footer) is the next false. It imports TERMS_URL/PRIVACY_URL from @/lib/legal-links and openExternalLink from @/lib/open-external-link — two imports, not one. Keep the store-name function pure over "ios" | "android" (never read Platform inside it) so its spec runs in the node environment. Keep running check with NO_PROXY="$NO_PROXY,[::1]" no_proxy="$no_proxy,[::1]".
-## Item 8 — the paywall subscription footer (mobile) — DONE
-
-Done: src/features/premium/subscription-terms.ts + spec, six new constants, paywall-sheet.tsx footer under « Restaurer mes achats ».
-Decisions:
-- The pure function returns the WHOLE sentence, not just the store name — the item step asks for "the footer sentence for ios/android", and a function returning « l'App Store » would leave the sentence assembled in the component, where no spec reaches it. It takes a `StorePlatform = "ios" | "android"` parameter and never reads `Platform` itself, so the spec runs in vitest's node environment (item 7's lesson).
-- Copy split as PAYWALL_TERMS_INTRO + the two store names in constants.ts, joined by the function: the long legal sentence is written once, only the store name varies. Two full sentences side by side would drift the moment one is edited.
-- The spec asserts both full literals (a wrong word fails, not just a wrong store) plus « mensuel », « au même prix », « 24 h » — the three facts guideline 3.1.2 actually checks — and that neither platform names the other store.
-- STORE_PLATFORM is a module const, `Platform.OS === "android" ? "android" : "ios"`: the paywall never shows on web (PURCHASES_SUPPORTED is false there), so there is no third branch to write.
-- The two links live in one <Text> with the « · » separator as a nested string, like legal-line.tsx — a flex row would break the line badly on a narrow sheet. Same suppressHighlighting, TEXT.captionStrong on ink; the sentence is TEXT.caption on inkMuted like restoreLabel above it.
-- The footer sits inside the offering-loaded branch, after the restore Pressable: no offer on screen means no subscription terms to state.
-Files: apps/mobile/src/features/premium/subscription-terms.ts (new), apps/mobile/src/features/premium/subscription-terms.test.ts (new), apps/mobile/src/features/premium/constants.ts, apps/mobile/src/features/premium/components/paywall-sheet.tsx, PRD.md, progress.txt.
-Proof: bun run check exit 0 (typecheck 7/7, mobile 259 tests in 27 files — was 255 in 26 —, api 368, knip + biome clean).
-Notes for next: item 9 (account legal footer) is the next false. It needs the three links — PRIVACY_URL, TERMS_URL, SUPPORT_URL from @/lib/legal-links — and its labels in features/account/constants.ts, asserted in the existing constants.test.ts (that spec's shape: a non-empty list + one meaning assertion per string). PAYWALL_PRIVACY_LINK_LABEL and PAYWALL_TERMS_LINK_LABEL already hold the same two French labels in the premium constants — do NOT import them across features, the repo keeps copy per feature. Keep running check with NO_PROXY="$NO_PROXY,[::1]" no_proxy="$no_proxy,[::1]".
-## Item 9 — the account screen's legal footer (mobile) — DONE
-
-Done: three quiet links — « Politique de confidentialité » · « Conditions d'utilisation » · « Support » — under the footer actions of account-screen.tsx, in both states.
-Decisions:
-- Rendered inline in account-screen.tsx, not as a legal-footer.tsx component: one call site, no props, and the repo's rule is to split what is *reusable*. The onboarding LegalLine earns its file because it is a sentence with copy of its own; three links inside an existing footer <View> do not.
-- Placed after the signed-in/signed-out ternary inside styles.footer, so a single node covers both states — no duplication, and the PRD's "shown signed in and signed out" is structural rather than repeated.
-- One <Text> with « · » separators, like the paywall's legal line (item 8): a flex row would break badly when the three long French labels wrap on a narrow screen. TEXT.caption/inkMuted for the line, TEXT.captionStrong/ink for the links — the same quiet/emphasis pair the paywall and the onboarding sentence already use.
-- Labels are their own constants in features/account/constants.ts (LEGAL_PRIVACY_LABEL, LEGAL_TERMS_LABEL, LEGAL_SUPPORT_LABEL, LEGAL_SEPARATOR), duplicating the premium feature's two identical strings on purpose — the repo keeps copy per feature and item 8's note says explicitly not to import across features.
-- constants.test.ts gains the four strings in the non-empty list plus one meaning assertion per label (guideline 5.1.1), the shape that spec already uses.
-Files: apps/mobile/src/features/account/constants.ts, apps/mobile/src/features/account/constants.test.ts, apps/mobile/src/features/account/components/account-screen.tsx, PRD.md, progress.txt.
-Proof: bun run check exit 0 (typecheck 7/7, mobile 260 tests in 27 files — was 259 —, api 368, knip + biome clean).
-Notes for next: item 10 (ProfileAvatar) is the next false. It takes `initial: string | null`, so the pure derivation lives beside AppHeader (a `profileInitial(pseudo)` style function with its own spec — empty/missing pseudo -> null), and profile-avatar.tsx must lose picsum.photos, avatar_url and the expo-image import; check whether expo-image is still used elsewhere before knip decides it is an unused dependency. Keep running check with NO_PROXY="$NO_PROXY,[::1]" no_proxy="$no_proxy,[::1]".
-## Item 10 — the avatar shows the Pseudo's initial (mobile) — DONE
-
-Done: src/components/profile-initial.ts + spec, profile-avatar.tsx takes `initial: string | null`, AppHeader derives it from useProfile.
-Decisions:
-- The derivation is its own import-free module (profile-initial.ts) beside AppHeader, not a function inside app-header.tsx: that file imports react-native and expo-router, so a spec on it dies in vitest's node environment — item 7's lesson, applied without probing it again.
-- `profileInitial` trims before taking the first character: the Pseudo is free text and a leading space would render an empty circle that looks like a bug, not a missing Pseudo.
-- Source is the Pseudo from useProfile, never the Supabase `full_name`: the header's greeting already names the Account's first name, and the avatar must show what the Leaderboard shows. `metadataString` stays — `firstNameOf` still reads it.
-- TEXT.statValue (Inter Tight SemiBold 26) for the letter: the avatar box is CONTROL_SQUARE_SIZE = 60 and the neutral dot it replaces is 26 wide, so 26 is the size that keeps the same optical weight — TEXT.label at 14 would float in the circle. No new token, per the PRD.
-- The photo branch's `overflow: hidden` and `position: relative` left the box with the <Image>: nothing overflows any more, and the dot's `margin: "auto"` became alignItems/justifyContent center so the letter and the dot center identically.
-- expo-image stays a dependency — theme-image-cache.ts and theme-reveal.tsx still use it, so knip is green.
-Files: apps/mobile/src/components/profile-initial.ts (new), apps/mobile/src/components/profile-initial.test.ts (new), apps/mobile/src/components/profile-avatar.tsx, apps/mobile/src/components/app-header.tsx, PRD.md, progress.txt.
-Proof: bun run check exit 0 (typecheck 7/7, mobile 263 tests in 28 files — was 260 in 27 —, api 368, knip + biome clean). grep for picsum, avatar_url and expo-image across src/components: 0 hits.
-Notes for next: item 11 (ios.privacyManifests in app.config.ts) is the last false and the last item of the PRD. app.config.ts is the one file allowed local literals (static config), so the six NSPrivacyCollectedDataType entries go there verbatim — no constant module, no test. Its proof runs `bunx expo config --type prebuild --json` from apps/mobile, which needs the Expo CLI to resolve; if the sandbox chokes on it, a JSON parse of the config object is the fallback. Keep running check with NO_PROXY="$NO_PROXY,[::1]" no_proxy="$no_proxy,[::1]".
-## Item 11 — the iOS privacy manifest (mobile) — DONE
-
-Done: app.config.ts declares ios.privacyManifests — NSPrivacyTracking false + the six collected data types. Last item of the PRD.
-Decisions:
-- The six types are a string list `.map()`ed into the identical envelope (linked true, tracking false, purpose AppFunctionality) rather than six hand-written objects: the envelope is the same for all six by design (PRD data inventory), and writing it once makes a divergent entry impossible. 40 lines of literal became 14.
-- The list is a module const above the config, not inline in `ios`: the config object stays readable, and the one comment the file earns ("everything is tied to the Account and serves the app's features alone") sits where the list is.
-- No NSPrivacyAccessedAPITypes: verified in node_modules/@expo/config-plugins/build/ios/PrivacyInfo.js that `withPrivacyInfo` MERGES our dictionary into the existing PrivacyInfo.xcprivacy (mergePrivacyInfo on the parsed plist), so Expo's template + autolinked defaults for accessed-API reasons survive prebuild untouched. The PRD asks for exactly that.
-- No constants module and no spec: app.config.ts is static config read by the Expo CLI, and the proof is the CLI's own output, not a unit test.
-Files: apps/mobile/app.config.ts, PRD.md, progress.txt.
-Proof: `APP_VARIANT=production bunx expo config --type prebuild --json` exits 0; `grep -o NSPrivacyCollectedDataType | wc -l` = 37 = 1 array key + 6 x 6 keys per entry (grep -c prints 1 only because the JSON is one line). The parsed ios.privacyManifests shows NSPrivacyTracking false and exactly the six types EmailAddress, Name, UserID, DeviceID, PurchaseHistory, GameplayContent, each linked/not-tracking/AppFunctionality. bun run check exit 0 (typecheck 7/7, mobile 263 tests in 28 files, api 368, knip + biome clean).
-Notes for next: every item in the PRD is now true — the loop's work is done. What remains is human-only: H2 to H15 (OVH redirect, the Vercel web project + VERCEL_WEB_PROJECT_ID for deploy-web, the H4 legal review, DNS, the EAS production build, App Store Connect, the review Google account, RevenueCat grant, Play Console). Two flags carried from earlier items for H4: /legal labels the 14-digit 94033623300017 as « SIRET » where the PRD Decisions say SIREN, and the deploy-web job fails on `vercel pull` until H3 sets the repo variable.
+- routes.ts gains deleteAccount: "/mentis/delete-account"; routes.test.ts asserts the six paths and that the new one stays under /mentis. SiteFooter untouched — Google wants the URL to land on the page itself, and the four legal links are enough.
+- src/lib/delete-account.ts is pure TS (no JSX, so vitest reaches it in the node environment): IN_APP_STEPS, DELETION_EMAIL_SUBJECT, DELETION_EMAIL_BODY_LINES, DELETION_EMAIL_BODY (the lines joined by \n) and buildDeletionMailto(address).
+- buildDeletionMailto uses encodeURIComponent, not URLSearchParams: the latter encodes a space as "+", which several mail clients paste literally into the subject.
+- The body is kept as lines, not one blob: the page renders one <p> per line and the spec asserts the six lines and the three identity fields separately.
+- copy-button.tsx is the site's first and only "use client" component. It guards on navigator.clipboard being absent and simply does nothing then — the address is also a mailto: link and the template is displayed in full, so nothing is lost.
+- The page names Mentis and PUBLISHER.tradeName, says the deletion is immediate and irreversible with no retention, lists what is erased (account, pseudo, scores, sessions, competition attempts and answers, standings, the Premium mirror) and what is not ours (the purchase record at Apple, Google, RevenueCat), and carries a card telling the Player to cancel the subscription in the store BEFORE deleting.
+- Email path: write from the Account's own address (that is the identity check Google permits), 30 days max, in practice a few days.
+Files: apps/web/src/app/mentis/delete-account/page.tsx (new), apps/web/src/components/copy-button.tsx (new), apps/web/src/lib/delete-account.ts (new), apps/web/src/lib/delete-account.test.ts (new), apps/web/src/lib/routes.ts, apps/web/src/lib/routes.test.ts, apps/web/AGENTS.md (five pages -> six), PRD-2.md, progress.txt.
+Proof: bun run --filter @mentis/web build lists /mentis/delete-account and emits out/mentis/delete-account.html. bun run check exit 0 (web 7 tests, mobile 263, api 368).
+Notes for next: the api e2e specs 403 under the sandbox proxy because app.getUrl() returns http://[::1]:port and NO_PROXY only bypasses the unbracketed ::1 — run with NO_PROXY="$NO_PROXY,[::1]" and all 368 pass. Not persisted to /etc/sandbox-persistent.sh: some clients read NO_PROXY entries as regexes, where [::1] is a character class matching every host. Item 2 links to ROUTES.deleteAccount from the support FAQ and the privacy erasure right.

@@ -65,7 +65,7 @@ Goal: Play Console's « Delete account URL » field accepts a page of the studio
       "The page names Mentis and Frogster Studio, states the deletion is immediate and irreversible, lists what is erased, names the purchase record kept by Apple, Google and RevenueCat, and tells the Player to cancel the subscription in the store before deleting",
       "bun run --filter @mentis/web build emits the route in out/; apps/web/AGENTS.md says six pages; bun run check green from the repo root"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "web",

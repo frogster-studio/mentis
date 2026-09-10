@@ -3,13 +3,14 @@ import { describe, expect, it } from "vitest";
 import { PAGE_PATHS, ROUTES } from "@/lib/routes";
 
 describe("routes", () => {
-  it("lists the five pages of the site", () => {
+  it("lists the six pages of the site", () => {
     expect(PAGE_PATHS).toEqual([
       "/",
       "/legal",
       "/mentis/privacy",
       "/mentis/terms",
       "/mentis/support",
+      "/mentis/delete-account",
     ]);
   });
 
@@ -17,5 +18,6 @@ describe("routes", () => {
     expect(ROUTES.privacy.startsWith("/mentis/")).toBe(true);
     expect(ROUTES.terms.startsWith("/mentis/")).toBe(true);
     expect(ROUTES.support.startsWith("/mentis/")).toBe(true);
+    expect(ROUTES.deleteAccount.startsWith("/mentis/")).toBe(true);
   });
 });
