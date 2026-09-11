@@ -8,6 +8,7 @@ COPY package.json bun.lock ./
 COPY apps/api/package.json apps/api/
 COPY apps/admin/package.json apps/admin/
 COPY apps/mobile/package.json apps/mobile/
+COPY apps/web/package.json apps/web/
 COPY packages/answer-matching/package.json packages/answer-matching/
 COPY packages/contracts/package.json packages/contracts/
 
