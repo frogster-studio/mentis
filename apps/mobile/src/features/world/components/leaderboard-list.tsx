@@ -14,14 +14,14 @@ export interface LeaderboardListProps {
 export const LeaderboardList = ({ entries, myPseudo }: LeaderboardListProps) => {
   if (entries.length === 0) {
     return (
-      <Card onPress={null}>
+      <Card background={null} onPress={null}>
         <Text style={styles.empty}>{LEADERBOARD_EMPTY}</Text>
       </Card>
     );
   }
 
   return (
-    <Card onPress={null}>
+    <Card background={null} onPress={null}>
       <View style={styles.rows}>
         {entries.map((entry) => (
           // A pseudo names one Account per Season, so the row it fills is its own.

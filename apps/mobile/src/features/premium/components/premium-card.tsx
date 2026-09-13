@@ -21,7 +21,7 @@ export interface PremiumCardProps {
 
 export const PremiumCard = ({ isPremium, onOpenPaywall }: PremiumCardProps) => {
   return (
-    <Card onPress={null}>
+    <Card background={null} onPress={null}>
       <View style={styles.heading}>
         <MaterialCommunityIcons name="crown-outline" size={CROWN_SIZE} color={COLORS.ink} />
         <Text style={styles.title}>{isPremium ? PREMIUM_ACTIVE_TITLE : PREMIUM_TITLE}</Text>

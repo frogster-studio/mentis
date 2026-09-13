@@ -1,157 +1,124 @@
-import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "expo-router";
 import { Animated, StyleSheet, View } from "react-native";
-import { useAppHeaderHeight, useCollapsedAppHeaderHeight } from "@/components/app-header";
+import { useAppHeaderHeight } from "@/components/app-header";
 import { useAppTabBarHeight } from "@/components/app-tab-bar";
-import { useTabScroll, useTabScrollOffset } from "@/components/tab-scroll";
+import { useTabScroll } from "@/components/tab-scroll";
+import { PaperBackground } from "@/components/ui/paper-background";
 import { ScreenContainer, TAB_SCREEN_EDGES } from "@/components/ui/screen-container";
 import { ScreenError } from "@/components/ui/screen-error";
 import { ScreenLoading } from "@/components/ui/screen-loading";
 import { useProfile } from "@/features/account/api";
 import { useAuthStore } from "@/features/account/auth-store";
-import { competitionKeys, useCompetitionDay, useStanding } from "@/features/competition/api";
+import { useCompetitionDay, useStanding } from "@/features/competition/api";
+import { bestAttempt } from "@/features/competition/best-attempt";
 import { CompetitionCard } from "@/features/competition/components/competition-card";
 import {
   CATCHUP_TEASER,
   CATCHUP_TITLE,
-  COMPETITION_TEASER,
-  COMPETITION_TITLE,
+  COMPETITION_CATCHUP_LABEL,
+  COMPETITION_DAILY_TEASER,
+  COMPETITION_DAILY_TITLE,
+  COMPETITION_DONE_TITLE,
+  COMPETITION_ERROR,
+  COMPETITION_SEE_RESULTS_LABEL,
+  COMPETITION_START_LABEL,
+  COMPETITION_TRY_AGAIN_LABEL,
 } from "@/features/competition/constants";
-import { useLeaderboardPage, worldKeys } from "@/features/world/api";
-import { LeaderboardList } from "@/features/world/components/leaderboard-list";
-import { LeaderboardPager } from "@/features/world/components/leaderboard-pager";
+import { LeaderboardPreviewCard } from "@/features/world/components/leaderboard-preview-card";
 import { LEADERBOARD_ERROR } from "@/features/world/constants";
-import { clampPage, FIRST_PAGE } from "@/features/world/pager";
-import { queryClient } from "@/lib/query-client";
-import { GUTTER, SPACE } from "@/theme/tokens";
+import { FIRST_PAGE } from "@/features/world/pager";
+import { useLeaderboardPreview } from "@/features/world/use-leaderboard-preview";
+import { useSeasonFreshness } from "@/features/world/use-season-freshness";
+import { COLORS, GUTTER, SPACE } from "@/theme/tokens";
 
 export const WorldScreen = () => {
   const router = useRouter();
-  const headerHeight = useAppHeaderHeight();
+  const headerHeight = useAppHeaderHeight("/world");
   const tabBarHeight = useAppTabBarHeight();
   const owner = useAuthStore((state) => state.session?.user.id);
   const day = useCompetitionDay(owner);
   const profile = useProfile(owner);
   const standing = useStanding(owner);
-  const [chosenPage, setChosenPage] = useState<number | null>(null);
-  // A ranked Player opens on their own page; everyone else on the first.
-  const page = chosenPage ?? standing.data?.page ?? FIRST_PAGE;
-  const leaderboard = useLeaderboardPage(page);
+  const myPseudo = profile.data?.pseudo ?? null;
+  const preview = useLeaderboardPreview(standing.data?.page ?? FIRST_PAGE, myPseudo);
   const onScroll = useTabScroll();
-  const [pagerTop, setPagerTop] = useState<number | null>(null);
-  const pagerTranslate = useStickyUnderHeader(pagerTop);
+  const best = day.data ? bestAttempt(day.data.attempts) : undefined;
+  const offersReplay = best !== undefined && day.data?.replay === true;
   useSeasonFreshness(owner);
-  usePageInRange(page, leaderboard.data?.pageCount, setChosenPage);
 
   return (
-    <ScreenContainer edges={TAB_SCREEN_EDGES} underlay={null}>
+    <ScreenContainer edges={TAB_SCREEN_EDGES} underlay={<PaperBackground isDark={true} />}>
       <Animated.ScrollView
         showsVerticalScrollIndicator={false}
         onScroll={onScroll}
         scrollEventThrottle={16}
         contentContainerStyle={[
           styles.content,
-          { paddingTop: headerHeight + SPACE.md, paddingBottom: tabBarHeight },
+          { paddingTop: headerHeight + SPACE.xl, paddingBottom: tabBarHeight + SPACE.lg },
         ]}
       >
-        {/* Competition needs an Account, so the entries simply are not there for a signed-out Player. */}
+        {preview.isPending ? (
+          <ScreenLoading />
+        ) : preview.isError ? (
+          <ScreenError message={LEADERBOARD_ERROR} onRetry={preview.refetch} />
+        ) : (
+          <LeaderboardPreviewCard
+            entries={preview.entries}
+            myPseudo={myPseudo}
+            onPress={() => router.push("/leaderboard")}
+          />
+        )}
         {owner !== undefined ? (
-          <View style={styles.cards}>
-            <CompetitionCard
-              title={COMPETITION_TITLE}
-              teaser={COMPETITION_TEASER}
-              icon="emoji-events"
-              onPress={() => router.push("/competition")}
-            />
-            {/* Offered while the API says yesterday is empty — Premium is asked at issuance. */}
-            {day.data?.catchup ? (
+          day.isPending ? (
+            <ScreenLoading />
+          ) : day.isError ? (
+            <ScreenError message={COMPETITION_ERROR} onRetry={() => void day.refetch()} />
+          ) : (
+            <View style={styles.cards}>
               <CompetitionCard
-                title={CATCHUP_TITLE}
-                teaser={CATCHUP_TEASER}
-                icon="history"
+                title={best ? COMPETITION_DONE_TITLE : COMPETITION_DAILY_TITLE}
+                teaser={best ? null : COMPETITION_DAILY_TEASER}
+                score={best?.score ?? null}
+                color={best ? COLORS.success : COLORS.primary}
+                showStreak={true}
+                showPremium={offersReplay}
+                actionLabel={
+                  best
+                    ? offersReplay
+                      ? COMPETITION_TRY_AGAIN_LABEL
+                      : COMPETITION_SEE_RESULTS_LABEL
+                    : COMPETITION_START_LABEL
+                }
                 onPress={() =>
-                  router.push({ pathname: "/competition", params: { kind: "catchup" } })
+                  router.push({
+                    pathname: "/competition",
+                    params: { kind: offersReplay ? "replay" : (best?.kind ?? "initial") },
+                  })
                 }
               />
-            ) : null}
-          </View>
+              {day.data.catchup ? (
+                <CompetitionCard
+                  title={CATCHUP_TITLE}
+                  teaser={CATCHUP_TEASER}
+                  score={null}
+                  color={COLORS.catchup}
+                  showStreak={false}
+                  showPremium={true}
+                  actionLabel={COMPETITION_CATCHUP_LABEL}
+                  onPress={() =>
+                    router.push({ pathname: "/competition", params: { kind: "catchup" } })
+                  }
+                />
+              ) : null}
+            </View>
+          )
         ) : null}
-
-        {leaderboard.isPending ? (
-          <ScreenLoading />
-        ) : leaderboard.isError ? (
-          <ScreenError message={LEADERBOARD_ERROR} onRetry={() => void leaderboard.refetch()} />
-        ) : (
-          <>
-            <Animated.View
-              onLayout={(event) => setPagerTop(event.nativeEvent.layout.y)}
-              style={[
-                styles.pager,
-                pagerTranslate === null ? null : { transform: [{ translateY: pagerTranslate }] },
-              ]}
-            >
-              <LeaderboardPager
-                page={page}
-                pageCount={leaderboard.data.pageCount}
-                myPage={standing.data?.page ?? null}
-                onPage={setChosenPage}
-              />
-            </Animated.View>
-            <LeaderboardList
-              entries={leaderboard.data.entries}
-              myPseudo={profile.data?.pseudo ?? null}
-            />
-          </>
-        )}
       </Animated.ScrollView>
     </ScreenContainer>
   );
 };
 
-// The ScrollView's own sticky rows come to rest at the very top, which the header card covers.
-function useStickyUnderHeader(top: number | null) {
-  const scrollOffset = useTabScrollOffset();
-  const collapsedHeaderHeight = useCollapsedAppHeaderHeight();
-
-  if (top === null) {
-    return null;
-  }
-  const rest = top - collapsedHeaderHeight;
-  return scrollOffset.interpolate({
-    inputRange: [rest, rest + 1],
-    outputRange: [0, 1],
-    extrapolateLeft: "clamp",
-  });
-}
-
-// Another Account finalizing moves every rank, so coming back to the tab re-reads the Season.
-function useSeasonFreshness(owner: string | undefined) {
-  useFocusEffect(
-    useCallback(() => {
-      void queryClient.invalidateQueries({ queryKey: worldKeys.leaderboard });
-      if (owner !== undefined) {
-        void queryClient.invalidateQueries({ queryKey: competitionKeys.standing(owner) });
-      }
-    }, [owner]),
-  );
-}
-
-// The Season can shrink under the Standing's page, so a page past the end falls back onto the last.
-function usePageInRange(
-  page: number,
-  pageCount: number | undefined,
-  onPage: (page: number) => void,
-) {
-  useEffect(() => {
-    if (pageCount !== undefined && clampPage(page, pageCount) !== page) {
-      onPage(clampPage(page, pageCount));
-    }
-  }, [page, pageCount, onPage]);
-}
-
 const styles = StyleSheet.create({
-  content: { flexGrow: 1, gap: SPACE.lg, paddingHorizontal: GUTTER },
-  cards: { gap: SPACE.lg },
-  // Held over the rows it stays above as they scroll past it.
-  pager: { zIndex: 1 },
+  content: { flexGrow: 1, gap: SPACE.xl, paddingHorizontal: GUTTER },
+  cards: { gap: SPACE.xl },
 });

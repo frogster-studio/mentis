@@ -6,9 +6,23 @@ import {
   useContext,
   useMemo,
   useRef,
+  useState,
 } from "react";
 import { Animated, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
 import { TAB_TRANSITION_EASING, TAB_TRANSITION_MS } from "@/components/tab-transition";
+
+const TabHeaderContext = createContext<{
+  heights: Record<string, number>;
+  measure: (path: string, height: number) => void;
+}>({ heights: {}, measure: () => {} });
+
+export function useTabHeaderHeight(path: string) {
+  return useContext(TabHeaderContext).heights[path];
+}
+
+export function useMeasureTabHeader() {
+  return useContext(TabHeaderContext).measure;
+}
 
 const TabScrollContext = createContext<Animated.Value | null>(null);
 
@@ -16,7 +30,15 @@ const TabScrollContext = createContext<Animated.Value | null>(null);
 export const TabScrollProvider = ({ children }: PropsWithChildren) => {
   const offset = useRef(new Animated.Value(0)).current;
 
-  return <TabScrollContext.Provider value={offset}>{children}</TabScrollContext.Provider>;
+  const [heights, setHeights] = useState<Record<string, number>>({});
+  const measure = useCallback((path: string, height: number) => {
+    setHeights((current) => (current[path] === height ? current : { ...current, [path]: height }));
+  }, []);
+  return (
+    <TabHeaderContext.Provider value={{ heights, measure }}>
+      <TabScrollContext.Provider value={offset}>{children}</TabScrollContext.Provider>
+    </TabHeaderContext.Provider>
+  );
 };
 
 export function useTabScrollOffset(): Animated.Value {
@@ -31,19 +53,22 @@ export function useTabScrollOffset(): Animated.Value {
 export function useTabScroll() {
   const offset = useTabScrollOffset();
   const restingOffset = useRef(0);
+  const [isFocused, setIsFocused] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
+      setIsFocused(true);
       Animated.timing(offset, {
         toValue: restingOffset.current,
         duration: TAB_TRANSITION_MS,
         easing: TAB_TRANSITION_EASING,
         useNativeDriver: true,
       }).start();
+      return () => setIsFocused(false);
     }, [offset]),
   );
 
-  return useMemo(
+  const onScroll = useMemo(
     () =>
       Animated.event([{ nativeEvent: { contentOffset: { y: offset } } }], {
         useNativeDriver: true,
@@ -53,4 +78,5 @@ export function useTabScroll() {
       }),
     [offset],
   );
+  return isFocused ? onScroll : undefined;
 }

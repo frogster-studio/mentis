@@ -19,7 +19,7 @@ export interface HomeModeCardProps {
 
 export const HomeModeCard = ({ points, name, how, icon }: HomeModeCardProps) => {
   return (
-    <Card onPress={null}>
+    <Card background={null} onPress={null}>
       <View style={styles.row}>
         <Text style={styles.points}>
           {points}

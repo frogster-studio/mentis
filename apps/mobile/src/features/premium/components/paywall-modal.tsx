@@ -82,7 +82,7 @@ export const PaywallModal = ({ visible, onDismiss }: PaywallModalProps) => {
           borderWidth={null}
           style={styles.panel}
         >
-          <PaperBackground />
+          <PaperBackground isDark={false} />
           <ScrollView
             contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + SPACE.lg }]}
             showsVerticalScrollIndicator={false}

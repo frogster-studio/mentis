@@ -19,7 +19,7 @@ export interface HomeThemeCardProps {
 
 export const HomeThemeCard = ({ name, average, sessionCount, category }: HomeThemeCardProps) => {
   return (
-    <Card onPress={null}>
+    <Card background={null} onPress={null}>
       <View style={styles.row}>
         <Text style={styles.value}>
           {formatAverage(average)}
