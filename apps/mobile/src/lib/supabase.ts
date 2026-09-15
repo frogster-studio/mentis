@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
 import Constants from "expo-constants";
 import { AppState, Platform } from "react-native";
+import { sessionStorage } from "./session-storage";
 
 const config = Constants.expoConfig?.extra as {
   supabaseUrl: string;
@@ -19,10 +20,17 @@ const prerenderStorage = {
   removeItem: async () => undefined,
 };
 
+// The session holds a long-lived refresh token, so native keeps it in the Keychain/Keystore, not a plain file.
+const storage = isPrerender
+  ? prerenderStorage
+  : Platform.OS === "web"
+    ? AsyncStorage
+    : sessionStorage;
+
 // detectSessionInUrl stays off — mobile hands ID tokens directly; web's redirect flow comes later.
 export const supabase = createClient(config.supabaseUrl, config.supabasePublishableKey, {
   auth: {
-    storage: isPrerender ? prerenderStorage : AsyncStorage,
+    storage,
     persistSession: !isPrerender,
     autoRefreshToken: !isPrerender,
     detectSessionInUrl: false,

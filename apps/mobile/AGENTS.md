@@ -55,7 +55,7 @@ src/
   features/onboarding/  # the once-per-device welcome gate + its store
   features/world/       # « Monde » tab placeholder
   components/           # shared composed components; components/ui/ for shared primitives
-  lib/                  # api/ (the seam), query client, supabase (auth only)
+  lib/                  # api/ (the seam), query client, supabase (auth only) + its SecureStore session
   theme/                # design tokens: COLORS, SPACE, RADIUS, TEXT…
   utils/                # chunk.ts
   types/quiz.ts         # canonical domain types

@@ -45,7 +45,7 @@ src/
   health/         # GET /health
   _config/        # ConfigModule and its providers: ENV (zod-validated, parsed once at boot), SUPABASE (auth admin and storage signing, never data), JWKS
   bootstrap.ts    # helmet, CORS allowlist, trust proxy, json body cap — shared with the e2e suite
-  main.ts         # boot: create, configure, shutdown hooks, listen
+  main.ts         # boot: create with NEST_OPTIONS, configureApp, shutdown hooks, listen
   app.module.ts   # root module: feature imports, APP_FILTER
 ```
 
