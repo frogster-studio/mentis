@@ -47,6 +47,7 @@ export const PseudoSheet = ({ playerId, visible, onDismiss }: PseudoSheetProps) 
   return (
     <Sheet
       visible={visible}
+      isBare={false}
       title={PSEUDO_TITLE}
       message={null}
       dismissible={!rename.isPending}

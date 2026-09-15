@@ -155,6 +155,7 @@ export const PickerScreen = () => {
 
       <Sheet
         visible={helpVisible}
+        isBare={false}
         title={null}
         message={null}
         dismissible={true}

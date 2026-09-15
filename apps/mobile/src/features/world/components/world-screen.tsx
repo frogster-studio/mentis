@@ -24,6 +24,7 @@ import {
   COMPETITION_START_LABEL,
   COMPETITION_TRY_AGAIN_LABEL,
 } from "@/features/competition/constants";
+import { usePremiumGate } from "@/features/premium/use-premium-gate";
 import { LeaderboardPreviewCard } from "@/features/world/components/leaderboard-preview-card";
 import { LEADERBOARD_ERROR } from "@/features/world/constants";
 import { FIRST_PAGE } from "@/features/world/pager";
@@ -42,6 +43,7 @@ export const WorldScreen = () => {
   const myPseudo = profile.data?.pseudo ?? null;
   const preview = useLeaderboardPreview(standing.data?.page ?? FIRST_PAGE, myPseudo);
   const onScroll = useTabScroll();
+  const gatePremium = usePremiumGate();
   const best = day.data ? bestAttempt(day.data.attempts) : undefined;
   const offersReplay = best !== undefined && day.data?.replay === true;
   useSeasonFreshness(owner);
@@ -89,12 +91,18 @@ export const WorldScreen = () => {
                       : COMPETITION_SEE_RESULTS_LABEL
                     : COMPETITION_START_LABEL
                 }
-                onPress={() =>
+                onPress={() => {
+                  if (offersReplay) {
+                    gatePremium(() =>
+                      router.push({ pathname: "/competition", params: { kind: "replay" } }),
+                    );
+                    return;
+                  }
                   router.push({
                     pathname: "/competition",
-                    params: { kind: offersReplay ? "replay" : (best?.kind ?? "initial") },
-                  })
-                }
+                    params: { kind: best?.kind ?? "initial" },
+                  });
+                }}
               />
               {day.data.catchup ? (
                 <CompetitionCard
@@ -106,7 +114,9 @@ export const WorldScreen = () => {
                   showPremium={true}
                   actionLabel={COMPETITION_CATCHUP_LABEL}
                   onPress={() =>
-                    router.push({ pathname: "/competition", params: { kind: "catchup" } })
+                    gatePremium(() =>
+                      router.push({ pathname: "/competition", params: { kind: "catchup" } }),
+                    )
                   }
                 />
               ) : null}

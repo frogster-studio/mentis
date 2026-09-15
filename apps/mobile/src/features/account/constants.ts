@@ -59,3 +59,5 @@ export const LEGAL_PRIVACY_LABEL = "Politique de confidentialité";
 export const LEGAL_TERMS_LABEL = "Conditions d'utilisation";
 export const LEGAL_SUPPORT_LABEL = "Support";
 export const LEGAL_SEPARATOR = "·";
+
+export const PAYWALL_PREVIEW_LABEL = "Aperçu du paywall (dev)";

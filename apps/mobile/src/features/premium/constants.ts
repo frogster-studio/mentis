@@ -19,6 +19,7 @@ export const PAYWALL_PRICE_PERIOD = "/ mois";
 export const PAYWALL_PURCHASE_LABEL = "Continuer";
 export const PAYWALL_PURCHASE_ERROR = "L'achat n'a pas abouti. Réessayez dans un instant.";
 export const PAYWALL_OFFERING_ERROR = "Impossible de charger l'offre.";
+export const PAYWALL_PREVIEW_PRICE = "4,99 €";
 export const PAYWALL_OFFERING_EMPTY = "Aucune offre n'est disponible pour le moment.";
 
 export const PAYWALL_ACTIVATION_TITLE = "Activation de votre abonnement";

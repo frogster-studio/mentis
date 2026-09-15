@@ -27,6 +27,7 @@ import {
   LEGAL_SEPARATOR,
   LEGAL_SUPPORT_LABEL,
   LEGAL_TERMS_LABEL,
+  PAYWALL_PREVIEW_LABEL,
   SIGN_IN_ERROR,
   SIGN_OUT_CANCEL_LABEL,
   SIGN_OUT_CONFIRM_LABEL,
@@ -35,9 +36,9 @@ import {
   SIGN_OUT_TITLE,
 } from "@/features/account/constants";
 import { deleteAccount } from "@/features/account/delete-account";
-import { PaywallModal } from "@/features/premium/components/paywall-modal";
 import { PremiumCard } from "@/features/premium/components/premium-card";
 import { RestorePurchases } from "@/features/premium/components/restore-purchases";
+import { usePaywallStore } from "@/features/premium/paywall-store";
 import { useIsPremium } from "@/features/premium/use-is-premium";
 import { HomeEmptyState } from "@/features/quiz/components/home-empty-state";
 import { HomeThemeCard } from "@/features/quiz/components/home-theme-card";
@@ -57,9 +58,10 @@ export const AccountScreen = () => {
   const [signOutVisible, setSignOutVisible] = useState(false);
   const [signInFailed, setSignInFailed] = useState(false);
   const [deleteVisible, setDeleteVisible] = useState(false);
-  const [paywallVisible, setPaywallVisible] = useState(false);
   const [pseudoVisible, setPseudoVisible] = useState(false);
   const isPremium = useIsPremium();
+  const openPaywall = usePaywallStore((state) => state.open);
+  const openPaywallPreview = usePaywallStore((state) => state.openPreview);
   // A failure leaves everything intact; the mutation's error state lets the Player retry.
   const accountDeletion = useMutation({ mutationFn: deleteAccount });
 
@@ -122,7 +124,17 @@ export const AccountScreen = () => {
               <Text style={styles.pitch}>{ACCOUNT_PITCH}</Text>
             )}
             {user && PURCHASES_SUPPORTED && isPremium !== null ? (
-              <PremiumCard isPremium={isPremium} onOpenPaywall={() => setPaywallVisible(true)} />
+              <PremiumCard isPremium={isPremium} onOpenPaywall={openPaywall} />
+            ) : null}
+            {__DEV__ ? (
+              <QuietButton
+                layout="block"
+                label={PAYWALL_PREVIEW_LABEL}
+                icon={null}
+                accessibilityLabel={null}
+                disabled={false}
+                onPress={openPaywallPreview}
+              />
             ) : null}
             {showTransferNotice ? <TransferNotice /> : null}
             {isEmpty ? (
@@ -200,8 +212,6 @@ export const AccountScreen = () => {
           </View>
         </View>
       )}
-
-      <PaywallModal visible={paywallVisible} onDismiss={() => setPaywallVisible(false)} />
 
       {userId ? (
         <PseudoSheet

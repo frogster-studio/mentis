@@ -1,18 +1,18 @@
 import { useMutation } from "@tanstack/react-query";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { type PropsWithChildren, useState } from "react";
+import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { PaperBackground } from "@/components/ui/paper-background";
+import { Card } from "@/components/ui/card";
 import { QuietButton } from "@/components/ui/quiet-button";
-import { MAX_CONTENT_WIDTH } from "@/components/ui/screen-container";
 import { ScreenError } from "@/components/ui/screen-error";
 import { ScreenLoading } from "@/components/ui/screen-loading";
-import { Squircle } from "@/components/ui/squircle";
+import { Sheet, useSheetBottomInset } from "@/components/ui/sheet";
 import {
   awaitPremiumActivation,
   purchasePremium,
   usePremiumOffering,
 } from "@/features/premium/api";
-import { PaywallOffer } from "@/features/premium/components/paywall-offer";
+import { PaywallOffer, paywallSavings } from "@/features/premium/components/paywall-offer";
 import { PremiumActivation } from "@/features/premium/components/premium-activation";
 import {
   PAYWALL_ACTIVATION_CLOSE_LABEL,
@@ -20,21 +20,22 @@ import {
   PAYWALL_ACTIVATION_TITLE,
   PAYWALL_OFFERING_EMPTY,
   PAYWALL_OFFERING_ERROR,
+  PAYWALL_PREVIEW_PRICE,
 } from "@/features/premium/constants";
+import { FULL_PAYWALL, fullPaywallHeight, paywallFit } from "@/features/premium/paywall-fit";
+import { usePaywallStore } from "@/features/premium/paywall-store";
 import { TEXT } from "@/theme/text";
-import { COLORS, GUTTER, RADIUS, SPACE } from "@/theme/tokens";
+import { COLORS, GUTTER, SPACE } from "@/theme/tokens";
 
-// The scrim leaves the screen underneath legible, so the paywall reads as a layer over it.
-const PANEL_MAX_HEIGHT = "94%";
-
-export interface PaywallModalProps {
-  visible: boolean;
-  onDismiss: () => void;
-}
-
-export const PaywallModal = ({ visible, onDismiss }: PaywallModalProps) => {
+export const PaywallSheet = () => {
+  const visible = usePaywallStore((state) => state.visible);
+  const isPreview = usePaywallStore((state) => state.isPreview);
+  const closePaywall = usePaywallStore((state) => state.close);
   const insets = useSafeAreaInsets();
-  const offering = usePremiumOffering(visible);
+  const bottomInset = useSheetBottomInset();
+  const { height, fontScale } = useWindowDimensions();
+  const [fullOfferHeight, setFullOfferHeight] = useState<number | null>(null);
+  const offering = usePremiumOffering(visible && !isPreview);
   const activation = useMutation({
     mutationFn: awaitPremiumActivation,
     onSuccess: (isActive) => {
@@ -55,7 +56,7 @@ export const PaywallModal = ({ visible, onDismiss }: PaywallModalProps) => {
   function close() {
     purchase.reset();
     activation.reset();
-    onDismiss();
+    closePaywall();
   }
 
   const pack = offering.data ?? null;
@@ -63,96 +64,107 @@ export const PaywallModal = ({ visible, onDismiss }: PaywallModalProps) => {
   const isBusy = purchase.isPending || activation.isPending;
   // The webhook can outlast the wait: the Player leaves on a notice, never on a failure.
   const activationOutranTheWait = activation.isSuccess && !activation.data;
+  const availableHeight = height - insets.top - SPACE.sm;
+  const showsOffer =
+    !activation.isPending &&
+    !activationOutranTheWait &&
+    (isPreview || (!offering.isPending && !offering.isError && pack !== null));
+  const savings = paywallSavings(fontScale);
+  const fit =
+    fullOfferHeight === null ? FULL_PAYWALL : paywallFit(fullOfferHeight, availableHeight, savings);
 
   return (
-    <Modal
+    <Sheet
       visible={visible}
-      transparent
-      animationType="slide"
-      statusBarTranslucent
-      onRequestClose={close}
+      isBare={true}
+      title={null}
+      message={null}
+      dismissible={!isBusy}
+      onDismiss={close}
     >
-      <View style={styles.scrim}>
-        <Pressable style={StyleSheet.absoluteFill} disabled={isBusy} onPress={close} />
-        <Squircle
-          radius={RADIUS.xl}
-          corners="top"
-          color={COLORS.background}
-          borderColor={null}
-          borderWidth={null}
-          style={styles.panel}
-        >
-          <PaperBackground isDark={false} />
-          <ScrollView
-            contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + SPACE.lg }]}
-            showsVerticalScrollIndicator={false}
-          >
-            {activation.isPending ? (
-              <View style={styles.state}>
-                <Text style={styles.stateTitle}>{PAYWALL_ACTIVATION_TITLE}</Text>
-                <PremiumActivation />
-              </View>
-            ) : activationOutranTheWait ? (
-              <View style={styles.state}>
-                <Text style={styles.stateTitle}>{PAYWALL_ACTIVATION_TITLE}</Text>
-                <Text style={styles.notice}>{PAYWALL_ACTIVATION_PENDING}</Text>
-                <QuietButton
-                  layout="block"
-                  label={PAYWALL_ACTIVATION_CLOSE_LABEL}
-                  icon={null}
-                  accessibilityLabel={null}
-                  disabled={false}
-                  onPress={close}
-                />
-              </View>
-            ) : offering.isPending ? (
-              <View style={styles.state}>
-                <ScreenLoading />
-              </View>
-            ) : offering.isError ? (
-              <View style={styles.state}>
-                <ScreenError message={PAYWALL_OFFERING_ERROR} onRetry={() => offering.refetch()} />
-              </View>
-            ) : pack === null ? (
-              // An offering with no package is store configuration, so retrying can only fail again.
-              <View style={styles.state}>
-                <ScreenError message={PAYWALL_OFFERING_EMPTY} onRetry={null} />
-              </View>
-            ) : (
-              <PaywallOffer
-                pack={pack}
-                purchaseFailed={purchase.isError}
-                isPurchasing={purchase.isPending}
-                onSkip={close}
-                onPurchase={() => purchase.mutate(pack)}
-              />
-            )}
-          </ScrollView>
-        </Squircle>
-      </View>
-    </Modal>
+      <ScrollView
+        style={{ maxHeight: availableHeight }}
+        contentContainerStyle={[styles.content, { paddingBottom: bottomInset + GUTTER }]}
+        showsVerticalScrollIndicator={false}
+        scrollEnabled={fit.isScrollable}
+        nestedScrollEnabled
+        onContentSizeChange={(_, contentHeight) => {
+          if (showsOffer) {
+            setFullOfferHeight(fullPaywallHeight(contentHeight, fit, savings));
+          }
+        }}
+      >
+        {activation.isPending ? (
+          <StateCard>
+            <Text style={styles.stateTitle}>{PAYWALL_ACTIVATION_TITLE}</Text>
+            <PremiumActivation />
+          </StateCard>
+        ) : activationOutranTheWait ? (
+          <StateCard>
+            <Text style={styles.stateTitle}>{PAYWALL_ACTIVATION_TITLE}</Text>
+            <Text style={styles.notice}>{PAYWALL_ACTIVATION_PENDING}</Text>
+            <QuietButton
+              layout="block"
+              label={PAYWALL_ACTIVATION_CLOSE_LABEL}
+              icon={null}
+              accessibilityLabel={null}
+              disabled={false}
+              onPress={close}
+            />
+          </StateCard>
+        ) : isPreview ? (
+          // Dev only: the simulator has no store, so the offer renders without RevenueCat.
+          <PaywallOffer
+            priceString={PAYWALL_PREVIEW_PRICE}
+            showsCrest={fit.showsCrest}
+            showsIllustration={fit.showsIllustration}
+            purchaseFailed={false}
+            isPurchasing={false}
+            onSkip={close}
+            onPurchase={close}
+          />
+        ) : offering.isPending ? (
+          <StateCard>
+            <ScreenLoading />
+          </StateCard>
+        ) : offering.isError ? (
+          <StateCard>
+            <ScreenError message={PAYWALL_OFFERING_ERROR} onRetry={() => offering.refetch()} />
+          </StateCard>
+        ) : pack === null ? (
+          // An offering with no package is store configuration, so retrying can only fail again.
+          <StateCard>
+            <ScreenError message={PAYWALL_OFFERING_EMPTY} onRetry={null} />
+          </StateCard>
+        ) : (
+          <PaywallOffer
+            priceString={pack.product.priceString}
+            showsCrest={fit.showsCrest}
+            showsIllustration={fit.showsIllustration}
+            purchaseFailed={purchase.isError}
+            isPurchasing={purchase.isPending}
+            onSkip={close}
+            onPurchase={() => purchase.mutate(pack)}
+          />
+        )}
+      </ScrollView>
+    </Sheet>
   );
 };
 
+const StateCard = ({ children }: PropsWithChildren) => (
+  <Card background={null} onPress={null}>
+    <View style={styles.state}>{children}</View>
+  </Card>
+);
+
 const styles = StyleSheet.create({
-  scrim: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: COLORS.scrim,
-  },
-  panel: {
-    width: "100%",
-    maxWidth: MAX_CONTENT_WIDTH,
-    alignSelf: "center",
-    maxHeight: PANEL_MAX_HEIGHT,
-  },
   content: {
     paddingTop: GUTTER,
     paddingHorizontal: GUTTER,
   },
   state: {
-    paddingVertical: SPACE.xxl,
-    paddingHorizontal: SPACE.lg,
+    paddingVertical: SPACE.xl,
     gap: SPACE.lg,
   },
   stateTitle: {

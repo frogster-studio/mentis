@@ -5,7 +5,7 @@ import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
 
 const LOCK = require("../../../../assets/images/premium-lock.png");
 
-const BLOCK_HEIGHT = 150;
+export const PAYWALL_ILLUSTRATION_HEIGHT = 150;
 const LOCK_WIDTH = 89;
 const LOCK_HEIGHT = 120;
 const LOCK_TOP = 6;
@@ -50,7 +50,7 @@ export const PaywallIllustration = () => {
 
 const styles = StyleSheet.create({
   block: {
-    height: BLOCK_HEIGHT,
+    height: PAYWALL_ILLUSTRATION_HEIGHT,
   },
   pill: {
     position: "absolute",

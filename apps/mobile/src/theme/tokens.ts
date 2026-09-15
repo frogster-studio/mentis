@@ -17,6 +17,7 @@ export const COLORS = {
   danger: "#EF4444",
   scrim: "rgba(37, 3, 19, 0.4)",
   stroke: "rgba(37, 3, 19, 0.1)",
+  clear: "transparent",
 } as const;
 
 export const SPACE = {

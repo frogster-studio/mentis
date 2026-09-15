@@ -1,11 +1,13 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import type { PurchasesPackage } from "react-native-purchases";
+import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { NewButton } from "@/components/ui/new-button";
 import { Squircle } from "@/components/ui/squircle";
-import { PaywallCrest } from "@/features/premium/components/paywall-crest";
+import { PAYWALL_CREST_HEIGHT, PaywallCrest } from "@/features/premium/components/paywall-crest";
 import { PaywallHeroGradient } from "@/features/premium/components/paywall-hero-gradient";
-import { PaywallIllustration } from "@/features/premium/components/paywall-illustration";
+import {
+  PAYWALL_ILLUSTRATION_HEIGHT,
+  PaywallIllustration,
+} from "@/features/premium/components/paywall-illustration";
 import {
   PAYWALL_FEATURES,
   PAYWALL_LEGAL_SEPARATOR,
@@ -18,6 +20,7 @@ import {
   PAYWALL_TERMS_LINK_LABEL,
   PAYWALL_TITLE,
 } from "@/features/premium/constants";
+import type { PaywallSavings } from "@/features/premium/paywall-fit";
 import { subscriptionTermsSentence } from "@/features/premium/subscription-terms";
 import { PRIVACY_URL, TERMS_URL } from "@/lib/legal-links";
 import { openExternalLink } from "@/lib/open-external-link";
@@ -27,11 +30,23 @@ import { COLORS, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
 const FEATURE_ICON_SIZE = 24;
 const SKIP_TINT = "4D";
 const PLAN_LABEL_OVERLAP = SPACE.sm;
+const TITLE_GAP = SPACE.xl;
 // The paywall never shows on web, so anything that is not Android buys through the App Store.
 const STORE_PLATFORM = Platform.OS === "android" ? "android" : "ios";
 
+// The label line grows with the system text size, so the clearance is computed, never fixed.
+const skipClearance = (fontScale: number) =>
+  TEXT.label.lineHeight * fontScale + SPACE.xs * 2 + SPACE.sm;
+
+export const paywallSavings = (fontScale: number): PaywallSavings => ({
+  illustration: PAYWALL_ILLUSTRATION_HEIGHT,
+  crest: PAYWALL_CREST_HEIGHT + TITLE_GAP - skipClearance(fontScale),
+});
+
 export interface PaywallOfferProps {
-  pack: PurchasesPackage;
+  priceString: string;
+  showsCrest: boolean;
+  showsIllustration: boolean;
   purchaseFailed: boolean;
   isPurchasing: boolean;
   onSkip: () => void;
@@ -39,12 +54,16 @@ export interface PaywallOfferProps {
 }
 
 export const PaywallOffer = ({
-  pack,
+  priceString,
+  showsCrest,
+  showsIllustration,
   purchaseFailed,
   isPurchasing,
   onSkip,
   onPurchase,
 }: PaywallOfferProps) => {
+  const { fontScale } = useWindowDimensions();
+
   return (
     <>
       <Squircle
@@ -64,8 +83,13 @@ export const PaywallOffer = ({
           <Text style={styles.skipLabel}>{PAYWALL_SKIP_LABEL}</Text>
         </Pressable>
 
-        <PaywallCrest />
-        <Text style={styles.title}>{PAYWALL_TITLE}</Text>
+        {showsCrest ? <PaywallCrest /> : null}
+        {/* Without the crest the title clears « Passer », which keeps its corner. */}
+        <Text
+          style={[styles.title, { marginTop: showsCrest ? TITLE_GAP : skipClearance(fontScale) }]}
+        >
+          {PAYWALL_TITLE}
+        </Text>
 
         <View style={styles.features}>
           {PAYWALL_FEATURES.map((feature) => (
@@ -80,7 +104,7 @@ export const PaywallOffer = ({
           ))}
         </View>
 
-        <PaywallIllustration />
+        {showsIllustration ? <PaywallIllustration /> : null}
       </Squircle>
 
       <View style={styles.plan}>
@@ -104,7 +128,7 @@ export const PaywallOffer = ({
           style={styles.priceCard}
         >
           <View style={styles.price}>
-            <Text style={styles.priceValue}>{pack.product.priceString}</Text>
+            <Text style={styles.priceValue}>{priceString}</Text>
             <Text style={styles.pricePeriod}>{PAYWALL_PRICE_PERIOD}</Text>
           </View>
           <Text style={styles.terms}>{subscriptionTermsSentence(STORE_PLATFORM)}</Text>
@@ -172,7 +196,6 @@ const styles = StyleSheet.create({
   },
   title: {
     ...TEXT.sectionTitle,
-    marginTop: SPACE.xl,
     color: COLORS.ink,
     textAlign: "center",
   },
