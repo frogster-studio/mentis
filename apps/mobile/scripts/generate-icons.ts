@@ -1,7 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { Resvg } from "@resvg/resvg-js";
-import { MARK_STARBURST_PATH, MARK_VIEWBOX_SIZE } from "@/components/logo-mark-paths";
 import { COLORS } from "@/theme/tokens";
 
 const ASSETS_DIR = join(__dirname, "../assets");
@@ -85,12 +84,6 @@ const measureMark = (svg: string): MarkExtent => {
 const croppedMark = (mark: string, extent: MarkExtent, canvas: number): string =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="${canvas}" height="${canvas}" viewBox="${extent.left} ${extent.top} ${extent.side} ${extent.side}">${placed(mark, 1)}</svg>`;
 
-const legacyMarkSvg = (canvas: number, paths: string[], color: string): string => {
-  const scale = canvas / MARK_VIEWBOX_SIZE;
-  const marks = paths.map((path) => `<path fill="${color}" d="${path}"/>`).join("");
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${canvas}" height="${canvas}" viewBox="0 0 ${canvas} ${canvas}"><g transform="scale(${scale})">${marks}</g></svg>`;
-};
-
 const write = (output: string, content: Buffer | string) => {
   writeFileSync(join(ASSETS_DIR, output), content);
   console.log(output);
@@ -111,4 +104,4 @@ write(
 // Icon Composer paints the gradient plate itself, so its layer ships the bare mark.
 write("expo.icon/Assets/mark.svg", mark);
 write("images/splash-icon.png", renderPng(croppedMark(mark, markExtent, 384)));
-write("images/favicon.png", renderPng(legacyMarkSvg(64, [MARK_STARBURST_PATH], COLORS.primary)));
+write("images/favicon.png", renderPng(croppedMark(mark, markExtent, 64)));

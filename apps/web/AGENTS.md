@@ -10,4 +10,4 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 - The site is exactly the six pages of `src/lib/routes.ts`; the root layout gives every one of them `SiteFooter`.
 - Copy is French; slugs stay English because stores and reviewers read them in a URL.
-- Design and comment rules are the back-office's ([apps/admin/AGENTS.md](../admin/AGENTS.md)): sky on a zinc base, one radius, 2–3 type sizes, Lexend titles / Poppins body, brand art inline SVG in `currentColor`.
+- Design and comment rules are the back-office's ([apps/admin/AGENTS.md](../admin/AGENTS.md)): sky on a zinc base, one radius, 2–3 type sizes, Lexend titles / Poppins body. The Mentis mark is the app icon's own layers (`apps/mobile/assets/app-icon/`) imported as static assets, never a redrawn copy.
