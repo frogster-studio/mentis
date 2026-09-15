@@ -1,11 +1,9 @@
 import type { AppAccountStatsResponse } from "@mentis/contracts/app";
-import { useMutation } from "@tanstack/react-query";
-import { useEffect } from "react";
-import { AppState } from "react-native";
 import { accountKeys } from "@/features/account/api";
 import { useAuthStore } from "@/features/account/auth-store";
 import { api } from "@/lib/api";
 import { queryClient } from "@/lib/query-client";
+import { useDrainOnTriggers } from "@/lib/use-drain-on-triggers";
 import { isOwnerGoneError, pushInBatches } from "./batch-push";
 import { entriesForOwner, type OutboxEntry } from "./outbox";
 import { useOutboxStore } from "./outbox-store";
@@ -71,29 +69,8 @@ function seedAckedSessions(playerId: string, batch: OutboxEntry[]): void {
   });
 }
 
-// Drains at launch, foreground and sign-in; mounted once, at the app root.
+// Mounted once, at the app root.
 export function useOutboxSync(): void {
   const playerId = useAuthStore((state) => state.session?.user.id);
-  // No UI reads this mutation — it exists so every write in the app goes through one.
-  const { mutate: drain } = useMutation({ mutationFn: drainOutbox });
-
-  useEffect(() => {
-    if (playerId === undefined) {
-      return;
-    }
-    drain(playerId);
-    // The outbox hydrates asynchronously: drain again once hydration lands to push a backlog.
-    const stopHydrationWatch = useOutboxStore.persist.hasHydrated()
-      ? undefined
-      : useOutboxStore.persist.onFinishHydration(() => drain(playerId));
-    const subscription = AppState.addEventListener("change", (status) => {
-      if (status === "active") {
-        drain(playerId);
-      }
-    });
-    return () => {
-      stopHydrationWatch?.();
-      subscription.remove();
-    };
-  }, [playerId, drain]);
+  useDrainOnTriggers(playerId, drainOutbox, useOutboxStore);
 }

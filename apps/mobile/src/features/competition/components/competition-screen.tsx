@@ -1,10 +1,7 @@
 import type { AppCompetitionAttemptKind } from "@mentis/contracts/app";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
-import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { StyleSheet, type TextInput, View } from "react-native";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { QuietButton } from "@/components/ui/quiet-button";
-import { ALL_SCREEN_EDGES, ScreenContainer } from "@/components/ui/screen-container";
 import { ScreenError } from "@/components/ui/screen-error";
 import { ScreenLoading } from "@/components/ui/screen-loading";
 import { useAuthStore } from "@/features/account/auth-store";
@@ -29,16 +26,13 @@ import { useFinalizeOutboxStore } from "@/features/competition/finalize-outbox-s
 import { drainFinalizeOutbox } from "@/features/competition/finalize-sync";
 import { useCompetitionStore } from "@/features/competition/store";
 import { PaywallModal } from "@/features/premium/components/paywall-modal";
-import { AnswerFooter } from "@/features/quiz/components/answer-footer";
-import { PlayHeader } from "@/features/quiz/components/play-header";
-import { PlayScreen } from "@/features/quiz/components/play-screen";
+import { PlayFrame } from "@/features/quiz/components/play-frame";
+import { PlayShell } from "@/features/quiz/components/play-shell";
 import { ThemeReveal } from "@/features/quiz/components/theme-reveal";
-import { usePlayClock } from "@/features/quiz/use-play-clock";
-import { useQuestionTransition } from "@/features/quiz/use-question-transition";
+import { usePlayLoop } from "@/features/quiz/use-play-loop";
 import { useThemeReveal } from "@/features/quiz/use-theme-reveal";
 import { isApiError } from "@/lib/api/client";
 import { PURCHASES_SUPPORTED } from "@/lib/purchases";
-import { GUTTER, SPACE } from "@/theme/tokens";
 
 export const CompetitionScreen = () => {
   const router = useRouter();
@@ -64,22 +58,15 @@ export const CompetitionScreen = () => {
     attempt === undefined ? undefined : queuedFinalize(state.entries, attempt.id),
   );
 
-  const inputRef = useRef<TextInput>(null);
   const enqueuedRef = useRef(false);
-  const [quitVisible, setQuitVisible] = useState(false);
   const [paywallVisible, setPaywallVisible] = useState(false);
   const premiumRequired = isApiError(error, "PREMIUM_REQUIRED");
   const unavailable = isApiError(error, "CONFLICT");
 
-  const isActive = play?.status === "active";
   // An empty batch is only ever safe once the server holds the answers: never before it is queued.
   const isJudgeable = attempt?.status === "finalized" || queued !== undefined;
-  const now = usePlayClock(play?.endsAt ?? 0, isActive, expire);
-  // Lags question + position through the collapse/expand beat so the swap lands at the peak.
-  const transition = useQuestionTransition({
-    question: isActive && play ? currentAttemptQuestion(play).text : "",
-    position: (play?.answers.length ?? 0) + 1,
-  });
+  const activeQuestion = play?.status === "active" ? currentAttemptQuestion(play) : null;
+  const loop = usePlayLoop({ play, question: activeQuestion, expire, switchToSquare });
   const transcript = useTranscript(owner, attempt?.id, isJudgeable);
   // The queue is acked the moment the batch lands, so the transcript itself holds the screen after.
   const showResults = isJudgeable || transcript.data !== undefined;
@@ -132,30 +119,10 @@ export const CompetitionScreen = () => {
     }
   }, [play, owner, enqueue]);
 
-  // Every question starts with the keyboard open, except under the quit sheet.
-  useEffect(() => {
-    if (isActive && !quitVisible) {
-      inputRef.current?.focus();
-    }
-  }, [isActive, quitVisible]);
-
-  // The Countdown can finish the Attempt behind the open sheet — the results take it down.
-  useEffect(() => {
-    if (play?.status === "finished") {
-      setQuitVisible(false);
-    }
-  }, [play?.status]);
-
   const goHome = () => router.dismissTo("/");
 
-  const onRequestQuit = () => {
-    // The keyboard drops as the sheet rises, so the field lets go before it opens.
-    inputRef.current?.blur();
-    setQuitVisible(true);
-  };
-
   const onConfirmQuit = () => {
-    setQuitVisible(false);
+    loop.closeQuit();
     if (play && owner !== undefined) {
       // The positions never reached stay out of the batch: the API zero-fills them.
       enqueuedRef.current = true;
@@ -168,35 +135,24 @@ export const CompetitionScreen = () => {
   // Held at the same slot under the same root in every branch: unmounting it mid-present strands it.
   const quitConfirm = (
     <ConfirmDialog
-      visible={quitVisible}
+      visible={loop.quitVisible}
       title={COMPETITION_QUIT_TITLE}
       message={COMPETITION_QUIT_MESSAGE}
       confirmLabel={COMPETITION_QUIT_CONFIRM_LABEL}
       cancelLabel={COMPETITION_QUIT_CANCEL_LABEL}
-      onCancel={() => setQuitVisible(false)}
+      onCancel={loop.closeQuit}
       onConfirm={onConfirmQuit}
     />
   );
 
-  // Nothing is under way yet, so the quit control leaves straight away — no confirmation.
-  const framed = (body: ReactNode) => (
-    <ScreenContainer edges={ALL_SCREEN_EDGES} underlay={null}>
-      <View style={styles.header}>
-        <QuietButton
-          layout="circle"
-          label={null}
-          icon="close"
-          accessibilityLabel={COMPETITION_QUIT_LABEL}
-          onPress={goHome}
-          disabled={false}
-        />
-      </View>
-      {body}
-    </ScreenContainer>
-  );
-
   if (owner === undefined) {
-    return isAuthLoading ? framed(<ScreenLoading />) : <Redirect href="/" />;
+    return isAuthLoading ? (
+      <PlayFrame quitLabel={COMPETITION_QUIT_LABEL} onQuit={goHome}>
+        <ScreenLoading />
+      </PlayFrame>
+    ) : (
+      <Redirect href="/" />
+    );
   }
 
   if (showResults) {
@@ -230,16 +186,16 @@ export const CompetitionScreen = () => {
     const expired = isApiError(transcript.error, "ATTEMPT_EXPIRED");
     return (
       <>
-        {framed(
-          transcript.isError ? (
+        <PlayFrame quitLabel={COMPETITION_QUIT_LABEL} onQuit={goHome}>
+          {transcript.isError ? (
             <ScreenError
               message={expired ? COMPETITION_EXPIRED_ERROR : COMPETITION_JUDGE_ERROR}
               onRetry={expired ? null : () => void transcript.refetch()}
             />
           ) : (
             <ScreenLoading />
-          ),
-        )}
+          )}
+        </PlayFrame>
         {quitConfirm}
       </>
     );
@@ -248,7 +204,7 @@ export const CompetitionScreen = () => {
   if (isError) {
     return (
       <>
-        {framed(
+        <PlayFrame quitLabel={COMPETITION_QUIT_LABEL} onQuit={goHome}>
           <ScreenError
             message={
               premiumRequired
@@ -259,8 +215,8 @@ export const CompetitionScreen = () => {
             }
             // A day that refused the kind will refuse it again; a paywall or a blip may not.
             onRetry={unavailable ? null : () => void refetch()}
-          />,
-        )}
+          />
+        </PlayFrame>
         <PaywallModal visible={paywallVisible} onDismiss={() => setPaywallVisible(false)} />
         {quitConfirm}
       </>
@@ -283,7 +239,9 @@ export const CompetitionScreen = () => {
   if (!play || !attempt || play.status === "finished") {
     return (
       <>
-        {framed(<ScreenLoading />)}
+        <PlayFrame quitLabel={COMPETITION_QUIT_LABEL} onQuit={goHome}>
+          <ScreenLoading />
+        </PlayFrame>
         {quitConfirm}
       </>
     );
@@ -291,50 +249,19 @@ export const CompetitionScreen = () => {
 
   return (
     <>
-      <PlayScreen
-        questionText={transition.question}
-        position={transition.position}
+      <PlayShell
+        play={play}
         total={play.questions.length}
+        loop={loop}
         categoryColor={attempt.category.color}
-        collapsed={transition.collapsed}
-        questionOpacity={transition.opacity}
-        header={
-          <PlayHeader
-            showCrown={true}
-            endsAt={play.endsAt}
-            now={now}
-            countdownFrozen={transition.countdownFrozen}
-            quitLabel={COMPETITION_QUIT_LABEL}
-            onQuit={onRequestQuit}
-          />
-        }
-        footer={
-          <AnswerFooter
-            play={play}
-            categoryColor={attempt.category.color}
-            inputRef={inputRef}
-            autoFocus={!quitVisible}
-            onInputChange={setInput}
-            onSwitchToSquare={() => {
-              inputRef.current?.blur();
-              switchToSquare();
-            }}
-            onSelect={select}
-            onConfirm={() => confirm(Date.now())}
-          />
-        }
+        showCrown={true}
+        quitLabel={COMPETITION_QUIT_LABEL}
+        headerExtra={null}
+        onInputChange={setInput}
+        onSelect={select}
+        onConfirm={confirm}
       />
       {quitConfirm}
     </>
   );
 };
-
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: GUTTER,
-    paddingTop: SPACE.sm,
-  },
-});
