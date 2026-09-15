@@ -1,8 +1,11 @@
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useEffect, useState } from "react";
-import { Platform, StyleSheet } from "react-native";
+import { Platform } from "react-native";
+import { NewButton } from "@/components/ui/new-button";
 import { signInWithApple } from "@/features/account/auth";
-import { CONTROL_HEIGHT, RADIUS } from "@/theme/tokens";
+import { AppleMark } from "@/features/account/components/apple-mark";
+import { APPLE_SIGN_IN_LABEL } from "@/features/account/constants";
+import { COLORS, CONTROL_ICON_SIZE } from "@/theme/tokens";
 
 export interface AppleSignInButtonProps {
   onError: () => void;
@@ -20,11 +23,15 @@ export const AppleSignInButton = ({ onError }: AppleSignInButtonProps) => {
   if (Platform.OS !== "ios" || !available) return null;
 
   return (
-    <AppleAuthentication.AppleAuthenticationButton
-      buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
-      buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-      cornerRadius={RADIUS.base}
-      style={styles.button}
+    <NewButton
+      layout="block"
+      shape="full"
+      tone="inverse"
+      icon={<AppleMark color={COLORS.face} size={CONTROL_ICON_SIZE} />}
+      label={APPLE_SIGN_IN_LABEL}
+      accessibilityLabel={null}
+      disabled={false}
+      pending={false}
       onPress={() => {
         signInWithApple().catch((error) => {
           console.error("Apple sign-in failed", error);
@@ -34,7 +41,3 @@ export const AppleSignInButton = ({ onError }: AppleSignInButtonProps) => {
     />
   );
 };
-
-const styles = StyleSheet.create({
-  button: { height: CONTROL_HEIGHT, width: "100%" },
-});

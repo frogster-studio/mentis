@@ -39,6 +39,7 @@ export const TransferPrompt = () => {
   return (
     <Sheet
       visible={visible}
+      isBare={false}
       title={TRANSFER_TITLE}
       message={TRANSFER_MESSAGE}
       // Dismissing is a reversible decline, never a silent accept — and mid-push nothing dismisses.

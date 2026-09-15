@@ -13,7 +13,7 @@ export default function HomePage() {
       </section>
 
       <article className="flex flex-col gap-6 rounded-lg border border-zinc-200 bg-white p-10">
-        <LogoMark className="size-10 text-sky-500" />
+        <LogoMark className="size-10" />
         <div className="flex flex-col gap-3">
           <h2 className="text-lg">Mentis</h2>
           <p className="text-sm text-zinc-600">

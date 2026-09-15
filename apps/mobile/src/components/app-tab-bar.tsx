@@ -1,6 +1,14 @@
 import type { BottomTabBarProps } from "expo-router/js-tabs";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Animated, type LayoutRectangle, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Animated,
+  type ColorValue,
+  type LayoutRectangle,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { TAB_TRANSITION_EASING, TAB_TRANSITION_MS } from "@/components/tab-transition";
 import { useBottomChromeGap } from "@/components/ui/screen-container";
 import { Squircle } from "@/components/ui/squircle";
@@ -26,9 +34,19 @@ export function useAppTabBarHeight() {
   return useBottomChromeGap() + BAR_HEIGHT;
 }
 
-export const AppTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
+export interface AppTabBarProps extends BottomTabBarProps {
+  isDark: boolean;
+  trackColor: ColorValue;
+}
+
+export const AppTabBar = ({
+  state,
+  descriptors,
+  navigation,
+  isDark,
+  trackColor,
+}: AppTabBarProps) => {
   const bottomGap = useBottomChromeGap();
-  const isWorld = state.routes[state.index].name === "world";
   const [frames, setFrames] = useState<Record<string, TriggerFrame>>({});
   const activeFrame = frames[state.routes[state.index].key];
   const chip = useChipTravel(activeFrame);
@@ -47,13 +65,13 @@ export const AppTabBar = ({ state, descriptors, navigation }: BottomTabBarProps)
     <View style={[styles.overlay, { paddingBottom: bottomGap }]}>
       <Squircle
         radius={RADIUS.lg}
-        color={isWorld ? COLORS.ink : COLORS.quiet}
+        color={trackColor}
         style={styles.track}
         corners="all"
         borderColor={null}
         borderWidth={null}
       >
-        {isWorld ? (
+        {isDark ? (
           <Squircle
             radius={RADIUS.lg}
             corners="all"
@@ -102,12 +120,10 @@ export const AppTabBar = ({ state, descriptors, navigation }: BottomTabBarProps)
               >
                 {tabBarIcon?.({
                   focused,
-                  color: isWorld && !focused ? COLORS.face : COLORS.ink,
+                  color: isDark && !focused ? COLORS.face : COLORS.ink,
                   size: TAB_ICON_SIZE,
                 })}
-                <Text style={[styles.label, isWorld && !focused && styles.lightLabel]}>
-                  {title}
-                </Text>
+                <Text style={[styles.label, isDark && !focused && styles.lightLabel]}>{title}</Text>
               </Pressable>
             );
           })}

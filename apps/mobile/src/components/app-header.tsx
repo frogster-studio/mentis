@@ -1,4 +1,3 @@
-import type { User } from "@supabase/supabase-js";
 import { usePathname, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Pressable, StatusBar, StyleSheet, Text, View } from "react-native";
@@ -17,7 +16,8 @@ import { Squircle } from "@/components/ui/squircle";
 import { useProfile } from "@/features/account/api";
 import { useAuthStore } from "@/features/account/auth-store";
 import { PseudoSheet } from "@/features/account/components/pseudo-sheet";
-import { ACCOUNT_TITLE } from "@/features/account/constants";
+import { PROFILE_TITLE } from "@/features/account/constants";
+import { firstNameOf } from "@/features/account/user-metadata";
 import { useStanding } from "@/features/competition/api";
 import { HOME_TITLE, POINTS_UNIT } from "@/features/quiz/constants";
 import { SeasonSummary } from "@/features/world/components/season-summary";
@@ -112,8 +112,8 @@ export const AppHeader = () => {
               pending={false}
               icon="menu"
               label={null}
-              accessibilityLabel={ACCOUNT_TITLE}
-              onPress={() => router.push("/account")}
+              accessibilityLabel={PROFILE_TITLE}
+              onPress={() => router.push("/profile")}
             />
           </>
         }
@@ -207,16 +207,6 @@ function titleOpacityAt(mix: Animated.Value, index: number) {
 
 function greetingFor(firstName: string | undefined): string {
   return [GREETING, firstName, GREETING_SUFFIX].filter(Boolean).join(" ");
-}
-
-function firstNameOf(user: User | undefined): string | undefined {
-  return metadataString(user, "full_name")?.split(" ")[0];
-}
-
-// Supabase types user metadata as an open bag, so every read out of it is checked.
-function metadataString(user: User | undefined, key: string): string | undefined {
-  const value: unknown = user?.user_metadata[key];
-  return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
 const styles = StyleSheet.create({

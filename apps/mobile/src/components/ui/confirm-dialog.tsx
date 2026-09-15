@@ -26,6 +26,7 @@ export const ConfirmDialog = ({
   return (
     <Sheet
       visible={visible}
+      isBare={false}
       title={title}
       message={message}
       dismissible={true}

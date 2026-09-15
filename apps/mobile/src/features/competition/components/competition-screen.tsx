@@ -25,7 +25,8 @@ import { queuedFinalize } from "@/features/competition/finalize-outbox";
 import { useFinalizeOutboxStore } from "@/features/competition/finalize-outbox-store";
 import { drainFinalizeOutbox } from "@/features/competition/finalize-sync";
 import { useCompetitionStore } from "@/features/competition/store";
-import { PaywallModal } from "@/features/premium/components/paywall-modal";
+import { usePaywallStore } from "@/features/premium/paywall-store";
+import { usePremiumGate } from "@/features/premium/use-premium-gate";
 import { PlayFrame } from "@/features/quiz/components/play-frame";
 import { PlayShell } from "@/features/quiz/components/play-shell";
 import { ThemeReveal } from "@/features/quiz/components/theme-reveal";
@@ -59,7 +60,7 @@ export const CompetitionScreen = () => {
   );
 
   const enqueuedRef = useRef(false);
-  const [paywallVisible, setPaywallVisible] = useState(false);
+  const gatePremium = usePremiumGate();
   const premiumRequired = isApiError(error, "PREMIUM_REQUIRED");
   const unavailable = isApiError(error, "CONFLICT");
 
@@ -107,7 +108,7 @@ export const CompetitionScreen = () => {
   // The refusal itself opens the paywall: a Premium Attempt was asked for, so the way in is shown.
   useEffect(() => {
     if (premiumRequired && PURCHASES_SUPPORTED) {
-      setPaywallVisible(true);
+      usePaywallStore.getState().open();
     }
   }, [premiumRequired]);
 
@@ -171,7 +172,7 @@ export const CompetitionScreen = () => {
         <>
           <CompetitionResults
             transcript={shownTranscript}
-            onReplay={offersReplay ? () => openKind("replay") : null}
+            onReplay={offersReplay ? () => gatePremium(() => openKind("replay")) : null}
             otherAttempt={
               other === undefined
                 ? null
@@ -217,7 +218,6 @@ export const CompetitionScreen = () => {
             onRetry={unavailable ? null : () => void refetch()}
           />
         </PlayFrame>
-        <PaywallModal visible={paywallVisible} onDismiss={() => setPaywallVisible(false)} />
         {quitConfirm}
       </>
     );

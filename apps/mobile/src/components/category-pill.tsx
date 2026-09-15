@@ -16,14 +16,15 @@ const BAR_GAP = 6;
 
 export interface CategoryPillProps {
   icon: CommunityIconName;
+  color: string;
 }
 
 // The label is a bar until Categories are drawn for real; only the glyph carries meaning today.
-export const CategoryPill = ({ icon }: CategoryPillProps) => {
+export const CategoryPill = ({ icon, color }: CategoryPillProps) => {
   return (
     <Squircle
       radius={RADIUS.sm}
-      color={COLORS.primarySunken}
+      color={`${color}50`}
       style={styles.pill}
       corners="all"
       borderColor={null}
@@ -31,7 +32,7 @@ export const CategoryPill = ({ icon }: CategoryPillProps) => {
     >
       <Squircle
         radius={BADGE_SIZE / 3}
-        color={COLORS.primary}
+        color={color}
         style={styles.badge}
         corners="all"
         borderColor={null}
@@ -39,7 +40,7 @@ export const CategoryPill = ({ icon }: CategoryPillProps) => {
       >
         <MaterialCommunityIcons name={icon} size={ICON_SIZE} color={COLORS.inkMuted} />
       </Squircle>
-      <View style={styles.bar} />
+      <View style={[styles.bar, { backgroundColor: color }]} />
     </Squircle>
   );
 };

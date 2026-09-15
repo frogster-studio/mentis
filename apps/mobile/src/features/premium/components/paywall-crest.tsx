@@ -16,12 +16,11 @@ const BADGE_WIDTH = 64;
 const BADGE_HEIGHT = 81;
 const BADGE_MARK_SIZE = 40;
 
+export const PAYWALL_CREST_HEIGHT = CROWN_HEIGHT - CROWN_BADGE_OVERLAP + BADGE_HEIGHT;
+
 export const PaywallCrest = () => {
   return (
     <View style={styles.crest}>
-      <View style={styles.crownSlot}>
-        <Image source={CROWN} style={styles.crown} contentFit="contain" />
-      </View>
       <View style={styles.wreath}>
         <View style={styles.mirrored}>
           <LaurelBranch color={COLORS.background} width={LAUREL_WIDTH} height={LAUREL_HEIGHT} />
@@ -37,6 +36,9 @@ export const PaywallCrest = () => {
           <LogoMark color={COLORS.background} size={BADGE_MARK_SIZE} />
         </Squircle>
         <LaurelBranch color={COLORS.background} width={LAUREL_WIDTH} height={LAUREL_HEIGHT} />
+      </View>
+      <View style={styles.crownSlot}>
+        <Image source={CROWN} style={styles.crown} contentFit="contain" />
       </View>
     </View>
   );

@@ -38,7 +38,7 @@ export const PracticeCard = () => {
       {/* Full bleed: the row runs under the card's edges and the fades take it from there. */}
       <Marquee gap={PILL_GAP} fadeColor={COLORS.primary}>
         {PRACTICE_PILL_ICONS.map((icon) => (
-          <CategoryPill key={icon} icon={icon} />
+          <CategoryPill key={icon} icon={icon} color={COLORS.primary} />
         ))}
       </Marquee>
       <View style={styles.action}>

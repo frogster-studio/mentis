@@ -13,7 +13,7 @@
   # ✅ bunx eas-cli build --platform android --profile production
   # ❌ a plugins/with-*-signing.js stamping keystore vars from .env into the prebuilt android/
   ```
-- `bun run icons` — re-render every app icon surface from the Mark (run after the Mark changes)
+- `bun run icons` — re-render every icon surface (app icons, splash, favicon) from `assets/app-icon/` (`mark.svg` + `background.svg`); run after either changes
 - `bun run typecheck` — `tsc --noEmit`
 - `bun run test` — vitest
 - From the repo root: `bun run check` (typecheck + test + knip + format, all workspaces); **every issue must end with `check` green**
@@ -51,7 +51,7 @@ src/
   app/                  # expo-router routes — thin files only (re-export/compose from features)
   features/quiz/        # practice play, and the Countdown/Carré mechanics competition reuses
   features/competition/ # the daily Attempt: issuance, play, the finalize outbox
-  features/account/     # sign-in, the « Compte » screen, account deletion
+  features/account/     # the sign-in sheet, the « Profil » tabs (stats / historique / infos), account deletion
   features/onboarding/  # the once-per-device welcome gate + its store
   features/world/       # « Monde » tab placeholder
   components/           # shared composed components; components/ui/ for shared primitives
@@ -59,8 +59,8 @@ src/
   theme/                # design tokens: COLORS, SPACE, RADIUS, TEXT…
   utils/                # chunk.ts
   types/quiz.ts         # canonical domain types
-assets/                 # root: all static assets — images/ + fonts/ + expo.icon/ (app icons via app.config.ts)
-scripts/                # generate-icons.ts — every icon surface, rendered from the Mark
+assets/                 # root: all static assets — images/ + fonts/ + app-icon/ (icon source) + expo.icon/ (Icon Composer bundle)
+scripts/                # generate-icons.ts — every icon surface, rendered from app-icon/
 ```
 
 ## Data access
@@ -111,6 +111,12 @@ Database migrations live in `apps/api/src/_database/migrations/` (shared with th
   ```
 - Every rounded surface is a **`Squircle`** (Figma corner smoothing via `expo-squircle-view`, with a plain-radius fallback on web) — a bare `borderRadius` is only for true circles. **`Card`** is the card surface, pressable only via its optional `onPress` (`PRESSED` baked in); card anatomy is never re-composed outside it. `ModalCard` is deliberately independent of it.
 - **`Sheet`** is the bottom-sheet surface — `@lodev09/react-native-true-sheet` behind it, never hand-rolled, and the only module importing it. Prefer it to a `Modal` wherever a sheet genuinely fits, which is most places — but modals are not banned, so reach for one where centering truly reads better.
+- **Every Premium feature's tap goes through `usePremiumGate()`** — a non-Premium Player gets the one root `PaywallSheet`, never a pushed screen to a refusal.
+
+  ```tsx
+  // ✅ onPress={() => gatePremium(() => router.push({ pathname: "/competition", params: { kind: "catchup" } }))}
+  // ❌ onPress={() => router.push(...)}  // lands on a PREMIUM_REQUIRED screen first
+  ```
 - **`AppHeader`** is the tab screens' whole card — greeting row, divider, title — so nothing in it rides the tab slide: the title cross-fades in place, in a slot that hugs it. Scrolling slides the title half up behind the greeting row until the card is a plain rounded header, so a tab screen pads by `useAppHeaderHeight()` and feeds the header through `useTabScroll()`. Every screen sits on `ScreenContainer`'s grid paper.
 - Pushed screens draw their own header row: `QuietButton` circle left (chevron = back, X = quit), `TEXT.screenTitle` centered, balancing spacer right. Content scrolling under a `HeaderCard` vanishes behind its opaque paper band, clipped flat at the card's bottom edge; the results screen's top and bottom bands are the `BlurBand` recipe.
 - **Overlaid chrome owns its safe-area inset.** A band pinned over content runs to the screen edge and pads its own row by the inset; the screen under it drops that edge from `ScreenContainer` and pads content by the chrome's full height. Floating bottom chrome pads by `useBottomChromeGap()`, which adds Android's room over the bare navigation bar.
