@@ -1,19 +1,15 @@
 import { squareChoices } from "@mentis/answer-matching";
 import { randomUUID } from "expo-crypto";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { StyleSheet, type TextInput, View } from "react-native";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { QuietButton } from "@/components/ui/quiet-button";
-import { ALL_SCREEN_EDGES, ScreenContainer } from "@/components/ui/screen-container";
 import { ScreenError } from "@/components/ui/screen-error";
 import { ScreenLoading } from "@/components/ui/screen-loading";
 import { useAuthStore } from "@/features/account/auth-store";
 import { useSessionQuestions } from "@/features/quiz/api";
-import { AnswerFooter } from "@/features/quiz/components/answer-footer";
 import { DevSkipToResults } from "@/features/quiz/components/dev-skip-to-results";
-import { PlayHeader } from "@/features/quiz/components/play-header";
-import { PlayScreen } from "@/features/quiz/components/play-screen";
+import { PlayFrame } from "@/features/quiz/components/play-frame";
+import { PlayShell } from "@/features/quiz/components/play-shell";
 import { SessionResults } from "@/features/quiz/components/session-results";
 import { ThemeReveal } from "@/features/quiz/components/theme-reveal";
 import {
@@ -29,10 +25,8 @@ import { drainOutbox } from "@/features/quiz/outbox-sync";
 import { currentQuestion, sessionScore } from "@/features/quiz/session-reducer";
 import { useStatsStore } from "@/features/quiz/stats-store";
 import { useQuizStore } from "@/features/quiz/store";
-import { usePlayClock } from "@/features/quiz/use-play-clock";
-import { useQuestionTransition } from "@/features/quiz/use-question-transition";
+import { usePlayLoop } from "@/features/quiz/use-play-loop";
 import { useThemeReveal } from "@/features/quiz/use-theme-reveal";
-import { GUTTER, SPACE } from "@/theme/tokens";
 
 export const SessionScreen = () => {
   const { themeId, name, imageUrl, categoryId, categoryName, categoryColor, categoryIcon } =
@@ -60,21 +54,22 @@ export const SessionScreen = () => {
   const enqueue = useOutboxStore((state) => state.enqueue);
   const owner = useAuthStore((state) => state.session?.user.id);
 
-  const inputRef = useRef<TextInput>(null);
   const recordedRef = useRef(false);
-  const [quitVisible, setQuitVisible] = useState(false);
   // The pick fixes the Theme, so practice reveals from the very frame the screen mounts.
   const { isDone: isRevealDone, secondsLeft } = useThemeReveal(true);
 
-  const isActive = session?.status === "active";
-  const answeredCount = session?.answers.length ?? 0;
   // Stable per question (same array element), changes identity on each advance.
-  const activeQuestion = session && isActive ? currentQuestion(session) : null;
-  const now = usePlayClock(session?.endsAt ?? 0, isActive, expire);
-  // Lags question + position through the collapse/expand beat so the swap lands at the peak.
-  const transition = useQuestionTransition({
-    question: activeQuestion?.text ?? "",
-    position: answeredCount + 1,
+  const activeQuestion = session?.status === "active" ? currentQuestion(session) : null;
+  const loop = usePlayLoop({
+    play: session,
+    question: activeQuestion,
+    expire,
+    // The RNG is injected here at the call site, so the reducer stays pure.
+    switchToSquare: () => {
+      if (activeQuestion) {
+        switchToSquare(squareChoices(activeQuestion, Math.random));
+      }
+    },
   });
 
   // The Questions can land mid-Reveal and no Countdown may run behind it, yet the Session must
@@ -109,20 +104,6 @@ export const SessionScreen = () => {
     }
   }, [session, themeId, name, owner, recordSession, enqueue]);
 
-  // Every question starts with the keyboard open, except under the quit sheet.
-  useEffect(() => {
-    if (activeQuestion && !quitVisible) {
-      inputRef.current?.focus();
-    }
-  }, [activeQuestion, quitVisible]);
-
-  // The Countdown can Finish the session behind the open sheet — the results take it down.
-  useEffect(() => {
-    if (session?.status === "finished") {
-      setQuitVisible(false);
-    }
-  }, [session?.status]);
-
   // The Theme is fixed by the pick, so the Reveal plays once here — a replay never repeats it.
   if (!isRevealDone) {
     return (
@@ -140,6 +121,8 @@ export const SessionScreen = () => {
     );
   }
 
+  const goHome = () => router.dismissTo("/");
+
   // Nothing unmounts on a replay, so the record guard and the Questions are both reset by hand.
   const onReplay = () => {
     recordedRef.current = false;
@@ -147,27 +130,21 @@ export const SessionScreen = () => {
     void refetch();
   };
 
-  const onRequestQuit = () => {
-    // The keyboard drops as the sheet rises, so the field lets go before it opens.
-    inputRef.current?.blur();
-    setQuitVisible(true);
-  };
-
   const onConfirmQuit = () => {
     // The unmount cleanup (clearSession) wipes the store, so no trace of the session survives.
-    setQuitVisible(false);
-    router.dismissTo("/");
+    loop.closeQuit();
+    goHome();
   };
 
   // Held at the same slot under the same root in every branch: unmounting it mid-present strands it.
   const quitConfirm = (
     <ConfirmDialog
-      visible={quitVisible}
+      visible={loop.quitVisible}
       title={QUIT_TITLE}
       message={QUIT_MESSAGE}
       confirmLabel={QUIT_CONFIRM_LABEL}
       cancelLabel={QUIT_CANCEL_LABEL}
-      onCancel={() => setQuitVisible(false)}
+      onCancel={loop.closeQuit}
       onConfirm={onConfirmQuit}
     />
   );
@@ -180,7 +157,7 @@ export const SessionScreen = () => {
           questions={session.questions}
           answers={session.answers}
           onReplay={onReplay}
-          onGoHome={() => router.dismissTo("/")}
+          onGoHome={goHome}
         />
         {quitConfirm}
       </>
@@ -192,85 +169,34 @@ export const SessionScreen = () => {
     const isDrawLost = (isError || questions?.length === 0) && !isFetching;
     return (
       <>
-        <ScreenContainer edges={ALL_SCREEN_EDGES} underlay={null}>
-          {/* Nothing is under way yet, so the quit control leaves straight away — no confirmation. */}
-          <View style={styles.header}>
-            <QuietButton
-              layout="circle"
-              label={null}
-              icon="close"
-              accessibilityLabel={QUIT_LABEL}
-              onPress={() => router.dismissTo("/")}
-              disabled={false}
-            />
-          </View>
+        <PlayFrame quitLabel={QUIT_LABEL} onQuit={goHome}>
           {/* A retry leaves the query in "error" until it lands, so the spinner stands in for it. */}
           {isDrawLost ? (
             <ScreenError message={SESSION_ERROR} onRetry={() => void refetch()} />
           ) : (
             <ScreenLoading />
           )}
-        </ScreenContainer>
+        </PlayFrame>
         {quitConfirm}
       </>
     );
   }
 
-  const onSwitchToSquare = () => {
-    if (!activeQuestion) {
-      return;
-    }
-    // The RNG is injected here at the call site, so the reducer stays pure.
-    inputRef.current?.blur();
-    switchToSquare(squareChoices(activeQuestion, Math.random));
-  };
-
   return (
     <>
-      <PlayScreen
-        questionText={transition.question}
-        position={transition.position}
+      <PlayShell
+        play={session}
         total={session.questions.length}
+        loop={loop}
         categoryColor={categoryColor}
-        collapsed={transition.collapsed}
-        questionOpacity={transition.opacity}
-        header={
-          <>
-            <PlayHeader
-              showCrown={false}
-              endsAt={session.endsAt}
-              now={now}
-              countdownFrozen={transition.countdownFrozen}
-              quitLabel={QUIT_LABEL}
-              onQuit={onRequestQuit}
-            />
-            <DevSkipToResults />
-          </>
-        }
-        footer={
-          <AnswerFooter
-            play={session}
-            categoryColor={categoryColor}
-            inputRef={inputRef}
-            autoFocus={!quitVisible}
-            onInputChange={setInput}
-            onSwitchToSquare={onSwitchToSquare}
-            onSelect={select}
-            onConfirm={() => confirm(Date.now())}
-          />
-        }
+        showCrown={false}
+        quitLabel={QUIT_LABEL}
+        headerExtra={<DevSkipToResults />}
+        onInputChange={setInput}
+        onSelect={select}
+        onConfirm={confirm}
       />
       {quitConfirm}
     </>
   );
 };
-
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: GUTTER,
-    paddingTop: SPACE.sm,
-  },
-});

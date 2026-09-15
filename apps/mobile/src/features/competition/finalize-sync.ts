@@ -1,8 +1,6 @@
-import { useMutation } from "@tanstack/react-query";
-import { useEffect } from "react";
-import { AppState } from "react-native";
 import { useAuthStore } from "@/features/account/auth-store";
 import { queryClient } from "@/lib/query-client";
+import { useDrainOnTriggers } from "@/lib/use-drain-on-triggers";
 import { competitionKeys, pushFinalize } from "./api";
 import { finalizesForOwner, isPermanentRefusal } from "./finalize-outbox";
 import { useFinalizeOutboxStore } from "./finalize-outbox-store";
@@ -23,29 +21,8 @@ export async function drainFinalizeOutbox(playerId: string): Promise<void> {
   }
 }
 
-// Drains at launch, foreground and sign-in; mounted once, at the app root.
+// Mounted once, at the app root.
 export function useCompetitionSync(): void {
   const playerId = useAuthStore((state) => state.session?.user.id);
-  // No UI reads this mutation — it exists so every write in the app goes through one.
-  const { mutate: drain } = useMutation({ mutationFn: drainFinalizeOutbox });
-
-  useEffect(() => {
-    if (playerId === undefined) {
-      return;
-    }
-    drain(playerId);
-    // The outbox hydrates asynchronously: drain again once hydration lands to push a backlog.
-    const stopHydrationWatch = useFinalizeOutboxStore.persist.hasHydrated()
-      ? undefined
-      : useFinalizeOutboxStore.persist.onFinishHydration(() => drain(playerId));
-    const subscription = AppState.addEventListener("change", (status) => {
-      if (status === "active") {
-        drain(playerId);
-      }
-    });
-    return () => {
-      stopHydrationWatch?.();
-      subscription.remove();
-    };
-  }, [playerId, drain]);
+  useDrainOnTriggers(playerId, drainFinalizeOutbox, useFinalizeOutboxStore);
 }
