@@ -1,10 +1,19 @@
 import {
+  type AdminThemeImageCleanup,
+  type AdminThemeImageCleanupResponse,
+  type AdminThemeImageConfig,
+  type AdminThemeImageReset,
+  type AdminThemeImageUpload,
   type AdminThemeImageUploadResponse,
   type AdminThemeListResponse,
   type AdminThemeResponse,
   type AdminThemeStaging,
   type AdminThemeWrite,
   adminThemeIdSchema,
+  adminThemeImageCleanupResponseSchema,
+  adminThemeImageCleanupSchema,
+  adminThemeImageResetSchema,
+  adminThemeImageUploadSchema,
   adminThemeStagingSchema,
   adminThemeWriteSchema,
 } from "@mentis/contracts/admin";
@@ -48,8 +57,33 @@ export class AdminThemesController {
 
   @Post("image-upload-url")
   @HttpCode(HttpStatus.OK)
-  createImageUploadUrl(): Promise<AdminThemeImageUploadResponse> {
-    return this.themeImageService.createUploadUrl();
+  createImageUploadUrl(
+    @Body(new ZodValidationPipe(adminThemeImageUploadSchema)) input: AdminThemeImageUpload,
+  ): Promise<AdminThemeImageUploadResponse> {
+    return this.themeImageService.createUploadUrl(input);
+  }
+
+  @Get("image-config")
+  imageConfig(): AdminThemeImageConfig {
+    return this.themeImageService.config();
+  }
+
+  @Post("image-cleanup")
+  @HttpCode(HttpStatus.OK)
+  async cleanupImage(
+    @Body(new ZodValidationPipe(adminThemeImageCleanupSchema)) input: AdminThemeImageCleanup,
+  ): Promise<AdminThemeImageCleanupResponse> {
+    await this.themeImageService.cleanup(input.token);
+    return adminThemeImageCleanupResponseSchema.parse({ deleted: true });
+  }
+
+  @Post(":id/image/reset")
+  @HttpCode(HttpStatus.OK)
+  resetImage(
+    @Param("id", new ZodValidationPipe(adminThemeIdSchema)) id: string,
+    @Body(new ZodValidationPipe(adminThemeImageResetSchema)) input: AdminThemeImageReset,
+  ): Promise<AdminThemeResponse> {
+    return this.curationService.resetThemeImage(id, input.expectedImage);
   }
 
   @Patch(":id")

@@ -34,5 +34,5 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   // Everything except static assets goes through the session gate.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|fonts).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|fonts|theme-image-codec).*)"],
 };

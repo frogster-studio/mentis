@@ -2,6 +2,7 @@ import {
   type AdminThemeResponse,
   type AdminThemeWrite,
   adminThemeWriteSchema,
+  DEFAULT_THEME_IMAGE,
 } from "@mentis/contracts/admin";
 
 export type ThemeFormState = {
@@ -11,7 +12,7 @@ export type ThemeFormState = {
 };
 
 export function blankThemeForm(categoryId: string | null): ThemeFormState {
-  return { name: "", categoryId: categoryId ?? "", image: "" };
+  return { name: "", categoryId: categoryId ?? "", image: DEFAULT_THEME_IMAGE };
 }
 
 export function toThemeForm(theme: AdminThemeResponse): ThemeFormState {

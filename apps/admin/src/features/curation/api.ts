@@ -3,17 +3,19 @@ import {
   type AdminQuestionListResponse,
   type AdminQuestionWrite,
   type AdminThemeListResponse,
-  type AdminThemeWrite,
   adminCategoryListResponseSchema,
   adminCategoryResponseSchema,
   adminQuestionListResponseSchema,
   adminQuestionResponseSchema,
+  adminThemeImageConfigSchema,
   adminThemeListResponseSchema,
   adminThemeResponseSchema,
 } from "@mentis/contracts/admin";
 import { type QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { deleteFromApi, getFromApi, sendToApi } from "@/lib/api/client";
+
+import { saveThemeWithImage } from "./theme-image-upload";
 
 const curationKeys = {
   categories: ["curation", "categories"] as const,
@@ -70,10 +72,7 @@ export function useDeleteCategory() {
 export function useSaveTheme() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, theme }: { id?: string; theme: AdminThemeWrite }) =>
-      id === undefined
-        ? sendToApi("POST", "/themes", theme, adminThemeResponseSchema)
-        : sendToApi("PATCH", `/themes/${id}`, theme, adminThemeResponseSchema),
+    mutationFn: saveThemeWithImage,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: curationKeys.themes }),
   });
 }
@@ -172,5 +171,22 @@ export function useDeleteQuestion() {
   return useMutation({
     mutationFn: (id: string) => deleteFromApi(`/questions/${id}`),
     onSuccess: () => refetchCatalogColumns(queryClient),
+  });
+}
+
+export function useThemeImageConfig() {
+  return useQuery({
+    queryKey: ["curation", "theme-image-config"],
+    queryFn: () => getFromApi("/themes/image-config", adminThemeImageConfigSchema),
+    staleTime: Infinity,
+  });
+}
+
+export function useResetThemeImage() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, expectedImage }: { id: string; expectedImage: string }) =>
+      sendToApi("POST", `/themes/${id}/image/reset`, { expectedImage }, adminThemeResponseSchema),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: curationKeys.themes }),
   });
 }

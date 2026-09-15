@@ -93,6 +93,7 @@ describe("adminThemeStagingSchema", () => {
 });
 
 const upload = {
+  token: "signed-image-authorization",
   path: "5c2e0d3a-0000-4000-8000-000000000001.webp",
   signedUrl: "https://stub.supabase.co/storage/v1/object/upload/sign/theme-images/a.webp?token=x",
 };
@@ -108,6 +109,19 @@ describe("adminThemeImageUploadResponseSchema", () => {
   ])("rejects %s", (_case, broken) => {
     expect(adminThemeImageUploadResponseSchema.safeParse({ ...upload, ...broken }).success).toBe(
       false,
+    );
+  });
+});
+
+describe("theme image defaults", () => {
+  it("uses default.webp when a new theme has no custom image", () => {
+    expect(adminThemeWriteSchema.parse({ name: "New theme", categoryId: CATEGORY_ID }).image).toBe(
+      "default.webp",
+    );
+  });
+  it("carries a cleanup token when the save succeeded but cleanup failed", () => {
+    expect(adminThemeResponseSchema.parse({ ...theme, cleanupToken: "retry" }).cleanupToken).toBe(
+      "retry",
     );
   });
 });

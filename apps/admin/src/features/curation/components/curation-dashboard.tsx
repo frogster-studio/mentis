@@ -4,7 +4,13 @@ import type { AdminThemeResponse } from "@mentis/contracts/admin";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-import { useCategories, useStageQuestion, useThemeQuestions, useThemes } from "../api";
+import {
+  useCategories,
+  useStageQuestion,
+  useThemeImageConfig,
+  useThemeQuestions,
+  useThemes,
+} from "../api";
 import {
   NO_SELECTION,
   readSelection,
@@ -34,6 +40,7 @@ export const CurationDashboard = () => {
   const [floorBlock, setFloorBlock] = useState<string | null>(null);
   const categories = useCategories();
   const themes = useThemes();
+  useThemeImageConfig();
   const stageQuestion = useStageQuestion();
 
   const linkedSelection = readSelection(new URLSearchParams(searchParams.toString()));
@@ -137,10 +144,17 @@ export const CurationDashboard = () => {
 
   // Back walks the selection history, so an authoring pane opened over the old one must close with it.
   useEffect(() => {
-    const closeAuthoring = () => setAuthoring(null);
-    window.addEventListener("popstate", closeAuthoring);
-    return () => window.removeEventListener("popstate", closeAuthoring);
-  }, []);
+    const closeAuthoring = (event: PopStateEvent) => {
+      if (isFormDirty && !window.confirm("This form has unsaved changes. Leave anyway?")) {
+        event.stopImmediatePropagation();
+        window.history.pushState(null, "", `${window.location.pathname}${linkedQuery}`);
+        return;
+      }
+      setAuthoring(null);
+    };
+    window.addEventListener("popstate", closeAuthoring, true);
+    return () => window.removeEventListener("popstate", closeAuthoring, true);
+  }, [isFormDirty, linkedQuery]);
 
   // The browser's own leave prompt: shallow routing never sees a tab closing or a typed URL.
   useEffect(() => {

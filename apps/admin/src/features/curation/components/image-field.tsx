@@ -1,93 +1,199 @@
-import Image from "next/image";
-import { useEffect, useState } from "react";
+"use client";
 
-import { MIN_THEME_IMAGE_DIMENSION, THEME_IMAGE_EXTENSIONS } from "../theme-image";
-import { uploadThemeImage } from "../theme-image-upload";
+import { DEFAULT_THEME_IMAGE } from "@mentis/contracts/admin";
+import Image from "next/image";
+import { useEffect, useId, useRef, useState } from "react";
+import { THEME_IMAGE_EXTENSIONS, validateThemeImage } from "../theme-image";
 
 interface ImageFieldProps {
   path: string;
-  isUploading: boolean;
-  onUploadingChange: (isUploading: boolean) => void;
-  onUploaded: (path: string) => void;
+  publicBaseUrl?: string;
+  file: File | null;
+  isBusy: boolean;
+  onFileChange: (file: File | null) => void;
+  onValidatingChange: (value: boolean) => void;
+  onReset?: () => void;
 }
 
-// The form owns the upload state: an explicit save must never race the bytes it names.
 export const ImageField = ({
   path,
-  isUploading,
-  onUploadingChange,
-  onUploaded,
+  publicBaseUrl,
+  file,
+  isBusy,
+  onFileChange,
+  onValidatingChange,
+  onReset,
 }: ImageFieldProps) => {
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const input = useRef<HTMLInputElement>(null);
+  const generation = useRef(0);
+  const dragDepth = useRef(0);
+  const helpId = useId();
+
+  useEffect(() => {
+    if (!file) {
+      setPreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
 
   useEffect(
     () => () => {
-      if (preview !== null) {
-        URL.revokeObjectURL(preview);
-      }
+      generation.current += 1;
     },
-    [preview],
+    [],
   );
 
-  const pick = async (input: HTMLInputElement) => {
-    const file = input.files?.[0];
-    // Cleared right away, so re-picking the very same file still fires a change.
-    input.value = "";
-    if (file === undefined) {
+  const pick = async (files: File[]) => {
+    if (isBusy || files.length === 0) return;
+    setError(null);
+    if (files.length !== 1) {
+      setError("Choisissez une seule image à la fois.");
       return;
     }
-    setError(null);
-    onUploadingChange(true);
+    const current = ++generation.current;
+    setIsValidating(true);
+    onValidatingChange(true);
     try {
-      const uploaded = await uploadThemeImage(file);
-      setPreview(URL.createObjectURL(file));
-      onUploaded(uploaded);
+      await validateThemeImage(files[0]);
+      if (current === generation.current) onFileChange(files[0]);
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : String(failure));
+      if (current === generation.current)
+        setError(failure instanceof Error ? failure.message : "Image invalide.");
     } finally {
-      onUploadingChange(false);
+      if (current === generation.current) {
+        setIsValidating(false);
+        onValidatingChange(false);
+      }
     }
   };
 
+  const imageUrl = preview ?? (publicBaseUrl ? `${publicBaseUrl}${path}` : null);
+  const isDefault = path === DEFAULT_THEME_IMAGE;
+
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-3">
-        {preview === null ? (
-          <span className="flex size-16 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 text-xs text-zinc-400">
-            {path === "" ? "Empty" : "Stored"}
+    <div className="flex flex-col gap-3">
+      <fieldset
+        aria-label="Importer une image"
+        data-dragging={isDragging}
+        onDragEnter={(event) => {
+          event.preventDefault();
+          if (!isBusy) {
+            dragDepth.current += 1;
+            setIsDragging(true);
+          }
+        }}
+        onDragOver={(event) => {
+          event.preventDefault();
+          event.dataTransfer.dropEffect = isBusy ? "none" : "copy";
+        }}
+        onDragLeave={(event) => {
+          event.preventDefault();
+          dragDepth.current = Math.max(0, dragDepth.current - 1);
+          if (!dragDepth.current) setIsDragging(false);
+        }}
+        onDrop={(event) => {
+          event.preventDefault();
+          dragDepth.current = 0;
+          setIsDragging(false);
+          void pick(Array.from(event.dataTransfer.files));
+        }}
+        className={`rounded-lg border border-dashed p-4 transition-colors focus-within:border-sky-500 focus-within:bg-sky-50 ${isDragging ? "border-sky-500 bg-sky-50" : "border-zinc-300 bg-zinc-50 hover:border-sky-400 hover:bg-sky-50"}`}
+      >
+        <button
+          type="button"
+          disabled={isBusy}
+          onClick={() => input.current?.click()}
+          aria-describedby={helpId}
+          className="flex w-full flex-col items-center gap-3 rounded-lg text-sm text-zinc-600 outline-none disabled:cursor-wait"
+        >
+          {imageUrl ? (
+            <span className="relative block h-40 w-full">
+              <Image
+                src={imageUrl}
+                alt={file ? "Aperçu de l’image sélectionnée" : "Image actuelle du thème"}
+                fill
+                sizes="(max-width: 640px) 100vw, 400px"
+                unoptimized
+                className="rounded-lg object-contain"
+              />
+            </span>
+          ) : (
+            <span className="h-40">Chargement de l’image…</span>
+          )}
+          <span>
+            {isDragging ? "Déposez votre image ici" : "Glissez une image ou choisissez un fichier"}
           </span>
-        ) : (
-          <Image
-            src={preview}
-            alt="Theme preview"
-            width={64}
-            height={64}
-            // The preview is a local blob the optimizer can never fetch.
-            unoptimized
-            className="size-16 shrink-0 rounded-lg object-cover"
-          />
-        )}
+        </button>
         <input
+          ref={input}
           type="file"
           accept={THEME_IMAGE_EXTENSIONS.join(",")}
-          disabled={isUploading}
+          disabled={isBusy}
+          className="sr-only"
+          aria-label="Choisir une image"
           onChange={(event) => {
-            void pick(event.target);
+            const files = Array.from(event.target.files ?? []);
+            event.target.value = "";
+            void pick(files);
           }}
-          aria-label="Image"
-          className="w-full text-sm text-zinc-500 file:mr-3 file:rounded-lg file:border-0 file:bg-sky-100 file:px-3 file:py-2 file:text-sky-700 file:text-sm file:transition-colors hover:file:bg-sky-600 hover:file:text-white"
         />
-      </div>
-      <p className="text-xs text-zinc-500">
-        {isUploading
-          ? "Resizing and uploading…"
-          : path === ""
-            ? `A PNG, JPEG or WebP of at least ${MIN_THEME_IMAGE_DIMENSION}×${MIN_THEME_IMAGE_DIMENSION}px — stored as webp.`
-            : path}
+      </fieldset>
+      <p id={helpId} className="text-xs text-zinc-500">
+        JPG, JPEG, PNG ou WebP · 2 Mo maximum · minimum 700 × 700 px.
+        <br />
+        Résolution recommandée : 1 000 × 1 000 px ou plus. Les images rectangulaires sont acceptées.
       </p>
+      <p className="break-all text-xs text-zinc-500">
+        {path.split("/").at(-1)} · .webp · {isDefault ? "Image par défaut" : "Image personnalisée"}
+      </p>
+      {file ? (
+        <div className="flex flex-col gap-2 text-xs text-zinc-600">
+          <p>{file.name} — aperçu local. L’image sera remplacée après SAVE.</p>
+          <button
+            type="button"
+            disabled={isBusy}
+            className="self-start text-sky-700 hover:underline disabled:opacity-50"
+            onClick={() => {
+              generation.current += 1;
+              setIsValidating(false);
+              onValidatingChange(false);
+              onFileChange(null);
+              setError(null);
+            }}
+          >
+            Annuler la sélection
+          </button>
+        </div>
+      ) : null}
+      {isValidating ? (
+        <p role="status" className="text-xs text-zinc-500">
+          Vérification de l’image…
+        </p>
+      ) : null}
+      {!isDefault && onReset ? (
+        <button
+          type="button"
+          disabled={isBusy || isValidating || file !== null}
+          className="self-start text-sm text-zinc-600 hover:text-sky-700 disabled:opacity-40"
+          onClick={onReset}
+        >
+          Supprimer l’image
+        </button>
+      ) : null}
+      {file && !isDefault ? (
+        <p className="text-xs text-zinc-500">
+          Annulez la sélection avant de supprimer l’image actuelle.
+        </p>
+      ) : null}
       {error ? (
-        <p role="alert" className="text-red-600 text-xs">
+        <p role="alert" className="text-sm text-zinc-700">
           {error}
         </p>
       ) : null}

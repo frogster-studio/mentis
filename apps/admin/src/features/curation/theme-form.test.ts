@@ -23,7 +23,11 @@ const theme = {
 
 describe("blankThemeForm", () => {
   it("starts under the Category the columns are showing", () => {
-    expect(blankThemeForm(CATEGORY_ID)).toEqual({ name: "", categoryId: CATEGORY_ID, image: "" });
+    expect(blankThemeForm(CATEGORY_ID)).toEqual({
+      name: "",
+      categoryId: CATEGORY_ID,
+      image: "default.webp",
+    });
   });
 
   it("starts Categoryless when nothing is selected", () => {

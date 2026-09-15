@@ -3,14 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "bun run --filter @mentis/contracts build && next dev",
-    "build": "bun run --filter @mentis/contracts build && next build",
+    "dev": "bun run prepare:image-codec && bun run --filter @mentis/contracts build && next dev",
+    "build": "bun run prepare:image-codec && bun run --filter @mentis/contracts build && next build",
     "start": "next start",
     "test": "vitest run",
-    "typecheck": "bun run --filter @mentis/contracts build && tsc --noEmit"
+    "typecheck": "bun run --filter @mentis/contracts build && tsc --noEmit",
+    "prepare:image-codec": "bun scripts/prepare-image-codec.ts"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
+    "@jsquash/webp": "^1.5.0",
     "@mentis/contracts": "workspace:*",
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.110.1",
@@ -24,6 +26,7 @@
     "@types/node": "^22.20.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "happy-dom": "^20.14.5",
     "tailwindcss": "^4",
     "typescript": "~6.0.3",
     "vitest": "^4.1.10"
