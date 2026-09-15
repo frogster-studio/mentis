@@ -58,7 +58,7 @@ export const ResultCard = ({
         </Squircle>
       </View>
       <View style={styles.card}>
-        <Card onPress={null}>
+        <Card background={null} onPress={null}>
           <View style={styles.head}>
             <Text style={styles.question}>{questionText}</Text>
             <Pressable style={({ pressed }) => pressed && styles.pressed} hitSlop={8}>

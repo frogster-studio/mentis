@@ -26,7 +26,7 @@ export const LeaderboardPager = ({ page, pageCount, myPage, onPage }: Leaderboar
   const atLast = page >= pageCount;
 
   return (
-    <Card onPress={null}>
+    <Card background={null} onPress={null}>
       <View style={styles.pager}>
         <View style={styles.steps}>
           <PagerStep

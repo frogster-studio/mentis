@@ -45,7 +45,7 @@ export const HeaderCard = ({
     <View style={styles.overlay}>
       {/* Content scrolls under the card, so the paper carries on over the band and hides it. */}
       <View style={[styles.paper, { height: cardTop + HEADER_TOP_HALF_HEIGHT }]}>
-        <PaperBackground />
+        <PaperBackground isDark={false} />
         {mask}
       </View>
       <View style={[styles.card, { marginTop: cardTop }]}>

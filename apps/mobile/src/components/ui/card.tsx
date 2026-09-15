@@ -1,23 +1,25 @@
-import type { PropsWithChildren } from "react";
-import { Pressable, StyleSheet } from "react-native";
+import type { PropsWithChildren, ReactNode } from "react";
+import { Pressable, StyleSheet, View } from "react-native";
 import { Squircle } from "@/components/ui/squircle";
 import { COLORS, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
 
 export interface CardProps {
   onPress: (() => void) | null;
+  background: ReactNode;
 }
 
-export const Card = ({ children, onPress }: PropsWithChildren<CardProps>) => {
+export const Card = ({ children, onPress, background }: PropsWithChildren<CardProps>) => {
   const surface = (
     <Squircle
       radius={RADIUS.base}
-      color={COLORS.card}
-      style={styles.card}
+      color={background === null ? COLORS.card : null}
+      style={null}
       corners="all"
       borderColor={null}
       borderWidth={null}
     >
-      {children}
+      {background}
+      <View style={styles.card}>{children}</View>
     </Squircle>
   );
 

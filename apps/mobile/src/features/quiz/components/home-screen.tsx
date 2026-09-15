@@ -7,7 +7,7 @@ import { PracticeCard } from "@/features/quiz/components/practice-card";
 import { SPACE } from "@/theme/tokens";
 
 export const HomeScreen = () => {
-  const headerHeight = useAppHeaderHeight();
+  const headerHeight = useAppHeaderHeight("/");
   const tabBarHeight = useAppTabBarHeight();
   const onScroll = useTabScroll();
 

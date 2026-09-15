@@ -38,7 +38,7 @@ export const ScreenContainer = ({
 }: PropsWithChildren<ScreenContainerProps>) => {
   return (
     <View style={styles.screen}>
-      <PaperBackground />
+      <PaperBackground isDark={false} />
       {underlay}
       <SafeAreaView style={styles.content} edges={edges}>
         {children}

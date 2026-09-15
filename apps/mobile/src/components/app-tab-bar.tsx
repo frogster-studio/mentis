@@ -28,6 +28,7 @@ export function useAppTabBarHeight() {
 
 export const AppTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
   const bottomGap = useBottomChromeGap();
+  const isWorld = state.routes[state.index].name === "world";
   const [frames, setFrames] = useState<Record<string, TriggerFrame>>({});
   const activeFrame = frames[state.routes[state.index].key];
   const chip = useChipTravel(activeFrame);
@@ -46,12 +47,22 @@ export const AppTabBar = ({ state, descriptors, navigation }: BottomTabBarProps)
     <View style={[styles.overlay, { paddingBottom: bottomGap }]}>
       <Squircle
         radius={RADIUS.lg}
-        color={COLORS.quiet}
+        color={isWorld ? COLORS.ink : COLORS.quiet}
         style={styles.track}
         corners="all"
         borderColor={null}
         borderWidth={null}
       >
+        {isWorld ? (
+          <Squircle
+            radius={RADIUS.lg}
+            corners="all"
+            color={`${COLORS.face}26`}
+            borderColor={null}
+            borderWidth={null}
+            style={StyleSheet.absoluteFill}
+          />
+        ) : null}
         <View style={styles.rail}>
           {/* One chip travels between the triggers, so the selection slides instead of jumping. */}
           {activeFrame ? (
@@ -89,8 +100,14 @@ export const AppTabBar = ({ state, descriptors, navigation }: BottomTabBarProps)
                 accessibilityState={{ selected: focused }}
                 accessibilityLabel={title}
               >
-                {tabBarIcon?.({ focused, color: COLORS.ink, size: TAB_ICON_SIZE })}
-                <Text style={styles.label}>{title}</Text>
+                {tabBarIcon?.({
+                  focused,
+                  color: isWorld && !focused ? COLORS.face : COLORS.ink,
+                  size: TAB_ICON_SIZE,
+                })}
+                <Text style={[styles.label, isWorld && !focused && styles.lightLabel]}>
+                  {title}
+                </Text>
               </Pressable>
             );
           })}
@@ -163,5 +180,6 @@ const styles = StyleSheet.create({
     color: COLORS.ink,
     userSelect: "none",
   },
+  lightLabel: { color: COLORS.face },
   pressed: PRESSED,
 });
