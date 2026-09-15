@@ -2,6 +2,7 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import FastSquircleView from "react-native-fast-squircle";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { profileInitial } from "@/components/profile-initial";
 import { NewButton } from "@/components/ui/new-button";
@@ -24,6 +25,7 @@ import { COLORS, CONTROL_ICON_SIZE, GUTTER, PRESSED, RADIUS, SPACE } from "@/the
 const MEDAL = require("../../../../assets/images/competition/medal.png");
 
 const PORTRAIT_OVERLAP = 37;
+const CHIP_TINT = "14";
 const MEDAL_HEIGHT = CONTROL_ICON_SIZE;
 const MEDAL_WIDTH = 13;
 const CHIP_HEIGHT = TEXT.body.lineHeight + SPACE.xs * 2;
@@ -47,17 +49,11 @@ export const ProfileHeader = () => {
   return (
     <View style={[styles.header, { paddingTop: insets.top + SPACE.xl }]}>
       <View>
-        <Squircle
-          radius={RADIUS.base}
-          corners="all"
-          color={COLORS.card}
-          borderColor={null}
-          borderWidth={null}
-          style={styles.card}
-        >
+        <FastSquircleView style={styles.card}>
           <Text style={styles.name} numberOfLines={1} adjustsFontSizeToFit>
             {name}
           </Text>
+
           <View style={styles.chipRow}>
             {isSignedOut ? (
               <Chip label={SIGN_IN_CHIP_LABEL} onPress={openSignIn} />
@@ -68,7 +64,8 @@ export const ProfileHeader = () => {
               </>
             ) : null}
           </View>
-        </Squircle>
+        </FastSquircleView>
+
         <View style={styles.portrait}>
           <ProfilePortrait
             photoUrl={avatarUrlOf(user) ?? null}
@@ -113,7 +110,7 @@ const Chip = ({ label, onPress }: ChipProps) => {
       <Squircle
         radius={RADIUS.lg}
         corners="all"
-        color={COLORS.background}
+        color={`${COLORS.ink}${CHIP_TINT}`}
         borderColor={null}
         borderWidth={null}
         style={styles.chip}
@@ -135,6 +132,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACE.lg,
     alignItems: "center",
     gap: SPACE.md,
+    borderRadius: RADIUS.base,
+    backgroundColor: COLORS.card,
   },
   name: {
     ...TEXT.display,

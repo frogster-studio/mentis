@@ -1,4 +1,5 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { isValidElement, type ReactElement } from "react";
 import { ActivityIndicator, Animated, Pressable, StyleSheet, Text } from "react-native";
 import SquircleView from "react-native-fast-squircle";
 import type { CommunityIconName } from "@/components/ui/icon-name";
@@ -10,6 +11,7 @@ import { COLORS, CONTROL_ICON_SIZE, CONTROL_SQUARE_SIZE, RADIUS, SPACE } from "@
 const PALETTES = {
   default: { face: COLORS.face, edge: COLORS.ink, content: COLORS.ink },
   primary: { face: COLORS.primary, edge: COLORS.ink, content: COLORS.ink },
+  inverse: { face: COLORS.ink, edge: COLORS.ink, content: COLORS.face },
   disabled: { face: COLORS.face, edge: COLORS.inkMuted, content: COLORS.inkMuted },
 } as const;
 
@@ -17,10 +19,11 @@ export interface NewButtonProps {
   onPress: () => void;
   layout: "block" | "hug";
   shape: "rounded" | "full";
-  tone: "default" | "primary";
+  tone: "default" | "primary" | "inverse";
   disabled: boolean;
   pending: boolean;
-  icon: CommunityIconName | null;
+  // A brand mark is a drawn element; everything else is a glyph name.
+  icon: CommunityIconName | ReactElement | null;
   label: string | null;
   accessibilityLabel: string | null;
 }
@@ -71,13 +74,15 @@ export const NewButton = ({
             <ActivityIndicator size="small" color={palette.content} />
           ) : (
             <>
-              {icon ? (
+              {icon === null ? null : isValidElement(icon) ? (
+                icon
+              ) : (
                 <MaterialCommunityIcons
                   name={icon}
                   size={CONTROL_ICON_SIZE}
                   color={palette.content}
                 />
-              ) : null}
+              )}
               {label ? (
                 <Text style={[styles.label, { color: palette.content }]}>{label}</Text>
               ) : null}

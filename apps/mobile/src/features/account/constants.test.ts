@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  APPLE_SIGN_IN_LABEL,
   DELETE_ACCOUNT_CANCEL_LABEL,
   DELETE_ACCOUNT_CONFIRM_LABEL,
   DELETE_ACCOUNT_ERROR,
@@ -55,6 +56,7 @@ describe("account constants", () => {
       PROFILE_STATS_EMPTY,
       SIGN_IN_CHIP_LABEL,
       SIGN_IN_TITLE,
+      APPLE_SIGN_IN_LABEL,
       GOOGLE_SIGN_IN_LABEL,
       SIGN_OUT_LABEL,
       SIGN_OUT_TITLE,
@@ -90,8 +92,8 @@ describe("account constants", () => {
     }
   });
 
-  it("names the provider on the Google button", () => {
-    // The custom Google button carries its own label (unlike Apple's OS-drawn button).
+  it("names the provider on each sign-in button", () => {
+    expect(APPLE_SIGN_IN_LABEL).toContain("Apple");
     expect(GOOGLE_SIGN_IN_LABEL).toContain("Google");
   });
 

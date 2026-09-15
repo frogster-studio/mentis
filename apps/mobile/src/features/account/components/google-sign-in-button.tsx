@@ -1,7 +1,9 @@
 import { Platform } from "react-native";
 import { NewButton } from "@/components/ui/new-button";
 import { signInWithGoogle } from "@/features/account/auth";
+import { GoogleMark } from "@/features/account/components/google-mark";
 import { GOOGLE_SIGN_IN_LABEL } from "@/features/account/constants";
+import { CONTROL_ICON_SIZE } from "@/theme/tokens";
 
 export interface GoogleSignInButtonProps {
   // Called when sign-in fails for a real reason (a dismissed sheet is not an error).
@@ -17,7 +19,7 @@ export const GoogleSignInButton = ({ onError }: GoogleSignInButtonProps) => {
       layout="block"
       shape="full"
       tone="default"
-      icon="google"
+      icon={<GoogleMark size={CONTROL_ICON_SIZE} />}
       label={GOOGLE_SIGN_IN_LABEL}
       accessibilityLabel={null}
       disabled={false}

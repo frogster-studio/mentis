@@ -1,19 +1,20 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Image } from "expo-image";
-import { StyleSheet, Text, View } from "react-native";
-import { Card } from "@/components/ui/card";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import FastSquircleView from "react-native-fast-squircle";
 import { LaurelBranch } from "@/features/premium/components/laurel-branch";
 import { PaywallHeroGradient } from "@/features/premium/components/paywall-hero-gradient";
 import { PREMIUM_ACTIVE_TITLE, PREMIUM_CTA_LABEL } from "@/features/premium/constants";
 import { TEXT } from "@/theme/text";
-import { COLORS, CONTROL_ICON_SIZE, SPACE } from "@/theme/tokens";
+import { COLORS, CONTROL_ICON_SIZE, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
 
 const CROWN = require("../../../../assets/images/premium-crown.png");
 
-const CROWN_WIDTH = 40;
-const CROWN_HEIGHT = 35;
-const LAUREL_WIDTH = 30;
-const LAUREL_HEIGHT = 54;
+// The crest is measured off the mockup: the crown sits inside the wreath, not above it.
+const CROWN_WIDTH = 41;
+const CROWN_HEIGHT = 36;
+const LAUREL_WIDTH = 34;
+const LAUREL_HEIGHT = 61;
 
 export interface PremiumBannerProps {
   isPremium: boolean;
@@ -22,8 +23,14 @@ export interface PremiumBannerProps {
 
 export const PremiumBanner = ({ isPremium, onPress }: PremiumBannerProps) => {
   return (
-    <Card background={<PaywallHeroGradient />} onPress={isPremium ? null : onPress}>
-      <View style={styles.row}>
+    <Pressable
+      onPress={onPress}
+      disabled={isPremium}
+      accessibilityRole="button"
+      style={({ pressed }) => pressed && styles.pressed}
+    >
+      <FastSquircleView style={styles.banner}>
+        <PaywallHeroGradient />
         <View style={styles.crest}>
           <View style={styles.wreath}>
             <View style={styles.mirrored}>
@@ -35,20 +42,26 @@ export const PremiumBanner = ({ isPremium, onPress }: PremiumBannerProps) => {
             <Image source={CROWN} style={styles.crown} contentFit="contain" />
           </View>
         </View>
-        <Text style={styles.title}>{isPremium ? PREMIUM_ACTIVE_TITLE : PREMIUM_CTA_LABEL}</Text>
+        <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>
+          {isPremium ? PREMIUM_ACTIVE_TITLE : PREMIUM_CTA_LABEL}
+        </Text>
         {isPremium ? null : (
           <MaterialIcons name="arrow-forward" size={CONTROL_ICON_SIZE} color={COLORS.ink} />
         )}
-      </View>
-    </Card>
+      </FastSquircleView>
+    </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
-  row: {
+  banner: {
     flexDirection: "row",
     alignItems: "center",
     gap: SPACE.md,
+    paddingVertical: SPACE.xs,
+    paddingHorizontal: SPACE.sm,
+    borderRadius: RADIUS.base,
+    overflow: "hidden",
   },
   crest: {
     alignItems: "center",
@@ -80,4 +93,5 @@ const styles = StyleSheet.create({
     flex: 1,
     color: COLORS.ink,
   },
+  pressed: PRESSED,
 });

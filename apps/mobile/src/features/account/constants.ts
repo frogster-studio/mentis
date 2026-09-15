@@ -1,5 +1,3 @@
-// The Apple button's label is supplied and localized by the OS, so only Google's lives here.
-
 export const PROFILE_TITLE = "Profil";
 export const PROFILE_CLOSE_LABEL = "Fermer";
 export const PROFILE_STATS_TAB_LABEL = "Stats";
@@ -8,8 +6,10 @@ export const PROFILE_INFOS_TAB_LABEL = "Infos";
 export const PROFILE_SIGNED_OUT_NAME = "Pas connecté";
 export const PROFILE_STATS_EMPTY = "Aucune statistique pour le moment.";
 
-export const SIGN_IN_CHIP_LABEL = "se connecter / s'inscrire";
+export const SIGN_IN_CHIP_LABEL = "se connecter / s’inscrire";
 export const SIGN_IN_TITLE = "Me connecter";
+export const SIGN_IN_WORDMARK = "Mentis";
+export const APPLE_SIGN_IN_LABEL = "Continuer avec Apple";
 export const GOOGLE_SIGN_IN_LABEL = "Continuer avec Google";
 
 export const SIGN_OUT_LABEL = "Se déconnecter";
