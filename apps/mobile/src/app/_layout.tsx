@@ -4,6 +4,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { SheetProvider } from "@/components/ui/sheet";
+import { SignInSheet } from "@/features/account/components/sign-in-sheet";
 import { TransferPrompt } from "@/features/account/components/transfer-prompt";
 import { useCompetitionSync } from "@/features/competition/finalize-sync";
 import { useOnboardingStore } from "@/features/onboarding/store";
@@ -59,6 +60,7 @@ const RootNavigator = () => {
       </Stack>
       <TransferPrompt />
       <PaywallSheet />
+      <SignInSheet />
     </>
   );
 };

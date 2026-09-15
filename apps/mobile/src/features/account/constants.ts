@@ -1,9 +1,15 @@
 // The Apple button's label is supplied and localized by the OS, so only Google's lives here.
 
-export const ACCOUNT_TITLE = "Compte";
-export const ACCOUNT_BACK_LABEL = "Retour";
-export const ACCOUNT_PITCH = "Connecte-toi pour retrouver tes statistiques sur tous tes appareils.";
+export const PROFILE_TITLE = "Profil";
+export const PROFILE_CLOSE_LABEL = "Fermer";
+export const PROFILE_STATS_TAB_LABEL = "Stats";
+export const PROFILE_HISTORY_TAB_LABEL = "Historique";
+export const PROFILE_INFOS_TAB_LABEL = "Infos";
+export const PROFILE_SIGNED_OUT_NAME = "Pas connecté";
+export const PROFILE_STATS_EMPTY = "Aucune statistique pour le moment.";
 
+export const SIGN_IN_CHIP_LABEL = "se connecter / s'inscrire";
+export const SIGN_IN_TITLE = "Me connecter";
 export const GOOGLE_SIGN_IN_LABEL = "Continuer avec Google";
 
 export const SIGN_OUT_LABEL = "Se déconnecter";
@@ -58,6 +64,5 @@ export const DELETE_ACCOUNT_ERROR = "La suppression a échoué.";
 export const LEGAL_PRIVACY_LABEL = "Politique de confidentialité";
 export const LEGAL_TERMS_LABEL = "Conditions d'utilisation";
 export const LEGAL_SUPPORT_LABEL = "Support";
-export const LEGAL_SEPARATOR = "·";
 
 export const PAYWALL_PREVIEW_LABEL = "Aperçu du paywall (dev)";

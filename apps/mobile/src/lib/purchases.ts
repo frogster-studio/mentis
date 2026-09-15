@@ -16,22 +16,29 @@ const config = Constants.expoConfig?.extra as {
 export const PURCHASES_SUPPORTED = Platform.OS !== "web";
 
 let appUserId: string | null = null;
+let isConfigured = false;
 
-// logOut is never called — premium follows the store account, so identity only ever moves forward.
+// A signed-out Player still reads the offer, so the SDK starts anonymous and identity only moves forward.
 export const syncPurchasesIdentity = (userId: string | null) => {
-  if (!PURCHASES_SUPPORTED || !userId || userId === appUserId) {
+  if (!PURCHASES_SUPPORTED) {
     return;
   }
 
-  if (appUserId === null) {
+  if (!isConfigured) {
     Purchases.configure({
       apiKey: Platform.OS === "ios" ? config.revenueCatIosApiKey : config.revenueCatAndroidApiKey,
       appUserID: userId,
     });
-  } else {
-    Purchases.logIn(userId);
+    isConfigured = true;
+    appUserId = userId;
+    return;
   }
 
+  if (!userId || userId === appUserId) {
+    return;
+  }
+
+  Purchases.logIn(userId);
   appUserId = userId;
 };
 

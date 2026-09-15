@@ -1,49 +1,32 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Tabs } from "expo-router/js-tabs";
-import { StyleSheet, useWindowDimensions, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { AppHeader } from "@/components/app-header";
 import { AppTabBar, TAB_ICON_SIZE } from "@/components/app-tab-bar";
 import { TabScrollProvider } from "@/components/tab-scroll";
-import {
-  TAB_TRANSITION_EASING,
-  TAB_TRANSITION_MS,
-  watchTabProgress,
-} from "@/components/tab-transition";
+import { useTabSlide } from "@/components/tab-slide";
 import { HOME_TAB_LABEL } from "@/features/quiz/constants";
 import { WORLD_TAB_LABEL } from "@/features/world/constants";
 import { COLORS } from "@/theme/tokens";
 
 const TabsLayout = () => {
-  const { width } = useWindowDimensions();
+  const slide = useTabSlide();
 
   return (
     <TabScrollProvider>
       <View style={styles.shell}>
         <Tabs
-          tabBar={(props) => <AppTabBar {...props} />}
-          screenOptions={{
-            headerShown: false,
-            // Both tabs stay mounted so the incoming one is already drawn when the slide starts.
-            lazy: false,
-            sceneStyle: styles.scene,
-            transitionSpec: {
-              animation: "timing",
-              config: { duration: TAB_TRANSITION_MS, easing: TAB_TRANSITION_EASING },
-            },
-            // The tabs ride one filmstrip: the outgoing screen leaves exactly as the incoming arrives.
-            sceneStyleInterpolator: ({ current }) => ({
-              sceneStyle: {
-                transform: [
-                  {
-                    translateX: watchTabProgress(current.progress).interpolate({
-                      inputRange: [-1, 0, 1],
-                      outputRange: [-width, 0, width],
-                    }),
-                  },
-                ],
-              },
-            }),
+          tabBar={(props) => {
+            const isWorld = props.state.routes[props.state.index].name === "world";
+            return (
+              <AppTabBar
+                {...props}
+                isDark={isWorld}
+                trackColor={isWorld ? COLORS.ink : COLORS.quiet}
+              />
+            );
           }}
+          screenOptions={{ headerShown: false, sceneStyle: styles.scene, ...slide }}
         >
           <Tabs.Screen
             name="index"

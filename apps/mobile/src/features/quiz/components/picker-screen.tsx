@@ -6,13 +6,10 @@ import { NewButton } from "@/components/ui/new-button";
 import { ScreenContainer } from "@/components/ui/screen-container";
 import { ScreenError } from "@/components/ui/screen-error";
 import { ScreenLoading } from "@/components/ui/screen-loading";
-import { Sheet } from "@/components/ui/sheet";
 import { useThemes } from "@/features/quiz/api";
-import { HomeEmptyState } from "@/features/quiz/components/home-empty-state";
 import { SwipableButton } from "@/features/quiz/components/swipable-button";
 import { ThemeCard } from "@/features/quiz/components/theme-card";
 import {
-  HOME_EMPTY_TITLE,
   PICKER_BACK_LABEL,
   PICKER_ERROR,
   PICKER_SUBTITLE,
@@ -42,7 +39,6 @@ export const PickerScreen = () => {
   // One Draw per visit: recomputed on every mount, stable while the screen stays up.
   const draw = useMemo(() => (data ? drawThemes(data, Math.random) : []), [data]);
   const [selected, setSelected] = useState<ThemeWithCount | null>(null);
-  const [helpVisible, setHelpVisible] = useState(false);
   const scrollOffset = useRef(new Animated.Value(0)).current;
   const headerHeight = useHeaderCardHeight(TITLE_HALF_HEIGHT);
   const wash = useColorCrossFade(selected ? `${selected.category.color}${WASH_ALPHA}` : null);
@@ -118,30 +114,17 @@ export const PickerScreen = () => {
             <View style={styles.labelSlot}>
               <Text style={styles.label}>{PRACTICE_TITLE}</Text>
             </View>
-            <View style={styles.actions}>
-              <NewButton
-                layout="hug"
-                shape="full"
-                tone="default"
-                icon="tooltip-question-outline"
-                label={null}
-                accessibilityLabel={HOME_EMPTY_TITLE}
-                onPress={() => setHelpVisible(true)}
-                disabled={false}
-                pending={false}
-              />
-              <NewButton
-                layout="hug"
-                shape="full"
-                tone="default"
-                icon="close"
-                label={null}
-                accessibilityLabel={PICKER_BACK_LABEL}
-                onPress={leave}
-                disabled={false}
-                pending={false}
-              />
-            </View>
+            <NewButton
+              layout="hug"
+              shape="full"
+              tone="default"
+              icon="close"
+              label={null}
+              accessibilityLabel={PICKER_BACK_LABEL}
+              onPress={leave}
+              disabled={false}
+              pending={false}
+            />
           </>
         }
       >
@@ -152,17 +135,6 @@ export const PickerScreen = () => {
       </HeaderCard>
 
       <SwipableButton color={selected?.category.color ?? null} start={onStart} />
-
-      <Sheet
-        visible={helpVisible}
-        isBare={false}
-        title={null}
-        message={null}
-        dismissible={true}
-        onDismiss={() => setHelpVisible(false)}
-      >
-        <HomeEmptyState />
-      </Sheet>
     </ScreenContainer>
   );
 };
@@ -235,10 +207,6 @@ const styles = StyleSheet.create({
   label: {
     ...TEXT.body,
     color: COLORS.ink,
-  },
-  actions: {
-    flexDirection: "row",
-    gap: SPACE.sm,
   },
   titleHalf: {
     paddingHorizontal: SPACE.lg,

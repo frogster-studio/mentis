@@ -16,6 +16,7 @@ import {
   PAYWALL_PRIVACY_LINK_LABEL,
   PAYWALL_PURCHASE_ERROR,
   PAYWALL_PURCHASE_LABEL,
+  PAYWALL_SIGN_IN_FIRST_LABEL,
   PAYWALL_SKIP_LABEL,
   PAYWALL_TERMS_LINK_LABEL,
   PAYWALL_TITLE,
@@ -49,6 +50,7 @@ export interface PaywallOfferProps {
   showsIllustration: boolean;
   purchaseFailed: boolean;
   isPurchasing: boolean;
+  isSignedOut: boolean;
   onSkip: () => void;
   onPurchase: () => void;
 }
@@ -59,6 +61,7 @@ export const PaywallOffer = ({
   showsIllustration,
   purchaseFailed,
   isPurchasing,
+  isSignedOut,
   onSkip,
   onPurchase,
 }: PaywallOfferProps) => {
@@ -140,7 +143,7 @@ export const PaywallOffer = ({
               layout="block"
               shape="full"
               tone="default"
-              label={PAYWALL_PURCHASE_LABEL}
+              label={isSignedOut ? PAYWALL_SIGN_IN_FIRST_LABEL : PAYWALL_PURCHASE_LABEL}
               icon="arrow-right"
               accessibilityLabel={null}
               disabled={false}

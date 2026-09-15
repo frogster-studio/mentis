@@ -51,7 +51,7 @@ src/
   app/                  # expo-router routes — thin files only (re-export/compose from features)
   features/quiz/        # practice play, and the Countdown/Carré mechanics competition reuses
   features/competition/ # the daily Attempt: issuance, play, the finalize outbox
-  features/account/     # sign-in, the « Compte » screen, account deletion
+  features/account/     # the sign-in sheet, the « Profil » tabs (stats / historique / infos), account deletion
   features/onboarding/  # the once-per-device welcome gate + its store
   features/world/       # « Monde » tab placeholder
   components/           # shared composed components; components/ui/ for shared primitives

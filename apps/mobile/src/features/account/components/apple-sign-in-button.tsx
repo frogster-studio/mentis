@@ -23,7 +23,7 @@ export const AppleSignInButton = ({ onError }: AppleSignInButtonProps) => {
     <AppleAuthentication.AppleAuthenticationButton
       buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
       buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-      cornerRadius={RADIUS.base}
+      cornerRadius={RADIUS.lg}
       style={styles.button}
       onPress={() => {
         signInWithApple().catch((error) => {

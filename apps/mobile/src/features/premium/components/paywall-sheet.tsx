@@ -7,6 +7,8 @@ import { QuietButton } from "@/components/ui/quiet-button";
 import { ScreenError } from "@/components/ui/screen-error";
 import { ScreenLoading } from "@/components/ui/screen-loading";
 import { Sheet, useSheetBottomInset } from "@/components/ui/sheet";
+import { useAuthStore } from "@/features/account/auth-store";
+import { useSignInStore } from "@/features/account/sign-in-store";
 import {
   awaitPremiumActivation,
   purchasePremium,
@@ -31,6 +33,8 @@ export const PaywallSheet = () => {
   const visible = usePaywallStore((state) => state.visible);
   const isPreview = usePaywallStore((state) => state.isPreview);
   const closePaywall = usePaywallStore((state) => state.close);
+  const openSignIn = useSignInStore((state) => state.open);
+  const isSignedOut = useAuthStore((state) => state.session === null);
   const insets = useSafeAreaInsets();
   const bottomInset = useSheetBottomInset();
   const { height, fontScale } = useWindowDimensions();
@@ -57,6 +61,12 @@ export const PaywallSheet = () => {
     purchase.reset();
     activation.reset();
     closePaywall();
+  }
+
+  // The sign-in sheet takes the paywall's place; a landed session brings the Player back here.
+  function signInFirst() {
+    close();
+    openSignIn();
   }
 
   const pack = offering.data ?? null;
@@ -120,8 +130,9 @@ export const PaywallSheet = () => {
             showsIllustration={fit.showsIllustration}
             purchaseFailed={false}
             isPurchasing={false}
+            isSignedOut={isSignedOut}
             onSkip={close}
-            onPurchase={close}
+            onPurchase={isSignedOut ? signInFirst : close}
           />
         ) : offering.isPending ? (
           <StateCard>
@@ -143,8 +154,9 @@ export const PaywallSheet = () => {
             showsIllustration={fit.showsIllustration}
             purchaseFailed={purchase.isError}
             isPurchasing={purchase.isPending}
+            isSignedOut={isSignedOut}
             onSkip={close}
-            onPurchase={() => purchase.mutate(pack)}
+            onPurchase={isSignedOut ? signInFirst : () => purchase.mutate(pack)}
           />
         )}
       </ScrollView>

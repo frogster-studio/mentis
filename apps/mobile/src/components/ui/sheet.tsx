@@ -8,6 +8,9 @@ import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
 
 export { TrueSheetProvider as SheetProvider } from "@lodev09/react-native-true-sheet";
 
+// iOS refuses a presentation while another sheet is still animating away, so each one waits its turn.
+let lastDismissal: Promise<void> = Promise.resolve();
+
 export interface SheetProps {
   visible: boolean;
   title: string | null;
@@ -34,9 +37,13 @@ export const Sheet = ({
     if (visible === presented.current) return;
     presented.current = visible;
     if (visible) {
-      sheet.current?.present();
+      lastDismissal.then(() => {
+        if (presented.current) {
+          sheet.current?.present();
+        }
+      });
     } else {
-      sheet.current?.dismiss();
+      lastDismissal = sheet.current?.dismiss().catch(() => undefined) ?? Promise.resolve();
     }
   }, [visible]);
 

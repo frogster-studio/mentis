@@ -1,8 +1,5 @@
-export const PREMIUM_TITLE = "Mentis Premium";
-export const PREMIUM_PITCH = "Débloquez l'expérience Mentis complète.";
-export const PREMIUM_CTA_LABEL = "Devenir Premium";
+export const PREMIUM_CTA_LABEL = "Débloquer Mentis Premium";
 export const PREMIUM_ACTIVE_TITLE = "Compte Premium";
-export const PREMIUM_ACTIVE_MESSAGE = "Abonnement actif, merci !";
 export const PREMIUM_RESTORE_LABEL = "Restaurer mes achats";
 export const PREMIUM_RESTORE_PENDING_LABEL = "Restauration…";
 export const PREMIUM_RESTORE_ERROR = "La restauration a échoué.";
@@ -17,6 +14,8 @@ export const PAYWALL_SKIP_LABEL = "Passer";
 export const PAYWALL_PLAN_LABEL = "Abonnement mensuel";
 export const PAYWALL_PRICE_PERIOD = "/ mois";
 export const PAYWALL_PURCHASE_LABEL = "Continuer";
+// A purchase needs an Account, so a signed-out Player is sent to sign in before the store.
+export const PAYWALL_SIGN_IN_FIRST_LABEL = "Se connecter d'abord";
 export const PAYWALL_PURCHASE_ERROR = "L'achat n'a pas abouti. Réessayez dans un instant.";
 export const PAYWALL_OFFERING_ERROR = "Impossible de charger l'offre.";
 export const PAYWALL_PREVIEW_PRICE = "4,99 €";

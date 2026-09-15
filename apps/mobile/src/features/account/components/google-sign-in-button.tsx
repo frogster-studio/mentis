@@ -1,5 +1,5 @@
 import { Platform } from "react-native";
-import { QuietButton } from "@/components/ui/quiet-button";
+import { NewButton } from "@/components/ui/new-button";
 import { signInWithGoogle } from "@/features/account/auth";
 import { GOOGLE_SIGN_IN_LABEL } from "@/features/account/constants";
 
@@ -13,18 +13,21 @@ export const GoogleSignInButton = ({ onError }: GoogleSignInButtonProps) => {
   if (Platform.OS === "web") return null;
 
   return (
-    <QuietButton
+    <NewButton
       layout="block"
+      shape="full"
+      tone="default"
+      icon="google"
       label={GOOGLE_SIGN_IN_LABEL}
-      icon={null}
       accessibilityLabel={null}
+      disabled={false}
+      pending={false}
       onPress={() => {
         signInWithGoogle().catch((error) => {
           console.error("Google sign-in failed", error);
           onError();
         });
       }}
-      disabled={false}
     />
   );
 };

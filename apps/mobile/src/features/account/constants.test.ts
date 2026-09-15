@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  ACCOUNT_PITCH,
-  ACCOUNT_TITLE,
   DELETE_ACCOUNT_CANCEL_LABEL,
   DELETE_ACCOUNT_CONFIRM_LABEL,
   DELETE_ACCOUNT_ERROR,
@@ -10,9 +8,15 @@ import {
   deleteAccountMessage,
   GOOGLE_SIGN_IN_LABEL,
   LEGAL_PRIVACY_LABEL,
-  LEGAL_SEPARATOR,
   LEGAL_SUPPORT_LABEL,
   LEGAL_TERMS_LABEL,
+  PROFILE_CLOSE_LABEL,
+  PROFILE_HISTORY_TAB_LABEL,
+  PROFILE_INFOS_TAB_LABEL,
+  PROFILE_SIGNED_OUT_NAME,
+  PROFILE_STATS_EMPTY,
+  PROFILE_STATS_TAB_LABEL,
+  PROFILE_TITLE,
   PSEUDO_ERROR,
   PSEUDO_LOAD_ERROR,
   PSEUDO_PLACEHOLDER,
@@ -20,7 +24,9 @@ import {
   PSEUDO_SUBMIT_LABEL,
   PSEUDO_TAKEN_ERROR,
   PSEUDO_TITLE,
+  SIGN_IN_CHIP_LABEL,
   SIGN_IN_ERROR,
+  SIGN_IN_TITLE,
   SIGN_OUT_CANCEL_LABEL,
   SIGN_OUT_CONFIRM_LABEL,
   SIGN_OUT_LABEL,
@@ -35,13 +41,20 @@ import {
 } from "./constants";
 
 describe("account constants", () => {
-  it("exposes the French account label", () => {
-    expect(ACCOUNT_TITLE).toBe("Compte");
+  it("exposes the French profile label", () => {
+    expect(PROFILE_TITLE).toBe("Profil");
   });
 
   it("exposes non-empty French copy for every account string", () => {
     const strings = [
-      ACCOUNT_PITCH,
+      PROFILE_CLOSE_LABEL,
+      PROFILE_STATS_TAB_LABEL,
+      PROFILE_HISTORY_TAB_LABEL,
+      PROFILE_INFOS_TAB_LABEL,
+      PROFILE_SIGNED_OUT_NAME,
+      PROFILE_STATS_EMPTY,
+      SIGN_IN_CHIP_LABEL,
+      SIGN_IN_TITLE,
       GOOGLE_SIGN_IN_LABEL,
       SIGN_OUT_LABEL,
       SIGN_OUT_TITLE,
@@ -71,7 +84,6 @@ describe("account constants", () => {
       LEGAL_PRIVACY_LABEL,
       LEGAL_TERMS_LABEL,
       LEGAL_SUPPORT_LABEL,
-      LEGAL_SEPARATOR,
     ];
     for (const copy of strings) {
       expect(copy.trim().length).toBeGreaterThan(0);
