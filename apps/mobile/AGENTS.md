@@ -13,7 +13,7 @@
   # ✅ bunx eas-cli build --platform android --profile production
   # ❌ a plugins/with-*-signing.js stamping keystore vars from .env into the prebuilt android/
   ```
-- `bun run icons` — re-render every icon surface from `assets/app-icon/` (app icons and splash: `mark.svg` + `background.svg`) and the Mark (favicon); run after either changes
+- `bun run icons` — re-render every icon surface (app icons, splash, favicon) from `assets/app-icon/` (`mark.svg` + `background.svg`); run after either changes
 - `bun run typecheck` — `tsc --noEmit`
 - `bun run test` — vitest
 - From the repo root: `bun run check` (typecheck + test + knip + format, all workspaces); **every issue must end with `check` green**
@@ -60,7 +60,7 @@ src/
   utils/                # chunk.ts
   types/quiz.ts         # canonical domain types
 assets/                 # root: all static assets — images/ + fonts/ + app-icon/ (icon source) + expo.icon/ (Icon Composer bundle)
-scripts/                # generate-icons.ts — every icon surface, rendered from app-icon/mark.svg and the Mark
+scripts/                # generate-icons.ts — every icon surface, rendered from app-icon/
 ```
 
 ## Data access
