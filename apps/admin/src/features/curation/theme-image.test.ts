@@ -1,110 +1,125 @@
-import { describe, expect, it } from "vitest";
-
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  fitWithinCap,
+  MAX_THEME_IMAGE_BYTES,
   processThemeImage,
-  THEME_IMAGE_WEBP_QUALITY,
   themeImageDimensionsError,
   themeImageFormatError,
+  validateThemeImage,
 } from "./theme-image";
 
-describe("themeImageFormatError", () => {
-  it.each(["a.png", "b.jpg", "c.jpeg", "d.webp", "PHOTO.PNG"])("accepts %s", (fileName) => {
-    expect(themeImageFormatError(fileName)).toBeNull();
-  });
+const png = [137, 80, 78, 71, 13, 10, 26, 10];
+const webp = [..."RIFF0000WEBP"].map((char) => char.charCodeAt(0));
+const file = (name = "photo.png", bytes = png, type = "image/png") =>
+  new File([new Uint8Array(bytes)], name, { type });
+let close: ReturnType<typeof vi.fn>;
+beforeEach(() => {
+  close = vi.fn();
+  vi.stubGlobal("createImageBitmap", vi.fn().mockResolvedValue({ width: 700, height: 900, close }));
+});
+afterEach(() => vi.unstubAllGlobals());
 
-  it.each(["a.gif", "b.tiff", "c.heic", "d.pdf", "no-extension"])(
-    "refuses %s, naming what the bucket takes",
-    (fileName) => {
-      expect(themeImageFormatError(fileName)).toContain(".png, .jpg, .jpeg or .webp");
-    },
+describe("image validation", () => {
+  it.each(["a.png", "b.jpg", "c.jpeg", "d.webp", "PHOTO.PNG"])("accepts %s", (name) =>
+    expect(themeImageFormatError(name)).toBeNull(),
   );
-});
-
-describe("themeImageDimensionsError", () => {
-  it("accepts an image exactly at the floor", () => {
-    expect(themeImageDimensionsError({ width: 1000, height: 1000 })).toBeNull();
-  });
-
-  it("refuses a width under the floor, naming both sizes", () => {
-    const error = themeImageDimensionsError({ width: 999, height: 2000 });
-    expect(error).toContain("999×2000px");
-    expect(error).toContain("1000×1000px");
-  });
-
-  it("refuses a height under the floor", () => {
-    expect(themeImageDimensionsError({ width: 2000, height: 800 })).not.toBeNull();
-  });
-});
-
-describe("fitWithinCap", () => {
+  it.each(["a.gif", "b.tiff", "c.heic", "d.pdf", "no-extension"])("rejects %s", (name) =>
+    expect(themeImageFormatError(name)).toContain("JPG, JPEG, PNG ou WebP"),
+  );
   it.each([
-    [
-      { width: 4000, height: 3000 },
-      { width: 1920, height: 1440 },
-    ],
-    [
-      { width: 3000, height: 4000 },
-      { width: 1440, height: 1920 },
-    ],
-    [
-      { width: 3001, height: 1999 },
-      { width: 1920, height: 1279 },
-    ],
-  ])("caps %o at the longest side, aspect ratio kept", (source, capped) => {
-    expect(fitWithinCap(source)).toEqual(capped);
-  });
-
+    [700, 700],
+    [700, 1900],
+    [1000, 700],
+  ])("accepts %i × %i", (width, height) =>
+    expect(themeImageDimensionsError({ width, height })).toBeNull(),
+  );
   it.each([
-    { width: 1500, height: 1200 },
-    { width: 1000, height: 1000 },
-    { width: 1920, height: 1080 },
-  ])("never upscales %o", (source) => {
-    expect(fitWithinCap(source)).toEqual(source);
+    [699, 1000],
+    [1000, 699],
+  ])("rejects %i × %i", (width, height) =>
+    expect(themeImageDimensionsError({ width, height })).toContain("700 × 700"),
+  );
+  it.each([
+    ["photo.jpg", [255, 216, 255], "image/jpeg"],
+    ["photo.jpeg", [255, 216, 255], "image/jpeg"],
+    ["photo.png", png, "image/png"],
+    ["photo.webp", webp, "image/webp"],
+  ])("validates the content of %s", async (name, bytes, type) => {
+    await expect(validateThemeImage(file(name, bytes, type))).resolves.toBeUndefined();
+    expect(close).toHaveBeenCalledOnce();
+  });
+  it("accepts exactly 2 MiB", async () => {
+    const bytes = new Uint8Array(MAX_THEME_IMAGE_BYTES);
+    bytes.set(png);
+    await expect(validateThemeImage(new File([bytes], "photo.png"))).resolves.toBeUndefined();
+  });
+  it("rejects oversized images before decoding", async () => {
+    await expect(
+      validateThemeImage(new File([new Uint8Array(MAX_THEME_IMAGE_BYTES + 1)], "a.png")),
+    ).rejects.toThrow("Photo trop lourde");
+    expect(createImageBitmap).not.toHaveBeenCalled();
+  });
+  it("rejects an extension or MIME that hides another format", async () => {
+    await expect(validateThemeImage(file("fake.webp"))).rejects.toThrow("contenu");
+    await expect(validateThemeImage(file("fake.png", png, "image/gif"))).rejects.toThrow("contenu");
+  });
+  it("reports unreadable images", async () => {
+    vi.mocked(createImageBitmap).mockRejectedValue(new Error("decode failed"));
+    await expect(validateThemeImage(file())).rejects.toThrow("Impossible de lire");
+  });
+  it("closes a decoded image even when it is too small", async () => {
+    vi.mocked(createImageBitmap).mockResolvedValue({
+      width: 699,
+      height: 800,
+      close,
+    } as unknown as ImageBitmap);
+    await expect(validateThemeImage(file())).rejects.toThrow("trop petite");
+    expect(close).toHaveBeenCalledOnce();
   });
 });
 
-describe("processThemeImage", () => {
-  const encodedWebp = new Blob(["webp-bytes"], { type: "image/webp" });
-
-  it("hands the encoder the capped dimensions and the webp quality", async () => {
-    const calls: unknown[] = [];
-
-    const blob = await processThemeImage(
-      { image: "bitmap", width: 4000, height: 2000 },
-      async (image, target, quality) => {
-        calls.push({ image, target, quality });
-        return encodedWebp;
-      },
+describe("WebP conversion", () => {
+  it("preserves an existing WebP without encoding", async () => {
+    const original = file("photo.webp", webp, "image/webp");
+    const encode = vi.fn();
+    expect(await processThemeImage(original, encode)).toBe(original);
+    expect(encode).not.toHaveBeenCalled();
+  });
+  it("decodes once and passes the original dimensions to the encoder without resizing", async () => {
+    const original = file();
+    const converted = new Blob(["webp"], { type: "image/webp" });
+    const encode = vi.fn().mockResolvedValue(converted);
+    expect(await processThemeImage(original, encode)).toBe(converted);
+    expect(createImageBitmap).toHaveBeenCalledOnce();
+    expect(createImageBitmap).toHaveBeenCalledWith(original);
+    expect(encode).toHaveBeenCalledWith({ width: 700, height: 900, close });
+    expect(close).toHaveBeenCalledOnce();
+  });
+  it("revalidates immediately before encoding", async () => {
+    const encode = vi.fn();
+    await expect(processThemeImage(file("bad.gif"), encode)).rejects.toThrow("Format");
+    expect(encode).not.toHaveBeenCalled();
+  });
+  it("reports encoder failure", async () => {
+    await expect(processThemeImage(file(), vi.fn().mockRejectedValue(new Error()))).rejects.toThrow(
+      "conversion",
     );
-
-    expect(blob).toBe(encodedWebp);
-    expect(calls).toEqual([
-      { image: "bitmap", target: { width: 1920, height: 960 }, quality: THEME_IMAGE_WEBP_QUALITY },
-    ]);
+    expect(close).toHaveBeenCalledOnce();
   });
-
-  it("keeps the source dimensions when they already fit", async () => {
-    await processThemeImage({ image: "bitmap", width: 1200, height: 1600 }, async (_i, target) => {
-      expect(target).toEqual({ width: 1200, height: 1600 });
-      return encodedWebp;
-    });
+  it("refuses a non-WebP or empty encoder result", async () => {
+    for (const result of [
+      new Blob(["png"], { type: "image/png" }),
+      new Blob([], { type: "image/webp" }),
+    ]) {
+      await expect(processThemeImage(file(), async () => result)).rejects.toThrow("conversion");
+    }
   });
-
-  it("refuses a browser that silently falls back to another format", async () => {
-    await expect(
-      processThemeImage(
-        { image: null, width: 1200, height: 1200 },
-        async () => new Blob(["png-bytes"], { type: "image/png" }),
-      ),
-    ).rejects.toThrow(/webp/);
-  });
-
-  it("propagates an encoder failure", async () => {
-    await expect(
-      processThemeImage({ image: null, width: 1200, height: 1200 }, async () => {
-        throw new Error("encoder exploded");
-      }),
-    ).rejects.toThrow("encoder exploded");
+  it("rejects oversized conversion output without trying to compress it", async () => {
+    const encode = vi
+      .fn()
+      .mockResolvedValue(
+        new Blob([new Uint8Array(MAX_THEME_IMAGE_BYTES + 1)], { type: "image/webp" }),
+      );
+    await expect(processThemeImage(file(), encode)).rejects.toThrow("convertie dépasse");
+    expect(encode).toHaveBeenCalledOnce();
   });
 });

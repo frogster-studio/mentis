@@ -157,6 +157,12 @@ const fakeCurationRepository = {
       ).length,
     }));
   },
+  async findTheme(id) {
+    return liveThemes.find((row) => row.id === id) ?? null;
+  },
+  async isImageReferenced({ image }) {
+    return liveThemes.some((row) => row.image === image);
+  },
   async createTheme(authored) {
     if (liveThemes.some((row) => row.slug === authored.slug)) {
       throw new ConflictException({ message: `A Theme is already named ${authored.name}` });
@@ -173,16 +179,14 @@ const fakeCurationRepository = {
     liveThemes.push(created);
     return created;
   },
-  async updateTheme(authored) {
+  async updateTheme(authored, expected) {
     const stored = liveThemes.find((row) => row.id === authored.id);
     if (stored === undefined) {
       return null;
     }
-    if (!liveCategories.some((row) => row.id === authored.categoryId)) {
-      throw new BadRequestException({
-        message: "This Theme names a Category that no longer exists",
-      });
-    }
+    if (expected && stored.image !== expected.image) throw new ConflictException("Image changed");
+    if (authored.categoryId && !liveCategories.some((row) => row.id === authored.categoryId))
+      throw new BadRequestException("This Theme names a Category that no longer exists");
     const updated = Object.assign(new ThemeEntity(), stored, authored);
     liveThemes = liveThemes.map((row) => (row.id === updated.id ? updated : row));
     return updated;
@@ -237,6 +241,8 @@ const fakeCurationRepository = {
   | "updateCategory"
   | "deleteCategory"
   | "listThemes"
+  | "findTheme"
+  | "isImageReferenced"
   | "createTheme"
   | "updateTheme"
   | "stageTheme"
@@ -253,6 +259,7 @@ let signedUploads: { bucket: string; path: string }[] = [];
 const stubSupabase = {
   storage: {
     from: (bucket: string) => ({
+      remove: async () => ({ error: null }),
       createSignedUploadUrl: (path: string) => {
         signedUploads.push({ bucket, path });
         return Promise.resolve({
@@ -280,7 +287,7 @@ const AUTHORED_CATEGORY_WRITE = { name: "Ciné & Séries", color: "#00897b", ico
 const AUTHORED_THEME_WRITE = {
   name: "Kaamelott",
   categoryId: TELEVISION,
-  image: "kaamelott.webp",
+  image: "default.webp",
 };
 
 const WRITE_ROUTES = [
@@ -299,10 +306,25 @@ const WRITE_ROUTES = [
     path: `/admin/questions/${CAPITALE}/staging`,
     body: { readyToBePublished: false },
   },
-  { method: "POST", path: "/admin/themes/image-upload-url", body: undefined },
+  {
+    method: "POST",
+    path: "/admin/themes/image-upload-url",
+    body: { themeId: SIMPSON, name: "Les Simpson", expectedImage: `${SIMPSON}.webp` },
+  },
+  {
+    method: "POST",
+    path: `/admin/themes/${SIMPSON}/image/reset`,
+    body: { expectedImage: `${SIMPSON}.webp` },
+  },
+  { method: "POST", path: "/admin/themes/image-cleanup", body: { token: "invalid" } },
 ];
 
-const LIST_ROUTES = ["/admin/categories", "/admin/themes", `/admin/questions?themeId=${SIMPSON}`];
+const LIST_ROUTES = [
+  "/admin/themes/image-config",
+  "/admin/categories",
+  "/admin/themes",
+  `/admin/questions?themeId=${SIMPSON}`,
+];
 
 describe("admin curation routes e2e", () => {
   let app: INestApplication;
@@ -708,7 +730,7 @@ describe("admin curation routes e2e", () => {
       id: AUTHORED_THEME,
       name: "Kaamelott",
       categoryId: TELEVISION,
-      image: "kaamelott.webp",
+      image: "default.webp",
       published: false,
     });
     const listed = await (await asEditor("/admin/themes")).json();
@@ -716,7 +738,7 @@ describe("admin curation routes e2e", () => {
       id: AUTHORED_THEME,
       name: "Kaamelott",
       categoryId: TELEVISION,
-      image: "kaamelott.webp",
+      image: "default.webp",
       published: false,
       questionCount: 0,
       readyQuestionCount: 0,
@@ -767,7 +789,7 @@ describe("admin curation routes e2e", () => {
       id: SIMPSON,
       name: "Kaamelott",
       categoryId: MUSIQUE,
-      image: "kaamelott.webp",
+      image: "default.webp",
       published: true,
     });
   });
@@ -910,7 +932,7 @@ describe("admin curation routes e2e", () => {
 
     expect(response.status).toBe(200);
     const minted = await response.json();
-    expect(minted.path).toMatch(/^[0-9a-f-]{36}\.webp$/);
+    expect(minted.path).toMatch(/^[0-9a-f-]{36}\/[0-9a-f-]{36}\/les-simpson\.webp$/);
     expect(signedUploads).toEqual([{ bucket: THEME_IMAGES_BUCKET, path: minted.path }]);
     expect(minted.signedUrl).toContain(minted.path);
   });

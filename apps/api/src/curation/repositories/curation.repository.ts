@@ -88,15 +88,39 @@ export class CurationRepository {
     return this.themes.save(created);
   }
 
-  // preload keeps the stored slug, so a rename never collides — only the Category can still move.
-  async updateTheme(theme: DeepPartial<ThemeEntity>): Promise<ThemeEntity | null> {
-    const merged = await this.themes.preload(theme);
-    if (merged === undefined) {
-      return null;
-    }
+  findTheme(id: string): Promise<ThemeEntity | null> {
+    return this.themes.findOneBy({ id });
+  }
 
-    await this.refuseUnknownCategory(merged.categoryId);
-    return this.themes.save(merged);
+  isImageReferenced(theme: DeepPartial<ThemeEntity>): Promise<boolean> {
+    return this.themes.existsBy({ image: theme.image });
+  }
+
+  async updateTheme(
+    theme: DeepPartial<ThemeEntity>,
+    expected?: ThemeEntity,
+  ): Promise<ThemeEntity | null> {
+    return this.themes.manager.transaction(async (manager) => {
+      const themes = manager.getRepository(ThemeEntity);
+      const stored = await themes.findOne({
+        where: { id: theme.id },
+        lock: { mode: "pessimistic_write" },
+      });
+      if (stored === null) return null;
+      if (expected && stored.image !== expected.image) {
+        throw new ConflictException({
+          message: "L’image a changé. Rechargez le thème avant de réessayer.",
+        });
+      }
+      if (expected && stored.updatedAt.getTime() !== expected.updatedAt.getTime()) {
+        throw new ConflictException({
+          message: "Le thème a changé. Rechargez-le avant de réessayer.",
+        });
+      }
+      const merged = themes.merge(stored, theme);
+      await this.refuseUnknownCategory(merged.categoryId);
+      return themes.save(merged);
+    });
   }
 
   // Another tab can drop the Category a write names between the column's load and the save.

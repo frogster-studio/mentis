@@ -17,14 +17,24 @@ import {
   adminQuestionResponseSchema,
   adminThemeListResponseSchema,
   adminThemeResponseSchema,
+  DEFAULT_THEME_IMAGE,
 } from "@mentis/contracts/admin";
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { CurationRepository } from "../repositories/curation.repository";
 import { slugify } from "../utils/slugify";
+import { ThemeImageService } from "./theme-image.service";
 
 @Injectable()
 export class CurationService {
-  constructor(private readonly curationRepository: CurationRepository) {}
+  constructor(
+    private readonly curationRepository: CurationRepository,
+    private readonly themeImages: ThemeImageService,
+  ) {}
 
   async listCategories(): Promise<AdminCategoryListResponse> {
     const categories = await this.curationRepository.listCategories();
@@ -66,19 +76,49 @@ export class CurationService {
 
   async createTheme(theme: AdminThemeWrite): Promise<AdminThemeResponse> {
     const slug = this.slugOf(theme.name, "Theme");
-    // Authoring never stages: a new Theme waits for the Editor's Published switch.
+    const id = await this.themeImages.authorize(theme);
     return adminThemeResponseSchema.parse(
-      await this.curationRepository.createTheme({ ...theme, slug, published: false }),
+      await this.curationRepository.createTheme({
+        id,
+        name: theme.name,
+        categoryId: theme.categoryId,
+        image: theme.image,
+        slug,
+        published: false,
+      }),
     );
   }
 
-  // The slug stays out of the write: renaming a Theme must never move the key the Catalog stores.
   async updateTheme(id: string, theme: AdminThemeWrite): Promise<AdminThemeResponse> {
-    const updated = await this.curationRepository.updateTheme({ id, ...theme });
-    if (updated === null) {
-      throw new NotFoundException({ message: `Unknown theme: ${id}` });
+    const stored = await this.curationRepository.findTheme(id);
+    if (stored === null) throw new NotFoundException({ message: `Unknown theme: ${id}` });
+    if (theme.expectedImage !== undefined && theme.expectedImage !== stored.image) {
+      throw new ConflictException("L’image a changé. Rechargez le thème avant de réessayer.");
     }
-    return adminThemeResponseSchema.parse(updated);
+    await this.themeImages.authorize(theme, stored);
+    const updated = await this.curationRepository.updateTheme(
+      { id, name: theme.name, categoryId: theme.categoryId, image: theme.image },
+      stored,
+    );
+    if (updated === null) throw new NotFoundException({ message: `Unknown theme: ${id}` });
+    const cleanupToken = await this.themeImages.cleanupAfterSave(updated, stored.image);
+    return adminThemeResponseSchema.parse({ ...updated, cleanupToken });
+  }
+
+  async resetThemeImage(id: string, expectedImage: string): Promise<AdminThemeResponse> {
+    const stored = await this.curationRepository.findTheme(id);
+    if (stored === null) throw new NotFoundException("Thème introuvable.");
+    if (stored.image === DEFAULT_THEME_IMAGE)
+      throw new BadRequestException("Le thème utilise déjà l’image par défaut.");
+    if (stored.image !== expectedImage)
+      throw new ConflictException("L’image a changé. Rechargez le thème avant de réessayer.");
+    const updated = await this.curationRepository.updateTheme(
+      { id, image: DEFAULT_THEME_IMAGE },
+      stored,
+    );
+    if (updated === null) throw new NotFoundException("Thème introuvable.");
+    const cleanupToken = await this.themeImages.cleanupAfterSave(updated, stored.image);
+    return adminThemeResponseSchema.parse({ ...updated, cleanupToken });
   }
 
   // ADR 0008: the switch is stored as sent — no count is recomputed and no threshold is checked here.

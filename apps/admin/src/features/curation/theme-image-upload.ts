@@ -1,69 +1,111 @@
-import { adminThemeImageUploadResponseSchema } from "@mentis/contracts/admin";
-
-import { sendToApi } from "@/lib/api/client";
 import {
-  type ImageDimensions,
-  processThemeImage,
-  themeImageDimensionsError,
-  themeImageFormatError,
-} from "./theme-image";
+  type AdminThemeImageUpload,
+  type AdminThemeResponse,
+  type AdminThemeWrite,
+  adminThemeImageCleanupResponseSchema,
+  adminThemeImageUploadResponseSchema,
+  adminThemeListResponseSchema,
+  adminThemeResponseSchema,
+  DEFAULT_THEME_IMAGE,
+} from "@mentis/contracts/admin";
+import { getFromApi, sendToApi } from "@/lib/api/client";
+import { processThemeImage } from "./theme-image";
 
-async function encodeWebp(
-  image: ImageBitmap,
-  target: ImageDimensions,
-  quality: number,
-): Promise<Blob> {
-  const canvas = new OffscreenCanvas(target.width, target.height);
-  const context = canvas.getContext("2d");
-  if (context === null) {
-    throw new Error("Canvas 2D is unavailable in this browser.");
-  }
-  context.drawImage(image, 0, 0, target.width, target.height);
-  return canvas.convertToBlob({ type: "image/webp", quality });
-}
-
-async function decodeThemeImage(file: File): Promise<ImageBitmap> {
-  try {
-    return await createImageBitmap(file);
-  } catch {
-    throw new Error("This file could not be read as an image.");
-  }
-}
-
-async function processPickedFile(file: File): Promise<Blob> {
-  const image = await decodeThemeImage(file);
-  try {
-    const tooSmall = themeImageDimensionsError(image);
-    if (tooSmall !== null) {
-      throw new Error(tooSmall);
+function encodeWebp(image: ImageBitmap): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(new URL("./theme-image-worker.ts", import.meta.url));
+    const timeout = window.setTimeout(() => {
+      worker.terminate();
+      reject(new Error("Conversion trop longue."));
+    }, 60_000);
+    const finish = () => {
+      clearTimeout(timeout);
+      worker.terminate();
+    };
+    worker.onmessage = (event: MessageEvent<{ blob?: Blob; error?: string }>) => {
+      finish();
+      if (event.data.blob) resolve(event.data.blob);
+      else reject(new Error(event.data.error));
+    };
+    worker.onerror = () => {
+      finish();
+      reject(new Error("Conversion indisponible."));
+    };
+    try {
+      worker.postMessage(image, [image]);
+    } catch (error) {
+      finish();
+      reject(error);
     }
-    return await processThemeImage({ image, width: image.width, height: image.height }, encodeWebp);
-  } finally {
-    image.close();
-  }
+  });
 }
 
-// ADR 0007: the processed file goes straight to storage, never through the API or the BFF.
-export async function uploadThemeImage(file: File): Promise<string> {
-  const wrongFormat = themeImageFormatError(file.name);
-  if (wrongFormat !== null) {
-    throw new Error(wrongFormat);
-  }
-  const encoded = await processPickedFile(file);
-
+export async function uploadThemeImage(file: File, input: AdminThemeImageUpload) {
+  const encoded = await processThemeImage(file, encodeWebp);
   const upload = await sendToApi(
     "POST",
     "/themes/image-upload-url",
-    undefined,
+    input,
     adminThemeImageUploadResponseSchema,
   );
-  const stored = await fetch(upload.signedUrl, {
-    method: "PUT",
-    headers: { "content-type": "image/webp" },
-    body: encoded,
-  });
-  if (!stored.ok) {
-    throw new Error(`The image upload failed (${stored.status}).`);
+  let stored: Response;
+  try {
+    stored = await fetch(upload.signedUrl, {
+      method: "PUT",
+      headers: { "content-type": "image/webp" },
+      body: encoded,
+      signal: AbortSignal.timeout(60_000),
+    });
+  } catch {
+    throw new Error(
+      "Connexion interrompue pendant l’import. L’image actuelle est conservée. Réessayez.",
+    );
   }
-  return upload.path;
+  if (!stored.ok) throw new Error("L’import a échoué. L’image actuelle est conservée. Réessayez.");
+  return upload;
+}
+
+export async function cleanupThemeImage(token: string): Promise<void> {
+  await sendToApi("POST", "/themes/image-cleanup", { token }, adminThemeImageCleanupResponseSchema);
+}
+
+export async function saveThemeWithImage(input: {
+  id?: string;
+  theme: AdminThemeWrite;
+  file?: File;
+}): Promise<AdminThemeResponse> {
+  const { id, theme, file } = input;
+  const upload = file
+    ? await uploadThemeImage(file, {
+        themeId: id,
+        name: theme.name,
+        expectedImage: theme.expectedImage ?? theme.image,
+      })
+    : undefined;
+  const payload = upload ? { ...theme, image: upload.path, imageUploadToken: upload.token } : theme;
+  try {
+    return await sendToApi(
+      id ? "PATCH" : "POST",
+      id ? `/themes/${id}` : "/themes",
+      payload,
+      adminThemeResponseSchema,
+    );
+  } catch (failure) {
+    if (upload) {
+      const themes = await getFromApi("/themes", adminThemeListResponseSchema).catch(() => []);
+      const stored = themes.find((row) => row.image === upload.path);
+      if (stored) {
+        if ((theme.expectedImage ?? theme.image) === DEFAULT_THEME_IMAGE) return stored;
+        try {
+          await cleanupThemeImage(upload.token);
+          return stored;
+        } catch {
+          return { ...stored, cleanupToken: upload.token };
+        }
+      }
+    }
+    throw new Error(
+      failure instanceof Error ? failure.message : "Enregistrement impossible. Réessayez.",
+    );
+  }
 }
