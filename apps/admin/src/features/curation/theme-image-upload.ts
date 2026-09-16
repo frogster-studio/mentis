@@ -11,7 +11,7 @@ import {
 import { getFromApi, sendToApi } from "@/lib/api/client";
 import { processThemeImage } from "./theme-image";
 
-function encodeWebp(file: File): Promise<Blob> {
+function encodeWebp(image: ImageBitmap): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const worker = new Worker(new URL("./theme-image-worker.ts", import.meta.url));
     const timeout = window.setTimeout(() => {
@@ -31,7 +31,12 @@ function encodeWebp(file: File): Promise<Blob> {
       finish();
       reject(new Error("Conversion indisponible."));
     };
-    worker.postMessage(file);
+    try {
+      worker.postMessage(image, [image]);
+    } catch (error) {
+      finish();
+      reject(error);
+    }
   });
 }
 

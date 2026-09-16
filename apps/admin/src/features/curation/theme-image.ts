@@ -20,6 +20,11 @@ export function themeImageDimensionsError({ width, height }: ImageDimensions): s
 }
 
 export async function validateThemeImage(file: File): Promise<void> {
+  const image = await decodeThemeImage(file);
+  image.close();
+}
+
+async function decodeThemeImage(file: File): Promise<ImageBitmap> {
   const formatError = themeImageFormatError(file.name);
   if (formatError) throw new Error(formatError);
   if (file.size > MAX_THEME_IMAGE_BYTES) throw new Error(THEME_IMAGE_SIZE_ERROR);
@@ -47,25 +52,27 @@ export async function validateThemeImage(file: File): Promise<void> {
   } catch {
     throw new Error("Impossible de lire cette image. Choisissez un autre fichier.");
   }
-  try {
-    const dimensionError = themeImageDimensionsError(image);
-    if (dimensionError) throw new Error(dimensionError);
-  } finally {
+  const dimensionError = themeImageDimensionsError(image);
+  if (dimensionError) {
     image.close();
+    throw new Error(dimensionError);
   }
+  return image;
 }
 
 export async function processThemeImage(
   file: File,
-  encode: (file: File) => Promise<Blob>,
+  encode: (image: ImageBitmap) => Promise<Blob>,
 ): Promise<Blob> {
-  await validateThemeImage(file);
-  if (file.name.toLowerCase().endsWith(".webp")) return file;
+  const image = await decodeThemeImage(file);
   let encoded: Blob;
   try {
-    encoded = await encode(file);
+    if (file.name.toLowerCase().endsWith(".webp")) return file;
+    encoded = await encode(image);
   } catch {
     throw new Error("La conversion en WebP a échoué. Réessayez avec une autre image.");
+  } finally {
+    image.close();
   }
   if (encoded.type !== "image/webp" || encoded.size === 0) {
     throw new Error("La conversion en WebP a échoué. Réessayez avec une autre image.");

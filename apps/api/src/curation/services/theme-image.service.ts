@@ -93,16 +93,17 @@ export class ThemeImageService {
     )
       throw new ConflictException("Cet import n’est plus valide. Sélectionnez à nouveau l’image.");
     const { data, error } = await this.supabase.storage.from(THEME_IMAGES_BUCKET).info(theme.image);
-    if (
-      error ||
-      data?.metadata?.mimetype !== "image/webp" ||
-      !(data.metadata.size > 0) ||
-      data.metadata.size > 2 * 1024 * 1024
-    ) {
+    if (error || !data) {
       throw new BadRequestException(
-        "L’image WebP n’a pas été importée correctement (2 Mo maximum).",
+        "Impossible de vérifier l’image importée. Réessayez l’enregistrement.",
       );
     }
+    if (data.contentType !== "image/webp")
+      throw new BadRequestException("L’image importée doit être au format WebP.");
+    if (typeof data.size !== "number" || !Number.isFinite(data.size) || data.size <= 0)
+      throw new BadRequestException("L’image importée est vide ou sa taille est indisponible.");
+    if (data.size > 2 * 1024 * 1024)
+      throw new BadRequestException("L’image importée dépasse 2 Mo.");
     return authorization.id;
   }
 

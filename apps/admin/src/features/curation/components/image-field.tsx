@@ -145,13 +145,15 @@ export const ImageField = ({
           }}
         />
       </fieldset>
-      <p id={helpId} className="text-xs text-zinc-500">
-        JPG, JPEG, PNG ou WebP · 2 Mo maximum · minimum 700 × 700 px.
-        <br />
-        Résolution recommandée : 1 000 × 1 000 px ou plus. Les images rectangulaires sont acceptées.
+      <p className="break-all text-xs text-orange-500 text-center pb-2">
+        {path.split("/").at(-1)} {isDefault ? "(image par défaut)" : null}
       </p>
-      <p className="break-all text-xs text-zinc-500">
-        {path.split("/").at(-1)} · .webp · {isDefault ? "Image par défaut" : "Image personnalisée"}
+      <p id={helpId} className="text-xs text-zinc-500">
+        Formats : JPG, JPEG, PNG ou webp acceptés.
+        <br />
+        Taille : 2 Mo maximum.
+        <br /> Résolution 700 × 700 px minimum.
+        <br />⚠ Images converties automatiquement en .webp
       </p>
       {file ? (
         <div className="flex flex-col gap-2 text-xs text-zinc-600">
@@ -192,11 +194,9 @@ export const ImageField = ({
           Annulez la sélection avant de supprimer l’image actuelle.
         </p>
       ) : null}
-      {error ? (
-        <p role="alert" className="text-sm text-zinc-700">
-          {error}
-        </p>
-      ) : null}
+      <p role="alert" className="text-sm text-zinc-700 min-h-6 border-b-zinc-300 border-b-[1px]">
+        {error ? <span>{error}</span> : null}
+      </p>
     </div>
   );
 };

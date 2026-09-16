@@ -84,12 +84,15 @@ describe("WebP conversion", () => {
     expect(await processThemeImage(original, encode)).toBe(original);
     expect(encode).not.toHaveBeenCalled();
   });
-  it("passes the original file to the encoder without resizing", async () => {
+  it("decodes once and passes the original dimensions to the encoder without resizing", async () => {
     const original = file();
     const converted = new Blob(["webp"], { type: "image/webp" });
     const encode = vi.fn().mockResolvedValue(converted);
     expect(await processThemeImage(original, encode)).toBe(converted);
-    expect(encode).toHaveBeenCalledWith(original);
+    expect(createImageBitmap).toHaveBeenCalledOnce();
+    expect(createImageBitmap).toHaveBeenCalledWith(original);
+    expect(encode).toHaveBeenCalledWith({ width: 700, height: 900, close });
+    expect(close).toHaveBeenCalledOnce();
   });
   it("revalidates immediately before encoding", async () => {
     const encode = vi.fn();
@@ -100,6 +103,7 @@ describe("WebP conversion", () => {
     await expect(processThemeImage(file(), vi.fn().mockRejectedValue(new Error()))).rejects.toThrow(
       "conversion",
     );
+    expect(close).toHaveBeenCalledOnce();
   });
   it("refuses a non-WebP or empty encoder result", async () => {
     for (const result of [

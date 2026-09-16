@@ -16,7 +16,7 @@ Postgres and Storage cannot share a transaction. If deletion fails after persist
 
 - The API never sees image content. Browser validation checks extensions, MIME types, file signatures, dimensions (each at least 700 px) and input size (at most 2 MiB). The bucket accepts only `image/webp`; the API checks the stored MIME type and size before persisting a new reference.
 - Lossless conversion can increase file size. Output above 2 MiB is refused; there is no automatic resizing or quality reduction.
-- The codec is `@jsquash/webp`, loaded in a worker only when conversion is needed. Its WASM assets are copied from the installed dependency by the admin's dev/build scripts.
+- The codec is `@jsquash/webp`, loaded in a worker only when conversion is needed. SAVE transfers the already validated bitmap to the worker without another decode. Encoding tries low-effort lossless settings first, then the denser lossless settings only if the output exceeds 2 MiB. Neither pass reduces pixel quality. Its WASM assets are copied from the installed dependency by the admin's dev/build scripts.
 - A failed database save or a browser closing after upload can leave an unreferenced WebP. These objects are deliberately not deleted after an ambiguous write response, since that could remove a committed image. There is no background orphan collector.
 - Cleanup retries live in the originating browser. Clearing its storage, losing a reset response, or rotating the signing secret can require manual cleanup of an unreferenced object. Associated images remain valid.
 - Existing object paths remain readable; images acquire slug-based paths when replaced. No database migration or bulk rewrite of catalog images is required.

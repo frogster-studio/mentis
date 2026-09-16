@@ -1,6 +1,6 @@
 import { type AdminThemeWrite, DEFAULT_THEME_IMAGE } from "@mentis/contracts/admin";
 import { ConflictException } from "@nestjs/common";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { createClient, StorageApiError, type SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ThemeEntity } from "../../_database/entities/theme.entity";
 import { testEnv } from "../../_tests/test-env";
@@ -14,7 +14,7 @@ let current: ThemeEntity;
 let events: string[];
 const storage = {
   createSignedUploadUrl: vi.fn(),
-  info: vi.fn(),
+  info: vi.fn<ReturnType<SupabaseClient["storage"]["from"]>["info"]>(),
   remove: vi.fn(),
 };
 const repository = {
@@ -63,7 +63,18 @@ beforeEach(() => {
   }));
   storage.info.mockImplementation(async () => {
     events.push("verify-upload");
-    return { data: { metadata: { mimetype: "image/webp", size: 1024 } }, error: null };
+    return {
+      data: {
+        id: "object-id",
+        name: "image.webp",
+        bucketId: "theme-images",
+        version: "version-id",
+        createdAt: "2026-09-16T00:00:00Z",
+        contentType: "image/webp",
+        size: 1024,
+      },
+      error: null,
+    };
   });
   storage.remove.mockImplementation(async () => {
     events.push("delete");
@@ -127,16 +138,68 @@ describe("image authorization", () => {
     ).rejects.toThrow("plus valide");
     vi.restoreAllMocks();
   });
-  it.each([
-    { error: new Error("not found") },
-    { data: { metadata: { mimetype: "image/jpeg", size: 100 } } },
-    { data: { metadata: { mimetype: "image/webp", size: 2 * 1024 * 1024 + 1 } } },
-  ])("refuses a missing or invalid stored upload", async (result) => {
+  it.each([null, {}])(
+    "accepts actual Storage info through the SDK with metadata %j",
+    async (metadata) => {
+      const upload = await sign();
+      const fetchInfo = vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            id: "object-id",
+            name: upload.path,
+            bucket_id: "theme-images",
+            version: "version-id",
+            created_at: "2026-09-16T00:00:00Z",
+            content_type: "image/webp",
+            size: 2 * 1024 * 1024,
+            metadata,
+          }),
+          { headers: { "content-type": "application/json" } },
+        ),
+      );
+      const supabase = createClient("https://storage.example", "test-key", {
+        global: { fetch: fetchInfo },
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const service = new ThemeImageService(
+        supabase,
+        testEnv,
+        repository as unknown as CurationRepository,
+      );
+      await expect(
+        service.authorize({ ...write(upload.path), imageUploadToken: upload.token }, current),
+      ).resolves.toBe(id);
+      expect(fetchInfo).toHaveBeenCalledWith(
+        `https://storage.example/storage/v1/object/info/theme-images/${upload.path}`,
+        expect.objectContaining({ method: "GET" }),
+      );
+    },
+  );
+  it("reports Storage lookup failure without blaming file size", async () => {
     const upload = await sign();
-    storage.info.mockResolvedValue(result);
+    storage.info.mockResolvedValue({
+      data: null,
+      error: new StorageApiError("not found", 404, "404"),
+    });
     await expect(
       curation.updateTheme(id, { ...write(upload.path), imageUploadToken: upload.token }),
-    ).rejects.toThrow("pas été importée");
+    ).rejects.toThrow("Impossible de vérifier");
+    expect(repository.updateTheme).not.toHaveBeenCalled();
+  });
+  it.each([
+    [{ contentType: "image/jpeg", size: 100 }, "format WebP"],
+    [{ size: 2 * 1024 * 1024 + 1 }, "dépasse 2 Mo"],
+    [{ size: 0 }, "vide"],
+    [{ size: undefined }, "indisponible"],
+    [{ size: Number.NaN }, "indisponible"],
+  ])("refuses invalid stored upload info %j", async (patch, message) => {
+    const upload = await sign();
+    const result = await storage.info(upload.path);
+    if (!result.data) throw new Error("Missing test fixture");
+    storage.info.mockResolvedValue({ data: { ...result.data, ...patch }, error: null });
+    await expect(
+      curation.updateTheme(id, { ...write(upload.path), imageUploadToken: upload.token }),
+    ).rejects.toThrow(message);
     expect(current.image).toBe("old.webp");
     expect(storage.remove).not.toHaveBeenCalled();
   });

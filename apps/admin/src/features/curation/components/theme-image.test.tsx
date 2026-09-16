@@ -114,12 +114,12 @@ afterEach(async () => {
 });
 
 describe("theme image field", () => {
-  it("shows the existing image, filename, format and custom status", async () => {
+  it("shows the existing image and filename", async () => {
     await act(async () => root.render(<FieldHarness />));
     expect(container.querySelector("img")?.getAttribute("src")).toBe(
       "https://images.example/old.webp",
     );
-    expect(text()).toContain("old.webp · .webp · Image personnalisée");
+    expect(text()).toContain("old.webp");
   });
   it("selects and cancels a local preview without uploading", async () => {
     await act(async () => root.render(<FieldHarness />));
@@ -205,7 +205,7 @@ describe("theme image field", () => {
       ),
     );
     expect(button("Supprimer l’image")).toBeUndefined();
-    expect(text()).toContain("Image par défaut");
+    expect(text()).toContain("image par défaut");
   });
 });
 
@@ -235,7 +235,7 @@ describe("reset confirmation", () => {
     expect(sendToApi).toHaveBeenCalledOnce();
     expect(button("Suppression…").disabled).toBe(true);
     await act(async () => finish({ ...current, image: "default.webp" }));
-    expect(text()).toContain("Image par défaut");
+    expect(text()).toContain("image par défaut");
     expect(container.querySelector("dialog")).toBeNull();
   });
   it("preserves the current image on reset failure", async () => {
@@ -301,7 +301,7 @@ describe("saving a replacement", () => {
     await click("SAVE");
     expect(sendToApi).toHaveBeenCalledOnce();
     expect(container.querySelector("img")?.getAttribute("src")).toBe("blob:new.webp");
-    expect(text()).toContain("old.webp · .webp");
+    expect(text()).toContain("old.webp");
     expect(text()).toContain("L’import a échoué");
   });
   it("keeps the selection if the database rejects the save", async () => {
@@ -314,7 +314,7 @@ describe("saving a replacement", () => {
     await choose(new File(["webp"], "new.webp", { type: "image/webp" }));
     await click("SAVE");
     expect(container.querySelector("img")?.getAttribute("src")).toBe("blob:new.webp");
-    expect(text()).toContain("old.webp · .webp");
+    expect(text()).toContain("old.webp");
     expect(button("SAVE").disabled).toBe(false);
   });
   it("offers cleanup retry while displaying the successfully saved replacement", async () => {
