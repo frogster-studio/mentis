@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import Image from "next/image";
 
-import { LogoMark } from "@/components/logo-mark";
 import { LogoWordmark } from "@/features/mentis/logo-wordmark";
 import styles from "@/features/mentis/mentis.module.css";
 import { CompetitionArt, ProductArt } from "@/features/mentis/product-art";
@@ -34,6 +33,13 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: URL },
+  icons: {
+    icon: [
+      { url: "/mentis/favicon.ico", sizes: "16x16 32x32 48x48", type: "image/x-icon" },
+      { url: "/mentis/favicon.svg", sizes: "any", type: "image/svg+xml" },
+    ],
+    apple: [{ url: "/mentis/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
   openGraph: {
     type: "website",
     locale: "fr_FR",
@@ -64,7 +70,14 @@ export default function MentisPage() {
       <div className={styles.container}>
         <header className={styles.header}>
           <a href={ROUTES.mentis} aria-label="Mentis — accueil" className={styles.brand}>
-            <LogoMark className={styles.mark} />
+            <Image
+              src="/mentis/logo.svg"
+              alt=""
+              className={styles.mark}
+              width={200}
+              height={196}
+              unoptimized
+            />
             <LogoWordmark className={styles.wordmark} />
           </a>
           <nav aria-label="Navigation Mentis" className={styles.nav}>
@@ -82,10 +95,6 @@ export default function MentisPage() {
         <main>
           <section className={styles.hero} aria-labelledby="hero-title">
             <div>
-              <p className={styles.eyebrow}>
-                <span className={styles.dot} />
-                En construction · Bêta iOS & Android
-              </p>
               <h1 id="hero-title">
                 La culture générale,
                 <br />à toi de jouer.

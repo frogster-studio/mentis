@@ -3,11 +3,12 @@ import Image from "next/image";
 import styles from "./mentis.module.css";
 
 const CATEGORIES = [
-  { name: "history", style: styles.history },
-  { name: "art", style: styles.art },
-  { name: "science", style: styles.science },
-  { name: "nature", style: styles.nature },
-  { name: "sport", style: styles.sport },
+  { name: "history", style: styles.history, width: 480, height: 142 },
+  { name: "art", style: styles.art, width: 488, height: 144 },
+  { name: "science", style: styles.science, width: 492, height: 145 },
+  { name: "nature", style: styles.nature, width: 480, height: 142 },
+  { name: "sport", style: styles.sport, width: 488, height: 144 },
+  { name: "geography", style: styles.geography, width: 588, height: 142 },
 ];
 
 export function ProductArt() {
@@ -26,8 +27,8 @@ export function ProductArt() {
         className={styles.mountain}
         src="/mentis/mountain.webp"
         alt=""
-        width={146}
-        height={155}
+        width={572}
+        height={620}
         unoptimized
       />
       <Image
@@ -38,28 +39,34 @@ export function ProductArt() {
         height={113}
         unoptimized
       />
-      <Image
-        className={styles.liberty}
-        src="/mentis/liberty.webp"
-        alt=""
-        width={224}
-        height={372}
-        preload
-        unoptimized
-      />
-      {CATEGORIES.map(({ name, style }) => (
+      <picture>
+        <source
+          type="image/webp"
+          srcSet="/mentis/liberty.webp 490w, /mentis/liberty-735.webp 735w"
+          sizes="(max-width: 480px) 45vw, (max-width: 760px) 201px, 245px"
+        />
+        <Image
+          className={styles.liberty}
+          src="/mentis/liberty.webp"
+          alt=""
+          width={224}
+          height={372}
+          loading="eager"
+          fetchPriority="high"
+          unoptimized
+        />
+      </picture>
+      {CATEGORIES.map(({ name, style, width, height }) => (
         <Image
           className={`${styles.categorySticker} ${style}`}
           key={name}
-          src={`/mentis/${name}.webp`}
+          src={`/mentis/${name}.svg`}
           alt=""
-          width={124}
-          height={48}
+          width={width}
+          height={height}
           unoptimized
         />
       ))}
-      <span className={styles.geography}>GÉOGRAPHIE</span>
-      <span className={styles.artNote}>La curiosité est un bon début.</span>
     </div>
   );
 }
@@ -67,15 +74,22 @@ export function ProductArt() {
 export function CompetitionArt() {
   return (
     <div className={styles.competitionArt} aria-hidden="true">
-      <Image
-        className={styles.summit}
-        src="/mentis/summit.webp"
-        alt=""
-        width={430}
-        height={449}
-        loading="lazy"
-        unoptimized
-      />
+      <picture>
+        <source
+          type="image/webp"
+          srcSet="/mentis/summit.webp 688w, /mentis/summit-1024.webp 1024w, /mentis/summit-1536.webp 1536w"
+          sizes="(max-width: 480px) 89vw, (max-width: 760px) 440px, (max-width: 1000px) 44vw, 512px"
+        />
+        <Image
+          className={styles.summit}
+          src="/mentis/summit.webp"
+          alt=""
+          width={430}
+          height={452}
+          loading="lazy"
+          unoptimized
+        />
+      </picture>
       <Image
         className={styles.crown}
         src="/mentis/crown.webp"

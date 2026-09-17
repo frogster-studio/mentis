@@ -20,7 +20,9 @@ Les données servent uniquement à gérer les candidatures et les invitations. L
 
 ## Identité et sources
 
-- Les WebP de `public/mentis` proviennent des éléments d’onboarding fournis par Hugo dans `.private/web-landing-page/elements` du worktree principal. Ils sont optimisés avant publication ; le site ne dépend pas du dossier privé.
+- Les illustrations de `public/mentis` proviennent des nouveaux exports haute définition fournis par Hugo. Les sources sont conservées localement hors du dossier public, dans `.private/web-landing-page/elements-hd` du worktree de la landing. Les illustrations sont compressées en WebP ; les variantes de la statue (490/735 px) et de la montagne (688/1024/1536 px) sont sélectionnées par le navigateur selon la largeur et la densité de l’écran. Les autres illustrations sont dimensionnées pour leur affichage haute densité. L’illustration de bonne réponse conserve sa source initiale, déjà suffisante.
+- Les six étiquettes sont des SVG vectoriels aux textes tracés ; les effets de flou d’arrière-plan inutiles de l’export Figma sont retirés. La coquille « GRÉOGRAPHIE » a été corrigée dans les tracés de `geography.svg`.
+- Le header utilise `public/mentis/logo.svg` pour le symbole et conserve le composant `LogoWordmark` pour la typographie. Le même symbole sert aux favicons SVG et ICO (16/32/48 px) et à l’icône Apple (180 px), sur fond beige pour rester lisible. Les métadonnées de ces icônes sont limitées à `/mentis`.
 - Inter Tight Regular réutilise le fichier du mobile. Epunda Slab Medium utilise la fonte variable officielle [Google Fonts](https://github.com/google/fonts/tree/main/ofl/epundaslab), avec sa licence OFL dans `public/fonts/mentis`.
 - `public/mentis/social-preview.png` est l’aperçu social 1200 × 630. Le titre, la description et les métadonnées sont définis dans `src/app/mentis/page.tsx`.
 - La question de démonstration est entièrement locale. Réponse vérifiée : Ojos del Salado, [Smithsonian Global Volcanism Program](https://volcano.si.edu/volcano.cfm?vn=355130).
