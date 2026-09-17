@@ -15,7 +15,7 @@ type OnboardingStore = {
   // The splash waits on this, so home never renders before the flag is known.
   hasHydrated: boolean;
   hasOnboarded: boolean;
-  // Pressing « Commencer » is the legal acceptance, and this records it for the device's lifetime.
+  // Pressing « C'est parti » is the legal acceptance, and this records it for the device's lifetime.
   complete: () => void;
 };
 

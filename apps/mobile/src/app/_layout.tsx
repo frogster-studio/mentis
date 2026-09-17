@@ -3,6 +3,8 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
+import { StyleSheet } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SheetProvider } from "@/components/ui/sheet";
 import { SignInSheet } from "@/features/account/components/sign-in-sheet";
 import { TransferPrompt } from "@/features/account/components/transfer-prompt";
@@ -38,11 +40,13 @@ const RootLayout = () => {
   }
 
   return (
-    <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
-      <SheetProvider>
-        <RootNavigator />
-      </SheetProvider>
-    </PersistQueryClientProvider>
+    <GestureHandlerRootView style={styles.root}>
+      <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
+        <SheetProvider>
+          <RootNavigator />
+        </SheetProvider>
+      </PersistQueryClientProvider>
+    </GestureHandlerRootView>
   );
 };
 
@@ -56,7 +60,7 @@ const RootNavigator = () => {
         screenOptions={{ headerShown: false, contentStyle: { backgroundColor: COLORS.background } }}
       >
         {/* The gate redirects off home, so onboarding must replace it rather than slide over it. */}
-        <Stack.Screen name="onboarding" options={{ animation: "none" }} />
+        <Stack.Screen name="onboarding/index" options={{ animation: "none" }} />
       </Stack>
       <TransferPrompt />
       <PaywallSheet />
@@ -64,5 +68,11 @@ const RootNavigator = () => {
     </>
   );
 };
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+});
 
 export default RootLayout;

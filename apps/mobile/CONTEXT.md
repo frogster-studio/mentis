@@ -129,7 +129,7 @@ _Avoid_: answer validation, AI check
 Whatever stands at the moment of submission: the input text (Cash) or the selected choice (Square). Submission happens at Countdown expiry, or earlier if the player explicitly confirms. Empty or wrong answers score 0 — there is no partial credit and no penalty.
 
 **Onboarding**:
-The one-time welcome screen shown on a device's first launch — Mark over Wordmark, one « Commencer » button whose press accepts the legal terms and reveals the app. Never shown again on that device.
+The one-time walkthrough shown on a device's first launch — a three-page carousel (Practice first), then the quiz session onboarding page, then the end page whose « C'est parti » press accepts the legal terms and reveals the app. Never shown again on that device.
 _Avoid_: welcome screen, splash (that's the loading gate)
 
 **Mark**:
@@ -137,5 +137,5 @@ The Mentis starburst glyph, the brand's symbol. Rendered by `LogoMark`.
 _Avoid_: logo (alone)
 
 **Wordmark**:
-The « mentis » lettering, rendered by `LogoWordmark`. Mark and Wordmark never form a fixed lockup; each surface composes them.
+The « mentis » lettering, set as text in the heading face wherever a surface shows it. Mark and Wordmark never form a fixed lockup; each surface composes them.
 _Avoid_: logo (alone)

@@ -1,59 +1,103 @@
 import { useRouter } from "expo-router";
-import { StyleSheet, View } from "react-native";
-import { LogoMark } from "@/components/logo-mark";
-import { LogoWordmark } from "@/components/logo-wordmark";
-import { Button } from "@/components/ui/button";
-import { ALL_SCREEN_EDGES, ScreenContainer } from "@/components/ui/screen-container";
-import { LegalLine } from "@/features/onboarding/components/legal-line";
-import { ONBOARDING_START_LABEL } from "@/features/onboarding/constants";
-import { useOnboardingStore } from "@/features/onboarding/store";
-import { COLORS, GUTTER, SPACE } from "@/theme/tokens";
+import { type ReactElement, useRef, useState } from "react";
+import { type LayoutRectangle, StyleSheet, Text, View } from "react-native";
+import { Carousel, type CarouselRef } from "react-native-reanimated-carousel";
+import { NewButton } from "@/components/ui/new-button";
+import { ScreenContainer } from "@/components/ui/screen-container";
+import { OnboardingPage } from "@/features/onboarding/components/onboarding-page";
+import { OnboardingPager } from "@/features/onboarding/components/onboarding-pager";
+import { PracticeHero } from "@/features/onboarding/components/practice-hero";
+import {
+  ONBOARDING_PLACEHOLDER_CAPTION,
+  ONBOARDING_PLACEHOLDER_TITLE,
+  ONBOARDING_PRACTICE_CAPTION,
+  ONBOARDING_PRACTICE_TITLE,
+  ONBOARDING_SURPRISE_CAPTION,
+  ONBOARDING_SURPRISE_CTA_LABEL,
+  ONBOARDING_SURPRISE_EMOJI,
+  ONBOARDING_SURPRISE_TITLE,
+} from "@/features/onboarding/constants";
+import { TEXT } from "@/theme/text";
+import { SPACE } from "@/theme/tokens";
 
-const MARK_SIZE = 96;
-const WORDMARK_WIDTH = 180;
+// The pager spends the bottom inset, so the deck takes only the top and the sides.
+const DECK_EDGES = ["top", "left", "right"] as const;
 
 export const OnboardingScreen = () => {
   const router = useRouter();
-  const complete = useOnboardingStore((state) => state.complete);
+  const carousel = useRef<CarouselRef>(null);
+  const [index, setIndex] = useState(0);
+  const [deck, setDeck] = useState<LayoutRectangle | null>(null);
 
-  return (
-    <ScreenContainer edges={ALL_SCREEN_EDGES} underlay={null}>
-      <View style={styles.headroom} />
-      <View style={styles.logo}>
-        <LogoMark color={COLORS.primary} size={MARK_SIZE} />
-        <LogoWordmark color={COLORS.ink} width={WORDMARK_WIDTH} />
-      </View>
-      <View style={styles.legroom} />
-      <View style={styles.actions}>
-        <Button
-          label={ONBOARDING_START_LABEL}
-          onPress={() => {
-            complete();
-            router.replace("/");
-          }}
+  const pages: ReactElement[] = [
+    <OnboardingPage
+      key="practice"
+      hero={<PracticeHero />}
+      caption={ONBOARDING_PRACTICE_CAPTION}
+      figure={null}
+      title={ONBOARDING_PRACTICE_TITLE}
+      action={null}
+    />,
+    <OnboardingPage
+      key="placeholder"
+      hero={null}
+      caption={ONBOARDING_PLACEHOLDER_CAPTION}
+      figure={null}
+      title={ONBOARDING_PLACEHOLDER_TITLE}
+      action={null}
+    />,
+    <OnboardingPage
+      key="surprise"
+      hero={null}
+      caption={ONBOARDING_SURPRISE_CAPTION}
+      figure={<Text style={styles.emoji}>{ONBOARDING_SURPRISE_EMOJI}</Text>}
+      title={ONBOARDING_SURPRISE_TITLE}
+      action={
+        <NewButton
+          layout="block"
+          shape="full"
+          tone="primary"
+          icon="play-circle-outline"
+          label={ONBOARDING_SURPRISE_CTA_LABEL}
+          accessibilityLabel={null}
+          onPress={() => router.push("/onboarding/quiz-session")}
+          disabled={false}
           pending={false}
         />
-        <LegalLine />
+      }
+    />,
+  ];
+
+  return (
+    <ScreenContainer edges={DECK_EDGES} underlay={null}>
+      <View style={styles.deck} onLayout={(event) => setDeck(event.nativeEvent.layout)}>
+        {deck ? (
+          <Carousel
+            ref={carousel}
+            style={{ width: deck.width, height: deck.height }}
+            data={pages}
+            renderItem={({ item }) => item}
+            onSnapToItem={setIndex}
+          />
+        ) : null}
       </View>
+      <OnboardingPager
+        index={index}
+        count={pages.length}
+        onBack={() => carousel.current?.prev()}
+        onNext={() => carousel.current?.next()}
+      />
     </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  // The 1:2 spacer ratio sits the logo above the screen's centre line.
-  headroom: {
+  deck: {
     flex: 1,
   },
-  legroom: {
-    flex: 2,
-  },
-  logo: {
-    alignItems: "center",
-    gap: SPACE.lg,
-  },
-  actions: {
-    paddingHorizontal: GUTTER,
-    paddingBottom: SPACE.lg,
-    gap: SPACE.md,
+  emoji: {
+    ...TEXT.display,
+    textAlign: "center",
+    marginVertical: SPACE.sm,
   },
 });
