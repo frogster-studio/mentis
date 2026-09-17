@@ -34,7 +34,7 @@ export const ProfileStatsScreen = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + SPACE.lg }]}
       >
-        {PURCHASES_SUPPORTED && isPremium !== null ? (
+        {user && PURCHASES_SUPPORTED && isPremium !== null ? (
           <PremiumBanner isPremium={isPremium} onPress={openPaywall} />
         ) : null}
         {showTransferNotice ? <TransferNotice /> : null}

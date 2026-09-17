@@ -6,7 +6,7 @@ interface SignInStore {
   close: () => void;
 }
 
-// One root sheet, so the paywall can hand a signed-out Player over to it.
+// One root sheet, opened from wherever a signed-out Player is invited in.
 export const useSignInStore = create<SignInStore>()((set) => ({
   visible: false,
   open: () => set({ visible: true }),

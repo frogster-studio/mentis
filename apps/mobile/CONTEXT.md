@@ -13,7 +13,7 @@ The optional cross-platform identity a Player signs into with Google or Apple. I
 _Avoid_: user, profile, login
 
 **Premium**:
-The paid tier of an Account — one auto-renewable monthly subscription (€2.99, no trial) bought through the stores, never available to an anonymous Player. Requires only a signed-in Account, no pseudo. Eligibility is evaluated at the moment of the action against the entitlement's expiry: lapsed means free tier immediately, but never mid-session; store grace periods count as active. French UI label: « Premium ».
+The paid tier of an Account — one auto-renewable monthly subscription (€2.99, no trial) bought through the stores by a signed-in Account and bound to that Account on every device, never available to an anonymous Player. Everything it unlocks is Account-bound. Requires only a signed-in Account, no pseudo. Eligibility is evaluated at the moment of the action against the entitlement's expiry: lapsed means free tier immediately, but never mid-session; store grace periods count as active. French UI label: « Premium ».
 _Avoid_: subscriber, pro, VIP
 
 **Pseudo**:
