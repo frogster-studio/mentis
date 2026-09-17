@@ -2,7 +2,7 @@ import { Image } from "expo-image";
 import { StyleSheet, Text, View } from "react-native";
 import FastSquircleView from "react-native-fast-squircle";
 import { CategoryPill } from "@/components/category-pill";
-import type { CommunityIconName } from "@/components/ui/icon-name";
+import type { IconName } from "@/components/ui/icon-name";
 import { SIGN_IN_TITLE, SIGN_IN_WORDMARK } from "@/features/account/constants";
 import { TEXT } from "@/theme/text";
 import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
@@ -15,18 +15,18 @@ const WORDMARK_OVERHANG = 95;
 
 // The scatter is measured off the mockup, so each pill keeps its own drift and tilt.
 const SCATTERED_PILLS = [
-  { icon: "palette-outline", left: "66%", top: "43%", rotate: "-4.1deg", color: COLORS.danger },
+  { icon: "palette", left: "66%", top: "43%", rotate: "-4.1deg", color: COLORS.danger },
   {
-    icon: "pine-tree-variant-outline",
+    icon: "park",
     left: "21%",
     top: "51%",
     rotate: "5.88deg",
     color: COLORS.primary,
   },
-  { icon: "soccer", left: "15%", top: "68%", rotate: "-3.73deg", color: COLORS.neutral },
-  { icon: "earth", left: "64%", top: "72%", rotate: "7.3deg", color: COLORS.success },
+  { icon: "sports-soccer", left: "15%", top: "68%", rotate: "-3.73deg", color: COLORS.neutral },
+  { icon: "public", left: "64%", top: "72%", rotate: "7.3deg", color: COLORS.success },
 ] as const satisfies readonly {
-  icon: CommunityIconName;
+  icon: IconName;
   left: string;
   top: string;
   rotate: string;
@@ -62,7 +62,7 @@ export const SignInHero = () => {
             { left: pill.left, top: pill.top, transform: [{ rotate: pill.rotate }] },
           ]}
         >
-          <CategoryPill icon={pill.icon} color={pill.color} />
+          <CategoryPill icon={pill.icon} color={pill.color} label={null} />
         </View>
       ))}
       <View style={styles.wordmarkSlot}></View>

@@ -1,4 +1,4 @@
-import type { CommunityIconName } from "@/components/ui/icon-name";
+import type { IconName } from "@/components/ui/icon-name";
 
 export const HOME_TAB_LABEL = "Practice";
 export const SESSION_COUNT_SINGULAR = "partie";
@@ -59,16 +59,16 @@ export const PRACTICE_PITCH = [
 
 // Placeholders until the Categories themselves are drawn — the row only has to read as variety.
 export const PRACTICE_PILL_ICONS = [
-  "bug-outline",
-  "account-supervisor-outline",
-  "airballoon-outline",
-  "alien-outline",
-  "arm-flex-outline",
-  "atom",
-  "baby-bottle-outline",
-  "bacteria-outline",
-  "bag-suitcase-outline",
-  "bicycle",
-  "book-open-variant-outline",
-  "pine-tree-variant-outline",
-] as const satisfies CommunityIconName[];
+  "bug-report",
+  "supervisor-account",
+  "rocket-launch",
+  "smart-toy",
+  "fitness-center",
+  "biotech",
+  "child-care",
+  "coronavirus",
+  "luggage",
+  "pedal-bike",
+  "menu-book",
+  "park",
+] as const satisfies IconName[];

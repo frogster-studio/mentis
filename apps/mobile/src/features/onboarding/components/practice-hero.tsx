@@ -2,8 +2,9 @@ import { Image } from "expo-image";
 import { StyleSheet, View } from "react-native";
 import FastSquircleView from "react-native-fast-squircle";
 import { CategoryPill } from "@/components/category-pill";
-import type { CommunityIconName } from "@/components/ui/icon-name";
-import { COLORS, RADIUS } from "@/theme/tokens";
+import type { IconName } from "@/components/ui/icon-name";
+import { PaywallHeroGradient } from "@/features/premium/components/paywall-hero-gradient";
+import { RADIUS } from "@/theme/tokens";
 
 const QUESTION_CARD = require("../../../../assets/images/onboarding/question-card.png");
 const BALL = require("../../../../assets/images/onboarding/ball.png");
@@ -13,32 +14,64 @@ const MOUNTAINS = require("../../../../assets/images/onboarding/mountains.png");
 // The card keeps the mockup's proportions, so every piece sits at its measured fraction of it.
 const HERO_ASPECT_RATIO = 410 / 461;
 
-// The scatter is measured off the mockup, so each pill keeps its own drift and tilt.
+// Sample Categories for the walkthrough alone, so their colours are theirs and not roles.
 const SCATTERED_PILLS = [
-  { icon: "palette-outline", left: "2.8%", top: "53.2%", rotate: "5.12deg", color: COLORS.danger },
-  { icon: "feather", left: "47.7%", top: "39%", rotate: "1.81deg", color: COLORS.primarySunken },
-  { icon: "flask-outline", left: "66%", top: "60.7%", rotate: "-7.8deg", color: COLORS.catchup },
   {
-    icon: "pine-tree-variant-outline",
-    left: "5.2%",
-    top: "74.9%",
-    rotate: "1.5deg",
-    color: COLORS.success,
+    name: "Musique",
+    icon: "music-note",
+    color: "#eba3ff",
+    left: "2.8%",
+    top: "53.2%",
+    rotate: "5.12deg",
   },
-  { icon: "soccer", left: "69%", top: "78.2%", rotate: "5.65deg", color: COLORS.neutral },
-  { icon: "earth", left: "33.3%", top: "91%", rotate: "-1.51deg", color: COLORS.ink },
+  {
+    name: "Histoire",
+    icon: "history-edu",
+    color: "#ffe3a0",
+    left: "47.7%",
+    top: "39%",
+    rotate: "1.81deg",
+  },
+  {
+    name: "Sciences",
+    icon: "science",
+    color: "#8caaff",
+    left: "66%",
+    top: "60.7%",
+    rotate: "-7.8deg",
+  },
+  { name: "Nature", icon: "park", color: "#83d3af", left: "5.2%", top: "74.9%", rotate: "1.5deg" },
+  {
+    name: "Sport",
+    icon: "sports-soccer",
+    color: "#ffaa82",
+    left: "69%",
+    top: "78.2%",
+    rotate: "5.65deg",
+  },
+  {
+    name: "Géographie",
+    icon: "map",
+    color: "#8ad0ff",
+    left: "33.3%",
+    top: "91%",
+    rotate: "-1.51deg",
+  },
 ] as const satisfies readonly {
-  icon: CommunityIconName;
+  name: string;
+  icon: IconName;
+  color: string;
   left: string;
   top: string;
   rotate: string;
-  color: string;
 }[];
 
 export const PracticeHero = () => {
   return (
     <View style={styles.hero} pointerEvents="none" accessible={false}>
-      <FastSquircleView style={[styles.face, styles.paint]} />
+      <FastSquircleView style={[styles.face, styles.clip]}>
+        <PaywallHeroGradient />
+      </FastSquircleView>
       {/* The card peeks over the top edge yet sits under the statue, so it lives outside the clip. */}
       <Image source={QUESTION_CARD} contentFit="contain" style={styles.questionCard} />
       <FastSquircleView style={[styles.face, styles.clip]}>
@@ -47,13 +80,13 @@ export const PracticeHero = () => {
         <Image source={MOUNTAINS} contentFit="contain" style={styles.mountains} />
         {SCATTERED_PILLS.map((pill) => (
           <View
-            key={pill.icon}
+            key={pill.name}
             style={[
               styles.pill,
               { left: pill.left, top: pill.top, transform: [{ rotate: pill.rotate }] },
             ]}
           >
-            <CategoryPill icon={pill.icon} color={pill.color} />
+            <CategoryPill icon={pill.icon} color={pill.color} label={pill.name} />
           </View>
         ))}
       </FastSquircleView>
@@ -75,9 +108,6 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.base,
     borderTopLeftRadius: RADIUS.xl,
     borderTopRightRadius: RADIUS.xl,
-  },
-  paint: {
-    backgroundColor: COLORS.primary,
   },
   clip: {
     overflow: "hidden",

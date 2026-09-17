@@ -2,7 +2,7 @@ import { StyleSheet } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { COLORS } from "@/theme/tokens";
 
-// The premium hero is the app's only gradient, so its stops stay here rather than becoming roles.
+// The app has this one gradient, so its stops stay here rather than becoming roles.
 const GRADIENT_STOPS = [
   { offset: "0", color: "#FFE798" },
   { offset: "0.5", color: "#FFCC7B" },

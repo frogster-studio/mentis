@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { type ReactElement, useRef, useState } from "react";
-import { type LayoutRectangle, StyleSheet, Text, View } from "react-native";
+import { type LayoutRectangle, StyleSheet, View } from "react-native";
 import { Carousel, type CarouselRef } from "react-native-reanimated-carousel";
 import { NewButton } from "@/components/ui/new-button";
 import { ScreenContainer } from "@/components/ui/screen-container";
@@ -14,11 +14,8 @@ import {
   ONBOARDING_PRACTICE_TITLE,
   ONBOARDING_SURPRISE_CAPTION,
   ONBOARDING_SURPRISE_CTA_LABEL,
-  ONBOARDING_SURPRISE_EMOJI,
   ONBOARDING_SURPRISE_TITLE,
 } from "@/features/onboarding/constants";
-import { TEXT } from "@/theme/text";
-import { SPACE } from "@/theme/tokens";
 
 // The pager spends the bottom inset, so the deck takes only the top and the sides.
 const DECK_EDGES = ["top", "left", "right"] as const;
@@ -34,7 +31,6 @@ export const OnboardingScreen = () => {
       key="practice"
       hero={<PracticeHero />}
       caption={ONBOARDING_PRACTICE_CAPTION}
-      figure={null}
       title={ONBOARDING_PRACTICE_TITLE}
       action={null}
     />,
@@ -42,7 +38,6 @@ export const OnboardingScreen = () => {
       key="placeholder"
       hero={null}
       caption={ONBOARDING_PLACEHOLDER_CAPTION}
-      figure={null}
       title={ONBOARDING_PLACEHOLDER_TITLE}
       action={null}
     />,
@@ -50,7 +45,6 @@ export const OnboardingScreen = () => {
       key="surprise"
       hero={null}
       caption={ONBOARDING_SURPRISE_CAPTION}
-      figure={<Text style={styles.emoji}>{ONBOARDING_SURPRISE_EMOJI}</Text>}
       title={ONBOARDING_SURPRISE_TITLE}
       action={
         <NewButton
@@ -94,10 +88,5 @@ export const OnboardingScreen = () => {
 const styles = StyleSheet.create({
   deck: {
     flex: 1,
-  },
-  emoji: {
-    ...TEXT.display,
-    textAlign: "center",
-    marginVertical: SPACE.sm,
   },
 });

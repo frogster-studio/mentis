@@ -6,18 +6,16 @@ import { COLORS, GUTTER, SPACE } from "@/theme/tokens";
 export interface OnboardingPageProps {
   hero: ReactNode;
   caption: string;
-  figure: ReactNode;
   title: string;
   action: ReactNode;
 }
 
-export const OnboardingPage = ({ hero, caption, figure, title, action }: OnboardingPageProps) => {
+export const OnboardingPage = ({ hero, caption, title, action }: OnboardingPageProps) => {
   return (
     <View style={styles.page}>
       {hero}
       <View style={styles.copy}>
         <Text style={styles.caption}>{caption}</Text>
-        {figure}
         <Text style={styles.title}>{title}</Text>
       </View>
       {action ? <View style={styles.action}>{action}</View> : null}

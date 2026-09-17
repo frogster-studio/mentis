@@ -3,7 +3,6 @@ export const ONBOARDING_PRACTICE_TITLE = "Entraîne toi sur de nombreux thèmes"
 export const ONBOARDING_PLACEHOLDER_CAPTION = "Deuxième page";
 export const ONBOARDING_PLACEHOLDER_TITLE = "Contenu à venir";
 export const ONBOARDING_SURPRISE_CAPTION = "Passons au fonctionnement d'un quizz";
-export const ONBOARDING_SURPRISE_EMOJI = "😉";
 export const ONBOARDING_SURPRISE_TITLE = "Petit test surprise";
 export const ONBOARDING_SURPRISE_CTA_LABEL = "C'est parti";
 export const ONBOARDING_BACK_LABEL = "Page précédente";

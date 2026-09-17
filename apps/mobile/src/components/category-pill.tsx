@@ -1,8 +1,9 @@
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { StyleSheet, View } from "react-native";
-import type { CommunityIconName } from "@/components/ui/icon-name";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { StyleSheet, Text, View } from "react-native";
+import type { IconName } from "@/components/ui/icon-name";
 import { Squircle } from "@/components/ui/squircle";
-import { COLORS, RADIUS } from "@/theme/tokens";
+import { TEXT } from "@/theme/text";
+import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
 
 const PILL_WIDTH = 113;
 const PILL_HEIGHT = 29;
@@ -13,45 +14,60 @@ const BAR_WIDTH = 67;
 const BAR_HEIGHT = 8;
 const BAR_RADIUS = 2;
 const BAR_GAP = 6;
+// The badge and the bar are the pill's own colour shaded by this much ink, never a second colour.
+const SHADE_ALPHA = "1A";
 
 export interface CategoryPillProps {
-  icon: CommunityIconName;
+  icon: IconName;
   color: string;
+  // A bar stands in until the Category is drawn for real; only the glyph carries meaning then.
+  label: string | null;
 }
 
-// The label is a bar until Categories are drawn for real; only the glyph carries meaning today.
-export const CategoryPill = ({ icon, color }: CategoryPillProps) => {
+export const CategoryPill = ({ icon, color, label }: CategoryPillProps) => {
   return (
     <Squircle
       radius={RADIUS.sm}
-      color={`${color}50`}
-      style={styles.pill}
+      color={color}
+      style={[styles.pill, label === null ? styles.placeholder : styles.labelled]}
       corners="all"
       borderColor={null}
       borderWidth={null}
     >
       <Squircle
         radius={BADGE_SIZE / 3}
-        color={color}
+        color={`${COLORS.ink}${SHADE_ALPHA}`}
         style={styles.badge}
         corners="all"
         borderColor={null}
         borderWidth={null}
       >
-        <MaterialCommunityIcons name={icon} size={ICON_SIZE} color={COLORS.inkMuted} />
+        <MaterialIcons name={icon} size={ICON_SIZE} color={COLORS.ink} />
       </Squircle>
-      <View style={[styles.bar, { backgroundColor: color }]} />
+      {label === null ? (
+        <View style={styles.bar} />
+      ) : (
+        <Text style={styles.label} numberOfLines={1}>
+          {label}
+        </Text>
+      )}
     </Squircle>
   );
 };
 
 const styles = StyleSheet.create({
   pill: {
-    width: PILL_WIDTH,
     height: PILL_HEIGHT,
     flexDirection: "row",
     alignItems: "center",
     paddingLeft: BADGE_INSET,
+  },
+  placeholder: {
+    width: PILL_WIDTH,
+  },
+  labelled: {
+    alignSelf: "flex-start",
+    paddingRight: SPACE.sm,
   },
   badge: {
     width: BADGE_SIZE,
@@ -64,6 +80,12 @@ const styles = StyleSheet.create({
     height: BAR_HEIGHT,
     marginLeft: BAR_GAP,
     borderRadius: BAR_RADIUS,
-    backgroundColor: COLORS.primaryPlaceholder,
+    backgroundColor: `${COLORS.ink}${SHADE_ALPHA}`,
+  },
+  label: {
+    ...TEXT.cardTitleSmall,
+    color: COLORS.ink,
+    textTransform: "uppercase",
+    marginLeft: BAR_GAP,
   },
 });
