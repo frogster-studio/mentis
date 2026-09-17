@@ -17,6 +17,8 @@ type OnboardingStore = {
   hasOnboarded: boolean;
   // Pressing « C'est parti » is the legal acceptance, and this records it for the device's lifetime.
   complete: () => void;
+  // Clears the flag alone, so the home gate walks the Player through the onboarding again.
+  replay: () => void;
 };
 
 export const useOnboardingStore = create<OnboardingStore>()(
@@ -25,6 +27,7 @@ export const useOnboardingStore = create<OnboardingStore>()(
       hasHydrated: false,
       hasOnboarded: false,
       complete: () => set({ hasOnboarded: true }),
+      replay: () => set({ hasOnboarded: false }),
     }),
     {
       name: "mentis-onboarding",
