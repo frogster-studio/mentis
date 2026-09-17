@@ -3,9 +3,10 @@ import { describe, expect, it } from "vitest";
 import { PAGE_PATHS, ROUTES } from "@/lib/routes";
 
 describe("routes", () => {
-  it("lists the six pages of the site", () => {
+  it("lists the landing page and the existing pages", () => {
     expect(PAGE_PATHS).toEqual([
       "/",
+      "/mentis",
       "/legal",
       "/mentis/privacy",
       "/mentis/terms",
