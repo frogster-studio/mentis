@@ -8,6 +8,7 @@ import { CompetitionHero } from "@/features/onboarding/components/competition-he
 import { OnboardingPage } from "@/features/onboarding/components/onboarding-page";
 import { OnboardingPager } from "@/features/onboarding/components/onboarding-pager";
 import { PracticeHero } from "@/features/onboarding/components/practice-hero";
+// import { SurpriseHero } from "@/features/onboarding/components/surprise-hero";
 import {
   ONBOARDING_COMPETITION_CAPTION,
   ONBOARDING_COMPETITION_TITLE,
@@ -17,6 +18,7 @@ import {
   ONBOARDING_SURPRISE_CTA_LABEL,
   ONBOARDING_SURPRISE_TITLE,
 } from "@/features/onboarding/constants";
+import { SurpriseHero } from "./surprise-hero";
 
 // The pager spends the bottom inset, so the deck takes only the top and the sides.
 const DECK_EDGES = ["top", "left", "right"] as const;
@@ -44,7 +46,7 @@ export const OnboardingScreen = () => {
     />,
     <OnboardingPage
       key="surprise"
-      hero={null}
+      hero={<SurpriseHero />}
       caption={ONBOARDING_SURPRISE_CAPTION}
       title={ONBOARDING_SURPRISE_TITLE}
       action={

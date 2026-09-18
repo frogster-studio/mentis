@@ -63,6 +63,7 @@ export const SessionScreen = () => {
   const loop = usePlayLoop({
     play: session,
     question: activeQuestion,
+    isHeld: false,
     expire,
     // The RNG is injected here at the call site, so the reducer stays pure.
     switchToSquare: () => {
@@ -192,6 +193,8 @@ export const SessionScreen = () => {
         showCrown={false}
         quitLabel={QUIT_LABEL}
         headerExtra={<DevSkipToResults />}
+        footerExtra={null}
+        onQuit={loop.requestQuit}
         onInputChange={setInput}
         onSelect={select}
         onConfirm={confirm}

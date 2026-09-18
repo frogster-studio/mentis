@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { View } from "react-native";
 import { AnswerFooter } from "@/features/quiz/components/answer-footer";
 import { PlayHeader } from "@/features/quiz/components/play-header";
 import { PlayScreen } from "@/features/quiz/components/play-screen";
@@ -13,6 +14,8 @@ export interface PlayShellProps {
   showCrown: boolean;
   quitLabel: string;
   headerExtra: ReactNode;
+  footerExtra: ReactNode;
+  onQuit: () => void;
   onInputChange: (value: string) => void;
   onSelect: (index: number) => void;
   onConfirm: (now: number) => void;
@@ -26,6 +29,8 @@ export const PlayShell = ({
   showCrown,
   quitLabel,
   headerExtra,
+  footerExtra,
+  onQuit,
   onInputChange,
   onSelect,
   onConfirm,
@@ -44,24 +49,30 @@ export const PlayShell = ({
             showCrown={showCrown}
             endsAt={play.endsAt}
             now={loop.now}
-            countdownFrozen={loop.transition.countdownFrozen}
+            countdownFrozen={loop.transition.countdownFrozen || loop.isHeld}
             quitLabel={quitLabel}
-            onQuit={loop.requestQuit}
+            onQuit={onQuit}
           />
           {headerExtra}
         </>
       }
       footer={
-        <AnswerFooter
-          play={play}
-          categoryColor={categoryColor}
-          inputRef={loop.inputRef}
-          autoFocus={!loop.quitVisible}
-          onInputChange={onInputChange}
-          onSwitchToSquare={loop.switchToSquare}
-          onSelect={onSelect}
-          onConfirm={() => onConfirm(Date.now())}
-        />
+        <>
+          {/* A held play keeps its answer controls in view but out of reach. */}
+          <View pointerEvents={loop.isHeld ? "none" : "auto"}>
+            <AnswerFooter
+              play={play}
+              categoryColor={categoryColor}
+              inputRef={loop.inputRef}
+              autoFocus={!loop.quitVisible && !loop.isHeld}
+              onInputChange={onInputChange}
+              onSwitchToSquare={loop.switchToSquare}
+              onSelect={onSelect}
+              onConfirm={() => onConfirm(Date.now())}
+            />
+          </View>
+          {footerExtra}
+        </>
       }
     />
   );

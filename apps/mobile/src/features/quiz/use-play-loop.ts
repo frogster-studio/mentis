@@ -8,6 +8,8 @@ export interface PlayLoopInput {
   play: (Pick<QuestionPlay, "endsAt"> & { answers: readonly unknown[]; status: string }) | null;
   // The Question on stage — one object for its whole turn, null outside an active play.
   question: { text: string } | null;
+  // A held play shows its Question but neither ticks nor takes the keyboard until released.
+  isHeld: boolean;
   expire: (now: number) => void;
   switchToSquare: () => void;
 }
@@ -16,6 +18,7 @@ export interface PlayLoop {
   inputRef: RefObject<TextInput | null>;
   now: number;
   transition: QuestionTransitionOutput;
+  isHeld: boolean;
   quitVisible: boolean;
   requestQuit: () => void;
   closeQuit: () => void;
@@ -23,10 +26,16 @@ export interface PlayLoop {
 }
 
 // The choreography every play shares: Countdown clock, question beat, keyboard focus, quit sheet.
-export function usePlayLoop({ play, question, expire, switchToSquare }: PlayLoopInput): PlayLoop {
+export function usePlayLoop({
+  play,
+  question,
+  isHeld,
+  expire,
+  switchToSquare,
+}: PlayLoopInput): PlayLoop {
   const inputRef = useRef<TextInput>(null);
   const [quitVisible, setQuitVisible] = useState(false);
-  const isActive = question !== null;
+  const isActive = question !== null && !isHeld;
   const isFinished = play?.status === "finished";
 
   const now = usePlayClock(play?.endsAt ?? 0, isActive, expire);
@@ -36,12 +45,12 @@ export function usePlayLoop({ play, question, expire, switchToSquare }: PlayLoop
     position: (play?.answers.length ?? 0) + 1,
   });
 
-  // Every question starts with the keyboard open, except under the quit sheet.
+  // Every question starts with the keyboard open, except under the quit sheet or while held.
   useEffect(() => {
-    if (question && !quitVisible) {
+    if (question && !quitVisible && !isHeld) {
       inputRef.current?.focus();
     }
-  }, [question, quitVisible]);
+  }, [question, quitVisible, isHeld]);
 
   // The Countdown can finish the play behind the open sheet — the results take it down.
   useEffect(() => {
@@ -54,6 +63,7 @@ export function usePlayLoop({ play, question, expire, switchToSquare }: PlayLoop
     inputRef,
     now,
     transition,
+    isHeld,
     quitVisible,
     // The keyboard drops as the sheet rises, so the field lets go before it opens.
     requestQuit: () => {

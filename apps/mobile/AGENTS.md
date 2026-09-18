@@ -14,6 +14,7 @@
   # ❌ a plugins/with-*-signing.js stamping keystore vars from .env into the prebuilt android/
   ```
 - `bun run icons` — re-render every icon surface (app icons, splash, favicon) from `assets/app-icon/` (`mark.svg` + `background.svg`); run after either changes
+- `bun run images` — convert every PNG under `assets/originals/` to a WebP at the same path under `assets/images/`; run after adding or re-exporting an original
 - `bun run typecheck` — `tsc --noEmit`
 - `bun run test` — vitest
 - From the repo root: `bun run check` (typecheck + test + knip + format, all workspaces); **every issue must end with `check` green**
@@ -30,6 +31,12 @@
 - Spacing and radius come off the token ladders — `SPACE`/`GUTTER`, `RADIUS`. Screens pick ladder steps, no free integers. Depth is only ever the sink edge under a control — never a blur (`boxShadow`, `elevation`, the `shadow*` triple).
 - Text styles **only** from `TEXT` (in `src/theme/`) — no `fontFamily`/`fontSize`/`fontWeight`/`lineHeight` literals in components (dev-only debug text excepted). Three faces, never more: **Epunda Slab Regular** for content headings, **Inter Tight SemiBold** for numerals and UI emphasis, **Inter Tight Regular** for everything else — `fontWeight` is never set, the face file *is* the weight. Font files in `assets/fonts/` under their PostScript names; a missing file fails the build, a runtime load failure falls back to the system font.
 - All UI copy in **French** — feature copy in the feature's `constants.ts`, shared-ui copy a module constant beside its primitive.
+- **Raster images ship as the WebP `bun run images` generates, never the PNG.** The original is a Figma PNG export at displayed dp × 3 (type `<px>w` in Figma's scale field, e.g. `360w` for a 120 dp element), saved under `assets/originals/<same path>`; the script refuses anything wider than 1290 px. Flat shapes (logos, pictos) are svg components instead.
+
+  ```tsx
+  // ✅ assets/originals/onboarding/gem.png (360 px) → bun run images → require("…/assets/images/onboarding/gem.webp") at width: 120
+  // ❌ require("…/assets/images/onboarding/gem.png")  // a 1200 px PNG drawn at 120 dp
+  ```
 - Icons come from `@expo/vector-icons`: MaterialIcons for controls (`IconName`), MaterialCommunityIcons where only its outline set has the glyph (`CommunityIconName`). A component taking an icon takes its glyph name, never an icon component. The only bespoke glyph is the hand-drawn `react-native-svg` component (`LogoMark`) — an svg drawing becomes a component, never an imported file.
 - **`NewButton`** is the control of the current visual direction — white squircle face, ink border, ink sink edge; `layout` (`block` | `hug`) and `shape` (`rounded` | `full`) are its only shape controls, and it takes a label, an icon, or both. **`Button`** / **`QuietButton`** are the pages that direction has not reached yet; glyph-only and text-only taps stay a bare `Pressable` dimmed with `PRESSED` — never a fourth button look. Only the sinking controls animate, through the one shared press mechanic; a state swap elsewhere (selected, dimmed) lands as static styles, never an Animated fade.
 
@@ -59,8 +66,8 @@ src/
   theme/                # design tokens: COLORS, SPACE, RADIUS, TEXT…
   utils/                # chunk.ts
   types/quiz.ts         # canonical domain types
-assets/                 # root: all static assets — images/ + fonts/ + app-icon/ (icon source) + expo.icon/ (Icon Composer bundle)
-scripts/                # generate-icons.ts — every icon surface, rendered from app-icon/
+assets/                 # root: all static assets — originals/ (Figma PNG exports) → images/ (generated WebP) + fonts/ + app-icon/ (icon source) + expo.icon/ (Icon Composer bundle)
+scripts/                # generate-icons.ts — every icon surface, rendered from app-icon/; optimize-images.ts — originals/ → images/ WebP
 ```
 
 ## Data access

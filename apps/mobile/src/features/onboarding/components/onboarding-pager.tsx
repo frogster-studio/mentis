@@ -24,7 +24,7 @@ export const OnboardingPager = ({ index, count, onBack, onNext }: OnboardingPage
 
   return (
     <View style={[styles.bar, { paddingBottom: bottomGap }]}>
-      {/* The slot stays when empty, so the counter never drifts off centre on the first page. */}
+      {/* The slots stay when empty, so the counter never drifts off centre on the first or last page. */}
       <View style={styles.slot}>
         {isFirst ? null : (
           <NewButton
@@ -51,17 +51,19 @@ export const OnboardingPager = ({ index, count, onBack, onNext }: OnboardingPage
         <Text style={styles.count}>{`${index + 1}${ONBOARDING_PAGE_SEPARATOR}${count}`}</Text>
       </Squircle>
       <View style={styles.slot}>
-        <NewButton
-          layout="hug"
-          shape="full"
-          tone="default"
-          icon="arrow-right"
-          label={null}
-          accessibilityLabel={ONBOARDING_NEXT_LABEL}
-          onPress={onNext}
-          disabled={isLast}
-          pending={false}
-        />
+        {isLast ? null : (
+          <NewButton
+            layout="hug"
+            shape="full"
+            tone="default"
+            icon="arrow-right"
+            label={null}
+            accessibilityLabel={ONBOARDING_NEXT_LABEL}
+            onPress={onNext}
+            disabled={false}
+            pending={false}
+          />
+        )}
       </View>
     </View>
   );

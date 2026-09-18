@@ -41,22 +41,25 @@ export const ResultCard = ({
 
   return (
     <View style={styles.row}>
-      <View style={styles.rail}>
-        {/* A one-pixel window over a wider dashed box: Android only dashes a uniform border. */}
-        <View style={styles.line}>
-          <View style={styles.dash} />
+      {/* A lone verdict holds no place in a run, so the rail stays out. */}
+      {total > 1 ? (
+        <View style={styles.rail}>
+          {/* A one-pixel window over a wider dashed box: Android only dashes a uniform border. */}
+          <View style={styles.line}>
+            <View style={styles.dash} />
+          </View>
+          <Squircle
+            radius={RADIUS.sm}
+            corners="all"
+            color={accent}
+            borderColor={null}
+            borderWidth={null}
+            style={styles.badge}
+          >
+            <Text style={styles.badgeLabel}>{`# ${position} / ${total}`}</Text>
+          </Squircle>
         </View>
-        <Squircle
-          radius={RADIUS.sm}
-          corners="all"
-          color={accent}
-          borderColor={null}
-          borderWidth={null}
-          style={styles.badge}
-        >
-          <Text style={styles.badgeLabel}>{`# ${position} / ${total}`}</Text>
-        </Squircle>
-      </View>
+      ) : null}
       <View style={styles.card}>
         <Card background={null} onPress={null}>
           <View style={styles.head}>

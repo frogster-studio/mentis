@@ -9,10 +9,10 @@ import {
   OnboardingHeroFrame,
 } from "@/features/onboarding/components/onboarding-hero-frame";
 
-const QUESTION_CARD = require("../../../../assets/images/onboarding/question-card.png");
-const BALL = require("../../../../assets/images/onboarding/ball.png");
-const STATUE = require("../../../../assets/images/onboarding/statue.png");
-const MOUNTAINS = require("../../../../assets/images/onboarding/mountains.png");
+const QUESTION_CARD = require("../../../../assets/images/onboarding/question-card.webp");
+const BALL = require("../../../../assets/images/onboarding/ball.webp");
+const STATUE = require("../../../../assets/images/onboarding/statue.webp");
+const MOUNTAINS = require("../../../../assets/images/onboarding/mountains.webp");
 
 // Sample Categories for the walkthrough alone, so their colours are theirs and not roles.
 const SCATTERED_PILLS = [

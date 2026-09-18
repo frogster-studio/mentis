@@ -1,6 +1,7 @@
 import { Image } from "expo-image";
-import { StyleSheet, Text, View } from "react-native";
-import { Squircle } from "@/components/ui/squircle";
+import { Text, View } from "react-native";
+import FastSquircleView from "react-native-fast-squircle";
+import Animated, { css as StyleSheetReanimated } from "react-native-reanimated";
 import {
   HERO_OVERLAY_SHADOW,
   OnboardingHeroFrame,
@@ -13,57 +14,53 @@ import { POINTS_UNIT } from "@/features/quiz/constants";
 import { TEXT } from "@/theme/text";
 import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
 
-const SUMMIT = require("../../../../assets/images/onboarding/summit.png");
-const CROWN = require("../../../../assets/images/onboarding/crown.png");
-const LEADER_AVATAR = require("../../../../assets/images/onboarding/leader-avatar.png");
+const AnimatedImage = Animated.createAnimatedComponent(Image);
 
-// The mockup softens the summit so the crown and the leader read first.
-const SUMMIT_BLUR_RADIUS = SPACE.md;
+const SUMMIT = require("../../../../assets/images/onboarding/summit.webp");
+const CROWN = require("../../../../assets/images/onboarding/crown.webp");
+const LEADER_AVATAR = require("../../../../assets/images/onboarding/leader-avatar.webp");
 
 export const CompetitionHero = () => {
   return (
     <OnboardingHeroFrame>
-      <Image
-        source={SUMMIT}
-        contentFit="contain"
-        blurRadius={SUMMIT_BLUR_RADIUS}
-        style={styles.summit}
-      />
-      <Image source={CROWN} contentFit="contain" style={styles.crown} />
+      <Image source={SUMMIT} contentFit="contain" style={styles.summit} />
+      <AnimatedImage source={CROWN} contentFit="contain" style={styles.crown} />
       <View style={[styles.leader, HERO_OVERLAY_SHADOW]}>
-        <Squircle
-          radius={RADIUS.sm}
-          corners="all"
-          color={COLORS.face}
-          borderColor={null}
-          borderWidth={null}
-          style={styles.leaderRow}
-        >
+        <FastSquircleView style={styles.leaderRow}>
           <Image source={LEADER_AVATAR} contentFit="contain" style={styles.avatar} />
           <Text style={styles.pseudo} numberOfLines={1}>
             {ONBOARDING_LEADER_PSEUDO}
           </Text>
           <Text style={styles.points}>{`${ONBOARDING_LEADER_POINTS} ${POINTS_UNIT}`}</Text>
-        </Squircle>
+        </FastSquircleView>
       </View>
     </OnboardingHeroFrame>
   );
 };
 
-const styles = StyleSheet.create({
+const styles = StyleSheetReanimated.create({
   summit: {
     position: "absolute",
-    left: "-6.1%",
-    top: "20.2%",
-    width: "112.4%",
-    aspectRatio: 1203 / 1029,
+    bottom: -70,
+    width: "110%",
+    alignSelf: "center",
+    aspectRatio: 992 / 876,
+    zIndex: 1,
   },
   crown: {
     position: "absolute",
-    left: "41.7%",
-    top: "9.1%",
-    width: "18.5%",
-    aspectRatio: 300 / 280,
+    top: 85,
+    height: "15%",
+    alignSelf: "center",
+    aspectRatio: 228 / 210,
+    animationName: {
+      from: { transform: [{ rotate: "-6deg" }] },
+      to: { transform: [{ rotate: "6deg" }] },
+    },
+    animationDuration: "1.5s",
+    animationIterationCount: "infinite",
+    animationDirection: "alternate",
+    animationTimingFunction: "ease-in-out",
   },
   leader: {
     position: "absolute",
@@ -76,10 +73,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: SPACE.sm,
     paddingVertical: SPACE.sm,
-    paddingLeft: SPACE.sm,
-    paddingRight: SPACE.lg,
+    paddingHorizontal: SPACE.md,
+    borderRadius: RADIUS.base,
+    backgroundColor: COLORS.face,
   },
-  // The mockup mirrors the portrait so she faces her name.
   avatar: {
     height: SPACE.xxl,
     aspectRatio: 145 / 160,

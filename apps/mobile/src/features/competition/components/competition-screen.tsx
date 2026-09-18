@@ -67,7 +67,13 @@ export const CompetitionScreen = () => {
   // An empty batch is only ever safe once the server holds the answers: never before it is queued.
   const isJudgeable = attempt?.status === "finalized" || queued !== undefined;
   const activeQuestion = play?.status === "active" ? currentAttemptQuestion(play) : null;
-  const loop = usePlayLoop({ play, question: activeQuestion, expire, switchToSquare });
+  const loop = usePlayLoop({
+    play,
+    question: activeQuestion,
+    isHeld: false,
+    expire,
+    switchToSquare,
+  });
   const transcript = useTranscript(owner, attempt?.id, isJudgeable);
   // The queue is acked the moment the batch lands, so the transcript itself holds the screen after.
   const showResults = isJudgeable || transcript.data !== undefined;
@@ -257,6 +263,8 @@ export const CompetitionScreen = () => {
         showCrown={true}
         quitLabel={COMPETITION_QUIT_LABEL}
         headerExtra={null}
+        footerExtra={null}
+        onQuit={loop.requestQuit}
         onInputChange={setInput}
         onSelect={select}
         onConfirm={confirm}
