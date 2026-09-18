@@ -1,7 +1,9 @@
 export const ONBOARDING_PRACTICE_CAPTION = "Practice illimité";
 export const ONBOARDING_PRACTICE_TITLE = "Entraîne toi sur de nombreux thèmes";
-export const ONBOARDING_PLACEHOLDER_CAPTION = "Deuxième page";
-export const ONBOARDING_PLACEHOLDER_TITLE = "Contenu à venir";
+export const ONBOARDING_COMPETITION_CAPTION = "Envie de compétition ?";
+export const ONBOARDING_COMPETITION_TITLE = "Hisse toi en haut du classement";
+export const ONBOARDING_LEADER_PSEUDO = "Emma8M6B";
+export const ONBOARDING_LEADER_POINTS = 4500;
 export const ONBOARDING_SURPRISE_CAPTION = "Passons au fonctionnement d'un quizz";
 export const ONBOARDING_SURPRISE_TITLE = "Petit test surprise";
 export const ONBOARDING_SURPRISE_CTA_LABEL = "C'est parti";

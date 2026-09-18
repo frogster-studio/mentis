@@ -4,12 +4,13 @@ import { type LayoutRectangle, StyleSheet, View } from "react-native";
 import { Carousel, type CarouselRef } from "react-native-reanimated-carousel";
 import { NewButton } from "@/components/ui/new-button";
 import { ScreenContainer } from "@/components/ui/screen-container";
+import { CompetitionHero } from "@/features/onboarding/components/competition-hero";
 import { OnboardingPage } from "@/features/onboarding/components/onboarding-page";
 import { OnboardingPager } from "@/features/onboarding/components/onboarding-pager";
 import { PracticeHero } from "@/features/onboarding/components/practice-hero";
 import {
-  ONBOARDING_PLACEHOLDER_CAPTION,
-  ONBOARDING_PLACEHOLDER_TITLE,
+  ONBOARDING_COMPETITION_CAPTION,
+  ONBOARDING_COMPETITION_TITLE,
   ONBOARDING_PRACTICE_CAPTION,
   ONBOARDING_PRACTICE_TITLE,
   ONBOARDING_SURPRISE_CAPTION,
@@ -35,10 +36,10 @@ export const OnboardingScreen = () => {
       action={null}
     />,
     <OnboardingPage
-      key="placeholder"
-      hero={null}
-      caption={ONBOARDING_PLACEHOLDER_CAPTION}
-      title={ONBOARDING_PLACEHOLDER_TITLE}
+      key="competition"
+      hero={<CompetitionHero />}
+      caption={ONBOARDING_COMPETITION_CAPTION}
+      title={ONBOARDING_COMPETITION_TITLE}
       action={null}
     />,
     <OnboardingPage

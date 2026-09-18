@@ -3,16 +3,16 @@ import { StyleSheet, View } from "react-native";
 import FastSquircleView from "react-native-fast-squircle";
 import { CategoryPill } from "@/components/category-pill";
 import type { IconName } from "@/components/ui/icon-name";
-import { PaywallHeroGradient } from "@/features/premium/components/paywall-hero-gradient";
-import { RADIUS } from "@/theme/tokens";
+import {
+  HERO_FACE,
+  HERO_OVERLAY_SHADOW,
+  OnboardingHeroFrame,
+} from "@/features/onboarding/components/onboarding-hero-frame";
 
 const QUESTION_CARD = require("../../../../assets/images/onboarding/question-card.png");
 const BALL = require("../../../../assets/images/onboarding/ball.png");
 const STATUE = require("../../../../assets/images/onboarding/statue.png");
 const MOUNTAINS = require("../../../../assets/images/onboarding/mountains.png");
-
-// The card keeps the mockup's proportions, so every piece sits at its measured fraction of it.
-const HERO_ASPECT_RATIO = 410 / 461;
 
 // Sample Categories for the walkthrough alone, so their colours are theirs and not roles.
 const SCATTERED_PILLS = [
@@ -68,13 +68,12 @@ const SCATTERED_PILLS = [
 
 export const PracticeHero = () => {
   return (
-    <View style={styles.hero} pointerEvents="none" accessible={false}>
-      <FastSquircleView style={[styles.face, styles.clip]}>
-        <PaywallHeroGradient />
-      </FastSquircleView>
-      {/* The card peeks over the top edge yet sits under the statue, so it lives outside the clip. */}
-      <Image source={QUESTION_CARD} contentFit="contain" style={styles.questionCard} />
-      <FastSquircleView style={[styles.face, styles.clip]}>
+    <OnboardingHeroFrame>
+      {/* The card peeks over the top edge yet sits under the statue, so it stays out of the clip. */}
+      <View style={HERO_OVERLAY_SHADOW}>
+        <Image source={QUESTION_CARD} contentFit="contain" style={styles.questionCard} />
+      </View>
+      <FastSquircleView style={HERO_FACE}>
         <Image source={BALL} contentFit="contain" style={styles.ball} />
         <Image source={STATUE} contentFit="contain" style={styles.statue} />
         <Image source={MOUNTAINS} contentFit="contain" style={styles.mountains} />
@@ -90,28 +89,11 @@ export const PracticeHero = () => {
           </View>
         ))}
       </FastSquircleView>
-    </View>
+    </OnboardingHeroFrame>
   );
 };
 
 const styles = StyleSheet.create({
-  hero: {
-    width: "100%",
-    aspectRatio: HERO_ASPECT_RATIO,
-  },
-  face: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: RADIUS.base,
-    borderTopLeftRadius: RADIUS.xl,
-    borderTopRightRadius: RADIUS.xl,
-  },
-  clip: {
-    overflow: "hidden",
-  },
   questionCard: {
     position: "absolute",
     left: "17.3%",
