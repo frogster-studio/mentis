@@ -2,14 +2,14 @@ export const PROFILE_TITLE = "Profil";
 export const PROFILE_CLOSE_LABEL = "Fermer";
 export const PROFILE_STATS_TAB_LABEL = "Stats";
 export const PROFILE_HISTORY_TAB_LABEL = "Historique";
-export const PROFILE_INFOS_TAB_LABEL = "Infos";
+// App Store 5.1.1(v): the tab must read as account settings, or Review cannot find the deletion.
+export const PROFILE_ACCOUNT_TAB_LABEL = "Compte";
 export const PROFILE_SIGNED_OUT_NAME = "Pas connecté";
 export const PROFILE_STATS_EMPTY = "Aucune statistique pour le moment.";
 export const REPLAY_ONBOARDING_LABEL = "Rejouer l'onboarding";
 
 export const SIGN_IN_CHIP_LABEL = "se connecter / s’inscrire";
 export const SIGN_IN_TITLE = "Me connecter";
-export const SIGN_IN_WORDMARK = "Mentis";
 export const APPLE_SIGN_IN_LABEL = "Continuer avec Apple";
 export const GOOGLE_SIGN_IN_LABEL = "Continuer avec Google";
 
@@ -59,6 +59,7 @@ export function deleteAccountMessage(isPremium: boolean | null): string {
 
 export const DELETE_ACCOUNT_CONFIRM_LABEL = "Supprimer";
 export const DELETE_ACCOUNT_CANCEL_LABEL = "Annuler";
+export const DELETE_ACCOUNT_DONE = "Ton compte a bien été supprimé.";
 export const DELETE_ACCOUNT_ERROR = "La suppression a échoué.";
 
 // App Store 5.1.1: the legal pages stay reachable from inside the app, signed in or out.

@@ -1,8 +1,8 @@
-import { StyleSheet, View } from "react-native";
-import { Button } from "@/components/ui/button";
-import { QuietButton } from "@/components/ui/quiet-button";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { NewButton } from "@/components/ui/new-button";
 import { Sheet } from "@/components/ui/sheet";
-import { SPACE } from "@/theme/tokens";
+import { TEXT } from "@/theme/text";
+import { COLORS, CONTROL_HEIGHT, PRESSED, SPACE } from "@/theme/tokens";
 
 export interface ConfirmDialogProps {
   visible: boolean;
@@ -34,15 +34,24 @@ export const ConfirmDialog = ({
     >
       {/* The destructive action takes the quiet slot, so the emphasis never invites the damage. */}
       <View style={styles.actions}>
-        <Button label={cancelLabel} onPress={onCancel} pending={false} />
-        <QuietButton
+        <NewButton
+          onPress={onCancel}
           layout="block"
-          label={confirmLabel}
-          icon={null}
-          accessibilityLabel={null}
-          onPress={onConfirm}
+          shape="rounded"
+          tone="primary"
           disabled={false}
+          pending={false}
+          icon={null}
+          label={cancelLabel}
+          accessibilityLabel={null}
         />
+        <Pressable
+          onPress={onConfirm}
+          accessibilityRole="button"
+          style={({ pressed }) => [styles.confirm, pressed && styles.pressed]}
+        >
+          <Text style={styles.confirmLabel}>{confirmLabel}</Text>
+        </Pressable>
       </View>
     </Sheet>
   );
@@ -50,7 +59,16 @@ export const ConfirmDialog = ({
 
 const styles = StyleSheet.create({
   actions: {
-    gap: SPACE.md,
     marginTop: SPACE.lg,
   },
+  confirm: {
+    height: CONTROL_HEIGHT,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  confirmLabel: {
+    ...TEXT.label,
+    color: COLORS.danger,
+  },
+  pressed: PRESSED,
 });

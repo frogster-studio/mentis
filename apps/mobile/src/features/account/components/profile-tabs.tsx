@@ -5,10 +5,10 @@ import { AppTabBar, TAB_ICON_SIZE } from "@/components/app-tab-bar";
 import { useTabSlide } from "@/components/tab-slide";
 import { PaperBackground } from "@/components/ui/paper-background";
 import { ProfileHeader } from "@/features/account/components/profile-header";
-import { PROFILE_WASH, ProfileWash } from "@/features/account/components/profile-wash";
+import { ProfileWash } from "@/features/account/components/profile-wash";
 import {
+  PROFILE_ACCOUNT_TAB_LABEL,
   PROFILE_HISTORY_TAB_LABEL,
-  PROFILE_INFOS_TAB_LABEL,
   PROFILE_STATS_TAB_LABEL,
 } from "@/features/account/constants";
 import { COLORS } from "@/theme/tokens";
@@ -23,8 +23,8 @@ export const ProfileTabs = () => {
       {/* Above the scenes, not over them, so the card holds still while the tabs slide under it. */}
       <ProfileHeader />
       <Tabs
-        tabBar={(props) => <AppTabBar {...props} isDark={false} trackColor={PROFILE_WASH} />}
-        screenOptions={{ headerShown: false, sceneStyle: styles.scene, ...slide }}
+        tabBar={(props) => <AppTabBar {...props} isDark={false} trackColor={COLORS.catchup} />}
+        screenOptions={{ headerShown: false, ...slide }}
       >
         <Tabs.Screen
           name="index"
@@ -47,13 +47,9 @@ export const ProfileTabs = () => {
         <Tabs.Screen
           name="infos"
           options={{
-            title: PROFILE_INFOS_TAB_LABEL,
+            title: PROFILE_ACCOUNT_TAB_LABEL,
             tabBarIcon: ({ color }) => (
-              <MaterialCommunityIcons
-                name="information-outline"
-                color={color}
-                size={TAB_ICON_SIZE}
-              />
+              <MaterialCommunityIcons name="cog-outline" color={color} size={TAB_ICON_SIZE} />
             ),
           }}
         />
@@ -66,8 +62,5 @@ const styles = StyleSheet.create({
   shell: {
     flex: 1,
     backgroundColor: COLORS.background,
-  },
-  scene: {
-    backgroundColor: COLORS.clear,
   },
 });

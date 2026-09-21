@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import FastSquircleView from "react-native-fast-squircle";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NewButton } from "@/components/ui/new-button";
-import { Sheet, useSheetBottomInset } from "@/components/ui/sheet";
+import { Sheet } from "@/components/ui/sheet";
 import { useAuthStore } from "@/features/account/auth-store";
 import { AppleSignInButton } from "@/features/account/components/apple-sign-in-button";
 import { GoogleSignInButton } from "@/features/account/components/google-sign-in-button";
@@ -11,17 +10,13 @@ import { SignInHero } from "@/features/account/components/sign-in-hero";
 import { PROFILE_CLOSE_LABEL, SIGN_IN_ERROR } from "@/features/account/constants";
 import { useSignInStore } from "@/features/account/sign-in-store";
 import { TEXT } from "@/theme/text";
-import { COLORS, GUTTER, RADIUS, SPACE } from "@/theme/tokens";
+import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
 
 export const SignInSheet = () => {
   const visible = useSignInStore((state) => state.visible);
   const close = useSignInStore((state) => state.close);
   const userId = useAuthStore((state) => state.session?.user.id);
-  const insets = useSafeAreaInsets();
-  const bottomInset = useSheetBottomInset();
-  const { height } = useWindowDimensions();
   const [signInFailed, setSignInFailed] = useState(false);
-  const availableHeight = height - insets.top - SPACE.sm;
 
   useEffect(() => {
     if (visible) {
@@ -46,12 +41,7 @@ export const SignInSheet = () => {
       onDismiss={close}
     >
       {/* The buttons keep their height; only the hero gives way on a short screen. */}
-      <View
-        style={[
-          styles.content,
-          { maxHeight: availableHeight, paddingBottom: bottomInset + GUTTER },
-        ]}
-      >
+      <View style={styles.content}>
         <View style={styles.heroFrame}>
           <SignInHero />
           <View style={styles.close}>
@@ -81,9 +71,10 @@ export const SignInSheet = () => {
 
 const styles = StyleSheet.create({
   content: {
-    paddingTop: GUTTER,
-    paddingHorizontal: GUTTER,
+    backgroundColor: COLORS.background,
+    borderRadius: RADIUS.xl,
     gap: SPACE.lg,
+    height: "100%",
   },
   heroFrame: {
     flexShrink: 1,
@@ -96,10 +87,6 @@ const styles = StyleSheet.create({
   buttons: {
     padding: SPACE.lg,
     gap: SPACE.md,
-    borderRadius: RADIUS.base,
-    borderBottomLeftRadius: RADIUS.xl,
-    borderBottomRightRadius: RADIUS.xl,
-    backgroundColor: COLORS.background,
   },
   error: {
     ...TEXT.body,

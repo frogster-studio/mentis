@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from "react-native";
+import FastSquircleView from "react-native-fast-squircle";
 import { TAB_TRANSITION_EASING, TAB_TRANSITION_MS } from "@/components/tab-transition";
 import { useBottomChromeGap } from "@/components/ui/screen-container";
 import { Squircle } from "@/components/ui/squircle";
@@ -63,14 +64,7 @@ export const AppTabBar = ({
 
   return (
     <View style={[styles.overlay, { paddingBottom: bottomGap }]}>
-      <Squircle
-        radius={RADIUS.lg}
-        color={trackColor}
-        style={styles.track}
-        corners="all"
-        borderColor={null}
-        borderWidth={null}
-      >
+      <FastSquircleView style={[styles.track, { backgroundColor: trackColor }]}>
         {isDark ? (
           <Squircle
             radius={RADIUS.lg}
@@ -123,12 +117,17 @@ export const AppTabBar = ({
                   color: isDark && !focused ? COLORS.face : COLORS.ink,
                   size: TAB_ICON_SIZE,
                 })}
-                <Text style={[styles.label, isDark && !focused && styles.lightLabel]}>{title}</Text>
+                <Text
+                  numberOfLines={1}
+                  style={[styles.label, isDark && !focused && styles.lightLabel]}
+                >
+                  {title}
+                </Text>
               </Pressable>
             );
           })}
         </View>
-      </Squircle>
+      </FastSquircleView>
     </View>
   );
 };
@@ -166,11 +165,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    alignItems: "center",
+    marginHorizontal: SPACE.lg,
     pointerEvents: "box-none",
   },
   track: {
     padding: TRACK_PADDING,
+    backgroundColor: `${COLORS.catchup}80`,
+    borderRadius: RADIUS.round,
   },
   rail: {
     flexDirection: "row",
@@ -184,15 +185,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   trigger: {
+    flex: 1,
     height: TRIGGER_HEIGHT,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: SPACE.sm,
-    paddingHorizontal: SPACE.xl,
+    paddingHorizontal: SPACE.sm,
   },
   label: {
     ...TEXT.label,
+    flexShrink: 1,
     color: COLORS.ink,
     userSelect: "none",
   },

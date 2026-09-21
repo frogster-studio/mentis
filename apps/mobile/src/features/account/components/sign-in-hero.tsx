@@ -1,19 +1,14 @@
 import { Image } from "expo-image";
 import { StyleSheet, Text, View } from "react-native";
-import FastSquircleView from "react-native-fast-squircle";
 import { CategoryPill } from "@/components/category-pill";
 import type { IconName } from "@/components/ui/icon-name";
-import { SIGN_IN_TITLE, SIGN_IN_WORDMARK } from "@/features/account/constants";
+import { SIGN_IN_TITLE } from "@/features/account/constants";
 import { TEXT } from "@/theme/text";
 import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
 
 const HERO = require("../../../../assets/images/sign-in-hero.jpg");
+const MENTIS_WORDMARK = require("../../../../assets/images/sign-in/mentis-wordmark.svg");
 
-const HERO_HEIGHT = 649;
-// The word's line box hangs below the card so its baseline lands near the bottom edge, as mocked.
-const WORDMARK_OVERHANG = 95;
-
-// The scatter is measured off the mockup, so each pill keeps its own drift and tilt.
 const SCATTERED_PILLS = [
   { icon: "palette", left: "66%", top: "43%", rotate: "-4.1deg", color: COLORS.danger },
   {
@@ -37,22 +32,13 @@ export const SignInHero = () => {
   return (
     <View style={styles.hero}>
       {/* Image + Mentis */}
-      <FastSquircleView
-        style={{
-          overflow: "hidden",
-          borderRadius: RADIUS.base,
-          borderTopLeftRadius: RADIUS.xl,
-          borderTopRightRadius: RADIUS.xl,
-        }}
-      >
+      <View style={styles.heroContent}>
         <Text style={styles.title}>{SIGN_IN_TITLE}</Text>
 
-        <Text style={styles.wordmark} numberOfLines={1}>
-          {SIGN_IN_WORDMARK}
-        </Text>
+        <Image source={MENTIS_WORDMARK} style={styles.wordmark} contentFit="contain" />
 
-        <Image source={HERO} style={{ width: "100%", height: "100%" }} contentFit="cover" />
-      </FastSquircleView>
+        <Image source={HERO} style={styles.heroImage} contentFit="cover" />
+      </View>
 
       {SCATTERED_PILLS.map((pill) => (
         <View
@@ -72,9 +58,13 @@ export const SignInHero = () => {
 
 const styles = StyleSheet.create({
   hero: {
-    height: HERO_HEIGHT,
     flexShrink: 1,
   },
+  heroContent: {
+    overflow: "hidden",
+    borderRadius: RADIUS.xl,
+  },
+  heroImage: { width: "100%", aspectRatio: 1230 / 1706 },
   title: {
     ...TEXT.cardTitle,
     color: COLORS.ink,
@@ -93,15 +83,14 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    bottom: -WORDMARK_OVERHANG,
     alignItems: "center",
   },
   wordmark: {
-    ...TEXT.display,
+    aspectRatio: 357 / 100,
+    width: "85%",
     position: "absolute",
+    zIndex: 10,
     alignSelf: "center",
-    zIndex: 1,
     bottom: 0,
-    color: COLORS.face,
   },
 });

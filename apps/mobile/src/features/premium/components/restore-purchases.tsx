@@ -49,22 +49,19 @@ const styles = StyleSheet.create({
     gap: SPACE.xs,
   },
   action: {
-    paddingVertical: SPACE.md,
-    alignItems: "center",
+    paddingVertical: SPACE.sm,
   },
   label: {
     ...TEXT.body,
-    color: COLORS.inkMuted,
+    color: COLORS.ink,
   },
   error: {
     ...TEXT.body,
     color: COLORS.danger,
-    textAlign: "center",
   },
   notice: {
     ...TEXT.body,
     color: COLORS.inkMuted,
-    textAlign: "center",
   },
   pressed: PRESSED,
 });

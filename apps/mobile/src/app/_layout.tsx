@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SheetProvider } from "@/components/ui/sheet";
+import { ToastHost } from "@/components/ui/toast";
 import { SignInSheet } from "@/features/account/components/sign-in-sheet";
 import { TransferPrompt } from "@/features/account/components/transfer-prompt";
 import { useCompetitionSync } from "@/features/competition/finalize-sync";
@@ -65,6 +66,7 @@ const RootNavigator = () => {
       <TransferPrompt />
       <PaywallSheet />
       <SignInSheet />
+      <ToastHost />
     </>
   );
 };

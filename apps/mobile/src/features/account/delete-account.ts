@@ -17,9 +17,9 @@ export async function deleteAccount(playerId: string): Promise<void> {
   useFinalizeOutboxStore.getState().discardOwner(playerId);
   queryClient.removeQueries({ queryKey: accountKeys.stats(playerId) });
 
-  // Otherwise the signed-out home still claims the stats live on an Account that no longer exists.
-  useTransferStore.getState().reset();
-
   // local scope skips the revoke round-trip (no user left) and still emits SIGNED_OUT.
   await supabase.auth.signOut({ scope: "local" });
+
+  // After the sign-out, or clearing the flags would offer the still-signed-in Player a transfer.
+  useTransferStore.getState().reset();
 }

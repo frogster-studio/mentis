@@ -3,6 +3,7 @@ import {
   APPLE_SIGN_IN_LABEL,
   DELETE_ACCOUNT_CANCEL_LABEL,
   DELETE_ACCOUNT_CONFIRM_LABEL,
+  DELETE_ACCOUNT_DONE,
   DELETE_ACCOUNT_ERROR,
   DELETE_ACCOUNT_LABEL,
   DELETE_ACCOUNT_TITLE,
@@ -11,9 +12,9 @@ import {
   LEGAL_PRIVACY_LABEL,
   LEGAL_SUPPORT_LABEL,
   LEGAL_TERMS_LABEL,
+  PROFILE_ACCOUNT_TAB_LABEL,
   PROFILE_CLOSE_LABEL,
   PROFILE_HISTORY_TAB_LABEL,
-  PROFILE_INFOS_TAB_LABEL,
   PROFILE_SIGNED_OUT_NAME,
   PROFILE_STATS_EMPTY,
   PROFILE_STATS_TAB_LABEL,
@@ -51,7 +52,7 @@ describe("account constants", () => {
       PROFILE_CLOSE_LABEL,
       PROFILE_STATS_TAB_LABEL,
       PROFILE_HISTORY_TAB_LABEL,
-      PROFILE_INFOS_TAB_LABEL,
+      PROFILE_ACCOUNT_TAB_LABEL,
       PROFILE_SIGNED_OUT_NAME,
       PROFILE_STATS_EMPTY,
       SIGN_IN_CHIP_LABEL,
@@ -75,6 +76,7 @@ describe("account constants", () => {
       deleteAccountMessage(false),
       DELETE_ACCOUNT_CONFIRM_LABEL,
       DELETE_ACCOUNT_CANCEL_LABEL,
+      DELETE_ACCOUNT_DONE,
       DELETE_ACCOUNT_ERROR,
       PSEUDO_TITLE,
       PSEUDO_PLACEHOLDER,
@@ -90,6 +92,15 @@ describe("account constants", () => {
     for (const copy of strings) {
       expect(copy.trim().length).toBeGreaterThan(0);
     }
+  });
+
+  it("names the third tab « Compte », so Review finds the deletion (App Store 5.1.1(v))", () => {
+    expect(PROFILE_ACCOUNT_TAB_LABEL).toBe("Compte");
+  });
+
+  it("confirms the erasure in its own words, never the failure's", () => {
+    expect(DELETE_ACCOUNT_DONE).not.toBe(DELETE_ACCOUNT_ERROR);
+    expect(DELETE_ACCOUNT_DONE).toContain("supprimé");
   });
 
   it("names the provider on each sign-in button", () => {
