@@ -3,13 +3,14 @@ import { Animated, StyleSheet, View } from "react-native";
 import { useAppHeaderHeight } from "@/components/app-header";
 import { useAppTabBarHeight } from "@/components/app-tab-bar";
 import { useTabScroll } from "@/components/tab-scroll";
+import { iconNameOrFallback } from "@/components/ui/icon-name";
 import { PaperBackground } from "@/components/ui/paper-background";
 import { ScreenContainer, TAB_SCREEN_EDGES } from "@/components/ui/screen-container";
 import { ScreenError } from "@/components/ui/screen-error";
 import { ScreenLoading } from "@/components/ui/screen-loading";
 import { useProfile } from "@/features/account/api";
 import { useAuthStore } from "@/features/account/auth-store";
-import { useCompetitionDay, useStanding } from "@/features/competition/api";
+import { useCompetitionDay, useStanding, useTranscript } from "@/features/competition/api";
 import { bestAttempt } from "@/features/competition/best-attempt";
 import { CompetitionCard } from "@/features/competition/components/competition-card";
 import {
@@ -46,6 +47,7 @@ export const WorldScreen = () => {
   const gatePremium = usePremiumGate();
   const best = day.data ? bestAttempt(day.data.attempts) : undefined;
   const offersReplay = best !== undefined && day.data?.replay === true;
+  const transcript = useTranscript(owner, best?.id, best !== undefined);
   useSeasonFreshness(owner);
 
   return (
@@ -81,9 +83,13 @@ export const WorldScreen = () => {
                 title={best ? COMPETITION_DONE_TITLE : COMPETITION_DAILY_TITLE}
                 teaser={best ? null : COMPETITION_DAILY_TEASER}
                 score={best?.score ?? null}
-                color={best ? COLORS.success : COLORS.primary}
+                colors={best ? ["#83D3AF"] : [COLORS.primaryGlow, COLORS.primary]}
                 showStreak={true}
                 showPremium={offersReplay}
+                themeImage={transcript.data ? { uri: transcript.data.imageUrl } : undefined}
+                categoryIcon={
+                  transcript.data ? iconNameOrFallback(transcript.data.category.icon) : undefined
+                }
                 actionLabel={
                   best
                     ? offersReplay
@@ -104,12 +110,13 @@ export const WorldScreen = () => {
                   });
                 }}
               />
+
               {day.data.catchup ? (
                 <CompetitionCard
                   title={CATCHUP_TITLE}
                   teaser={CATCHUP_TEASER}
                   score={null}
-                  color={COLORS.catchup}
+                  colors={[COLORS.background, COLORS.catchup]}
                   showStreak={false}
                   showPremium={true}
                   actionLabel={COMPETITION_CATCHUP_LABEL}

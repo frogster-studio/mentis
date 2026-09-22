@@ -1,40 +1,57 @@
-import { Image } from "expo-image";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { Image, type ImageSource } from "expo-image";
 import { StyleSheet, Text, View } from "react-native";
+import FastSquircleView from "react-native-fast-squircle";
 import { Card } from "@/components/ui/card";
+import type { IconName } from "@/components/ui/icon-name";
 import { NewButton } from "@/components/ui/new-button";
-import { Squircle } from "@/components/ui/squircle";
 import { CompetitionCardBackground } from "@/features/competition/components/competition-card-background";
 import { COMPETITION_MYSTERY, COMPETITION_STREAK_LABEL } from "@/features/competition/constants";
+import { PremiumCrownStamp } from "@/features/premium/components/premium-crown-stamp";
 import { RESULTS_SCORE_MAX_LABEL } from "@/features/quiz/constants";
 import { TEXT } from "@/theme/text";
-import { COLORS, CONTROL_SQUARE_SIZE, RADIUS, SPACE } from "@/theme/tokens";
+import { COLORS, CONTROL_ICON_SIZE, RADIUS, SPACE } from "@/theme/tokens";
+
+const MYSTERY_CHOICE_IMAGE = require("../../../../assets/images/competition/mystery-choice.png");
+const FLAME_IMAGE = require("../../../../assets/images/competition/flame.png");
+const CATEGORY_BADGE_SIZE = 36;
 
 export interface CompetitionCardProps {
   title: string;
   teaser: string | null;
   score: number | null;
-  color: string;
+  colors: string[];
   showStreak: boolean;
   showPremium: boolean;
   actionLabel: string;
   onPress: () => void;
+  themeImage?: ImageSource | number;
+  categoryIcon?: IconName;
 }
 
 export const CompetitionCard = ({
   title,
   teaser,
   score,
-  color,
+  colors,
   showStreak,
   showPremium,
   actionLabel,
   onPress,
+  themeImage,
+  categoryIcon,
 }: CompetitionCardProps) => {
   return (
     <View>
       <Card
         onPress={null}
-        background={<CompetitionCardBackground color={color} isFinished={score !== null} />}
+        background={
+          <CompetitionCardBackground
+            colors={colors}
+            isFinished={score !== null}
+            themeImage={themeImage}
+          />
+        }
       >
         <View style={styles.content}>
           <Text style={styles.title}>{title}</Text>
@@ -50,7 +67,7 @@ export const CompetitionCard = ({
                 }).map(([key, position]) => (
                   <Image
                     key={key}
-                    source={require("../../../../assets/images/competition/mystery-choice.png")}
+                    source={MYSTERY_CHOICE_IMAGE}
                     contentFit="contain"
                     style={[styles.choice, position]}
                     accessible={false}
@@ -58,23 +75,32 @@ export const CompetitionCard = ({
                 ))}
               </View>
             ) : null}
-            <Squircle
-              radius={RADIUS.sm}
-              corners="top"
-              color={score === null ? COLORS.primaryPlaceholder : COLORS.scrim}
-              borderColor={COLORS.stroke}
-              borderWidth={1}
-              style={styles.scoreCard}
-            >
-              {score === null ? (
-                <Text style={styles.mystery}>{COMPETITION_MYSTERY}</Text>
-              ) : (
-                <View style={styles.scoreRow}>
-                  <Text style={styles.score}>{score}</Text>
-                  <Text style={styles.scoreMax}>{RESULTS_SCORE_MAX_LABEL}</Text>
+            <View>
+              <FastSquircleView
+                style={[
+                  styles.scoreCard,
+                  {
+                    borderColor: score === null ? COLORS.primaryPlaceholder : COLORS.stroke,
+                    backgroundColor: score === null ? COLORS.primaryPlaceholder : COLORS.scrim,
+                  },
+                ]}
+              >
+                {score === null ? (
+                  <Text style={styles.mystery}>{COMPETITION_MYSTERY}</Text>
+                ) : (
+                  <View style={styles.scoreRow}>
+                    <Text style={styles.score}>{score}</Text>
+                    <Text style={styles.scoreMax}>{RESULTS_SCORE_MAX_LABEL}</Text>
+                  </View>
+                )}
+              </FastSquircleView>
+
+              {score !== null && categoryIcon !== undefined ? (
+                <View style={styles.categoryBadge}>
+                  <MaterialIcons name={categoryIcon} size={CONTROL_ICON_SIZE} color={COLORS.ink} />
                 </View>
-              )}
-            </Squircle>
+              ) : null}
+            </View>
           </View>
           <View>
             <NewButton
@@ -89,13 +115,9 @@ export const CompetitionCard = ({
               onPress={onPress}
             />
             {showPremium ? (
-              <Image
-                source={require("../../../../assets/images/premium-crown.png")}
-                contentFit="contain"
-                style={styles.crown}
-                pointerEvents="none"
-                accessible={false}
-              />
+              <View style={styles.premiumContainer}>
+                <PremiumCrownStamp />
+              </View>
             ) : null}
           </View>
         </View>
@@ -106,18 +128,11 @@ export const CompetitionCard = ({
           pointerEvents="none"
           accessibilityLabel={COMPETITION_STREAK_LABEL}
         >
-          <Squircle
-            radius={RADIUS.sm}
-            corners="all"
-            color={COLORS.scrim}
-            borderColor={null}
-            borderWidth={null}
-            style={styles.streakBadge}
-          >
-            <Text style={styles.streakNumber}>3</Text>
-          </Squircle>
+          <FastSquircleView style={styles.streakBadge}>
+            <Text style={styles.streakNumber}>100</Text>
+          </FastSquircleView>
           <Image
-            source={require("../../../../assets/images/competition/flame.png")}
+            source={FLAME_IMAGE}
             contentFit="contain"
             style={styles.flame}
             accessible={false}
@@ -138,7 +153,6 @@ const styles = StyleSheet.create({
   },
   teaser: { ...TEXT.caption, color: COLORS.ink, textAlign: "center", marginTop: SPACE.xs },
   illustration: {
-    height: TEXT.heroScore.lineHeight,
     marginTop: SPACE.md,
     alignItems: "center",
     overflow: "hidden",
@@ -149,36 +163,52 @@ const styles = StyleSheet.create({
   choiceBottomLeft: { left: 0, bottom: SPACE.md, transform: [{ rotate: "6deg" }] },
   choiceBottomRight: { right: 0, bottom: SPACE.sm, transform: [{ rotate: "-7deg" }] },
   scoreCard: {
-    minWidth: CONTROL_SQUARE_SIZE * 2,
     paddingHorizontal: SPACE.lg,
     alignItems: "center",
-    minHeight: TEXT.heroScore.lineHeight + SPACE.lg,
     marginTop: SPACE.xs,
+    borderWidth: 1,
+    borderBottomEndRadius: 0,
+    borderBottomStartRadius: 0,
+    borderRadius: RADIUS.base,
   },
   mystery: { ...TEXT.display, color: COLORS.background, paddingTop: SPACE.lg },
   scoreRow: { flexDirection: "row", alignItems: "baseline" },
-  score: { ...TEXT.heroScore, color: COLORS.face },
-  scoreMax: { ...TEXT.body, color: `${COLORS.face}80` },
-  crown: {
+  score: { ...TEXT.competitionScore, color: COLORS.face },
+  scoreMax: { ...TEXT.body, color: `${COLORS.face}40` },
+  categoryBadge: {
     position: "absolute",
-    width: CONTROL_SQUARE_SIZE,
-    height: CONTROL_SQUARE_SIZE,
-    right: SPACE.xs,
-    top: -SPACE.xl,
-  },
-  streak: { position: "absolute", right: SPACE.md, top: SPACE.sm },
-  streakBadge: {
-    width: SPACE.xxl,
-    height: SPACE.xxl,
+    top: -SPACE.xs,
+    right: -SPACE.md,
+    width: CATEGORY_BADGE_SIZE,
+    height: CATEGORY_BADGE_SIZE,
+    borderRadius: RADIUS.round,
+    backgroundColor: COLORS.face,
     alignItems: "center",
     justifyContent: "center",
   },
-  streakNumber: { ...TEXT.statValue, color: COLORS.face },
+
+  streak: { position: "absolute", right: SPACE.md, top: SPACE.sm },
+  streakBadge: {
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.scrim,
+    borderRadius: RADIUS.sm,
+    height: 42,
+    minWidth: 42,
+    paddingHorizontal: SPACE.sm,
+  },
+  premiumContainer: {
+    position: "absolute",
+    top: -SPACE.xl,
+    right: -SPACE.sm,
+  },
+  streakNumber: { ...TEXT.statValue, color: COLORS.face, transform: [{ rotate: "-6deg" }] },
   flame: {
     position: "absolute",
-    width: SPACE.xl,
-    height: SPACE.xxl,
-    right: -SPACE.sm,
-    top: -SPACE.xl,
+    aspectRatio: 219 / 249,
+    height: "200%",
+    top: -42,
+    right: -40,
+    transform: [{ rotate: "6deg" }],
   },
 });

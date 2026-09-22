@@ -1,40 +1,52 @@
-import { useId } from "react";
-import { StyleSheet } from "react-native";
-import Svg, { ClipPath, Defs, Image, LinearGradient, Rect, Stop } from "react-native-svg";
-import { COLORS, RADIUS } from "@/theme/tokens";
+import { Image, type ImageSource } from "expo-image";
+import { StyleSheet, View } from "react-native";
+import { THEME_IMAGE_CACHE_POLICY } from "@/features/quiz/theme-image-cache";
+import { RADIUS } from "@/theme/tokens";
+import { gradient } from "@/utils/gradient";
+
+const LANDSCAPE_IMAGE = require("../../../../assets/images/competition/landscape.png");
+
+const LANDSCAPE_OPACITY = 0.13;
 
 export interface CompetitionCardBackgroundProps {
-  color: string;
+  colors: string[];
   isFinished: boolean;
+  themeImage?: ImageSource | number;
 }
 
 export const CompetitionCardBackground = ({
-  color,
+  colors,
   isFinished,
+  themeImage,
 }: CompetitionCardBackgroundProps) => {
-  const id = `competition-${useId().replace(/\W/g, "")}`;
+  const center = colors[0];
+  const edge = colors[1] ?? colors[0];
+
   return (
-    <Svg style={StyleSheet.absoluteFill} width="100%" height="100%" pointerEvents="none">
-      <Defs>
-        <ClipPath id={`${id}-clip`}>
-          <Rect width="100%" height="100%" rx={RADIUS.base} />
-        </ClipPath>
-        <LinearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor={color} />
-          <Stop offset="1" stopColor={COLORS.background} />
-        </LinearGradient>
-      </Defs>
-      <Rect width="100%" height="100%" rx={RADIUS.base} fill={`url(#${id})`} />
+    <View
+      style={[
+        StyleSheet.absoluteFill,
+        styles.surface,
+        edge === undefined
+          ? { backgroundColor: center }
+          : gradient(`radial-gradient(farthest-corner at 50% 100%, ${center}, ${edge})`),
+      ]}
+      pointerEvents="none"
+    >
       {isFinished ? (
         <Image
-          href={require("../../../../assets/images/competition/landscape.png")}
-          width="100%"
-          height="100%"
-          preserveAspectRatio="xMidYMid slice"
-          opacity={0.13}
-          clipPath={`url(#${id}-clip)`}
+          source={themeImage ?? LANDSCAPE_IMAGE}
+          contentFit="cover"
+          cachePolicy={THEME_IMAGE_CACHE_POLICY}
+          style={styles.landscape}
+          accessible={false}
         />
       ) : null}
-    </Svg>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  surface: { borderRadius: RADIUS.base, borderCurve: "continuous", overflow: "hidden" },
+  landscape: { position: "absolute", inset: 0, opacity: LANDSCAPE_OPACITY },
+});

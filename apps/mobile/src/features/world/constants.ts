@@ -9,7 +9,6 @@ export const PAGER_LAST_LABEL = "Fin";
 export const PAGER_MY_PAGE_LABEL = "Ma page";
 export const LEADERBOARD_TITLE = "Classement";
 export const LEADERBOARD_BACK_LABEL = "Retour à la compétition";
-export const LEADERBOARD_OPEN_LABEL = "Voir tout le classement";
 export const SESSION_LABEL = "Session";
 export const SESSION_END_LABEL = "Fin dans";
 export const SESSION_DAYS_LABEL = "j";
