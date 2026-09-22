@@ -9,7 +9,7 @@ import { NewButton } from "@/components/ui/new-button";
 import { Squircle } from "@/components/ui/squircle";
 import { useProfile } from "@/features/account/api";
 import { useAuthStore } from "@/features/account/auth-store";
-import { PORTRAIT_SIZE, ProfilePortrait } from "@/features/account/components/profile-portrait";
+import { ProfilePortrait } from "@/features/account/components/profile-portrait";
 import { PseudoSheet } from "@/features/account/components/pseudo-sheet";
 import {
   PROFILE_CLOSE_LABEL,
@@ -24,10 +24,9 @@ import { COLORS, CONTROL_ICON_SIZE, GUTTER, PRESSED, RADIUS, SPACE } from "@/the
 // The pseudo is the Competition name, so the Competition medal sits beside it.
 const MEDAL = require("../../../../assets/images/competition/medal.png");
 
-const PORTRAIT_OVERLAP = 37;
+const PORTRAIT_SIZE = 108;
+
 const CHIP_TINT = "14";
-const MEDAL_HEIGHT = CONTROL_ICON_SIZE;
-const MEDAL_WIDTH = 13;
 const CHIP_HEIGHT = TEXT.body.lineHeight + SPACE.xs * 2;
 
 export const ProfileHeader = () => {
@@ -64,15 +63,16 @@ export const ProfileHeader = () => {
               </>
             ) : null}
           </View>
+
+          <FastSquircleView style={styles.portrait}>
+            <ProfilePortrait
+              photoUrl={avatarUrlOf(user) ?? null}
+              initial={profileInitial(profile.data?.pseudo)}
+              isSignedOut={isSignedOut}
+            />
+          </FastSquircleView>
         </FastSquircleView>
 
-        <View style={styles.portrait}>
-          <ProfilePortrait
-            photoUrl={avatarUrlOf(user) ?? null}
-            initial={profileInitial(profile.data?.pseudo)}
-            isSignedOut={isSignedOut}
-          />
-        </View>
         <View style={styles.close}>
           <NewButton
             layout="hug"
@@ -126,8 +126,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: GUTTER,
   },
   card: {
-    marginTop: PORTRAIT_SIZE - PORTRAIT_OVERLAP,
-    paddingTop: PORTRAIT_OVERLAP + SPACE.xs,
+    marginTop: PORTRAIT_SIZE / 1.5,
+    paddingTop: PORTRAIT_SIZE / 2,
     paddingBottom: SPACE.md,
     paddingHorizontal: SPACE.lg,
     alignItems: "center",
@@ -156,15 +156,17 @@ const styles = StyleSheet.create({
     color: COLORS.ink,
   },
   medal: {
-    width: MEDAL_WIDTH,
-    height: MEDAL_HEIGHT,
+    width: SPACE.xl,
+    aspectRatio: 243 / 408,
   },
   portrait: {
     position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
+    top: -PORTRAIT_SIZE / 1.5,
+    width: PORTRAIT_SIZE,
+    aspectRatio: 1,
+    overflow: "hidden",
     alignItems: "center",
+    borderRadius: 32,
   },
   close: {
     position: "absolute",

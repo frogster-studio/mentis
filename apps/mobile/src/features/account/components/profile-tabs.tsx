@@ -59,8 +59,5 @@ export const ProfileTabs = () => {
 };
 
 const styles = StyleSheet.create({
-  shell: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
+  shell: { flex: 1, backgroundColor: COLORS.background },
 });
