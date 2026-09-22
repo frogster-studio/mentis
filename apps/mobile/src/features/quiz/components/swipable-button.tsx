@@ -11,7 +11,8 @@ import {
   Text,
   View,
 } from "react-native";
-import { MAX_CONTENT_WIDTH, useBottomChromeGap } from "@/components/ui/screen-container";
+import { useAppTabBarHeight } from "@/components/app-tab-bar";
+import { MAX_CONTENT_WIDTH } from "@/components/ui/screen-container";
 import { AnimatedChevrons } from "@/features/quiz/components/animated-chevrons";
 import { PICKER_START_LABEL, PICKER_SWIPE_LABEL } from "@/features/quiz/constants";
 import { useColorCrossFade } from "@/features/quiz/use-color-cross-fade";
@@ -29,13 +30,14 @@ const NATIVE_DRIVER = Platform.OS !== "web";
 const IS_WEB = Platform.OS === "web";
 
 export interface SwipableButtonProps {
-  // Nothing picked yet leaves the empty trough waiting.
+  // Nothing picked yet keeps the whole control away.
   color: string | null;
   start: () => void;
 }
 
 export const SwipableButton = ({ color, start }: SwipableButtonProps) => {
-  const bottomGap = useBottomChromeGap();
+  // The control floats over the tab bar, so it clears the bar before the screen edge.
+  const bottomGap = useAppTabBarHeight() + SPACE.sm;
   const fill = useColorCrossFade(color);
   const reveal = useFade(color !== null);
   const [innerWidth, setInnerWidth] = useState(0);
@@ -57,7 +59,10 @@ export const SwipableButton = ({ color, start }: SwipableButtonProps) => {
 
   return (
     <View style={[styles.overlay, { paddingBottom: bottomGap }]}>
-      <View style={styles.band}>
+      <Animated.View
+        style={[styles.band, { opacity: reveal }]}
+        pointerEvents={color ? "box-none" : "none"}
+      >
         <View style={styles.track}>
           {fill.base ? (
             <Animated.View
@@ -75,9 +80,8 @@ export const SwipableButton = ({ color, start }: SwipableButtonProps) => {
               ]}
             />
           ) : null}
-          <Animated.View
-            style={[styles.inner, { opacity: reveal }]}
-            pointerEvents={color ? "auto" : "none"}
+          <View
+            style={styles.inner}
             onLayout={(event) => setInnerWidth(event.nativeEvent.layout.width)}
           >
             <View style={[StyleSheet.absoluteFill, styles.chevronSlot]} pointerEvents="none">
@@ -98,9 +102,9 @@ export const SwipableButton = ({ color, start }: SwipableButtonProps) => {
                 {face}
               </Animated.View>
             )}
-          </Animated.View>
+          </View>
         </View>
-      </View>
+      </Animated.View>
     </View>
   );
 };

@@ -106,7 +106,7 @@ export const AppHeader = () => {
             )}
             <NewButton
               layout="hug"
-              shape="full"
+              shape="rounded"
               tone="default"
               disabled={false}
               pending={false}

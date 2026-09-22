@@ -12,7 +12,10 @@ export interface CategoryBadgeProps {
 
 export const CategoryBadge = ({ category, isSelected }: CategoryBadgeProps) => {
   return (
-    <SquircleView borderRadius={14} style={[styles.badge, isSelected && styles.selected]}>
+    <SquircleView
+      borderRadius={14}
+      style={[styles.badge, { backgroundColor: isSelected ? COLORS.face : category.color }]}
+    >
       <MaterialIcons
         name={iconNameOrFallback(category.icon)}
         size={CONTROL_ICON_SIZE}
