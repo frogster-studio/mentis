@@ -30,6 +30,7 @@ export const SquareAnswerFooter = ({
             label={choice}
             color={categoryColor}
             selected={selection === index}
+            oneIsSelected={selection !== null}
             onPress={() => onSelect(index)}
           />
         ))}
