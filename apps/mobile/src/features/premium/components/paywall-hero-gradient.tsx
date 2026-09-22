@@ -4,7 +4,7 @@ import { COLORS } from "@/theme/tokens";
 
 // The app has this one gradient, so its stops stay here rather than becoming roles.
 const GRADIENT_STOPS = [
-  { offset: "0", color: "#FFE798" },
+  { offset: "0", color: COLORS.yellow },
   { offset: "0.5", color: "#FFCC7B" },
   { offset: "1", color: COLORS.primary },
 ] as const;

@@ -6,6 +6,7 @@ export const COLORS = {
   ink: "#250313",
   inkMuted: "rgba(37, 3, 19, 0.6)",
   primary: "#FFB15E",
+  primaryGlow: "#FFF6D9",
   primarySunken: "#E09250",
   primaryPlaceholder: "rgba(160, 101, 62, 0.4)",
   quiet: "#F1DBC6",
@@ -17,7 +18,9 @@ export const COLORS = {
   danger: "#EF4444",
   scrim: "rgba(37, 3, 19, 0.4)",
   stroke: "rgba(37, 3, 19, 0.1)",
+  bordeau: "#652F48",
   clear: "transparent",
+  yellow: "#FFE798",
 } as const;
 
 export const SPACE = {
