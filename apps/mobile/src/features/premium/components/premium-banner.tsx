@@ -3,16 +3,15 @@ import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import FastSquircleView from "react-native-fast-squircle";
 import { LaurelBranch } from "@/features/premium/components/laurel-branch";
-import { PaywallHeroGradient } from "@/features/premium/components/paywall-hero-gradient";
 import { PREMIUM_ACTIVE_TITLE, PREMIUM_CTA_LABEL } from "@/features/premium/constants";
 import { TEXT } from "@/theme/text";
 import { COLORS, CONTROL_ICON_SIZE, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
+import { gradient } from "@/utils/gradient";
 
 const CROWN = require("../../../../assets/images/premium-crown.png");
 
 // The crest is measured off the mockup: the crown sits inside the wreath, not above it.
-const CROWN_WIDTH = 41;
-const CROWN_HEIGHT = 36;
+const CROWN_WIDTH = 110;
 const LAUREL_WIDTH = 34;
 const LAUREL_HEIGHT = 61;
 
@@ -30,7 +29,6 @@ export const PremiumBanner = ({ isPremium, onPress }: PremiumBannerProps) => {
       style={({ pressed }) => pressed && styles.pressed}
     >
       <FastSquircleView style={styles.banner}>
-        <PaywallHeroGradient />
         <View style={styles.crest}>
           <View style={styles.wreath}>
             <View style={styles.mirrored}>
@@ -62,6 +60,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACE.sm,
     borderRadius: RADIUS.base,
     overflow: "hidden",
+    ...gradient(`linear-gradient(to top, ${COLORS.yellow}, ${COLORS.primary})`),
   },
   crest: {
     alignItems: "center",
@@ -77,7 +76,7 @@ const styles = StyleSheet.create({
   },
   crownSlot: {
     position: "absolute",
-    top: 0,
+    top: -SPACE.lg,
     left: 0,
     right: 0,
     bottom: 0,
@@ -86,7 +85,7 @@ const styles = StyleSheet.create({
   },
   crown: {
     width: CROWN_WIDTH,
-    height: CROWN_HEIGHT,
+    aspectRatio: 252 / 159,
   },
   title: {
     ...TEXT.rowTitle,
