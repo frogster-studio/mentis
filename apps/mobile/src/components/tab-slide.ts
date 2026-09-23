@@ -14,8 +14,6 @@ export function useTabSlide(): Pick<
   const { width } = useWindowDimensions();
 
   return {
-    // Every tab stays mounted so the incoming one is already drawn when the slide starts.
-    lazy: false,
     transitionSpec: {
       animation: "timing",
       config: { duration: TAB_TRANSITION_MS, easing: TAB_TRANSITION_EASING },

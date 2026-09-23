@@ -7,6 +7,11 @@ import { isApiError } from "@/lib/api/client";
 
 const RETRIES = 3;
 
+// Every read moves on a Player action the app already invalidates, so a mount or a focus trusts it this long.
+export const STALE_TIME_MS = 5 * 60_000;
+// The catalog and the pseudo change at an editor's or the Player's own pace, never behind the app's back.
+export const LONG_STALE_TIME_MS = 60 * 60_000;
+
 // A 429 retry spends the same limiter bucket; a 401 session is unrecoverable — retry neither.
 function retry(failureCount: number, error: unknown): boolean {
   if (isApiError(error, "RATE_LIMITED") || isApiError(error, "UNAUTHENTICATED")) {
@@ -15,7 +20,9 @@ function retry(failureCount: number, error: unknown): boolean {
   return failureCount < RETRIES;
 }
 
-export const queryClient = new QueryClient({ defaultOptions: { queries: { retry } } });
+export const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry, staleTime: STALE_TIME_MS } },
+});
 
 // The one key root the offline persister dehydrates; everything else stays in memory.
 export const ACCOUNT_QUERY_ROOT = "account";

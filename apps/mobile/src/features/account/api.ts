@@ -2,7 +2,7 @@ import { appAccountStatsResponseSchema } from "@mentis/contracts/app";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { fetchProfile, setPseudo } from "@/features/account/requests";
 import { api } from "@/lib/api";
-import { ACCOUNT_QUERY_ROOT, queryClient } from "@/lib/query-client";
+import { ACCOUNT_QUERY_ROOT, LONG_STALE_TIME_MS, queryClient } from "@/lib/query-client";
 
 // Keyed by Player id so one Player's shelf never bleeds into another's; the wire ignores the id.
 export const accountKeys = {
@@ -26,6 +26,7 @@ export function useProfile(playerId: string | undefined) {
     queryKey: accountKeys.profile(playerId ?? ""),
     queryFn: () => fetchProfile(api),
     enabled: playerId !== undefined,
+    staleTime: LONG_STALE_TIME_MS,
   });
 }
 

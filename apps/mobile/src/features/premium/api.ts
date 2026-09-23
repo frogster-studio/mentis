@@ -16,6 +16,7 @@ export function usePremiumOffering(enabled: boolean) {
     queryKey: premiumKeys.offering,
     queryFn: async () => premiumPackageOf(await readOfferings()),
     enabled,
+    staleTime: 0,
   });
 }
 

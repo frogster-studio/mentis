@@ -5,10 +5,10 @@ import { FIRST_PAGE } from "@/features/world/pager";
 import { fetchLeaderboardPage } from "@/features/world/requests";
 import { api } from "@/lib/api";
 
-export function useLeaderboardPreview(page: number, myPseudo: string | null) {
+export function useLeaderboardPreview(page: number | null, myPseudo: string | null) {
   const leaderboard = useLeaderboardPage(page);
   const neighborPage =
-    leaderboard.data && !leaderboard.isPlaceholderData
+    page !== null && leaderboard.data && !leaderboard.isPlaceholderData
       ? previewNeighborPage(leaderboard.data, myPseudo)
       : null;
   const neighbor = useQuery({
@@ -22,7 +22,7 @@ export function useLeaderboardPreview(page: number, myPseudo: string | null) {
       : [];
   const current = leaderboard.data?.entries ?? [];
   const entries =
-    neighborPage !== null && neighborPage < page
+    neighborPage !== null && page !== null && neighborPage < page
       ? [...adjacent, ...current]
       : [...current, ...adjacent];
 

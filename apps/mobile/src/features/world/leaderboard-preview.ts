@@ -1,5 +1,8 @@
-import type { AppCompetitionLeaderboardPageResponse } from "@mentis/contracts/app";
-import { clampPage } from "./pager";
+import type {
+  AppCompetitionLeaderboardPageResponse,
+  AppCompetitionStandingResponse,
+} from "@mentis/contracts/app";
+import { clampPage, FIRST_PAGE } from "./pager";
 
 export function leaderboardPreview(
   entries: AppCompetitionLeaderboardPageResponse["entries"],
@@ -8,6 +11,16 @@ export function leaderboardPreview(
   const position = entries.findIndex((entry) => entry.pseudo === myPseudo);
   const start = Math.max(0, Math.min(position - 1, entries.length - 3));
   return entries.slice(start, start + 3);
+}
+
+// The preview opens on the Player's own page, so it waits for the Standing instead of guessing page 1.
+export function previewPage(
+  owner: string | undefined,
+  standing: { data: AppCompetitionStandingResponse | undefined; isError: boolean },
+): number | null {
+  if (owner === undefined) return FIRST_PAGE;
+  if (standing.data) return standing.data.page ?? FIRST_PAGE;
+  return standing.isError ? FIRST_PAGE : null;
 }
 
 export function previewNeighborPage(

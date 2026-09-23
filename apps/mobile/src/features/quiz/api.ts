@@ -1,6 +1,7 @@
 import { appQuestionDrawResponseSchema, appThemeListResponseSchema } from "@mentis/contracts/app";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { LONG_STALE_TIME_MS } from "@/lib/query-client";
 import type { Question, ThemeWithCount } from "@/types/quiz";
 
 export const quizKeys = {
@@ -14,7 +15,11 @@ function fetchThemes(): Promise<ThemeWithCount[]> {
 }
 
 export function useThemes() {
-  return useQuery({ queryKey: quizKeys.themes, queryFn: fetchThemes });
+  return useQuery({
+    queryKey: quizKeys.themes,
+    queryFn: fetchThemes,
+    staleTime: LONG_STALE_TIME_MS,
+  });
 }
 
 // Cache-only observer: decorates with the catalog the picker already fetched, never hits the wire.

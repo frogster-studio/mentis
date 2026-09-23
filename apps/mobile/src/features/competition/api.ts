@@ -50,7 +50,7 @@ export function useAttempt(
   });
 }
 
-// Re-read on every mount: the Paris midnight and every finalize move what the day still allows.
+// A finalize invalidates it; the Paris midnight lands with the next stale focus or foreground.
 export function useCompetitionDay(playerId: string | undefined) {
   return useQuery({
     queryKey: competitionKeys.day(playerId ?? ""),
@@ -59,7 +59,7 @@ export function useCompetitionDay(playerId: string | undefined) {
   });
 }
 
-// Re-read on every mount: another Account finalizing moves the rank without this phone doing a thing.
+// Other Accounts move the rank at any time, so it drifts for at most STALE_TIME_MS between reads.
 export function useStanding(playerId: string | undefined) {
   return useQuery({
     queryKey: competitionKeys.standing(playerId ?? ""),

@@ -28,7 +28,7 @@ import {
 import { usePremiumGate } from "@/features/premium/use-premium-gate";
 import { LeaderboardPreviewCard } from "@/features/world/components/leaderboard-preview-card";
 import { LEADERBOARD_ERROR } from "@/features/world/constants";
-import { FIRST_PAGE } from "@/features/world/pager";
+import { previewPage } from "@/features/world/leaderboard-preview";
 import { useLeaderboardPreview } from "@/features/world/use-leaderboard-preview";
 import { useSeasonFreshness } from "@/features/world/use-season-freshness";
 import { COLORS, GUTTER, SPACE } from "@/theme/tokens";
@@ -42,7 +42,7 @@ export const WorldScreen = () => {
   const profile = useProfile(owner);
   const standing = useStanding(owner);
   const myPseudo = profile.data?.pseudo ?? null;
-  const preview = useLeaderboardPreview(standing.data?.page ?? FIRST_PAGE, myPseudo);
+  const preview = useLeaderboardPreview(previewPage(owner, standing), myPseudo);
   const onScroll = useTabScroll();
   const gatePremium = usePremiumGate();
   const best = day.data ? bestAttempt(day.data.attempts) : undefined;
