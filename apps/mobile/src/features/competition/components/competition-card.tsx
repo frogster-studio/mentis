@@ -6,14 +6,14 @@ import { Card } from "@/components/ui/card";
 import type { IconName } from "@/components/ui/icon-name";
 import { NewButton } from "@/components/ui/new-button";
 import { CompetitionCardBackground } from "@/features/competition/components/competition-card-background";
-import { COMPETITION_MYSTERY, COMPETITION_STREAK_LABEL } from "@/features/competition/constants";
+import { COMPETITION_STREAK_LABEL } from "@/features/competition/constants";
 import { PremiumCrownStamp } from "@/features/premium/components/premium-crown-stamp";
 import { RESULTS_SCORE_MAX_LABEL } from "@/features/quiz/constants";
 import { TEXT } from "@/theme/text";
-import { COLORS, CONTROL_ICON_SIZE, RADIUS, SPACE } from "@/theme/tokens";
+import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
 
-const MYSTERY_CHOICE_IMAGE = require("../../../../assets/images/competition/mystery-choice.png");
 const FLAME_IMAGE = require("../../../../assets/images/competition/flame.png");
+const QUESTION_MARK_COMPETITION_IMAGE = require("../../../../assets/images/competition/question-mark.png");
 const CATEGORY_BADGE_SIZE = 36;
 
 export interface CompetitionCardProps {
@@ -55,53 +55,45 @@ export const CompetitionCard = ({
       >
         <View style={styles.content}>
           <Text style={styles.title}>{title}</Text>
+
           {teaser ? <Text style={styles.teaser}>{teaser}</Text> : null}
+
           <View style={styles.illustration} pointerEvents="none" accessible={false}>
             {score === null ? (
-              <View style={StyleSheet.absoluteFill}>
-                {Object.entries({
-                  topLeft: styles.choiceTopLeft,
-                  topRight: styles.choiceTopRight,
-                  bottomLeft: styles.choiceBottomLeft,
-                  bottomRight: styles.choiceBottomRight,
-                }).map(([key, position]) => (
-                  <Image
-                    key={key}
-                    source={MYSTERY_CHOICE_IMAGE}
-                    contentFit="contain"
-                    style={[styles.choice, position]}
-                    accessible={false}
-                  />
+              <View style={styles.placeholderPillsContainer}>
+                {[1, 2].map((index) => (
+                  <PlaceholderPillColumn key={index} position={index} />
                 ))}
               </View>
             ) : null}
-            <View>
-              <FastSquircleView
-                style={[
-                  styles.scoreCard,
-                  {
-                    borderColor: score === null ? COLORS.primaryPlaceholder : COLORS.stroke,
-                    backgroundColor: score === null ? COLORS.primaryPlaceholder : COLORS.scrim,
-                  },
-                ]}
-              >
-                {score === null ? (
-                  <Text style={styles.mystery}>{COMPETITION_MYSTERY}</Text>
-                ) : (
-                  <View style={styles.scoreRow}>
-                    <Text style={styles.score}>{score}</Text>
-                    <Text style={styles.scoreMax}>{RESULTS_SCORE_MAX_LABEL}</Text>
-                  </View>
-                )}
-              </FastSquircleView>
+
+            <FastSquircleView
+              style={[
+                styles.scoreCard,
+                score === null ? styles.questionMarkCard : styles.playAgainCard,
+              ]}
+            >
+              {score === null ? (
+                <Image
+                  source={QUESTION_MARK_COMPETITION_IMAGE}
+                  contentFit="contain"
+                  style={styles.questionMark}
+                />
+              ) : (
+                <View style={styles.scoreRow}>
+                  <Text style={styles.score}>{score}</Text>
+                  <Text style={styles.scoreMax}>{RESULTS_SCORE_MAX_LABEL}</Text>
+                </View>
+              )}
 
               {score !== null && categoryIcon !== undefined ? (
-                <View style={styles.categoryBadge}>
-                  <MaterialIcons name={categoryIcon} size={CONTROL_ICON_SIZE} color={COLORS.ink} />
-                </View>
+                <FastSquircleView style={styles.categoryBadge}>
+                  <MaterialIcons name={categoryIcon} size={18} color={COLORS.ink} />
+                </FastSquircleView>
               ) : null}
-            </View>
+            </FastSquircleView>
           </View>
+
           <View>
             <NewButton
               layout="block"
@@ -122,6 +114,7 @@ export const CompetitionCard = ({
           </View>
         </View>
       </Card>
+
       {showStreak ? (
         <View
           style={styles.streak}
@@ -143,6 +136,26 @@ export const CompetitionCard = ({
   );
 };
 
+const PlaceholderPillColumn = ({ position }: { position: number }) => {
+  const deg = position === 1 ? 1 : -1;
+
+  return (
+    <View style={{ gap: SPACE.lg }}>
+      <FastSquircleView
+        style={[styles.placeholderPill, { transform: [{ rotate: `${deg * -3}deg` }] }]}
+      >
+        <FastSquircleView style={styles.placeholderPillContent} />
+      </FastSquircleView>
+
+      <FastSquircleView
+        style={[styles.placeholderPill, { transform: [{ rotate: `${deg * 7}deg` }] }]}
+      >
+        <FastSquircleView style={styles.placeholderPillContent} />
+      </FastSquircleView>
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
   content: { paddingBottom: SPACE.md },
   title: {
@@ -155,9 +168,7 @@ const styles = StyleSheet.create({
   illustration: {
     marginTop: SPACE.md,
     alignItems: "center",
-    overflow: "hidden",
   },
-  choice: { position: "absolute", width: "34%", height: SPACE.xxl, opacity: 0.5 },
   choiceTopLeft: { left: "14%", top: SPACE.xs, transform: [{ rotate: "-4deg" }] },
   choiceTopRight: { right: "14%", top: SPACE.md, transform: [{ rotate: "5deg" }] },
   choiceBottomLeft: { left: 0, bottom: SPACE.md, transform: [{ rotate: "6deg" }] },
@@ -181,7 +192,7 @@ const styles = StyleSheet.create({
     right: -SPACE.md,
     width: CATEGORY_BADGE_SIZE,
     height: CATEGORY_BADGE_SIZE,
-    borderRadius: RADIUS.round,
+    borderRadius: RADIUS.sm,
     backgroundColor: COLORS.face,
     alignItems: "center",
     justifyContent: "center",
@@ -210,5 +221,43 @@ const styles = StyleSheet.create({
     top: -42,
     right: -40,
     transform: [{ rotate: "6deg" }],
+  },
+  questionMark: {
+    aspectRatio: 135 / 222,
+    width: 45,
+    marginBottom: -15,
+  },
+  playAgainCard: {
+    borderColor: COLORS.stroke,
+    backgroundColor: COLORS.scrim,
+  },
+  questionMarkCard: {
+    borderColor: "#CF8A50",
+    backgroundColor: "#B67F50",
+    aspectRatio: 2,
+    paddingTop: SPACE.lg,
+  },
+  placeholderPillsContainer: {
+    position: "absolute",
+    height: SPACE.xxl,
+    opacity: 0.5,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    left: 0,
+    right: 0,
+  },
+  placeholderPill: {
+    width: 110,
+    height: 36,
+    backgroundColor: `${COLORS.bordeau}35`,
+    padding: 3,
+    alignContent: "flex-start",
+    borderRadius: 11,
+  },
+  placeholderPillContent: {
+    height: 32,
+    width: 32,
+    backgroundColor: `${COLORS.face}70`,
+    borderRadius: 10,
   },
 });
