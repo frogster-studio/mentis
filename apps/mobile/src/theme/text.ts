@@ -18,7 +18,7 @@ export const TEXT = {
   rowTitle: { fontFamily: FACES.heading, fontSize: 25, lineHeight: 30, letterSpacing: -1 },
   screenTitle: { fontFamily: FACES.heading, fontSize: 22, lineHeight: 28 },
   question: { fontFamily: FACES.heading, fontSize: 30, lineHeight: 35, letterSpacing: -1.2 },
-  sectionTitle: { fontFamily: FACES.heading, fontSize: 35, letterSpacing: -1.4 },
+  sectionTitle: { fontFamily: FACES.heading, fontSize: 35 },
   display: { fontFamily: FACES.heading, fontSize: 50, lineHeight: 49 },
   profilePortraitInitial: { fontFamily: FACES.heading, fontSize: 48 },
   statValue: { fontFamily: FACES.emphasis, fontSize: 26, lineHeight: 32 },
