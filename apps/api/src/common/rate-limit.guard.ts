@@ -6,7 +6,7 @@ const WINDOW_MS = 60_000;
 
 type RateLimitTier = { name: string; limit: number };
 
-export const PUBLIC_TIER: RateLimitTier = { name: "public", limit: 60 };
+export const PUBLIC_TIER: RateLimitTier = { name: "public", limit: 300 };
 export const DRAW_TIER: RateLimitTier = { name: "draw", limit: 30 };
 export const AUTHENTICATED_TIER: RateLimitTier = { name: "authenticated", limit: 120 };
 
