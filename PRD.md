@@ -62,7 +62,7 @@ Goal: an Editor can write, edit and clear an Explanation on any Question from th
       "question-form.test.ts: a blank form and a stored null both open on an empty Explanation; an empty textarea sends null; editing the Explanation marks the form dirty",
       "No migration file added; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "admin",

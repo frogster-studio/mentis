@@ -31,6 +31,7 @@ const question = (readyToBePublished: boolean): Question => ({
   aliases: [],
   misspellings: [],
   wrongChoices: ["Sydney", "Melbourne", "Perth"],
+  explanation: null,
   readyToBePublished,
 });
 

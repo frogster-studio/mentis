@@ -16,6 +16,7 @@ const question = {
   aliases: ["canbera city"],
   misspellings: ["camberra"],
   wrongChoices: ["Sydney", "Melbourne", "Perth"],
+  explanation: "Canberra fut choisie pour départager Sydney et Melbourne.",
   readyToBePublished: false,
 };
 
@@ -41,6 +42,20 @@ describe("adminQuestionListResponseSchema", () => {
     expect(adminQuestionListResponseSchema.parse([bare])).toEqual([bare]);
   });
 
+  it("serves a Question with no Explanation", () => {
+    const bare = { ...question, explanation: null };
+    expect(adminQuestionListResponseSchema.parse([bare])).toEqual([bare]);
+  });
+
+  it.each([{ explanation: undefined }, { explanation: 12 }])(
+    "rejects a Question whose Explanation is %o",
+    (absent) => {
+      expect(adminQuestionListResponseSchema.safeParse([{ ...question, ...absent }]).success).toBe(
+        false,
+      );
+    },
+  );
+
   it("rejects a Question without its staging flag", () => {
     const { readyToBePublished: _dropped, ...unstaged } = question;
     expect(adminQuestionListResponseSchema.safeParse([unstaged]).success).toBe(false);
@@ -58,6 +73,7 @@ const write = {
   text: "Quelle est la capitale de l'Australie ?",
   answer: "Canberra",
   wrongChoices: ["Sydney", "Melbourne", "Perth"],
+  explanation: "Canberra fut choisie pour départager Sydney et Melbourne.",
   aliases: ["Canbera City"],
   misspellings: ["Camberra"],
 };
@@ -70,6 +86,24 @@ describe("adminQuestionWriteSchema", () => {
       aliases: ["canbera city"],
       misspellings: ["camberra"],
     });
+  });
+
+  it("trims the Explanation the Editor typed", () => {
+    const parsed = adminQuestionWriteSchema.parse({ ...write, explanation: "  Un aside.  " });
+    expect(parsed.explanation).toBe("Un aside.");
+  });
+
+  it.each([
+    ["an empty Explanation", ""],
+    ["a whitespace-only Explanation", "   "],
+    ["an explicitly absent Explanation", null],
+  ])("stores %s as null", (_case, explanation) => {
+    expect(adminQuestionWriteSchema.parse({ ...write, explanation }).explanation).toBeNull();
+  });
+
+  it("takes an Explanation of exactly 400 characters once trimmed", () => {
+    const explanation = `  ${"a".repeat(400)}  `;
+    expect(adminQuestionWriteSchema.parse({ ...write, explanation }).explanation).toHaveLength(400);
   });
 
   it("lowercases aliases and misspellings, dropping blanks and repeats", () => {
@@ -89,6 +123,9 @@ describe("adminQuestionWriteSchema", () => {
     ["a blank answer slot", { wrongChoices: ["Sydney", "Melbourne", " "] }],
     ["a wrong choice repeating the correct one", { wrongChoices: ["Sydney", "canberra", "Perth"] }],
     ["no Theme", { themeId: "les-simpson" }],
+    ["an Explanation of 401 characters once trimmed", { explanation: ` ${"a".repeat(401)} ` }],
+    // The PATCH rewrites the whole Question, so a missing key can never mean "leave it untouched".
+    ["no Explanation key at all", { explanation: undefined }],
   ])("refuses a Question with %s", (_case, incomplete) => {
     expect(adminQuestionWriteSchema.safeParse({ ...write, ...incomplete }).success).toBe(false);
   });

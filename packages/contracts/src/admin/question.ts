@@ -13,6 +13,7 @@ export const adminQuestionResponseSchema = z.object({
   aliases: z.array(z.string()),
   misspellings: z.array(z.string()),
   wrongChoices: z.array(z.string()),
+  explanation: z.string().nullable(),
   readyToBePublished: z.boolean(),
 });
 export type AdminQuestionResponse = z.infer<typeof adminQuestionResponseSchema>;
@@ -27,6 +28,17 @@ const authoredVariants = z
   .array(z.string().trim().toLowerCase().max(255))
   .transform((variants) => [...new Set(variants.filter((variant) => variant !== ""))]);
 
+const EXPLANATION_MAX_LENGTH = 400;
+
+// An aside completing the Canonical Answer, deleted by saving an empty textarea — hence null, never "".
+const authoredExplanation = z
+  .string()
+  .nullable()
+  .transform((explanation) => explanation?.trim() || null)
+  .refine((explanation) => (explanation?.length ?? 0) <= EXPLANATION_MAX_LENGTH, {
+    message: `An Explanation is at most ${EXPLANATION_MAX_LENGTH} characters`,
+  });
+
 // A Question is complete or refused: text, the designated correct answer, and three distinct wrong choices.
 export const adminQuestionWriteSchema = z
   .object({
@@ -34,6 +46,7 @@ export const adminQuestionWriteSchema = z
     text: z.string().trim().min(1),
     answer: authoredAnswer,
     wrongChoices: z.array(authoredAnswer).length(3),
+    explanation: authoredExplanation,
     aliases: authoredVariants,
     misspellings: authoredVariants,
   })

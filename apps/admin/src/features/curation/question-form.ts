@@ -10,6 +10,7 @@ export type QuestionFormState = {
   text: string;
   answers: string[];
   correctSlot: number;
+  explanation: string;
   aliases: string;
   misspellings: string;
 };
@@ -22,6 +23,7 @@ export function blankQuestionForm(themeId: string | null): QuestionFormState {
     text: "",
     answers: emptySlots(),
     correctSlot: 0,
+    explanation: "",
     aliases: "",
     misspellings: "",
   };
@@ -35,6 +37,7 @@ export function toQuestionForm(question: Question): QuestionFormState {
     text: question.text,
     answers: emptySlots().map((slot, index) => stored[index] ?? slot),
     correctSlot: 0,
+    explanation: question.explanation ?? "",
     aliases: formatChips(question.aliases),
     misspellings: formatChips(question.misspellings),
   };
@@ -47,6 +50,7 @@ export function questionPayloadOf(form: QuestionFormState): AdminQuestionWrite |
     text: form.text,
     answer: form.answers[form.correctSlot] ?? "",
     wrongChoices: form.answers.filter((_slot, index) => index !== form.correctSlot),
+    explanation: form.explanation,
     aliases: parseChips(form.aliases),
     misspellings: parseChips(form.misspellings),
   });
@@ -58,6 +62,7 @@ export function isQuestionFormDirty(form: QuestionFormState, saved: QuestionForm
     form.themeId !== saved.themeId ||
     form.text !== saved.text ||
     form.correctSlot !== saved.correctSlot ||
+    form.explanation !== saved.explanation ||
     form.aliases !== saved.aliases ||
     form.misspellings !== saved.misspellings ||
     form.answers.some((answer, index) => answer !== saved.answers[index])

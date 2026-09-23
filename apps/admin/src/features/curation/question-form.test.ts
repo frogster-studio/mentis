@@ -19,6 +19,7 @@ const question: Question = {
   aliases: ["canbera city"],
   misspellings: ["camberra"],
   wrongChoices: ["Sydney", "Melbourne", "Perth"],
+  explanation: "Canberra fut choisie pour départager Sydney et Melbourne.",
   readyToBePublished: true,
 };
 
@@ -27,6 +28,7 @@ const complete: QuestionFormState = {
   text: "Quelle est la capitale de l'Australie ?",
   answers: ["Sydney", "Canberra", "Melbourne", "Perth"],
   correctSlot: 1,
+  explanation: "Canberra fut choisie pour départager Sydney et Melbourne.",
   aliases: "Canbera City",
   misspellings: "CAMBERRA",
 };
@@ -38,6 +40,7 @@ describe("blankQuestionForm", () => {
       text: "",
       answers: ["", "", "", ""],
       correctSlot: 0,
+      explanation: "",
       aliases: "",
       misspellings: "",
     });
@@ -51,9 +54,14 @@ describe("toQuestionForm", () => {
       text: "Quelle est la capitale de l'Australie ?",
       answers: ["Canberra", "Sydney", "Melbourne", "Perth"],
       correctSlot: 0,
+      explanation: "Canberra fut choisie pour départager Sydney et Melbourne.",
       aliases: "canbera city",
       misspellings: "camberra",
     });
+  });
+
+  it("opens on an empty Explanation for a Question stored without one", () => {
+    expect(toQuestionForm({ ...question, explanation: null }).explanation).toBe("");
   });
 
   // The Catalog predates the dashboard, so a short stored Question still opens on four slots.
@@ -74,6 +82,7 @@ describe("questionPayloadOf", () => {
       text: "Quelle est la capitale de l'Australie ?",
       answer: "Canberra",
       wrongChoices: ["Sydney", "Melbourne", "Perth"],
+      explanation: "Canberra fut choisie pour départager Sydney et Melbourne.",
       aliases: ["canbera city"],
       misspellings: ["camberra"],
     });
@@ -85,9 +94,17 @@ describe("questionPayloadOf", () => {
       text: question.text,
       answer: "Canberra",
       wrongChoices: ["Sydney", "Melbourne", "Perth"],
+      explanation: "Canberra fut choisie pour départager Sydney et Melbourne.",
       aliases: ["canbera city"],
       misspellings: ["camberra"],
     });
+  });
+
+  it.each([
+    ["an untouched textarea", ""],
+    ["a textarea holding spaces alone", "   "],
+  ])("sends a null Explanation for %s", (_case, explanation) => {
+    expect(questionPayloadOf({ ...complete, explanation })?.explanation).toBeNull();
   });
 
   it.each([
@@ -95,6 +112,7 @@ describe("questionPayloadOf", () => {
     ["no text", { text: "  " }],
     ["an empty slot", { answers: ["Sydney", "Canberra", "Melbourne", ""] }],
     ["a repeated answer", { answers: ["Sydney", "Canberra", "canberra", "Perth"] }],
+    ["an Explanation of 401 characters", { explanation: "a".repeat(401) }],
     ["nothing typed at all", blankQuestionForm(SIMPSON)],
   ])("refuses to build a payload with %s", (_case, incomplete) => {
     expect(questionPayloadOf({ ...complete, ...incomplete })).toBeNull();
@@ -111,6 +129,8 @@ describe("isQuestionFormDirty", () => {
     ["the text changed", { text: "Autre chose ?" }],
     ["an answer slot changed", { answers: ["Sydney", "Canberra", "Melbourne", "Darwin"] }],
     ["the correct slot moved", { correctSlot: 2 }],
+    ["the Explanation was edited", { explanation: "Un autre aside." }],
+    ["the Explanation was cleared", { explanation: "" }],
     ["a chip was typed", { aliases: "Canbera City, ACT" }],
     ["a misspelling was typed", { misspellings: "" }],
   ])("goes dirty once %s", (_case, edit) => {

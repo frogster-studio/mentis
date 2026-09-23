@@ -90,6 +90,7 @@ export const QuestionForm = ({
         onSuccess: (stored) => {
           const asStored = {
             ...form,
+            explanation: stored.explanation ?? "",
             aliases: formatChips(stored.aliases),
             misspellings: formatChips(stored.misspellings),
           };
