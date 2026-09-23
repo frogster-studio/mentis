@@ -20,6 +20,10 @@ _Avoid_: published (of a Question), draft, ready (alone)
 The Editor-controlled switch that makes a Theme and its Ready Questions servable, off by default. Flipping it on is allowed only while the Theme holds at least 20 Ready Questions — a back-office rule the serving side never knows.
 _Avoid_: live, active, visible (of a Theme)
 
+**Explanation**:
+The Editor's optional aside that completes a Question's Canonical Answer once it is known — never a hint toward it. Absent is null; it never gates Ready To Be Published.
+_Avoid_: hint, clue, note, comment
+
 **Visible**:
 The derived state of a Category holding at least one Published Theme. Never stored, never toggled.
 _Avoid_: published (of a Category)
