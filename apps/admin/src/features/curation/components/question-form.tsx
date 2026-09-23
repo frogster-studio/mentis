@@ -1,5 +1,6 @@
 "use client";
 
+import { EXPLANATION_MAX_LENGTH } from "@mentis/contracts/admin";
 import { type FormEvent, useEffect, useState } from "react";
 
 import { useDeleteQuestion, useSaveQuestion } from "../api";
@@ -7,6 +8,7 @@ import { formatChips, parseChips } from "../chips";
 import {
   ANSWER_SLOTS,
   blankQuestionForm,
+  isExplanationOverLimit,
   isQuestionFormDirty,
   type QuestionFormState,
   questionPayloadOf,
@@ -51,6 +53,7 @@ export const QuestionForm = ({
 
   const isDirty = isQuestionFormDirty(form, saved);
   const payload = questionPayloadOf(form);
+  const isExplanationTooLong = isExplanationOverLimit(form.explanation);
   const floorBlocker =
     question === undefined
       ? null
@@ -90,6 +93,7 @@ export const QuestionForm = ({
         onSuccess: (stored) => {
           const asStored = {
             ...form,
+            explanation: stored.explanation ?? "",
             aliases: formatChips(stored.aliases),
             misspellings: formatChips(stored.misspellings),
           };
@@ -170,6 +174,22 @@ export const QuestionForm = ({
         </div>
       </Field>
 
+      <Field label="Explanation">
+        <textarea
+          value={form.explanation}
+          onChange={(event) => edit({ explanation: event.target.value })}
+          rows={3}
+          className={`${CONTROL} resize-y`}
+        />
+        <p
+          className={`mt-1 text-right text-xs ${
+            isExplanationTooLong ? "text-red-600" : "text-zinc-500"
+          }`}
+        >
+          {form.explanation.length}/{EXPLANATION_MAX_LENGTH}
+        </p>
+      </Field>
+
       <Field label="Aliases">
         <input
           type="text"
@@ -211,7 +231,10 @@ export const QuestionForm = ({
       ) : null}
 
       <div className="flex items-center gap-3">
-        <TonalButton type="submit" isDisabled={!isDirty || payload === null || isBusy}>
+        <TonalButton
+          type="submit"
+          isDisabled={!isDirty || payload === null || isExplanationTooLong || isBusy}
+        >
           {question === undefined ? "Create Question" : "Save changes"}
         </TonalButton>
         {question ? (

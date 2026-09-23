@@ -99,12 +99,17 @@ const question = (
     aliases: [],
     misspellings: [],
     wrongChoices: ["1", "2", "3"],
+    explanation: null,
     readyToBePublished,
     createdAt: new Date(createdAt),
   });
 
+const STORED_EXPLANATION = "Canberra fut choisie pour départager Sydney et Melbourne.";
+
 const storedQuestions = [
-  question(CAPITALE, SIMPSON, true, "2026-08-06T10:00:00.000Z"),
+  Object.assign(question(CAPITALE, SIMPSON, true, "2026-08-06T10:00:00.000Z"), {
+    explanation: STORED_EXPLANATION,
+  }),
   question(DRAPEAU, SIMPSON, true, "2026-08-09T10:00:00.000Z"),
   question(MONNAIE, SIMPSON, false, "2026-08-07T10:00:00.000Z"),
   question(BROUILLON_QUESTION, BROUILLON, false, "2026-08-23T10:00:00.000Z"),
@@ -278,6 +283,7 @@ const AUTHORED_QUESTION = {
   text: "Quelle est la capitale de l'Australie ?",
   answer: "Canberra",
   wrongChoices: ["Sydney", "Melbourne", "Perth"],
+  explanation: `  ${STORED_EXPLANATION}  `,
   aliases: ["Canbera City"],
   misspellings: ["Camberra"],
 };
@@ -467,8 +473,10 @@ describe("admin curation routes e2e", () => {
       aliases: [],
       misspellings: [],
       wrongChoices: ["1", "2", "3"],
+      explanation: null,
       readyToBePublished: false,
     });
+    expect(body[2]).toMatchObject({ id: CAPITALE, explanation: STORED_EXPLANATION });
   });
 
   it.each(["", "?themeId=", "?themeId=les-simpson"])(
@@ -502,6 +510,7 @@ describe("admin curation routes e2e", () => {
       text: "Quelle est la capitale de l'Australie ?",
       answer: "Canberra",
       wrongChoices: ["Sydney", "Melbourne", "Perth"],
+      explanation: STORED_EXPLANATION,
       aliases: ["canbera city"],
       misspellings: ["camberra"],
       readyToBePublished: false,
@@ -525,6 +534,7 @@ describe("admin curation routes e2e", () => {
     ["no designated correct answer", { answer: "" }],
     ["three answers only", { wrongChoices: ["Sydney", "Melbourne"] }],
     ["a wrong choice repeating the correct one", { wrongChoices: ["Sydney", "canberra", "Perth"] }],
+    ["an Explanation of 401 characters", { explanation: "a".repeat(401) }],
   ])("POST /admin/questions with %s → 400 VALIDATION_FAILED", async (_case, incomplete) => {
     const response = await write(
       { method: "POST", path: "/admin/questions", body: { ...AUTHORED_QUESTION, ...incomplete } },
@@ -545,10 +555,25 @@ describe("admin curation routes e2e", () => {
       text: "Quelle est la capitale de l'Australie ?",
       answer: "Canberra",
       wrongChoices: ["Sydney", "Melbourne", "Perth"],
+      explanation: STORED_EXPLANATION,
       aliases: ["canbera city"],
       misspellings: ["camberra"],
       readyToBePublished: true,
     });
+  });
+
+  it("PATCH /admin/questions/:id with a null Explanation clears the stored one", async () => {
+    const response = await write(
+      {
+        method: "PATCH",
+        path: `/admin/questions/${CAPITALE}`,
+        body: { ...AUTHORED_QUESTION, explanation: null },
+      },
+      editorToken,
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ id: CAPITALE, explanation: null });
   });
 
   it("DELETE /admin/questions/:id drops it from its Theme's column", async () => {
@@ -890,6 +915,7 @@ describe("admin curation routes e2e", () => {
       aliases: [],
       misspellings: [],
       wrongChoices: ["1", "2", "3"],
+      explanation: STORED_EXPLANATION,
       readyToBePublished: false,
     });
   });

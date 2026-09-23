@@ -1,4 +1,8 @@
-import { type AdminQuestionWrite, adminQuestionWriteSchema } from "@mentis/contracts/admin";
+import {
+  type AdminQuestionWrite,
+  adminQuestionWriteSchema,
+  EXPLANATION_MAX_LENGTH,
+} from "@mentis/contracts/admin";
 
 import { formatChips, parseChips } from "./chips";
 import type { Question } from "./types";
@@ -10,6 +14,7 @@ export type QuestionFormState = {
   text: string;
   answers: string[];
   correctSlot: number;
+  explanation: string;
   aliases: string;
   misspellings: string;
 };
@@ -22,6 +27,7 @@ export function blankQuestionForm(themeId: string | null): QuestionFormState {
     text: "",
     answers: emptySlots(),
     correctSlot: 0,
+    explanation: "",
     aliases: "",
     misspellings: "",
   };
@@ -35,6 +41,7 @@ export function toQuestionForm(question: Question): QuestionFormState {
     text: question.text,
     answers: emptySlots().map((slot, index) => stored[index] ?? slot),
     correctSlot: 0,
+    explanation: question.explanation ?? "",
     aliases: formatChips(question.aliases),
     misspellings: formatChips(question.misspellings),
   };
@@ -47,10 +54,16 @@ export function questionPayloadOf(form: QuestionFormState): AdminQuestionWrite |
     text: form.text,
     answer: form.answers[form.correctSlot] ?? "",
     wrongChoices: form.answers.filter((_slot, index) => index !== form.correctSlot),
+    explanation: form.explanation,
     aliases: parseChips(form.aliases),
     misspellings: parseChips(form.misspellings),
   });
   return parsed.success ? parsed.data : null;
+}
+
+// The counter measures what the Editor sees, so trailing spaces the contract would trim still count.
+export function isExplanationOverLimit(explanation: string): boolean {
+  return explanation.length > EXPLANATION_MAX_LENGTH;
 }
 
 export function isQuestionFormDirty(form: QuestionFormState, saved: QuestionFormState): boolean {
@@ -58,6 +71,7 @@ export function isQuestionFormDirty(form: QuestionFormState, saved: QuestionForm
     form.themeId !== saved.themeId ||
     form.text !== saved.text ||
     form.correctSlot !== saved.correctSlot ||
+    form.explanation !== saved.explanation ||
     form.aliases !== saved.aliases ||
     form.misspellings !== saved.misspellings ||
     form.answers.some((answer, index) => answer !== saved.answers[index])
