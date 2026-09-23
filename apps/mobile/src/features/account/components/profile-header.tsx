@@ -19,7 +19,7 @@ import {
 import { useSignInStore } from "@/features/account/sign-in-store";
 import { avatarUrlOf, fullNameOf } from "@/features/account/user-metadata";
 import { TEXT } from "@/theme/text";
-import { COLORS, CONTROL_ICON_SIZE, GUTTER, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
+import { COLORS, GUTTER, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
 
 // The pseudo is the Competition name, so the Competition medal sits beside it.
 const MEDAL = require("../../../../assets/images/competition/medal.png");
