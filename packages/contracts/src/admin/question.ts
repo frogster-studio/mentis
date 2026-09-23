@@ -28,7 +28,7 @@ const authoredVariants = z
   .array(z.string().trim().toLowerCase().max(255))
   .transform((variants) => [...new Set(variants.filter((variant) => variant !== ""))]);
 
-const EXPLANATION_MAX_LENGTH = 400;
+export const EXPLANATION_MAX_LENGTH = 400;
 
 // An aside completing the Canonical Answer, deleted by saving an empty textarea — hence null, never "".
 const authoredExplanation = z

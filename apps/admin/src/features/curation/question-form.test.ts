@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   blankQuestionForm,
+  isExplanationOverLimit,
   isQuestionFormDirty,
   type QuestionFormState,
   questionPayloadOf,
@@ -116,6 +117,17 @@ describe("questionPayloadOf", () => {
     ["nothing typed at all", blankQuestionForm(SIMPSON)],
   ])("refuses to build a payload with %s", (_case, incomplete) => {
     expect(questionPayloadOf({ ...complete, ...incomplete })).toBeNull();
+  });
+});
+
+describe("isExplanationOverLimit", () => {
+  it.each([
+    ["an untouched textarea", "", false],
+    ["exactly 400 characters", "a".repeat(400), false],
+    ["401 characters", "a".repeat(401), true],
+    ["399 characters followed by two spaces", `${"a".repeat(399)}  `, true],
+  ])("reads %s as %s", (_case, explanation, isOver) => {
+    expect(isExplanationOverLimit(explanation)).toBe(isOver);
   });
 });
 

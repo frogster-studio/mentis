@@ -74,7 +74,7 @@ Goal: an Editor can write, edit and clear an Explanation on any Question from th
       "After a save the textarea shows the stored text; clearing it and saving stores null",
       "The over-limit rule is a pure function covered in question-form.test.ts; bun run check green"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```

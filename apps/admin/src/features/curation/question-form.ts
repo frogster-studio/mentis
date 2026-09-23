@@ -1,4 +1,8 @@
-import { type AdminQuestionWrite, adminQuestionWriteSchema } from "@mentis/contracts/admin";
+import {
+  type AdminQuestionWrite,
+  adminQuestionWriteSchema,
+  EXPLANATION_MAX_LENGTH,
+} from "@mentis/contracts/admin";
 
 import { formatChips, parseChips } from "./chips";
 import type { Question } from "./types";
@@ -55,6 +59,11 @@ export function questionPayloadOf(form: QuestionFormState): AdminQuestionWrite |
     misspellings: parseChips(form.misspellings),
   });
   return parsed.success ? parsed.data : null;
+}
+
+// The counter measures what the Editor sees, so trailing spaces the contract would trim still count.
+export function isExplanationOverLimit(explanation: string): boolean {
+  return explanation.length > EXPLANATION_MAX_LENGTH;
 }
 
 export function isQuestionFormDirty(form: QuestionFormState, saved: QuestionFormState): boolean {
