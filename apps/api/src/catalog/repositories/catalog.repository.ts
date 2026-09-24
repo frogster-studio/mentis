@@ -46,6 +46,7 @@ export class CatalogRepository {
       .addSelect("category.id", "categoryId")
       .addSelect("category.name", "categoryName")
       .addSelect("category.color", "categoryColor")
+      .addSelect("category.secondaryColor", "categorySecondaryColor")
       .addSelect("category.icon", "categoryIcon")
       .addSelect("count(question.id)", "questionCount")
       .where("theme.published = true")
@@ -55,6 +56,7 @@ export class CatalogRepository {
       .addGroupBy("category.id")
       .addGroupBy("category.name")
       .addGroupBy("category.color")
+      .addGroupBy("category.secondaryColor")
       .addGroupBy("category.icon")
       .orderBy("theme.name")
       .getRawMany<{
@@ -64,6 +66,7 @@ export class CatalogRepository {
         categoryId: string;
         categoryName: string;
         categoryColor: string;
+        categorySecondaryColor: string;
         categoryIcon: string;
         questionCount: string;
       }>();
@@ -76,6 +79,7 @@ export class CatalogRepository {
         id: row.categoryId,
         name: row.categoryName,
         color: row.categoryColor,
+        secondaryColor: row.categorySecondaryColor,
         icon: row.categoryIcon,
       },
     }));
@@ -98,6 +102,7 @@ export class CatalogRepository {
         id: category.id,
         name: category.name,
         color: category.color,
+        secondaryColor: category.secondaryColor,
         icon: category.icon,
       },
     };

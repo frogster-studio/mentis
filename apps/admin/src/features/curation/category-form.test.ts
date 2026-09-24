@@ -13,6 +13,7 @@ const category = {
   id: "3f1d0d3a-0000-4000-8000-000000000001",
   name: "Histoire",
   color: "#6d4c41",
+  secondaryColor: "#fff6e2",
   icon: "history-edu",
 };
 
@@ -21,12 +22,19 @@ describe("toCategoryForm", () => {
     expect(toCategoryForm(category)).toEqual({
       name: "Histoire",
       color: "#6d4c41",
+      secondaryColor: "#fff6e2",
       icon: "history-edu",
     });
   });
 
   it("lowercases a hex the app would still paint", () => {
     expect(toCategoryForm({ ...category, color: "#6D4C41" }).color).toBe("#6d4c41");
+  });
+
+  it("lowercases the secondary color the same as the color", () => {
+    expect(toCategoryForm({ ...category, secondaryColor: "#FFF6E2" }).secondaryColor).toBe(
+      "#fff6e2",
+    );
   });
 
   it("keeps a color it cannot serve rather than substituting one", () => {
@@ -44,11 +52,27 @@ describe("isServableColor", () => {
   });
 });
 
+describe("blankCategoryForm", () => {
+  it("starts a new Category on white, the same default the column backfilled", () => {
+    expect(blankCategoryForm().secondaryColor).toBe("#ffffff");
+  });
+});
+
 describe("categoryPayloadOf", () => {
-  it("sends the trimmed presentation once name, color and icon are there", () => {
+  it("sends the trimmed presentation once name, both colors and icon are there", () => {
     expect(
-      categoryPayloadOf({ name: "  Histoire  ", color: "#6d4c41", icon: "history-edu" }),
-    ).toEqual({ name: "Histoire", color: "#6d4c41", icon: "history-edu" });
+      categoryPayloadOf({
+        name: "  Histoire  ",
+        color: "#6d4c41",
+        secondaryColor: "#fff6e2",
+        icon: "history-edu",
+      }),
+    ).toEqual({
+      name: "Histoire",
+      color: "#6d4c41",
+      secondaryColor: "#fff6e2",
+      icon: "history-edu",
+    });
   });
 
   it("refuses a blank form", () => {
@@ -62,6 +86,10 @@ describe("categoryPayloadOf", () => {
   it("refuses a color the app could not paint", () => {
     expect(categoryPayloadOf({ ...category, color: "#6D4C41" })).toBeNull();
   });
+
+  it("refuses a secondary color the app could not paint", () => {
+    expect(categoryPayloadOf({ ...category, secondaryColor: "#FFF6E2" })).toBeNull();
+  });
 });
 
 describe("isCategoryFormDirty", () => {
@@ -69,6 +97,7 @@ describe("isCategoryFormDirty", () => {
     const saved = toCategoryForm(category);
     expect(isCategoryFormDirty({ ...saved }, saved)).toBe(false);
     expect(isCategoryFormDirty({ ...saved, icon: "movie" }, saved)).toBe(true);
+    expect(isCategoryFormDirty({ ...saved, secondaryColor: "#e0f2f1" }, saved)).toBe(true);
   });
 });
 

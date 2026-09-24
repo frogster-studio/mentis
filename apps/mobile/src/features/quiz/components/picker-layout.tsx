@@ -37,6 +37,7 @@ export const PickerLayout = () => {
         categoryId: selected.category.id,
         categoryName: selected.category.name,
         categoryColor: selected.category.color,
+        categorySecondaryColor: selected.category.secondaryColor,
         categoryIcon: selected.category.icon,
       },
     });

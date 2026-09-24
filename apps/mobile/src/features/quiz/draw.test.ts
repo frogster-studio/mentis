@@ -9,7 +9,13 @@ function theme(id: string, questionCount = 20): ThemeWithCount {
     name: `Thème ${id}`,
     imageUrl: `https://cdn.example.com/${id}.webp`,
     questionCount,
-    category: { id: "nature", name: "Nature", color: "#2e7d32", icon: "park" },
+    category: {
+      id: "nature",
+      name: "Nature",
+      color: "#2e7d32",
+      secondaryColor: "#e8f5e9",
+      icon: "park",
+    },
   };
 }
 

@@ -4,6 +4,7 @@ export const appCategorySchema = z.object({
   id: z.string(),
   name: z.string(),
   color: z.string().regex(/^#[0-9a-f]{6}$/),
+  secondaryColor: z.string().regex(/^#[0-9a-f]{6}$/),
   icon: z.string().min(1),
 });
 

@@ -24,7 +24,13 @@ const ISSUED: AppCompetitionAttemptResponse = {
   themeId: "histoire",
   themeName: "Histoire",
   imageUrl: "https://stub.supabase.co/storage/v1/object/public/theme-images/histoire.webp",
-  category: { id: "culture", name: "Culture", color: "#6a1b9a", icon: "menu-book" },
+  category: {
+    id: "culture",
+    name: "Culture",
+    color: "#6a1b9a",
+    secondaryColor: "#f3e5f5",
+    icon: "menu-book",
+  },
   questions: Array.from({ length: 10 }, (_, index) => ({
     id: `q${index + 1}`,
     text: `Question ${index + 1} ?`,

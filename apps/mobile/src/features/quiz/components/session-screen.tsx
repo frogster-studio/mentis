@@ -29,16 +29,25 @@ import { usePlayLoop } from "@/features/quiz/use-play-loop";
 import { useThemeReveal } from "@/features/quiz/use-theme-reveal";
 
 export const SessionScreen = () => {
-  const { themeId, name, imageUrl, categoryId, categoryName, categoryColor, categoryIcon } =
-    useLocalSearchParams<{
-      themeId: string;
-      name: string;
-      imageUrl: string;
-      categoryId: string;
-      categoryName: string;
-      categoryColor: string;
-      categoryIcon: string;
-    }>();
+  const {
+    themeId,
+    name,
+    imageUrl,
+    categoryId,
+    categoryName,
+    categoryColor,
+    categorySecondaryColor,
+    categoryIcon,
+  } = useLocalSearchParams<{
+    themeId: string;
+    name: string;
+    imageUrl: string;
+    categoryId: string;
+    categoryName: string;
+    categoryColor: string;
+    categorySecondaryColor: string;
+    categoryIcon: string;
+  }>();
   const router = useRouter();
   const { data: questions, isError, isFetching, refetch } = useSessionQuestions(themeId);
 
@@ -115,6 +124,7 @@ export const SessionScreen = () => {
           id: categoryId,
           name: categoryName,
           color: categoryColor,
+          secondaryColor: categorySecondaryColor,
           icon: categoryIcon,
         }}
         secondsLeft={secondsLeft}

@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { appCategorySchema, appThemeListResponseSchema } from "./theme";
 
-const category = { id: "nature", name: "Nature", color: "#2e7d32", icon: "park" };
+const category = {
+  id: "nature",
+  name: "Nature",
+  color: "#2e7d32",
+  secondaryColor: "#e8f5e9",
+  icon: "park",
+};
 
 const theme = {
   id: "chocolats",
@@ -22,6 +28,18 @@ describe("appCategorySchema", () => {
       expect(appCategorySchema.safeParse({ ...category, color }).success).toBe(false);
     },
   );
+
+  it.each(["#E8F5E9", "#e8f5e", "e8f5e9", "mintcream", ""])(
+    "rejects the secondary color %s",
+    (secondaryColor) => {
+      expect(appCategorySchema.safeParse({ ...category, secondaryColor }).success).toBe(false);
+    },
+  );
+
+  it("rejects a Category whose secondary color never travelled", () => {
+    const { secondaryColor: _dropped, ...withoutSecondaryColor } = category;
+    expect(appCategorySchema.safeParse(withoutSecondaryColor).success).toBe(false);
+  });
 
   it("rejects a blank icon", () => {
     expect(appCategorySchema.safeParse({ ...category, icon: "" }).success).toBe(false);

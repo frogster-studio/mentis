@@ -22,7 +22,13 @@ const question = (index: number, overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-const CATEGORY = { id: "nature", name: "Nature", color: "#2e7d32", icon: "park" };
+const CATEGORY = {
+  id: "nature",
+  name: "Nature",
+  color: "#2e7d32",
+  secondaryColor: "#e8f5e9",
+  icon: "park",
+};
 const IMAGE_URL = "https://cdn.example.com/storage/v1/object/public/theme-images/geo.webp";
 
 const attempt = (overrides: Record<string, unknown> = {}) => ({

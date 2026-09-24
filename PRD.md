@@ -82,7 +82,9 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Category), [apps/a
 
 ### Out of scope
 
-- Any mobile screen rendering `secondaryColor`.
+- Any mobile screen rendering `secondaryColor`. The phone still carries it: the session route's
+  params thread `categorySecondaryColor` beside `categoryColor`, so the Category reaching
+  `ThemeReveal` is whole. No screen paints it.
 - Renaming `color`.
 - A custom tooltip.
 - Keyboard navigation inside the grid.
@@ -116,7 +118,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Category), [apps/a
       "Every fixture across api, admin and mobile that builds a Category carries a secondaryColor",
       "bun run check is green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "admin",

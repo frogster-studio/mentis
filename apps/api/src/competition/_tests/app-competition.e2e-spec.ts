@@ -101,7 +101,13 @@ const JUDGED_QUESTIONS: DrawnQuestion[] = [
 const JUDGED_IDS = JUDGED_QUESTIONS.map((question) => question.id);
 const JUDGED_ATTEMPT = attemptId(20);
 
-const CATEGORY = { id: "nature", name: "Nature", color: "#2e7d32", icon: "park" };
+const CATEGORY = {
+  id: "nature",
+  name: "Nature",
+  color: "#2e7d32",
+  secondaryColor: "#e8f5e9",
+  icon: "park",
+};
 
 const themeRow = (name: string) => ({
   id: name.toLowerCase(),
