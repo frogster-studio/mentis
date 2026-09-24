@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
     color: COLORS.ink,
   },
   subtitleSlot: {
-    height: TEXT.caption.lineHeight,
+    height: TEXT.captionStrong.lineHeight,
     marginTop: SPACE.sm,
   },
   subtitle: {

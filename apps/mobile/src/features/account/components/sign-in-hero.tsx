@@ -8,6 +8,7 @@ import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
 
 const HERO = require("../../../../assets/images/sign-in-hero.jpg");
 const MENTIS_WORDMARK = require("../../../../assets/images/sign-in/mentis-wordmark.svg");
+const PILL_BADGE_SHADE_ALPHA = "1A";
 
 const SCATTERED_PILLS = [
   { icon: "palette", left: "66%", top: "43%", rotate: "-4.1deg", color: COLORS.danger },
@@ -48,7 +49,12 @@ export const SignInHero = () => {
             { left: pill.left, top: pill.top, transform: [{ rotate: pill.rotate }] },
           ]}
         >
-          <CategoryPill icon={pill.icon} color={pill.color} label={null} />
+          <CategoryPill
+            icon={pill.icon}
+            color={pill.color}
+            iconBg={`${COLORS.ink}${PILL_BADGE_SHADE_ALPHA}`}
+            label={null}
+          />
         </View>
       ))}
       <View style={styles.wordmarkSlot}></View>

@@ -34,7 +34,7 @@ const TAB_PATHS: readonly string[] = [HOME_PATH, WORLD_PATH];
 
 // Two lines reserve the title before its first layout measurement.
 const TITLE_LINES = 2;
-const TITLE_SLOT_HEIGHT = TEXT.display.lineHeight * TITLE_LINES;
+const TITLE_SLOT_HEIGHT = 40 * TITLE_LINES;
 const TITLE_HALF_HEIGHT = HEADER_DIVIDER_HEIGHT + SPACE.xxl + TITLE_SLOT_HEIGHT + SPACE.lg;
 
 export function useAppHeaderHeight(path: string) {
@@ -229,11 +229,9 @@ const styles = StyleSheet.create({
   titleSlot: {
     marginTop: SPACE.xxl,
   },
-  // The titles are stacked on one baseline so the cross-fade swaps them in place.
   title: {
     ...TEXT.display,
     color: COLORS.ink,
-    position: "absolute",
     left: SPACE.lg,
     right: SPACE.lg,
     bottom: 0,

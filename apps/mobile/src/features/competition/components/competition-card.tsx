@@ -5,14 +5,13 @@ import FastSquircleView from "react-native-fast-squircle";
 import { Card } from "@/components/ui/card";
 import type { IconName } from "@/components/ui/icon-name";
 import { NewButton } from "@/components/ui/new-button";
+import { StreakBadge } from "@/features/account/components/streak-badge";
 import { CompetitionCardBackground } from "@/features/competition/components/competition-card-background";
-import { COMPETITION_STREAK_LABEL } from "@/features/competition/constants";
 import { PremiumCrownStamp } from "@/features/premium/components/premium-crown-stamp";
 import { RESULTS_SCORE_MAX_LABEL } from "@/features/quiz/constants";
 import { TEXT } from "@/theme/text";
 import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
 
-const FLAME_IMAGE = require("../../../../assets/images/competition/flame.png");
 const QUESTION_MARK_COMPETITION_IMAGE = require("../../../../assets/images/competition/question-mark.png");
 const PLACEHOLDER_PILL_IMAGE = require("../../../../assets/images/competition/placeholder-pill.png");
 const CATEGORY_BADGE_SIZE = 36;
@@ -116,23 +115,7 @@ export const CompetitionCard = ({
         </View>
       </Card>
 
-      {showStreak ? (
-        <View
-          style={styles.streak}
-          pointerEvents="none"
-          accessibilityLabel={COMPETITION_STREAK_LABEL}
-        >
-          <FastSquircleView style={styles.streakBadge}>
-            <Text style={styles.streakNumber}>100</Text>
-          </FastSquircleView>
-          <Image
-            source={FLAME_IMAGE}
-            contentFit="contain"
-            style={styles.flame}
-            accessible={false}
-          />
-        </View>
-      ) : null}
+      {showStreak && <StreakBadge streak={45} />}
     </View>
   );
 };
@@ -200,30 +183,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-
-  streak: { position: "absolute", right: SPACE.md, top: SPACE.sm },
-  streakBadge: {
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.scrim,
-    borderRadius: RADIUS.sm,
-    height: 42,
-    minWidth: 42,
-    paddingHorizontal: SPACE.sm,
-  },
   premiumContainer: {
     position: "absolute",
     top: -SPACE.xl,
     right: -SPACE.sm,
-  },
-  streakNumber: { ...TEXT.statValue, color: COLORS.face, transform: [{ rotate: "-6deg" }] },
-  flame: {
-    position: "absolute",
-    aspectRatio: 219 / 249,
-    height: "200%",
-    top: -42,
-    right: -40,
-    transform: [{ rotate: "6deg" }],
   },
   questionMark: {
     aspectRatio: 135 / 222,
