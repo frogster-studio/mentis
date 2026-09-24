@@ -148,7 +148,7 @@ export const CategoryForm = ({
       </div>
 
       <Field label="Icon">
-        <IconField value={form.icon} onChange={(icon) => edit({ icon })} />
+        <IconField value={form.icon} color={form.color} onChange={(icon) => edit({ icon })} />
       </Field>
 
       {category ? (

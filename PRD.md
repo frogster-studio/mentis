@@ -157,7 +157,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Category), [apps/a
       "Picking a tile sets the field value; zero matches shows no tiles and the « No MaterialIcons glyph answers to that name. » hint",
       "bun run check is green"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```

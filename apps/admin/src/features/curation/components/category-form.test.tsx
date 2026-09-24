@@ -4,7 +4,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { sendToApi } from "@/lib/api/client";
-import { iconGlyph } from "../icons";
+import { iconGlyph, suggestIcons } from "../icons";
 import type { Category } from "../types";
 import { CategoryForm } from "./category-form";
 
@@ -37,6 +37,8 @@ const fieldBody = (label: string) =>
 const chip = () => fieldBody("Preview").firstElementChild as HTMLElement;
 const chipBadge = () => chip().firstElementChild as HTMLElement;
 const chipName = () => chip().children[1] as HTMLElement | undefined;
+const tiles = () => Array.from(container.querySelectorAll("ul button"));
+const openIconGrid = () => act(async () => labelled("Icon").click());
 
 // React reads the input through its own value tracker, so a raw assignment would look like no change.
 const nativeValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set as (
@@ -173,5 +175,48 @@ describe("editing the secondary color", () => {
     await type("Secondary color", "#FFF6E2");
     expect(container.textContent).not.toContain("Not a #rrggbb color");
     expect(button("Save changes").disabled).toBe(false);
+  });
+});
+
+describe("the icon grid", () => {
+  it("opens on a click, glyph-only tiles named by their title, every match reachable", async () => {
+    await renderForm(stored);
+    await openIconGrid();
+    expect(tiles().map((tile) => tile.getAttribute("title"))).toEqual(suggestIcons("restaurant"));
+    expect(tiles()[0].textContent).toBe(iconGlyph("restaurant"));
+    expect(tiles().every((tile) => (tile.textContent ?? "").length === 1)).toBe(true);
+    expect(container.querySelector("ul")?.className).toContain("overflow-y-auto");
+  });
+
+  it("washes the tile the field names in the form's color, and follows a color change", async () => {
+    await renderForm(stored);
+    await openIconGrid();
+    const washed = tiles().filter((tile) => (tile as HTMLElement).style.backgroundColor !== "");
+    expect(washed.map((tile) => tile.getAttribute("title"))).toEqual(["restaurant"]);
+    expect((washed[0] as HTMLElement).style.backgroundColor).toBe("#c4a2cb40");
+    await type("Main color", "#ffe3a0");
+    const stillWashed = tiles().filter(
+      (tile) => (tile as HTMLElement).style.backgroundColor !== "",
+    );
+    expect(stillWashed.map((tile) => tile.getAttribute("title"))).toEqual(["restaurant"]);
+    expect((stillWashed[0] as HTMLElement).style.backgroundColor).toBe("#ffe3a040");
+  });
+
+  it("picks a tile into the field, closing the grid", async () => {
+    await renderForm(stored);
+    await openIconGrid();
+    const menu = tiles().find((tile) => tile.getAttribute("title") === "restaurant-menu");
+    await act(async () => (menu as HTMLButtonElement).click());
+    expect(labelled("Icon").value).toBe("restaurant-menu");
+    expect(container.querySelector("ul")).toBeNull();
+    expect(chipBadge().textContent).toBe(iconGlyph("restaurant-menu"));
+  });
+
+  it("shows no tile and says so when no glyph answers to the name", async () => {
+    await renderForm(stored);
+    await openIconGrid();
+    await type("Icon", "zzzzzz");
+    expect(tiles()).toHaveLength(0);
+    expect(container.textContent).toContain("No MaterialIcons glyph answers to that name.");
   });
 });
