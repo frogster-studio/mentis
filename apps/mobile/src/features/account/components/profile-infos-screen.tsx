@@ -29,26 +29,28 @@ export const ProfileInfosScreen = () => {
       >
         <LegalLinks />
         {user ? <AccountActions user={user} isPremium={isPremium} /> : null}
-        <QuietButton
-          layout="block"
-          label={REPLAY_ONBOARDING_LABEL}
-          icon={null}
-          accessibilityLabel={null}
-          disabled={false}
-          onPress={() => {
-            replayOnboarding();
-            router.dismissTo("/");
-          }}
-        />
         {__DEV__ ? (
-          <QuietButton
-            layout="block"
-            label={PAYWALL_PREVIEW_LABEL}
-            icon={null}
-            accessibilityLabel={null}
-            disabled={false}
-            onPress={openPaywallPreview}
-          />
+          <>
+            <QuietButton
+              layout="block"
+              label={REPLAY_ONBOARDING_LABEL}
+              icon={null}
+              accessibilityLabel={null}
+              disabled={false}
+              onPress={() => {
+                replayOnboarding();
+                router.dismissTo("/");
+              }}
+            />
+            <QuietButton
+              layout="block"
+              label={PAYWALL_PREVIEW_LABEL}
+              icon={null}
+              accessibilityLabel={null}
+              disabled={false}
+              onPress={openPaywallPreview}
+            />
+          </>
         ) : null}
       </ScrollView>
     </ScreenContainer>
