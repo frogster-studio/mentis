@@ -65,7 +65,7 @@ A narrow, specific subject (« Marie Antoinette », « Les Simpson », « Chocol
 _Avoid_: topic, sujet
 
 **Category**:
-A broad grouping of Themes (« nature », « histoire »). Every Theme belongs to exactly one Category. A Category has a color and an icon; it organizes and colors the catalog but is never played directly — Players play Themes, not Categories. French UI label: « Catégorie ».
+A broad grouping of Themes (« nature », « histoire »). Every Theme belongs to exactly one Category. A Category has a color, a secondary color and an icon; it organizes and colors the catalog but is never played directly — Players play Themes, not Categories. French UI label: « Catégorie ».
 _Avoid_: tag, group, family
 
 **Draw**:
