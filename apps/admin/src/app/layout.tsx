@@ -29,6 +29,15 @@ const materialIcons = localFont({
   preload: false,
 });
 
+// The Category preview chip previews the app, so it borrows the app's heading face.
+const epundaSlab = localFont({
+  src: "../../public/fonts/EpundaSlab-Regular.ttf",
+  variable: "--font-chip",
+  weight: "400",
+  display: "swap",
+  preload: false,
+});
+
 export const metadata: Metadata = {
   title: "Mentis",
   description: "Mentis back-office",
@@ -38,7 +47,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html
       lang="en"
-      className={`${poppins.variable} ${lexend.variable} ${materialIcons.variable} h-full antialiased`}
+      className={`${poppins.variable} ${lexend.variable} ${materialIcons.variable} ${epundaSlab.variable} h-full antialiased`}
     >
       <body className="h-full flex flex-col">
         <Providers>{children}</Providers>

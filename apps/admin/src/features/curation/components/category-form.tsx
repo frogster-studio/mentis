@@ -16,6 +16,7 @@ import { visibleLabel } from "../staging-labels";
 import type { Category } from "../types";
 import { Badge } from "./badge";
 import { CategoryBadge } from "./category-badge";
+import { CategoryChip } from "./category-chip";
 import { ColorField } from "./color-field";
 import { CONTROL } from "./control";
 import { Field } from "./field";
@@ -99,7 +100,12 @@ export const CategoryForm = ({
         </Field>
 
         <Field label="Preview">
-          <CategoryBadge color={form.color} icon={form.icon} className="size-9 text-xl" />
+          <CategoryChip
+            name={form.name}
+            color={form.color}
+            secondaryColor={form.secondaryColor}
+            icon={form.icon}
+          />
         </Field>
       </div>
 

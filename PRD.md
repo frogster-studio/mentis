@@ -37,7 +37,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Category), [apps/a
 - « Main color » is a UI label only; it edits `color`.
 - The Main color field keeps its `CategoryBadge` swatch. The Secondary color field reuses `ColorField`, with a plain swatch of the secondary color as its preview.
 - `ColorField` takes a `label`, so the two hex inputs on one row carry distinct accessible names (« Main color », « Secondary color »).
-- The Preview block holds a `CategoryBadge` until item 4 replaces it with the chip.
+- The Preview block holds the chip (item 4 replaced the `CategoryBadge` that stood there).
 - Both fields share the same hex rule and the same « Not a #rrggbb color » hint.
 - A new Category's form starts at color `#0ea5e9` (unchanged) and secondary color `#ffffff`.
 - A change to `secondaryColor` makes the form dirty. Save is disabled until `secondaryColor` is a lowercase `#rrggbb`.
@@ -53,7 +53,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Category), [apps/a
   - The icon is the MaterialIcons glyph at 20 px, with no rotation.
 - Ink: the glyph and the name use the app's ink `#250313`, not zinc.
 - The name is the typed name, uppercased, in **EpundaSlab**.
-- EpundaSlab is copied from `apps/mobile/assets/fonts/EpundaSlab-Regular.ttf` into `apps/admin/public/fonts/` and wired with `next/font/local`, used by the chip alone. This is a deliberate local exception to the admin font rule: the chip previews the app.
+- EpundaSlab is copied from `apps/mobile/assets/fonts/EpundaSlab-Regular.ttf` into `apps/admin/public/fonts/` and wired with `next/font/local` in `layout.tsx` as `--font-chip` (the `--font-icons` precedent), used by the chip alone through Tailwind's `font-chip`. This is a deliberate local exception to the admin font rule: the chip previews the app.
 - The chip updates live on every edit of name, color, secondary color and icon.
 - Edge cases:
   - Empty name: the badge alone.
@@ -144,7 +144,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Category), [apps/a
       "The chip shows on both the create and the edit form",
       "bun run check is green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "admin",
