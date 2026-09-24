@@ -36,6 +36,8 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Category), [apps/a
   - Then Icon, Staging, the actions and the delete blocker, unchanged.
 - « Main color » is a UI label only; it edits `color`.
 - The Main color field keeps its `CategoryBadge` swatch. The Secondary color field reuses `ColorField`, with a plain swatch of the secondary color as its preview.
+- `ColorField` takes a `label`, so the two hex inputs on one row carry distinct accessible names (« Main color », « Secondary color »).
+- The Preview block holds a `CategoryBadge` until item 4 replaces it with the chip.
 - Both fields share the same hex rule and the same « Not a #rrggbb color » hint.
 - A new Category's form starts at color `#0ea5e9` (unchanged) and secondary color `#ffffff`.
 - A change to `secondaryColor` makes the form dirty. Save is disabled until `secondaryColor` is a lowercase `#rrggbb`.
@@ -129,7 +131,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Category), [apps/a
       "A happy-dom component test: editing the Secondary color hex enables Save, and saving sends secondaryColor in the body",
       "bun run check is green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "admin",

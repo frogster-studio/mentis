@@ -5,6 +5,7 @@ import { iconGlyph } from "../icons";
 import { CONTROL } from "./control";
 
 interface ColorFieldProps {
+  label: string;
   value: string;
   onChange: (color: string) => void;
   preview: ReactNode;
@@ -18,7 +19,7 @@ const FALLBACK_HSV: Hsv = { hue: 0, saturation: 0, value: 0 };
 
 const clamp = (ratio: number) => Math.min(1, Math.max(0, ratio));
 
-export const ColorField = ({ value, onChange, preview }: ColorFieldProps) => {
+export const ColorField = ({ label, value, onChange, preview }: ColorFieldProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState<string | null>(null);
   const [picked, setPicked] = useState(() => ({
@@ -117,7 +118,7 @@ export const ColorField = ({ value, onChange, preview }: ColorFieldProps) => {
         <button
           type="button"
           onClick={() => setIsOpen((current) => !current)}
-          aria-label="Pick a color"
+          aria-label={`Pick a ${label.toLowerCase()}`}
           aria-expanded={isOpen}
           className="rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
         >
@@ -130,7 +131,7 @@ export const ColorField = ({ value, onChange, preview }: ColorFieldProps) => {
           onFocus={() => setDraft(value)}
           onBlur={() => setDraft(null)}
           spellCheck={false}
-          aria-label="Color"
+          aria-label={label}
           className={`${CONTROL} font-mono`}
         />
       </div>
@@ -162,7 +163,7 @@ export const ColorField = ({ value, onChange, preview }: ColorFieldProps) => {
               <button
                 type="button"
                 onClick={openEyeDropper}
-                aria-label="Pick a color from the screen"
+                aria-label={`Pick a ${label.toLowerCase()} from the screen`}
                 className="flex size-7 shrink-0 items-center justify-center rounded-lg font-icons text-lg text-zinc-700 transition-colors hover:bg-zinc-100"
               >
                 {iconGlyph("colorize")}

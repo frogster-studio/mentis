@@ -54,3 +54,32 @@ Next: item 3 — the Category form's mockup layout (Name beside a Preview slot, 
 Secondary color side by side). The form still has no Secondary color input: item 2 only gave the
 state its field, which currently round-trips `#ffffff` on create and the stored value on edit.
 Hugo's human step for item 1 (generate and run the migration) is still pending.
+
+## Item 3 — admin: the Category form follows the mockup's layout (2026-09-24)
+
+- `components/category-form.tsx`: two `sm:grid-cols-2` rows, per `.private/design-guildeline.png`.
+  Row 1 is Name beside a « Preview » Field; row 2 is « Main color » beside « Secondary color »,
+  each with its own « Not a #rrggbb color » hint. Icon, Staging, the actions and the delete
+  blocker follow unchanged.
+- « Main color » edits `color` and keeps the `CategoryBadge` swatch; « Secondary color » edits
+  `secondaryColor` through the same `ColorField`, previewed by a plain bordered swatch.
+- The Preview block holds a `CategoryBadge` for now — item 4 swaps it for the chip.
+- `components/color-field.tsx`: new required `label` prop. Two `ColorField`s now share a row, and
+  both hex inputs used to answer to `aria-label="Color"`; the label names the input and both
+  pick buttons (« Pick a main color », « Pick a secondary color from the screen »).
+- New `components/category-form.test.tsx` (happy-dom, `theme-image.test.tsx`'s harness): the two
+  rows' labels and the stored colors render; a new Category starts at `#0ea5e9` / `#ffffff`;
+  typing a secondary hex repaints its swatch, enables Save and sends `secondaryColor` in the
+  PATCH body; a stored `"white"` shows the hint and blocks Save until a valid hex replaces it.
+- Test note for the next component test: React reads an input through its own value tracker, so
+  a raw `input.value = …` looks like no change. The `type` helper calls the native
+  `HTMLInputElement.prototype.value` setter before dispatching `input`. Also, happy-dom returns
+  `style.backgroundColor` verbatim — assert `"#e34e43"`, not `"rgb(227, 78, 67)"`.
+
+`bun run check` green from the repo root: typecheck every workspace, 1183 tests across 91 files,
+knip and format clean. Same sandbox setup as items 1 and 2 — `~/.bun/bin` on PATH and the proxy
+vars cleared for the api e2e suite.
+
+Next: item 4 — the Preview chip (EpundaSlab copied into `apps/admin/public/fonts/` and wired with
+`next/font/local`, the app's Category chip rebuilt in HTML, live on every edit). Hugo's human step
+for item 1 (generate and run the migration) is still pending.
