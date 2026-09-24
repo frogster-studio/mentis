@@ -5,7 +5,6 @@ import { RADIUS } from "@/theme/tokens";
 import { gradient } from "@/utils/gradient";
 
 const LANDSCAPE_IMAGE = require("../../../../assets/images/competition/landscape.png");
-
 const LANDSCAPE_OPACITY = 0.13;
 
 export interface CompetitionCardBackgroundProps {

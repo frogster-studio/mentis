@@ -13,10 +13,8 @@ import { useAuthStore } from "@/features/account/auth-store";
 import { useCompetitionDay, useStanding, useTranscript } from "@/features/competition/api";
 import { bestAttempt } from "@/features/competition/best-attempt";
 import { CompetitionCard } from "@/features/competition/components/competition-card";
+import { YesterdayCompetitionCard } from "@/features/competition/components/yesterday-competition-card";
 import {
-  CATCHUP_TEASER,
-  CATCHUP_TITLE,
-  COMPETITION_CATCHUP_LABEL,
   COMPETITION_DAILY_TEASER,
   COMPETITION_DAILY_TITLE,
   COMPETITION_DONE_TITLE,
@@ -112,19 +110,13 @@ export const WorldScreen = () => {
               />
 
               {day.data.catchup ? (
-                <CompetitionCard
-                  title={CATCHUP_TITLE}
-                  teaser={CATCHUP_TEASER}
-                  score={null}
-                  colors={[COLORS.background, COLORS.catchup]}
-                  showStreak={false}
-                  showPremium={true}
-                  actionLabel={COMPETITION_CATCHUP_LABEL}
+                <YesterdayCompetitionCard
                   onPress={() =>
                     gatePremium(() =>
                       router.push({ pathname: "/competition", params: { kind: "catchup" } }),
                     )
                   }
+                  onExpire={day.refetch}
                 />
               ) : null}
             </View>

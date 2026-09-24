@@ -5,10 +5,14 @@ import { CONTROL } from "./control";
 
 interface IconFieldProps {
   value: string;
+  color: string;
   onChange: (icon: string) => void;
 }
 
-export const IconField = ({ value, onChange }: IconFieldProps) => {
+// The app washes a selection in its Category's color at a quarter opacity.
+const WASH_ALPHA = "40";
+
+export const IconField = ({ value, color, onChange }: IconFieldProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const matches = suggestIcons(value);
 
@@ -34,21 +38,22 @@ export const IconField = ({ value, onChange }: IconFieldProps) => {
         />
       </div>
       {isOpen && matches.length > 0 ? (
-        <ul className="max-h-52 overflow-y-auto rounded-lg border border-zinc-200">
+        <ul className="grid h-[175px] grid-cols-[repeat(auto-fill,40px)] content-start gap-3 overflow-y-auto rounded-lg border border-zinc-200 p-3">
           {matches.map((name) => (
             <li key={name}>
               <button
                 type="button"
+                title={name}
                 // Picking keeps the caret in the field, so the blur that would close the list never fires.
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => {
                   onChange(name);
                   setIsOpen(false);
                 }}
-                className="flex w-full items-center gap-3 border-zinc-100 border-b px-3 py-2 text-left text-sm text-zinc-700 transition-colors last:border-b-0 hover:bg-sky-50"
+                style={name === value ? { backgroundColor: `${color}${WASH_ALPHA}` } : undefined}
+                className="flex size-10 items-center justify-center rounded-lg border border-zinc-200 font-icons text-xl text-zinc-900 transition-colors hover:bg-zinc-50"
               >
-                <span className="font-icons text-lg">{iconGlyph(name)}</span>
-                <span className="truncate">{name}</span>
+                {iconGlyph(name)}
               </button>
             </li>
           ))}

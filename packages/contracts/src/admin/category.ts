@@ -6,6 +6,7 @@ export const adminCategoryResponseSchema = z.object({
   id: z.guid(),
   name: z.string(),
   color: z.string(),
+  secondaryColor: z.string(),
   icon: z.string(),
 });
 export type AdminCategoryResponse = z.infer<typeof adminCategoryResponseSchema>;
@@ -18,6 +19,7 @@ export const adminCategoryWriteSchema = z.object({
   name: z.string().trim().min(1).max(255),
   // The app paints the stored value raw, so curation only ever writes the lowercase hex it expects.
   color: z.string().regex(/^#[0-9a-f]{6}$/, "A color is a lowercase #rrggbb"),
+  secondaryColor: z.string().regex(/^#[0-9a-f]{6}$/, "A color is a lowercase #rrggbb"),
   icon: z.string().trim().min(1).max(255),
 });
 export type AdminCategoryWrite = z.infer<typeof adminCategoryWriteSchema>;

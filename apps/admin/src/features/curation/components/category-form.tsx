@@ -16,6 +16,7 @@ import { visibleLabel } from "../staging-labels";
 import type { Category } from "../types";
 import { Badge } from "./badge";
 import { CategoryBadge } from "./category-badge";
+import { CategoryChip } from "./category-chip";
 import { ColorField } from "./color-field";
 import { CONTROL } from "./control";
 import { Field } from "./field";
@@ -87,31 +88,67 @@ export const CategoryForm = ({
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5">
-      <Field label="Name">
-        <input
-          type="text"
-          value={form.name}
-          onChange={(event) => edit({ name: event.target.value })}
-          aria-label="Name"
-          className={CONTROL}
-        />
-      </Field>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field label="Name">
+          <input
+            type="text"
+            value={form.name}
+            onChange={(event) => edit({ name: event.target.value })}
+            aria-label="Name"
+            className={CONTROL}
+          />
+        </Field>
 
-      <Field label="Color">
-        <ColorField
-          value={form.color}
-          onChange={(color) => edit({ color })}
-          preview={<CategoryBadge color={form.color} icon={form.icon} className="size-9 text-xl" />}
-        />
-        {isServableColor(form.color) ? null : (
-          <p className="mt-2 text-xs text-zinc-500">
-            Not a #rrggbb color — type or pick one to save.
-          </p>
-        )}
-      </Field>
+        <Field label="Preview">
+          <CategoryChip
+            name={form.name}
+            color={form.color}
+            secondaryColor={form.secondaryColor}
+            icon={form.icon}
+          />
+        </Field>
+      </div>
+
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field label="Main color">
+          <ColorField
+            label="Main color"
+            value={form.color}
+            onChange={(color) => edit({ color })}
+            preview={
+              <CategoryBadge color={form.color} icon={form.icon} className="size-9 text-xl" />
+            }
+          />
+          {isServableColor(form.color) ? null : (
+            <p className="mt-2 text-xs text-zinc-500">
+              Not a #rrggbb color — type or pick one to save.
+            </p>
+          )}
+        </Field>
+
+        <Field label="Secondary color">
+          <ColorField
+            label="Secondary color"
+            value={form.secondaryColor}
+            onChange={(secondaryColor) => edit({ secondaryColor })}
+            preview={
+              <span
+                className="block size-9 shrink-0 rounded-lg border border-zinc-200"
+                style={{ backgroundColor: form.secondaryColor }}
+                aria-hidden="true"
+              />
+            }
+          />
+          {isServableColor(form.secondaryColor) ? null : (
+            <p className="mt-2 text-xs text-zinc-500">
+              Not a #rrggbb color — type or pick one to save.
+            </p>
+          )}
+        </Field>
+      </div>
 
       <Field label="Icon">
-        <IconField value={form.icon} onChange={(icon) => edit({ icon })} />
+        <IconField value={form.icon} color={form.color} onChange={(icon) => edit({ icon })} />
       </Field>
 
       {category ? (

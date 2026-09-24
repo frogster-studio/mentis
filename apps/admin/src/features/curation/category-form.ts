@@ -4,19 +4,26 @@ import { isIconName } from "./icons";
 import type { Category } from "./types";
 
 const DEFAULT_COLOR = "#0ea5e9";
+const DEFAULT_SECONDARY_COLOR = "#ffffff";
 
 export type CategoryFormState = {
   name: string;
   color: string;
+  secondaryColor: string;
   icon: string;
 };
 
 export function blankCategoryForm(): CategoryFormState {
-  return { name: "", color: DEFAULT_COLOR, icon: "" };
+  return { name: "", color: DEFAULT_COLOR, secondaryColor: DEFAULT_SECONDARY_COLOR, icon: "" };
 }
 
 export function toCategoryForm(category: Category): CategoryFormState {
-  return { name: category.name, color: category.color.toLowerCase(), icon: category.icon };
+  return {
+    name: category.name,
+    color: category.color.toLowerCase(),
+    secondaryColor: category.secondaryColor.toLowerCase(),
+    icon: category.icon,
+  };
 }
 
 // A stored Category may predate the lowercase hex rule, and only the Editor may pick its replacement.
@@ -34,7 +41,12 @@ export function categoryPayloadOf(form: CategoryFormState): AdminCategoryWrite |
 }
 
 export function isCategoryFormDirty(form: CategoryFormState, saved: CategoryFormState): boolean {
-  return form.name !== saved.name || form.color !== saved.color || form.icon !== saved.icon;
+  return (
+    form.name !== saved.name ||
+    form.color !== saved.color ||
+    form.secondaryColor !== saved.secondaryColor ||
+    form.icon !== saved.icon
+  );
 }
 
 // The DB's RESTRICT is only the backstop: the dashboard is where an orphaning delete is stopped.

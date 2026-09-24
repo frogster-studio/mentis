@@ -45,6 +45,7 @@ const category = (
   id: string,
   name: string,
   color: string,
+  secondaryColor: string,
   icon: string,
   createdAt: string,
 ): CategoryEntity =>
@@ -53,14 +54,15 @@ const category = (
     slug: slugify(name),
     name,
     color,
+    secondaryColor,
     icon,
     createdAt: new Date(createdAt),
   });
 
 const storedCategories = [
-  category(TELEVISION, "Télévision", "#8e24aa", "tv", "2026-08-01T10:00:00.000Z"),
-  category(HISTOIRE, "Histoire", "#6d4c41", "history-edu", "2026-08-20T10:00:00.000Z"),
-  category(MUSIQUE, "Musique", "#1e88e5", "music-note", "2026-08-10T10:00:00.000Z"),
+  category(TELEVISION, "Télévision", "#8e24aa", "#f3e5f5", "tv", "2026-08-01T10:00:00.000Z"),
+  category(HISTOIRE, "Histoire", "#6d4c41", "#efebe9", "history-edu", "2026-08-20T10:00:00.000Z"),
+  category(MUSIQUE, "Musique", "#1e88e5", "#e3f2fd", "music-note", "2026-08-10T10:00:00.000Z"),
 ];
 
 const theme = (
@@ -288,7 +290,12 @@ const AUTHORED_QUESTION = {
   misspellings: ["Camberra"],
 };
 
-const AUTHORED_CATEGORY_WRITE = { name: "Ciné & Séries", color: "#00897b", icon: "movie" };
+const AUTHORED_CATEGORY_WRITE = {
+  name: "Ciné & Séries",
+  color: "#00897b",
+  secondaryColor: "#e0f2f1",
+  icon: "movie",
+};
 
 const AUTHORED_THEME_WRITE = {
   name: "Kaamelott",
@@ -420,18 +427,36 @@ describe("admin curation routes e2e", () => {
 
   it("GET /admin/categories serves every Category, newest first, slug held back", async () => {
     expect(await (await asEditor("/admin/categories")).json()).toEqual([
-      { id: HISTOIRE, name: "Histoire", color: "#6d4c41", icon: "history-edu" },
-      { id: MUSIQUE, name: "Musique", color: "#1e88e5", icon: "music-note" },
-      { id: TELEVISION, name: "Télévision", color: "#8e24aa", icon: "tv" },
+      {
+        id: HISTOIRE,
+        name: "Histoire",
+        color: "#6d4c41",
+        secondaryColor: "#efebe9",
+        icon: "history-edu",
+      },
+      {
+        id: MUSIQUE,
+        name: "Musique",
+        color: "#1e88e5",
+        secondaryColor: "#e3f2fd",
+        icon: "music-note",
+      },
+      {
+        id: TELEVISION,
+        name: "Télévision",
+        color: "#8e24aa",
+        secondaryColor: "#f3e5f5",
+        icon: "tv",
+      },
     ]);
   });
 
   it("GET /admin/categories breaks a createdAt tie on the id, not on storage order", async () => {
     const sameMoment = "2026-08-15T10:00:00.000Z";
     liveCategories = [
-      category(HISTOIRE, "Histoire", "#6d4c41", "history-edu", sameMoment),
-      category(MUSIQUE, "Musique", "#1e88e5", "music-note", sameMoment),
-      category(TELEVISION, "Télévision", "#8e24aa", "tv", sameMoment),
+      category(HISTOIRE, "Histoire", "#6d4c41", "#efebe9", "history-edu", sameMoment),
+      category(MUSIQUE, "Musique", "#1e88e5", "#e3f2fd", "music-note", sameMoment),
+      category(TELEVISION, "Télévision", "#8e24aa", "#f3e5f5", "tv", sameMoment),
     ];
 
     const listed = await (await asEditor("/admin/categories")).json();
@@ -622,6 +647,7 @@ describe("admin curation routes e2e", () => {
       id: AUTHORED_CATEGORY,
       name: "Ciné & Séries",
       color: "#00897b",
+      secondaryColor: "#e0f2f1",
       icon: "movie",
     });
     const listed = await (await asEditor("/admin/categories")).json();
@@ -648,6 +674,9 @@ describe("admin curation routes e2e", () => {
     ["an uppercase hex", { color: "#00897B" }],
     ["a named color", { color: "teal" }],
     ["a short hex", { color: "#abc" }],
+    ["an uppercase secondary hex", { secondaryColor: "#E0F2F1" }],
+    ["a named secondary color", { secondaryColor: "mintcream" }],
+    ["no secondary color at all", { secondaryColor: undefined }],
     ["a blank name", { name: "   " }],
     ["a blank icon", { icon: "" }],
     ["a name no slug can be built from", { name: "!?…" }],
@@ -662,6 +691,24 @@ describe("admin curation routes e2e", () => {
     );
 
     expect(response.status).toBe(400);
+    expect(errorResponseSchema.safeParse(await response.json()).success).toBe(true);
+  });
+
+  it.each([
+    ["an uppercase secondary hex", { secondaryColor: "#E0F2F1" }],
+    ["no secondary color at all", { secondaryColor: undefined }],
+  ])("PATCH /admin/categories/:id with %s → 400 VALIDATION_FAILED", async (_case, invalid) => {
+    const response = await write(
+      {
+        method: "PATCH",
+        path: `/admin/categories/${MUSIQUE}`,
+        body: { ...AUTHORED_CATEGORY_WRITE, ...invalid },
+      },
+      editorToken,
+    );
+
+    expect(response.status).toBe(400);
+    expect(errorResponseSchema.parse(await response.json()).code).toBe("VALIDATION_FAILED");
   });
 
   it("PATCH /admin/categories/:id rewrites its presentation", async () => {
@@ -672,6 +719,7 @@ describe("admin curation routes e2e", () => {
       id: MUSIQUE,
       name: "Ciné & Séries",
       color: "#00897b",
+      secondaryColor: "#e0f2f1",
       icon: "movie",
     });
   });

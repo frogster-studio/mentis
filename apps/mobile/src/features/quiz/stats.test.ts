@@ -144,7 +144,13 @@ describe("homeCards", () => {
 });
 
 describe("attachCategories", () => {
-  const NATURE = { id: "nature", name: "Nature", color: "#2e7d32", icon: "park" };
+  const NATURE = {
+    id: "nature",
+    name: "Nature",
+    color: "#2e7d32",
+    secondaryColor: "#e8f5e9",
+    icon: "park",
+  };
   const card: HomeCard = { id: "geo", name: "Géographie", average: 10, sessionCount: 2 };
   const theme: ThemeWithCount = {
     id: "geo",

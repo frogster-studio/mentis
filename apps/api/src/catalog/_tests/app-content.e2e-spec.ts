@@ -9,8 +9,20 @@ import { AppModule } from "../../app.module";
 import { CatalogRepository, type DrawnQuestion } from "../repositories/catalog.repository";
 import { THEME_IMAGES_BUCKET } from "../utils/theme-image-url";
 
-const television = { id: "television", name: "Télévision", color: "#8e24aa", icon: "tv" };
-const histoire = { id: "histoire", name: "Histoire", color: "#6d4c41", icon: "history-edu" };
+const television = {
+  id: "television",
+  name: "Télévision",
+  color: "#8e24aa",
+  secondaryColor: "#f3e5f5",
+  icon: "tv",
+};
+const histoire = {
+  id: "histoire",
+  name: "Histoire",
+  color: "#6d4c41",
+  secondaryColor: "#efebe9",
+  icon: "history-edu",
+};
 
 const storedThemes = [
   {

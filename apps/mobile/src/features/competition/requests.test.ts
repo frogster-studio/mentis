@@ -53,7 +53,13 @@ function issuedQuestion(position: number) {
   };
 }
 
-const CATEGORY = { id: "culture", name: "Culture", color: "#6a1b9a", icon: "menu-book" };
+const CATEGORY = {
+  id: "culture",
+  name: "Culture",
+  color: "#6a1b9a",
+  secondaryColor: "#f3e5f5",
+  icon: "menu-book",
+};
 const IMAGE_URL = "https://stub.supabase.co/storage/v1/object/public/theme-images/histoire.webp";
 
 const ISSUED_BODY = {

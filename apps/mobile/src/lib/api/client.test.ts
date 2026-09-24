@@ -139,7 +139,13 @@ describe("contract parsing", () => {
         name: "Histoire",
         imageUrl: "https://cdn.example.com/histoire.webp",
         questionCount: 12,
-        category: { id: "culture", name: "Culture", color: "#6d4c41", icon: "history-edu" },
+        category: {
+          id: "culture",
+          name: "Culture",
+          color: "#6d4c41",
+          secondaryColor: "#efebe9",
+          icon: "history-edu",
+        },
       },
     ];
     const { api } = client([jsonResponse(themes)]);

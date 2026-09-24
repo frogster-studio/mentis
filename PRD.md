@@ -1,53 +1,97 @@
-# PRD — Question Explanation
+# PRD — Category secondary color, live preview chip and icon grid
 
-Vocabulary: `apps/admin/CONTEXT.md` (Editor, Catalog, Explanation, Ready To Be Published), `apps/mobile/CONTEXT.md` (Question, Canonical Answer). Rules: `AGENTS.md`, `apps/api/AGENTS.md`, `apps/admin/AGENTS.md`, `docs/agents/conventions.md`, `docs/adr/0005-the-api-reaches-its-data-through-typeorm.md`, `docs/adr/0008-curation-rules-live-in-the-admin-client.md`.
+Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Category), [apps/admin/CONTEXT.md](apps/admin/CONTEXT.md) (Editor, Catalog). Rules: [AGENTS.md](AGENTS.md), [apps/api/AGENTS.md](apps/api/AGENTS.md), [apps/admin/AGENTS.md](apps/admin/AGENTS.md), [docs/agents/conventions.md](docs/agents/conventions.md), [ADR 0003](docs/adr/0003-database-admits-only-the-api.md), [ADR 0008](docs/adr/0008-curation-rules-live-in-the-admin-client.md).
 
-Goal: an Editor can write, edit and clear an Explanation on any Question from the admin Details column.
+**Follow the designed mockup: `.private/design-guildeline.png`** (filename spelled as on disk). The preview chip's reference is `.private/admin-preview-chips.svg`. Both are read-only: `.private/` is never modified.
 
 ## Decisions
 
 ### Domain
 
-- An Explanation completes a Question's Canonical Answer once it is known — an aside, never a hint toward the answer.
-- The Explanation is optional in every staging state: it never gates Ready To Be Published, and a staging write never touches it.
-- Absent means `null` in the database. Clearing the textarea and saving is how an Editor deletes it; there is no dedicated delete button.
+- The feature is on the **Category**, never the Theme: a Theme carries an image, and color and icon belong to its Category.
+- A Category gains a **secondary color** beside its existing color. The existing `color` keeps its name everywhere (entity, column, contracts, admin, mobile): no `mainColor` anywhere in code or on the wire.
+- The new field is `secondaryColor` in code and on the wire, `secondary_color` in the database.
 
-### Contract (`@mentis/contracts/admin`)
+### Schema
 
-- The Question write schema gains `explanation` as a required, nullable key — the PATCH rewrites the whole Question, so a missing key is a 400, never "leave untouched".
-- The value is trimmed; empty or whitespace-only becomes `null`; over 400 characters after trimming is refused.
-- The Question response schema gains `explanation: string | null`.
-- The app contract is untouched.
+- `secondary_color`: varchar(7), NOT NULL, column default `'#ffffff'`, so existing Categories backfill to white.
+- No new table, so no new grant or RLS snippet is needed.
 
-### Schema (API)
+### Contracts
 
-- `QuestionEntity` gains a nullable `explanation` column of type `text`; the 400 cap lives in the contract only, so it moves without a migration.
-- The migration is Hugo's: the item edits the entity and stops there.
+- The admin Category response carries `secondaryColor` as a plain string, like `color`, so a stored value is served rather than refused.
+- The admin Category write requires `secondaryColor`, with the same lowercase `#rrggbb` rule and message as `color`.
+- `appCategorySchema` carries `secondaryColor` with the same lowercase hex regex as `color`. The phone receives it, but no mobile screen renders it in this PRD.
 
-### API (`/admin/questions`)
+### API
 
-- POST stores the Explanation as the contract shaped it; PATCH `/:id` rewrites it, `null` included; PATCH `/:id/staging` leaves it alone; GET serves it on every Question.
-- No new route, no service or repository shape beyond what the entity and contract carry.
+- `/admin/categories` lists, creates and updates `secondaryColor`.
+- The Category nested in `/app/themes` (and every other `/app` read serving `appCategorySchema`) carries `secondaryColor`, through the catalog repository's select and `ThemeVisuals`.
 
-### Admin (Details column, Question form)
+### Admin — Category form
 
-- A textarea labelled "Explanation" sits directly under "Answers", before "Aliases".
-- It opens at 3 rows and resizes vertically only, by the Editor's drag handle.
-- A counter `n/400` sits at its bottom right and counts exactly the characters the Editor sees in the textarea — spaces included, nothing trimmed.
-- Past 400 the counter turns red and Save is disabled; typing is never blocked.
-- After a save the textarea shows the stored text (empty when `null`).
-- Editing the Explanation marks the form dirty, like every other field.
+- The layout follows the mockup:
+  - Row 1: Name on the left, a « Preview » block on the right.
+  - Row 2: « Main color » and « Secondary color » side by side.
+  - Then Icon, Staging, the actions and the delete blocker, unchanged.
+- « Main color » is a UI label only; it edits `color`.
+- The Main color field keeps its `CategoryBadge` swatch. The Secondary color field reuses `ColorField`, with a plain swatch of the secondary color as its preview.
+- `ColorField` takes a `label`, so the two hex inputs on one row carry distinct accessible names (« Main color », « Secondary color »).
+- The Preview block holds the chip (item 4 replaced the `CategoryBadge` that stood there).
+- Both fields share the same hex rule and the same « Not a #rrggbb color » hint.
+- A new Category's form starts at color `#0ea5e9` (unchanged) and secondary color `#ffffff`.
+- A change to `secondaryColor` makes the form dirty. Save is disabled until `secondaryColor` is a lowercase `#rrggbb`.
+- A stored secondary color is lowercased into the form, the same as `color`.
+
+### Admin — Preview chip
+
+- The chip mirrors the app's Category chip from `.private/admin-preview-chips.svg`.
+- It is rebuilt from plain HTML elements with classic `border-radius`: no SVG, no new library, no squircle, no backdrop blur.
+- Geometry:
+  - The outer pill is 35 px high, 13 px radius, filled with `secondaryColor`, and its width hugs the name.
+  - The inner badge is 29 px square, inset 3 px, radius ~10 px, filled with `color`.
+  - The icon is the MaterialIcons glyph at 20 px, with no rotation.
+- Ink: the glyph and the name use the app's ink `#250313`, not zinc.
+- The name is the typed name, uppercased, in **EpundaSlab**.
+- EpundaSlab is copied from `apps/mobile/assets/fonts/EpundaSlab-Regular.ttf` into `apps/admin/public/fonts/` and wired with `next/font/local` in `layout.tsx` as `--font-chip` (the `--font-icons` precedent), used by the chip alone through Tailwind's `font-chip`. This is a deliberate local exception to the admin font rule: the chip previews the app.
+- The chip updates live on every edit of name, color, secondary color and icon.
+- Edge cases:
+  - Empty name: the badge alone.
+  - A name that is not a MaterialIcons icon: an empty badge.
+  - A hex being typed but not yet valid: the chip keeps the last valid color, since `ColorField` only emits valid hex.
+- The chip shows on the edit form and on the create form.
+
+### Admin — Icon grid
+
+- `suggestIcons` drops its limit: it returns every MaterialIcons name containing the query.
+  - Names starting with the query rank first, then shorter names first (ranking unchanged).
+  - An empty query returns every icon.
+- The panel is a grid of glyph-only tiles styled after the mockup: square tiles, bordered, black glyph, no name text.
+  - The panel has a fixed height (~175 px per the mockup), spans the field's width, and scrolls vertically when the matches overflow.
+- Each tile shows its icon name through the native `title` attribute. No custom tooltip.
+- The selected tile is the one whose name equals the field value exactly. Its background is the form's current `color` with hex alpha `40` (`${color}40`, ~25 %, the app's wash convention), following the color live.
+- Behavior:
+  - It opens on focus and click, and closes on blur (unchanged).
+  - Picking a tile sets the value without the blur closing the panel mid-click (the existing `preventDefault` on mousedown).
+- With zero matches, the panel shows no tiles, and the existing « No MaterialIcons glyph answers to that name. » hint stays under it. The « Not a MaterialIcons name yet » hint is unchanged.
 
 ### Test seams
 
-- Contract: `packages/contracts/src/admin/question.spec.ts`.
-- API: `apps/api/src/curation/_tests/admin-curation.e2e-spec.ts`.
-- Admin form state and the over-limit rule as pure functions: `apps/admin/src/features/curation/question-form.test.ts`.
+- Contracts: `packages/contracts/src/admin/category.spec.ts` and `packages/contracts/src/app/theme.spec.ts`.
+- API e2e with the stubbed data source: `apps/api/src/curation/_tests/admin-curation.e2e-spec.ts` and `apps/api/src/catalog/_tests/app-content.e2e-spec.ts`.
+- Admin pure functions: `category-form.test.ts` and `icons.test.ts`.
+- Admin components in happy-dom: prior art `components/theme-image.test.tsx`.
 
 ### Out of scope
 
-- Mobile, the app contract, the draw, the Competition — and no test, comment or doc stating the Explanation is not served to players.
-- The "Question" textarea, the Details column's scroll, any list indicator or filter for Questions with an Explanation.
+- Any mobile screen rendering `secondaryColor`. The phone still carries it: the session route's
+  params thread `categorySecondaryColor` beside `categoryColor`, so the Category reaching
+  `ThemeReveal` is whole. No screen paints it.
+- Renaming `color`.
+- A custom tooltip.
+- Keyboard navigation inside the grid.
+- Themes and Questions.
+- Any API-side curation policy (ADR 0008).
 
 ## Items
 
@@ -55,24 +99,63 @@ Goal: an Editor can write, edit and clear an Explanation on any Question from th
 [
   {
     "category": "api",
-    "description": "The Explanation travels the whole data path: admin contract, QuestionEntity column, admin form state",
+    "description": "CategoryEntity carries secondaryColor: column secondary_color, varchar(7), NOT NULL, default '#ffffff'; color untouched",
     "steps": [
-      "question.spec.ts: the write schema trims the Explanation, turns empty or whitespace-only into null, refuses 401 characters after trimming, refuses a missing key; the response schema requires explanation as a string or null",
-      "admin-curation.e2e-spec.ts: POST stores the trimmed Explanation; PATCH /:id with null clears it; PATCH /:id/staging leaves it untouched; GET ?themeId= serves it; a 401-character Explanation answers 400",
-      "question-form.test.ts: a blank form and a stored null both open on an empty Explanation; an empty textarea sends null; editing the Explanation marks the form dirty",
-      "No migration file added; bun run check green"
+      "category.entity.ts declares secondaryColor with @Column({ type: \"varchar\", length: 7, name: \"secondary_color\", default: \"#ffffff\" }), in the entity's existing shape",
+      "The color column's declaration is byte-identical to before",
+      "No migration file is created or edited",
+      "bun run check is green"
+    ],
+    "passes": true
+  },
+  {
+    "category": "contracts",
+    "description": "secondaryColor travels the wire: admin and app Category contracts, /admin/categories, the Category in /app/themes, and the admin category form state",
+    "steps": [
+      "adminCategoryResponseSchema accepts any stored secondaryColor string; adminCategoryWriteSchema refuses '#FFFFFF', '#fff', 'white' and '' for secondaryColor, accepts '#fff6e2'; specs prove both",
+      "appCategorySchema requires a lowercase #rrggbb secondaryColor; theme.spec.ts proves acceptance and refusals",
+      "admin-curation e2e: GET /admin/categories serves each Category's secondaryColor; POST and PATCH store and return it; a write with an invalid or missing secondaryColor is 400 with the ErrorResponse envelope",
+      "app-content e2e: every Category in GET /app/themes carries its secondaryColor",
+      "category-form.test.ts: blankCategoryForm has secondaryColor '#ffffff'; toCategoryForm lowercases a stored secondaryColor; a secondaryColor change makes the form dirty; categoryPayloadOf is null for an invalid secondaryColor and carries it when valid",
+      "Every fixture across api, admin and mobile that builds a Category carries a secondaryColor",
+      "bun run check is green"
     ],
     "passes": true
   },
   {
     "category": "admin",
-    "description": "The Explanation textarea with its character counter in the Question form",
+    "description": "The Category form follows the mockup's layout: Name beside a Preview slot, then Main color and Secondary color side by side",
     "steps": [
-      "The Explanation textarea sits directly under Answers, opens at 3 rows, resizes vertically only",
-      "The n/400 counter at its bottom right counts the characters exactly as typed, spaces included",
-      "Past 400 characters the counter turns red and Save is disabled; typing is not blocked",
-      "After a save the textarea shows the stored text; clearing it and saving stores null",
-      "The over-limit rule is a pure function covered in question-form.test.ts; bun run check green"
+      "The Name field and a « Preview » labelled block share the first row, per .private/design-guildeline.png",
+      "« Main color » (editing color, CategoryBadge swatch) and « Secondary color » (editing secondaryColor, plain swatch) sit side by side on the second row, each with its own « Not a #rrggbb color » hint",
+      "A happy-dom component test: editing the Secondary color hex enables Save, and saving sends secondaryColor in the body",
+      "bun run check is green"
+    ],
+    "passes": true
+  },
+  {
+    "category": "admin",
+    "description": "The Preview chip: EpundaSlab wired in the admin, the app's Category chip rebuilt in HTML, updating live on every edit",
+    "steps": [
+      "apps/admin/public/fonts/ holds EpundaSlab-Regular.ttf copied from apps/mobile/assets/fonts/, loaded with next/font/local and applied to the chip alone",
+      "The chip matches .private/admin-preview-chips.svg: 35 px pill with 13 px radius filled with secondaryColor, 29 px badge inset 3 px with ~10 px radius filled with color, 20 px unrotated MaterialIcons glyph and uppercased name in #250313; no svg element, no new dependency",
+      "A happy-dom component test: typing a name, changing color, secondary color and icon each updates the chip's text, background colors and glyph without saving",
+      "Empty name renders the badge alone; an unknown icon name renders an empty badge",
+      "The chip shows on both the create and the edit form",
+      "bun run check is green"
+    ],
+    "passes": true
+  },
+  {
+    "category": "admin",
+    "description": "The icon picker becomes a fixed-height scrollable grid of every matching glyph, named by title, the selected tile washed in the form's color",
+    "steps": [
+      "icons.test.ts: suggestIcons('') returns every MaterialIcons name; suggestIcons('restaurant') returns every name containing it with 'restaurant' first; ranking of prefix-then-length unchanged",
+      "The panel has a fixed height and scrolls; tiles show the glyph only, styled per .private/design-guildeline.png",
+      "Each tile carries title equal to its icon name; no custom tooltip element",
+      "A happy-dom component test: the tile whose name equals the field value has background `${color}40`, and it follows a color change live; no other tile is washed",
+      "Picking a tile sets the field value; zero matches shows no tiles and the « No MaterialIcons glyph answers to that name. » hint",
+      "bun run check is green"
     ],
     "passes": true
   }
@@ -81,5 +164,5 @@ Goal: an Editor can write, edit and clear an Explanation on any Question from th
 
 ## Human steps
 
-- After item 1, before any API deploy: `bun run migration:generate` then `migration:run` — the repository selects whole entities, so an API shipped ahead of the column breaks `/admin/questions`. No dashboard SQL: a column on an existing table inherits its grants.
-- After item 2: check the form yourself, the Details column's scroll included, and open a ticket if it needs one.
+- **After item 1, before any API deploy:** Hugo runs `bun run migration:generate` then `migration:run` in `apps/api`, and checks that the migration only adds `secondary_color` with its `'#ffffff'` default and leaves `color` untouched. No grant or RLS snippet is needed: `categories` already exists.
+- **After item 5:** Hugo does a visual review of the Category form against `.private/design-guildeline.png`, and of the Preview chip against `.private/admin-preview-chips.svg`, in the running dashboard.

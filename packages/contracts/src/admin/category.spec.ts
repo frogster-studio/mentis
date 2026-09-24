@@ -5,6 +5,7 @@ const category = {
   id: "3f1d0d3a-0000-4000-8000-000000000001",
   name: "Histoire",
   color: "#6d4c41",
+  secondaryColor: "#fff6e2",
   icon: "history-edu",
 };
 
@@ -30,6 +31,15 @@ describe("adminCategoryListResponseSchema", () => {
     },
   );
 
+  it.each(["#FFF6E2", "white", ""])(
+    "serves the stored secondary color %s rather than refusing it",
+    (secondaryColor) => {
+      expect(adminCategoryListResponseSchema.parse([{ ...category, secondaryColor }])).toEqual([
+        { ...category, secondaryColor },
+      ]);
+    },
+  );
+
   it("serves a Category whose icon is blank", () => {
     expect(adminCategoryListResponseSchema.parse([{ ...category, icon: "" }])).toEqual([
       { ...category, icon: "" },
@@ -43,7 +53,12 @@ describe("adminCategoryListResponseSchema", () => {
   });
 });
 
-const write = { name: "Histoire", color: "#6d4c41", icon: "history-edu" };
+const write = {
+  name: "Histoire",
+  color: "#6d4c41",
+  secondaryColor: "#fff6e2",
+  icon: "history-edu",
+};
 
 describe("adminCategoryWriteSchema", () => {
   it("keeps the presentation the Editor picked, trimmed", () => {
@@ -58,9 +73,18 @@ describe("adminCategoryWriteSchema", () => {
     expect(adminCategoryWriteSchema.safeParse({ ...write, color }).success).toBe(false);
   });
 
+  it("keeps the secondary color beside the color, under the same rule", () => {
+    expect(adminCategoryWriteSchema.parse({ ...write, secondaryColor: "#fff6e2" })).toEqual(write);
+  });
+
+  it.each(["#FFFFFF", "#fff", "white", ""])("refuses the secondary color %o", (secondaryColor) => {
+    expect(adminCategoryWriteSchema.safeParse({ ...write, secondaryColor }).success).toBe(false);
+  });
+
   it.each([
     ["a blank name", { name: "   " }],
     ["a blank icon", { icon: "  " }],
+    ["no secondary color", { secondaryColor: undefined }],
   ])("refuses a Category with %s", (_case, incomplete) => {
     expect(adminCategoryWriteSchema.safeParse({ ...write, ...incomplete }).success).toBe(false);
   });

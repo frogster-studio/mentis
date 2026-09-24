@@ -19,8 +19,14 @@ const BROUILLON = "5c2e0d3a-0000-4000-8000-000000000002";
 const QUESTION = "7a3f0d3a-0000-4000-8000-000000000001";
 
 const categories: AdminCategoryListResponse = [
-  { id: TELEVISION, name: "Télévision", color: "#8e24aa", icon: "tv" },
-  { id: HISTOIRE, name: "Histoire", color: "#6d4c41", icon: "history-edu" },
+  { id: TELEVISION, name: "Télévision", color: "#8e24aa", secondaryColor: "#f3e5f5", icon: "tv" },
+  {
+    id: HISTOIRE,
+    name: "Histoire",
+    color: "#6d4c41",
+    secondaryColor: "#efebe9",
+    icon: "history-edu",
+  },
 ];
 
 const themes: AdminThemeListResponse = [

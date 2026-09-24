@@ -1,73 +1,159 @@
-## PRD-2 Item 1 — /mentis/delete-account (web) — DONE
+## Item 1 — api: CategoryEntity carries secondaryColor (2026-09-24)
 
-Done: the sixth page of the site, the Play Console « Delete account URL » target, with both deletion paths.
-Decisions:
-- routes.ts gains deleteAccount: "/mentis/delete-account"; routes.test.ts asserts the six paths and that the new one stays under /mentis. SiteFooter untouched — Google wants the URL to land on the page itself, and the four legal links are enough.
-- src/lib/delete-account.ts is pure TS (no JSX, so vitest reaches it in the node environment): IN_APP_STEPS, DELETION_EMAIL_SUBJECT, DELETION_EMAIL_BODY_LINES, DELETION_EMAIL_BODY (the lines joined by \n) and buildDeletionMailto(address).
-- buildDeletionMailto uses encodeURIComponent, not URLSearchParams: the latter encodes a space as "+", which several mail clients paste literally into the subject.
-- The body is kept as lines, not one blob: the page renders one <p> per line and the spec asserts the six lines and the three identity fields separately.
-- copy-button.tsx is the site's first and only "use client" component. It guards on navigator.clipboard being absent and simply does nothing then — the address is also a mailto: link and the template is displayed in full, so nothing is lost.
-- The page names Mentis and PUBLISHER.tradeName, says the deletion is immediate and irreversible with no retention, lists what is erased (account, pseudo, scores, sessions, competition attempts and answers, standings, the Premium mirror) and what is not ours (the purchase record at Apple, Google, RevenueCat), and carries a card telling the Player to cancel the subscription in the store BEFORE deleting.
-- Email path: write from the Account's own address (that is the identity check Google permits), 30 days max, in practice a few days.
-Files: apps/web/src/app/mentis/delete-account/page.tsx (new), apps/web/src/components/copy-button.tsx (new), apps/web/src/lib/delete-account.ts (new), apps/web/src/lib/delete-account.test.ts (new), apps/web/src/lib/routes.ts, apps/web/src/lib/routes.test.ts, apps/web/AGENTS.md (five pages -> six), PRD-2.md, progress.txt.
-Proof: bun run --filter @mentis/web build lists /mentis/delete-account and emits out/mentis/delete-account.html. bun run check exit 0 (web 7 tests, mobile 263, api 368).
-Notes for next: the api e2e specs 403 under the sandbox proxy because app.getUrl() returns http://[::1]:port and NO_PROXY only bypasses the unbracketed ::1 — run with NO_PROXY="$NO_PROXY,[::1]" and all 368 pass. Not persisted to /etc/sandbox-persistent.sh: some clients read NO_PROXY entries as regexes, where [::1] is a character class matching every host. Item 2 links to ROUTES.deleteAccount from the support FAQ and the privacy erasure right.
+- `apps/api/src/_database/entities/category.entity.ts`: added `secondaryColor` with
+  `@Column({ type: "varchar", length: 7, name: "secondary_color", default: "#ffffff" })`,
+  placed right after `color`, whose declaration is untouched.
+- No migration written or edited — `migration:generate` is Hugo's command.
+- `bun run check` green from the repo root (typecheck + test + knip + format, every workspace).
 
-## PRD-2 Item 2 — the support FAQ and the privacy policy link to /mentis/delete-account — DONE
+Environment note for the next run: this sandbox had no `bun` and the hoisted `node_modules`
+carried darwin-arm64 native bindings only. Installed bun (`~/.bun/bin`) and dropped the
+linux-arm64 bindings for `@swc/core`, `oxc-parser`, `oxc-resolver` and `@biomejs/cli` into
+`node_modules/` (no package.json or lockfile change). The api e2e suite also needs the proxy
+vars cleared — `app.getUrl()` yields `http://[::1]:port`, which `no_proxy` does not match, so
+every in-process request returns the sandbox proxy's 403:
+`env -u NODE_USE_ENV_PROXY -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy bun run check`.
 
-Done: the two pages that already talk about deletion now point at the deletion page, so a Player who lands anywhere on the site reaches it.
-Decisions:
-- Both pages render their content from a data array of plain strings. Rather than break that shape, each entry gains an optional `link: { lead, href, label }`, rendered after the text as `{lead} <a>{label}</a>.` — one branch, no JSX in the data.
-- TypeScript normalises an array literal whose object literals differ by adding the missing property as optional, so no hand-written type is needed for the entries without a link; typecheck confirms it.
-- Plain `<a href={ROUTES.deleteAccount}>` with the sky-600 class, not next/link: prior art for a cross-link inside prose is apps/web/src/app/mentis/terms/page.tsx linking ROUTES.privacy. next/link stays for the footer nav.
-- Support, « Comment supprimer mon compte ? »: the answer already describes the in-app path, so the link's lead names the fallback — « Le détail des deux voies — depuis l'application, ou par email si vous ne l'avez plus : supprimer mon compte. »
-- Privacy: the link hangs on the RIGHTS entry « Droit à l'effacement », where the PRD asked for it, not on the « Conservation et suppression » section — the erasure right is the legal hook Google and the CNIL both read.
-- SiteFooter untouched: still exactly its four legal links, per the PRD decision that Google wants the URL to land on the deletion page itself.
-Files: apps/web/src/app/mentis/support/page.tsx, apps/web/src/app/mentis/privacy/page.tsx, PRD-2.md, progress.txt.
-Proof: bun run --filter @mentis/web build green; grep of out/mentis/support.html and out/mentis/privacy.html finds href="/mentis/delete-account" once in each. bun run check exit 0 (web 7, contracts 177, answer-matching 49, admin 145, mobile 263, api 368).
-Notes for next: the api e2e specs still need NO_PROXY="$NO_PROXY,[::1]" under the sandbox proxy — see Item 1's note. Item 3 is mobile: DELETE_ACCOUNT_MESSAGE becomes a function of isPremium in features/account/constants.ts, fed by the isPremium account-screen.tsx already reads from useIsPremium().
+Next: item 2 — `secondaryColor` on the wire (contracts, /admin/categories, /app/themes, the
+admin category form state). Hugo's human step for item 1 (generate and run the migration,
+checking it only adds `secondary_color` with its `'#ffffff'` default) is still pending.
 
-## PRD-2 Item 3 — the in-app deletion confirmation warns a Premium Player — DONE
+## Item 2 — contracts/api/admin: secondaryColor travels the wire (2026-09-24)
 
-Done: DELETE_ACCOUNT_MESSAGE becomes deleteAccountMessage(isPremium) in features/account/constants.ts, so a subscribed Player is told the store keeps billing after the Account is gone (App Store 3.1.2).
-Decisions:
-- The function takes `boolean | null`, the exact type useIsPremium() returns, so account-screen.tsx feeds it straight: `message={deleteAccountMessage(isPremium)}`. Null is the tier still loading and reads as false — the app never claims a subscription it has not confirmed.
-- The premium branch is the base message plus one sentence, never a rewritten message: the test asserts startsWith(deleteAccountMessage(false)), so the 5.1.1(v) wording (what is erased, irreversible) can never drift out of the Premium branch.
-- Copy keeps the screen's tutoiement — "Ton abonnement Mentis Premium n'est pas résilié pour autant : la facturation continue. Résilie-le dans les réglages d'abonnement de l'App Store ou de Google Play." Both stores are named in one sentence rather than switching on Platform: prior art subscriptionTermsSentence(platform) exists for the paywall, but a confirmation dialog is not the place for a platform seam, and the PRD asked for a pure function of isPremium alone.
-- DELETE_ACCOUNT_BASE_MESSAGE and DELETE_ACCOUNT_SUBSCRIPTION_SENTENCE are module-local, not exported: the message has exactly one public shape now, and knip stays green.
-- The existing "non-empty French copy" test now lists deleteAccountMessage(false) where the bare constant used to be.
-Files: apps/mobile/src/features/account/constants.ts, apps/mobile/src/features/account/constants.test.ts, apps/mobile/src/features/account/components/account-screen.tsx, PRD-2.md, progress.txt.
-Proof: bun run check exit 0 (web 7, contracts 177, answer-matching 49, admin 145, mobile 265, api 368).
-Notes for next: the api e2e 403s under the sandbox proxy need BOTH env vars, not just the uppercase one — export NO_PROXY="$NO_PROXY,[::1]" no_proxy="$no_proxy,[::1]"; with only NO_PROXY set, 267 specs still fail. Still not persisted to /etc/sandbox-persistent.sh (some clients read the entries as regexes, where [::1] matches every host). All three PRD-2 items now pass; what remains is human step H16 in the Play Console.
+- `packages/contracts/src/admin/category.ts`: `adminCategoryResponseSchema` gains a plain
+  `secondaryColor: z.string()` (a stored value is served, never refused);
+  `adminCategoryWriteSchema` gains `secondaryColor` under the same lowercase `#rrggbb` regex and
+  the same « A color is a lowercase #rrggbb » message as `color`.
+- `packages/contracts/src/app/theme.ts`: `appCategorySchema` requires a lowercase `#rrggbb`
+  `secondaryColor`. It is the one Category shape `/app/themes` and `/app/competition` both serve,
+  so the phone receives it everywhere.
+- `apps/api/src/catalog/types/theme-visuals.ts` + `catalog.repository.ts`: the nested Category
+  carries `secondaryColor` — added to the select, to the `groupBy` (it sits under the
+  `count(question.id)` aggregate), to the raw row type and to both mappings
+  (`themesWithQuestionCounts` and `themeVisualsById`).
+- `/admin/categories` needed no controller or service change: list, create and update all flow
+  through the contracts, so widening the schemas was enough.
+- `apps/admin/.../category-form.ts`: `CategoryFormState` gains `secondaryColor`,
+  `blankCategoryForm` starts it at `#ffffff`, `toCategoryForm` lowercases the stored value, and
+  `isCategoryFormDirty` watches it. `isServableColor` is already field-agnostic, so both colors
+  share one rule.
+- Tests: contracts specs (acceptance + refusals of `#FFFFFF`, `#fff`, `white`, `''` and a missing
+  field), admin-curation e2e (list/POST/PATCH carry it; invalid or missing → 400 with the
+  ErrorResponse envelope, on POST and on PATCH), app-content and app-competition e2e fixtures,
+  `category-form.test.ts`, and every Category fixture across api, admin and mobile.
+- Out-of-scope note honoured: no mobile screen paints `secondaryColor`. Typecheck did force one
+  mobile change — `session-screen.tsx` rebuilds a Category from flat route params, so
+  `categorySecondaryColor` now travels beside `categoryColor` from `picker-layout.tsx`. Carried,
+  not rendered.
 
-## PRD Item 1 — the Explanation travels the whole data path (contract, entity, admin form state) — DONE
+`bun run check` green from the repo root: typecheck every workspace, 1179 tests across 90 files,
+knip and format clean. Same sandbox setup as item 1 — `~/.bun/bin` on PATH and the proxy vars
+cleared for the api e2e suite.
 
-Done: an Explanation can now be written, stored, served and cleared end to end. No UI yet — item 2 adds the textarea.
-Decisions:
-- Contract: `authoredExplanation` is `z.string().nullable().transform((e) => e?.trim() || null).refine(...)`. The `|| null` collapses empty *and* whitespace-only into null in one step, and the refine runs after the transform so the 400 cap counts trimmed characters, as the PRD asked. EXPLANATION_MAX_LENGTH stays module-local — item 2 exports it when the counter needs it; exporting it unused now would fail knip.
-- The key is required and nullable, never optional: `{ explanation: undefined }` is a 400. Spread into the write in `question.spec.ts` that is exactly the "missing key" case, since spreading an undefined value still overwrites.
-- Response schema: `explanation: z.string().nullable()`, placed after `wrongChoices` and before the staging flag — after the answer material, before staging. Same slot in the write schema and on the entity, matching the form order the PRD gives (under Answers, before Aliases).
-- Entity: `@Column({ type: "text", nullable: true }) explanation: string | null`. No migration authored — Hugo's `migration:generate` is the human step before any API deploy.
-- No API code changed at all. The service spreads the contract's shape into `DeepPartial<QuestionEntity>`, so the Explanation rides along; `stageQuestion` sends `{ id, readyToBePublished }` only, and TypeORM `preload` skips `undefined` while applying `null`, so staging leaves the Explanation untouched and a full PATCH with null clears it. The e2e fake mirrors that with `Object.assign`.
-- The app contract is untouched and zod strips by default, so `/app/*` never serves the Explanation — no test or comment states that, per the PRD's out-of-scope rule.
-- Admin: `QuestionFormState` gains `explanation: string`; `toQuestionForm` opens `null` as `""`, `questionPayloadOf` hands the raw textarea text to the contract (which trims it to null), `isQuestionFormDirty` compares it. The over-400 case makes `questionPayloadOf` return null, so Save is already disabled — item 2 only owns the red counter.
-- One line in `question-form.tsx`: the save's `onSuccess` now reseeds the form from `stored.explanation ?? ""`, like it already did for the chips. Data path, not UI — without it the textarea would keep untrimmed text the server rejected to store.
-- `staging.test.ts`'s `Question` fixture needed `explanation: null` to typecheck.
-Files: packages/contracts/src/admin/question.ts, packages/contracts/src/admin/question.spec.ts, apps/api/src/_database/entities/question.entity.ts, apps/api/src/curation/_tests/admin-curation.e2e-spec.ts, apps/admin/src/features/curation/question-form.ts, apps/admin/src/features/curation/question-form.test.ts, apps/admin/src/features/curation/staging.test.ts, apps/admin/src/features/curation/components/question-form.tsx, PRD.md, progress.txt.
-Proof: typecheck green in all six workspaces; contracts 189 (was 177), admin 181 (was 145), api 407 (was 368), mobile 303, web 17, answer-matching 49; biome `check --write` applied no fixes; knip silent. No migration file added.
-Notes for next: **bun is not installed on this box** — I ran `node_modules/.bin/{vitest,tsc,biome,knip}` per workspace instead. node_modules was installed for darwin-arm64 while the box is linux-arm64, so four native bindings were missing; I extracted the matching linux tarballs into node_modules by hand (`@swc/core-linux-arm64-gnu` 1.15.47, `@biomejs/cli-linux-arm64` 2.5.6, `@oxc-parser/binding-linux-arm64-gnu` 0.142.0, `@oxc-resolver/binding-linux-arm64-gnu` 11.24.2). Nothing in package.json or bun.lock changed. `apps/admin`'s typecheck script builds @mentis/contracts first, so run `packages/contracts` `tsc -p tsconfig.build.json` before typechecking admin by hand (dist/ is gitignored). The api e2e still needs both `NO_PROXY` and `no_proxy` to carry `[::1]`.
+Next: item 3 — the Category form's mockup layout (Name beside a Preview slot, then Main color and
+Secondary color side by side). The form still has no Secondary color input: item 2 only gave the
+state its field, which currently round-trips `#ffffff` on create and the stored value on edit.
+Hugo's human step for item 1 (generate and run the migration) is still pending.
 
-## PRD Item 2 — the Explanation textarea and its 400-character counter — DONE
+## Item 3 — admin: the Category form follows the mockup's layout (2026-09-24)
 
-Done: the Editor can now write, edit and clear an Explanation from the Details column. The PRD is complete.
-Decisions:
-- The field sits between "Answers" and "Aliases", a `<Field label="Explanation">` holding a `rows={3}` textarea on `${CONTROL} resize-y` — the CONTROL default lets a textarea be dragged sideways too, and a horizontal drag would break the column's layout.
-- `EXPLANATION_MAX_LENGTH` becomes an export of `packages/contracts/src/admin/question.ts` (it was module-local since item 1) so the counter and the contract's refine read the same 400 — knip is happy now that admin consumes it.
-- `isExplanationOverLimit(explanation)` in `question-form.ts` is the one over-limit rule: raw `.length`, no trim, because the PRD wants the counter to count exactly what the Editor sees, spaces included.
-- That same function drives both the red counter and the disabled Save. It is not redundant with `payload === null`: 399 characters plus two trailing spaces trims to 399, so the contract accepts it while the counter reads 401 — without the extra guard the counter would be red beside an enabled Save. That case is the fourth row of the new test table.
-- The counter is a `<p>` under the textarea, `text-right text-xs`, zinc-500 normally and red-600 past the limit — red-600 is already the form's error color (the `role="alert"` paragraph), so no new color enters the palette.
-- Typing is never blocked: no `maxLength` on the textarea. The Editor sees how far over they are and cuts the text down themselves.
-- No aria-label on the textarea, matching the "Question" one right above it; the Field's label span is the visible name.
-Files: packages/contracts/src/admin/question.ts, apps/admin/src/features/curation/question-form.ts, apps/admin/src/features/curation/question-form.test.ts, apps/admin/src/features/curation/components/question-form.tsx, PRD.md, progress.txt.
-Proof: typecheck green in all six workspaces; admin 185 tests (was 181), contracts 189, api 407, mobile 303, web 17, answer-matching 49; biome `check --write` reformatted the new TonalButton line only; knip silent.
-Notes for next: **bun is still not installed on this box** — ran `node_modules/.bin/{vitest,tsc,biome,knip}` per workspace. The linux-arm64 native bindings item 1 extracted by hand were still in place, so nothing to redo. Build `packages/contracts` (`tsc -p tsconfig.build.json`) before typechecking admin. The api e2e needs both `NO_PROXY` and `no_proxy` carrying `[::1]`. Both PRD items pass; what remains is Hugo's `migration:generate` + `migration:run` before any API deploy, and a look at the live form.
+- `components/category-form.tsx`: two `sm:grid-cols-2` rows, per `.private/design-guildeline.png`.
+  Row 1 is Name beside a « Preview » Field; row 2 is « Main color » beside « Secondary color »,
+  each with its own « Not a #rrggbb color » hint. Icon, Staging, the actions and the delete
+  blocker follow unchanged.
+- « Main color » edits `color` and keeps the `CategoryBadge` swatch; « Secondary color » edits
+  `secondaryColor` through the same `ColorField`, previewed by a plain bordered swatch.
+- The Preview block holds a `CategoryBadge` for now — item 4 swaps it for the chip.
+- `components/color-field.tsx`: new required `label` prop. Two `ColorField`s now share a row, and
+  both hex inputs used to answer to `aria-label="Color"`; the label names the input and both
+  pick buttons (« Pick a main color », « Pick a secondary color from the screen »).
+- New `components/category-form.test.tsx` (happy-dom, `theme-image.test.tsx`'s harness): the two
+  rows' labels and the stored colors render; a new Category starts at `#0ea5e9` / `#ffffff`;
+  typing a secondary hex repaints its swatch, enables Save and sends `secondaryColor` in the
+  PATCH body; a stored `"white"` shows the hint and blocks Save until a valid hex replaces it.
+- Test note for the next component test: React reads an input through its own value tracker, so
+  a raw `input.value = …` looks like no change. The `type` helper calls the native
+  `HTMLInputElement.prototype.value` setter before dispatching `input`. Also, happy-dom returns
+  `style.backgroundColor` verbatim — assert `"#e34e43"`, not `"rgb(227, 78, 67)"`.
+
+`bun run check` green from the repo root: typecheck every workspace, 1183 tests across 91 files,
+knip and format clean. Same sandbox setup as items 1 and 2 — `~/.bun/bin` on PATH and the proxy
+vars cleared for the api e2e suite.
+
+Next: item 4 — the Preview chip (EpundaSlab copied into `apps/admin/public/fonts/` and wired with
+`next/font/local`, the app's Category chip rebuilt in HTML, live on every edit). Hugo's human step
+for item 1 (generate and run the migration) is still pending.
+
+## Item 4 — admin: the Preview chip (2026-09-24)
+
+- `apps/admin/public/fonts/EpundaSlab-Regular.ttf`: copied byte-for-byte from
+  `apps/mobile/assets/fonts/`. `app/layout.tsx` loads it with `next/font/local` as
+  `--font-chip` (`preload: false`, like `material-icons`), `globals.css` exposes it under
+  `@theme inline`, and only the chip's name wears `font-chip` — the admin's Lexend/Poppins rule
+  stands everywhere else.
+- New `components/category-chip.tsx`: plain spans, no SVG and no new dependency. Outer pill
+  `h-[35px] rounded-[13px] p-[3px]` filled with `secondaryColor`, inner badge `size-[29px]
+  rounded-[10px]` filled with `color`, the MaterialIcons glyph at `text-[20px]` unrotated, the
+  name uppercased at `text-[14px]` with `px-[9px]`. Glyph and name are inked `#250313`
+  (`APP_INK`, the app's ink from `apps/mobile/src/theme/tokens.ts`), not zinc.
+- `components/category-form.tsx`: the Preview Field renders `CategoryChip` from form state, so
+  it follows name, color, secondary color and icon live, on the create form and the edit form
+  alike. `CategoryBadge` stays as the Main color swatch.
+- The mockup's squircle, its -1.8° glyph rotation and its `backdrop-filter` are deliberately
+  dropped per the PRD: classic `border-radius`, no blur.
+- `components/category-form.test.tsx`: four new cases — the stored Category's pill, badge, glyph
+  and ink; live follow of all four fields with `sendToApi` never called; an empty name leaving
+  the badge alone and an unknown icon leaving it blank; the create form's `#ffffff` / `#0ea5e9`
+  preview. The chip is reached through the « Preview » label's sibling, since the repo uses no
+  test ids.
+
+`bun run check` green from the repo root: typecheck every workspace, 1187 tests across 91 files,
+knip and format clean. `bun run --filter @mentis/admin build` is also green — worth running for
+a font change, since `check` never builds: the CSS carries `.font-chip{font-family:var(--font-chip)}`
+and `.next/static/media/` ships the EpundaSlab file.
+
+Environment note beyond items 1–3: the sandbox's `next build` needed the linux-arm64 native
+bindings for `lightningcss` and `@tailwindcss/oxide` dropped into `node_modules/` (no
+package.json or lockfile change), and a cleared `apps/admin/.next` — turbopack caches the
+failing resolution and replays the old error otherwise.
+
+Next: item 5 — the icon picker as a fixed-height scrollable grid of every matching glyph, named
+by `title`, the selected tile washed in `${color}40`. Hugo's human step for item 1 (generate and
+run the migration) is still pending; his visual review lands after item 5.
+
+## Item 5 — admin: the icon picker becomes a grid (2026-09-24)
+
+- `icons.ts`: `suggestIcons` drops `SUGGESTION_LIMIT` and its `.slice()` — every name containing
+  the query comes back (2234 for an empty query). The ranking is byte-identical: prefix first,
+  then the shorter name.
+- `components/icon-field.tsx`: the `ul` is now the mockup's panel — fixed `h-[175px]`,
+  `overflow-y-auto`, a `grid-cols-[repeat(auto-fill,40px)]` of `size-10` bordered tiles carrying
+  the glyph alone. Each tile's `title` is its icon name (the native tooltip, no custom element).
+  The tile whose name equals the field value wears `${color}${WASH_ALPHA}` — the app's `40` wash,
+  a quarter opacity — so it follows the Main color live. The `preventDefault` on mousedown and
+  the two hints are untouched.
+- `IconField` gained a required `color` prop; `category-form.tsx` passes `form.color`, so the
+  wash repaints as the color is typed. It is the form's only caller.
+- Zero matches still renders no panel at all, leaving the « No MaterialIcons glyph answers to
+  that name. » hint alone — the `isOpen && matches.length > 0` guard is unchanged.
+- `icons.test.ts`: the empty query now returns the whole glyphmap (counted against
+  `Object.keys(GLYPHMAP)`), `suggestIcons("restaurant")` returns all four names containing it
+  with `restaurant` first, and prefix-then-length ranking is pinned by
+  `movie` < `local-movies` and `movie-filter` < `movie-creation`.
+- `components/category-form.test.tsx`: four cases — the grid opens on a click with glyph-only
+  tiles titled by name in `suggestIcons` order; only the field's own tile is washed, at
+  `#c4a2cb40`, and it becomes `#ffe3a040` when the Main color is typed; picking `restaurant-menu`
+  fills the field, closes the grid and repaints the preview chip; `zzzzzz` leaves no tile and the
+  « No MaterialIcons glyph answers to that name. » hint.
+
+Test note: happy-dom returns an 8-digit hex from `style.backgroundColor` verbatim too, so the
+wash asserts `"#c4a2cb40"`. Opening the grid is `labelled("Icon").click()` inside `act` — the
+field opens on click as well as focus, and the harness dispatches no focus events.
+
+`bun run check` green from the repo root: typecheck every workspace, 1193 tests across 91 files,
+knip and format clean. Same sandbox setup as items 1–4 — `~/.bun/bin` on PATH and the proxy vars
+cleared for the api e2e suite.
+
+The PRD's five items are done. Two human steps remain for Hugo: generate and run the migration
+for `secondary_color` (item 1), and the visual review of the Category form against
+`.private/design-guildeline.png` and of the chip against `.private/admin-preview-chips.svg`.
