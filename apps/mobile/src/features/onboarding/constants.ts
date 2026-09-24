@@ -1,3 +1,4 @@
+import type { OnboardingOutcome } from "@/features/onboarding/outcome";
 import { POINTS_CASH, POINTS_SQUARE } from "@/features/quiz/constants";
 import type { Question } from "@/types/quiz";
 
@@ -46,15 +47,13 @@ export const ONBOARDING_TRY_LABEL = "Essayer";
 
 export const END_ONBOARDING_CAPTION = "Tu as compris le fonctionnement ?";
 export const END_ONBOARDING_TITLE = "Prêt à commencer ?";
-export const END_ONBOARDING_OUTCOME_COPY = {
-  cash: { title: "Bravo !", line: "Réponse « cash » : score maximal." },
-  square: {
-    title: "Presque parfait !",
-    line: `Réponse « carré » : bonne réponse. En « cash », tu aurais gagné ${POINTS_CASH} pts.`,
-  },
-  wrong: {
-    title: "Dommage !",
-    line: "C'est pas grave, il y a de nombreux autres thèmes sur Mentis.",
-  },
-  missed: { title: "Dommage !", line: "Voici la réponse" },
-} as const;
+export const END_ONBOARDING_OUTCOME_TITLE = {
+  cash: "Bravo !",
+  square: "Presque parfait !",
+  wrong: "Dommage !",
+  missed: "Dommage !",
+} as const satisfies Record<OnboardingOutcome, string>;
+export const END_ONBOARDING_SCORING_LINES = [
+  { lead: "Réponse “carré”, c'est ", points: `${ONBOARDING_HINT_SQUARE_POINTS}.` },
+  { lead: "En réponse “cash”, c'est ", points: `${ONBOARDING_HINT_CASH_POINTS}.` },
+] as const;

@@ -28,12 +28,13 @@ export const LegalLine = () => {
 
 const styles = StyleSheet.create({
   sentence: {
-    ...TEXT.caption,
+    ...TEXT.smallText,
     color: COLORS.inkMuted,
     textAlign: "center",
   },
   link: {
-    ...TEXT.captionStrong,
+    ...TEXT.smallTextStrong,
     color: COLORS.ink,
+    textDecorationLine: "underline",
   },
 });

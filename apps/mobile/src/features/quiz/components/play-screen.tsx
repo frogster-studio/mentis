@@ -30,6 +30,7 @@ export const PlayScreen = ({
   header,
   footer,
 }: PlayScreenProps) => {
+  const hasMultipleQuestions = total > 1;
   return (
     <ScreenContainer
       edges={ALL_SCREEN_EDGES}
@@ -62,10 +63,16 @@ export const PlayScreen = ({
             borderWidth={null}
           />
           {header}
-          <View style={styles.progress}>
-            <PlayProgressBar position={position} total={total} />
-          </View>
-          <Text style={styles.counter}>{`# ${position} / ${total}`}</Text>
+
+          {hasMultipleQuestions && (
+            <>
+              <View style={styles.progress}>
+                <PlayProgressBar position={position} total={total} />
+              </View>
+
+              <Text style={styles.counter}>{`# ${position} / ${total}`}</Text>
+            </>
+          )}
           <Animated.View
             style={[
               styles.questionWrap,

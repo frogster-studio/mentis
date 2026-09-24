@@ -1,7 +1,7 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { StyleSheet, Text, View } from "react-native";
+import FastSquircleView from "react-native-fast-squircle";
 import type { IconName } from "@/components/ui/icon-name";
-import { Squircle } from "@/components/ui/squircle";
 import { TEXT } from "@/theme/text";
 import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
 
@@ -20,30 +20,23 @@ const SHADE_ALPHA = "1A";
 export interface CategoryPillProps {
   icon: IconName;
   color: string;
-  // A bar stands in until the Category is drawn for real; only the glyph carries meaning then.
+  iconBg: string;
   label: string | null;
 }
 
-export const CategoryPill = ({ icon, color, label }: CategoryPillProps) => {
+export const CategoryPill = ({ icon, iconBg, color, label }: CategoryPillProps) => {
   return (
-    <Squircle
-      radius={RADIUS.sm}
-      color={color}
-      style={[styles.pill, label === null ? styles.placeholder : styles.labelled]}
-      corners="all"
-      borderColor={null}
-      borderWidth={null}
+    <FastSquircleView
+      style={[
+        styles.pill,
+        label === null ? styles.placeholder : styles.labelled,
+        { backgroundColor: color },
+      ]}
     >
-      <Squircle
-        radius={BADGE_SIZE / 3}
-        color={`${COLORS.ink}${SHADE_ALPHA}`}
-        style={styles.badge}
-        corners="all"
-        borderColor={null}
-        borderWidth={null}
-      >
+      <FastSquircleView style={[styles.badge, { backgroundColor: iconBg }]}>
         <MaterialIcons name={icon} size={ICON_SIZE} color={COLORS.ink} />
-      </Squircle>
+      </FastSquircleView>
+
       {label === null ? (
         <View style={styles.bar} />
       ) : (
@@ -51,7 +44,7 @@ export const CategoryPill = ({ icon, color, label }: CategoryPillProps) => {
           {label}
         </Text>
       )}
-    </Squircle>
+    </FastSquircleView>
   );
 };
 
@@ -61,6 +54,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingLeft: BADGE_INSET,
+    borderRadius: RADIUS.sm,
   },
   placeholder: {
     width: PILL_WIDTH,
@@ -70,6 +64,7 @@ const styles = StyleSheet.create({
     paddingRight: SPACE.sm,
   },
   badge: {
+    borderRadius: RADIUS.sm - 2,
     width: BADGE_SIZE,
     height: BADGE_SIZE,
     alignItems: "center",

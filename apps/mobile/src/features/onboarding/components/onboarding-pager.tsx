@@ -1,14 +1,14 @@
 import { StyleSheet, Text, View } from "react-native";
+import FastSquircleView from "react-native-fast-squircle";
 import { NewButton } from "@/components/ui/new-button";
 import { useBottomChromeGap } from "@/components/ui/screen-container";
-import { Squircle } from "@/components/ui/squircle";
 import {
   ONBOARDING_BACK_LABEL,
   ONBOARDING_NEXT_LABEL,
   ONBOARDING_PAGE_SEPARATOR,
 } from "@/features/onboarding/constants";
 import { TEXT } from "@/theme/text";
-import { COLORS, CONTROL_SQUARE_SIZE, RADIUS, SPACE } from "@/theme/tokens";
+import { COLORS, CONTROL_SQUARE_SIZE, SPACE } from "@/theme/tokens";
 
 export interface OnboardingPagerProps {
   index: number;
@@ -29,7 +29,7 @@ export const OnboardingPager = ({ index, count, onBack, onNext }: OnboardingPage
         {isFirst ? null : (
           <NewButton
             layout="hug"
-            shape="full"
+            shape="rounded"
             tone="default"
             icon="arrow-left"
             label={null}
@@ -40,21 +40,14 @@ export const OnboardingPager = ({ index, count, onBack, onNext }: OnboardingPage
           />
         )}
       </View>
-      <Squircle
-        radius={RADIUS.sm}
-        corners="all"
-        color={COLORS.ink}
-        borderColor={null}
-        borderWidth={null}
-        style={styles.counter}
-      >
+      <FastSquircleView style={styles.counter}>
         <Text style={styles.count}>{`${index + 1}${ONBOARDING_PAGE_SEPARATOR}${count}`}</Text>
-      </Squircle>
+      </FastSquircleView>
       <View style={styles.slot}>
         {isLast ? null : (
           <NewButton
             layout="hug"
-            shape="full"
+            shape="rounded"
             tone="default"
             icon="arrow-right"
             label={null}
@@ -80,8 +73,10 @@ const styles = StyleSheet.create({
     width: CONTROL_SQUARE_SIZE,
   },
   counter: {
-    paddingHorizontal: SPACE.sm,
-    paddingVertical: SPACE.xxs,
+    backgroundColor: COLORS.ink,
+    paddingHorizontal: SPACE.md,
+    paddingVertical: SPACE.sm,
+    borderRadius: 7,
   },
   count: {
     ...TEXT.label,

@@ -22,6 +22,8 @@ export const COLORS = {
   bordeau: "#652F48",
   clear: "transparent",
   yellow: "#FFE798",
+  shadow: "#3D0000",
+  successShadow: "#023301",
 } as const;
 
 export const SPACE = {

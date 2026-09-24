@@ -1,31 +1,53 @@
 import type { ReactNode } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { View } from "react-native";
+import Animated, { css as StyleSheetReanimated } from "react-native-reanimated";
 import { TEXT } from "@/theme/text";
 import { COLORS, GUTTER, SPACE } from "@/theme/tokens";
 
 export interface OnboardingPageProps {
   hero: ReactNode;
   caption: string;
+  emblem: ReactNode;
   title: string;
   action: ReactNode;
+  isRevealed: boolean;
 }
 
-export const OnboardingPage = ({ hero, caption, title, action }: OnboardingPageProps) => {
+const FADE_IN = StyleSheetReanimated.keyframes({
+  from: { opacity: 0 },
+  to: { opacity: 1 },
+});
+
+export const OnboardingPage = ({
+  hero,
+  caption,
+  emblem,
+  title,
+  action,
+  isRevealed,
+}: OnboardingPageProps) => {
   return (
     <View style={styles.page}>
       {hero}
+      {/* The copy mounts on the page's first reveal, so its fade plays where the Player sees it. */}
       <View style={styles.copy}>
-        <Text style={styles.caption}>{caption}</Text>
-        <Text style={styles.title}>{title}</Text>
+        {isRevealed ? (
+          <>
+            <Animated.Text style={styles.caption}>{caption}</Animated.Text>
+            {emblem ? <Animated.View style={styles.emblem}>{emblem}</Animated.View> : null}
+            <Animated.Text style={styles.title}>{title}</Animated.Text>
+          </>
+        ) : null}
       </View>
       {action ? <View style={styles.action}>{action}</View> : null}
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const styles = StyleSheetReanimated.create({
   page: {
     flex: 1,
+    overflow: "hidden",
     paddingHorizontal: GUTTER,
     paddingTop: SPACE.xl,
   },
@@ -40,11 +62,26 @@ const styles = StyleSheet.create({
     ...TEXT.body,
     color: COLORS.ink,
     textAlign: "center",
+    animationName: FADE_IN,
+    animationDuration: "500ms",
+  },
+  emblem: {
+    alignSelf: "stretch",
+    alignItems: "center",
+    marginTop: SPACE.sm,
+    animationName: FADE_IN,
+    animationDuration: "500ms",
+    animationDelay: "250ms",
+    animationFillMode: "backwards",
   },
   title: {
-    ...TEXT.sectionTitle,
+    ...TEXT.onboardingTitle,
     color: COLORS.ink,
     textAlign: "center",
+    animationName: FADE_IN,
+    animationDuration: "500ms",
+    animationDelay: "500ms",
+    animationFillMode: "backwards",
   },
   action: {
     paddingHorizontal: SPACE.lg,

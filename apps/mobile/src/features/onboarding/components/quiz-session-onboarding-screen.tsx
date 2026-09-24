@@ -10,9 +10,6 @@ import type { SessionAnswer } from "@/features/quiz/session-reducer";
 import { useQuizStore } from "@/features/quiz/store";
 import { usePlayLoop } from "@/features/quiz/use-play-loop";
 
-// The mockup's wash, #DDE5D7 over the paper, read back through the play backdrop's alpha.
-const CATEGORY_COLOR = "#95D3B6";
-
 export const QuizSessionOnboardingScreen = () => {
   const router = useRouter();
   const session = useQuizStore((state) => state.session);
@@ -73,7 +70,7 @@ export const QuizSessionOnboardingScreen = () => {
       play={session}
       total={session.questions.length}
       loop={loop}
-      categoryColor={CATEGORY_COLOR}
+      categoryColor={"#FFF"}
       showCrown={false}
       quitLabel={QUIT_LABEL}
       headerExtra={null}

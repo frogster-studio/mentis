@@ -21,6 +21,7 @@ SplashScreen.preventAutoHideAsync();
 const RootLayout = () => {
   const [fontsLoaded, fontError] = useFonts({
     "EpundaSlab-Regular": require("../../assets/fonts/EpundaSlab-Regular.ttf"),
+    "EpundaSlab-Medium": require("../../assets/fonts/EpundaSlab-Medium.ttf"),
     "InterTight-Regular": require("../../assets/fonts/InterTight-Regular.ttf"),
     "InterTight-SemiBold": require("../../assets/fonts/InterTight-SemiBold.ttf"),
   });

@@ -2,17 +2,15 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 import { NewButton } from "@/components/ui/new-button";
 import { ALL_SCREEN_EDGES, ScreenContainer } from "@/components/ui/screen-container";
+import { EndOnboardingVerdict } from "@/features/onboarding/components/end-onboarding-verdict";
 import { LegalLine } from "@/features/onboarding/components/legal-line";
 import {
   END_ONBOARDING_CAPTION,
   END_ONBOARDING_CTA_LABEL,
-  END_ONBOARDING_OUTCOME_COPY,
   END_ONBOARDING_TITLE,
-  ONBOARDING_QUESTION,
 } from "@/features/onboarding/constants";
-import { isOnboardingOutcome, outcomePoints } from "@/features/onboarding/outcome";
+import { isOnboardingOutcome } from "@/features/onboarding/outcome";
 import { useOnboardingStore } from "@/features/onboarding/store";
-import { ResultCard } from "@/features/quiz/components/result-card";
 import { TEXT } from "@/theme/text";
 import { COLORS, GUTTER, SPACE } from "@/theme/tokens";
 
@@ -25,23 +23,11 @@ export const EndOnboardingScreen = () => {
   }>();
   // Landing here without a verdict reads as a test never taken.
   const outcome = isOnboardingOutcome(outcomeParam) ? outcomeParam : "missed";
-  const copy = END_ONBOARDING_OUTCOME_COPY[outcome];
-  const points = outcomePoints(outcome);
 
   return (
     <ScreenContainer edges={ALL_SCREEN_EDGES} underlay={null}>
       <View style={styles.verdict}>
-        <Text style={styles.verdictTitle}>{copy.title}</Text>
-        <ResultCard
-          position={1}
-          total={1}
-          questionText={ONBOARDING_QUESTION.text}
-          canonicalAnswer={ONBOARDING_QUESTION.answer}
-          answerText={answer ?? ""}
-          correct={points > 0}
-          points={points}
-        />
-        <Text style={styles.verdictLine}>{copy.line}</Text>
+        <EndOnboardingVerdict outcome={outcome} answer={answer ?? ""} />
       </View>
       <View style={styles.copy}>
         <Text style={styles.caption}>{END_ONBOARDING_CAPTION}</Text>
@@ -70,27 +56,15 @@ export const EndOnboardingScreen = () => {
 
 const styles = StyleSheet.create({
   verdict: {
+    flex: 1,
     paddingHorizontal: GUTTER,
-    paddingTop: SPACE.xxl,
-    gap: SPACE.lg,
-  },
-  verdictTitle: {
-    ...TEXT.sectionTitle,
-    color: COLORS.ink,
-    textAlign: "center",
-  },
-  verdictLine: {
-    ...TEXT.body,
-    color: COLORS.ink,
-    textAlign: "center",
-    paddingHorizontal: SPACE.lg,
+    paddingTop: SPACE.xl,
   },
   copy: {
-    flex: 1,
-    justifyContent: "center",
     alignItems: "center",
     gap: SPACE.xs,
     paddingHorizontal: GUTTER + SPACE.lg,
+    paddingVertical: SPACE.xl,
   },
   caption: {
     ...TEXT.body,
@@ -98,7 +72,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   title: {
-    ...TEXT.sectionTitle,
+    ...TEXT.onboardingTitle,
     color: COLORS.ink,
     textAlign: "center",
   },

@@ -2,6 +2,7 @@ import type { TextStyle } from "react-native";
 
 const FACES = {
   heading: "EpundaSlab-Regular",
+  onboarding: "EpundaSlab-Medium",
   emphasis: "InterTight-SemiBold",
   regular: "InterTight-Regular",
 } as const;
@@ -9,9 +10,10 @@ const FACES = {
 export const TEXT = {
   caption: { fontFamily: FACES.regular, fontSize: 14, lineHeight: 19 },
   captionStrong: { fontFamily: FACES.emphasis, fontSize: 14, lineHeight: 19 },
-  body: { fontFamily: FACES.regular, fontSize: 16, lineHeight: 24 },
+  body: { fontFamily: FACES.regular, fontSize: 15, lineHeight: 24 },
   competitionScore: { fontFamily: FACES.regular, fontSize: 80, lineHeight: 110 },
   premiumLabel: { fontFamily: FACES.emphasis, fontSize: 10, lineHeight: 12 },
+  onboardingTitle: { fontFamily: FACES.onboarding, fontSize: 30, lineHeight: 40 },
   label: { fontFamily: FACES.emphasis, fontSize: 14, lineHeight: 20 },
   cardTitleSmall: { fontFamily: FACES.heading, fontSize: 14, lineHeight: 18 },
   cardTitle: { fontFamily: FACES.heading, fontSize: 18, lineHeight: 24 },
@@ -24,4 +26,6 @@ export const TEXT = {
   statValue: { fontFamily: FACES.emphasis, fontSize: 26, lineHeight: 32 },
   heroScore: { fontFamily: FACES.emphasis, fontSize: 100, lineHeight: 116 },
   revealCount: { fontFamily: FACES.heading, fontSize: 200, lineHeight: 300, letterSpacing: -12 },
+  smallText: { fontFamily: FACES.regular, fontSize: 12 },
+  smallTextStrong: { fontFamily: FACES.emphasis, fontSize: 12 },
 } as const satisfies Record<string, TextStyle>;

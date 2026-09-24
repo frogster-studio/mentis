@@ -8,7 +8,6 @@ import { CompetitionHero } from "@/features/onboarding/components/competition-he
 import { OnboardingPage } from "@/features/onboarding/components/onboarding-page";
 import { OnboardingPager } from "@/features/onboarding/components/onboarding-pager";
 import { PracticeHero } from "@/features/onboarding/components/practice-hero";
-// import { SurpriseHero } from "@/features/onboarding/components/surprise-hero";
 import {
   ONBOARDING_COMPETITION_CAPTION,
   ONBOARDING_COMPETITION_TITLE,
@@ -27,27 +26,34 @@ export const OnboardingScreen = () => {
   const router = useRouter();
   const carousel = useRef<CarouselRef>(null);
   const [index, setIndex] = useState(0);
+  const [furthestIndex, setFurthestIndex] = useState(0);
   const [deck, setDeck] = useState<LayoutRectangle | null>(null);
 
   const pages: ReactElement[] = [
     <OnboardingPage
       key="practice"
+      isRevealed={furthestIndex >= 0}
       hero={<PracticeHero />}
       caption={ONBOARDING_PRACTICE_CAPTION}
+      emblem={null}
       title={ONBOARDING_PRACTICE_TITLE}
       action={null}
     />,
     <OnboardingPage
       key="competition"
+      isRevealed={furthestIndex >= 1}
       hero={<CompetitionHero />}
       caption={ONBOARDING_COMPETITION_CAPTION}
+      emblem={null}
       title={ONBOARDING_COMPETITION_TITLE}
       action={null}
     />,
     <OnboardingPage
       key="surprise"
-      hero={<SurpriseHero />}
+      isRevealed={furthestIndex >= 2}
+      hero={null}
       caption={ONBOARDING_SURPRISE_CAPTION}
+      emblem={<SurpriseHero />}
       title={ONBOARDING_SURPRISE_TITLE}
       action={
         <NewButton
@@ -74,7 +80,10 @@ export const OnboardingScreen = () => {
             style={{ width: deck.width, height: deck.height }}
             data={pages}
             renderItem={({ item }) => item}
-            onSnapToItem={setIndex}
+            onSnapToItem={(snappedIndex) => {
+              setIndex(snappedIndex);
+              setFurthestIndex((furthest) => Math.max(furthest, snappedIndex));
+            }}
           />
         ) : null}
       </View>

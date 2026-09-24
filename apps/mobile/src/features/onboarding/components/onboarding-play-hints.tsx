@@ -1,6 +1,6 @@
+import { Image } from "expo-image";
 import { StyleSheet, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { NewButton } from "@/components/ui/new-button";
 import {
   CASH_HINT_ARROW_HEIGHT,
@@ -19,34 +19,24 @@ import {
   ONBOARDING_TRY_LABEL,
 } from "@/features/onboarding/constants";
 import { COLORS, GUTTER, SPACE } from "@/theme/tokens";
+import { gradient } from "@/utils/gradient";
 
-const SCRIM_ID = "onboardingPlayScrim";
-const SCRIM_HEIGHT_RATIO = 0.4;
+const FAKE_KEYBOARD_IMAGE = require("../../../../assets/images/onboarding/fake-keyboard.webp");
+
 const CASH_TILT = "4deg";
 const SQUARE_TILT = "-6deg";
-// « Soit tu choisis entre 4 propositions » breaks after « 4 » inside the mockup's 226 pt bubble.
 const BUBBLE_MAX_WIDTH = 226;
 
 export interface OnboardingPlayHintsProps {
   onTry: () => void;
 }
 
-// Drawn under the answer controls in their keyboard's place: the two ways to answer, then « Essayer ».
 export const OnboardingPlayHints = ({ onTry }: OnboardingPlayHintsProps) => {
   const { height } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
+  const { bottom } = useSafeAreaInsets();
 
   return (
     <View style={styles.block}>
-      <Svg style={[styles.scrim, { bottom: -insets.bottom, height: height * SCRIM_HEIGHT_RATIO }]}>
-        <Defs>
-          <LinearGradient id={SCRIM_ID} x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={COLORS.ink} stopOpacity="0" />
-            <Stop offset="1" stopColor={COLORS.ink} stopOpacity="1" />
-          </LinearGradient>
-        </Defs>
-        <Rect x="0" y="0" width="100%" height="100%" fill={`url(#${SCRIM_ID})`} />
-      </Svg>
       <View style={styles.cashHint}>
         <View style={styles.cashArrow}>
           <CashHintArrow />
@@ -55,6 +45,7 @@ export const OnboardingPlayHints = ({ onTry }: OnboardingPlayHintsProps) => {
           <OnboardingHintBubble text={ONBOARDING_HINT_CASH} points={ONBOARDING_HINT_CASH_POINTS} />
         </View>
       </View>
+
       <View style={styles.squareHint}>
         <View style={styles.squareArrow}>
           <SquareHintArrow />
@@ -66,6 +57,11 @@ export const OnboardingPlayHints = ({ onTry }: OnboardingPlayHintsProps) => {
           />
         </View>
       </View>
+
+      <View style={[styles.keyboardContainer, { bottom: -bottom }]}>
+        <Image source={FAKE_KEYBOARD_IMAGE} style={styles.keyboardImage} />
+      </View>
+
       <View style={styles.actions}>
         <NewButton
           layout="block"
@@ -79,6 +75,8 @@ export const OnboardingPlayHints = ({ onTry }: OnboardingPlayHintsProps) => {
           pending={false}
         />
       </View>
+
+      <View style={[styles.gradientScrim, { bottom: -bottom, height: height / 1.6 }]} />
     </View>
   );
 };
@@ -88,19 +86,14 @@ const styles = StyleSheet.create({
     paddingTop: SPACE.sm,
     paddingHorizontal: GUTTER + SPACE.sm,
   },
-  // Runs to the screen's bottom edge, under the inset the block itself never spends.
-  scrim: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-  },
   cashHint: {
+    zIndex: 1,
     alignSelf: "flex-start",
     marginLeft: SPACE.sm,
     maxWidth: BUBBLE_MAX_WIDTH,
   },
-  // Each arrow roots a little inside its bubble's top edge and reaches the control above.
   cashArrow: {
+    zIndex: 1,
     position: "absolute",
     left: "50%",
     top: -(CASH_HINT_ARROW_HEIGHT - SPACE.sm),
@@ -109,13 +102,29 @@ const styles = StyleSheet.create({
     transform: [{ rotate: CASH_TILT }],
   },
   squareHint: {
+    zIndex: 1,
     alignSelf: "flex-end",
     marginTop: SPACE.lg,
     marginRight: SPACE.sm,
     maxWidth: BUBBLE_MAX_WIDTH,
   },
-  // Mirrored, so the long arrow bows towards the Carré switch as it does in the mockup.
+  keyboardContainer: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+  },
+  gradientScrim: {
+    ...gradient(`linear-gradient(to bottom, ${COLORS.ink}00, ${COLORS.ink}FF)`),
+    position: "absolute",
+    left: 0,
+    right: 0,
+  },
+  keyboardImage: {
+    width: "100%",
+    aspectRatio: 1290 / 1030,
+  },
   squareArrow: {
+    zIndex: 1,
     position: "absolute",
     left: "55%",
     top: -(SQUARE_HINT_ARROW_HEIGHT - SPACE.sm),
@@ -125,6 +134,7 @@ const styles = StyleSheet.create({
     transform: [{ rotate: SQUARE_TILT }],
   },
   actions: {
+    zIndex: 1,
     marginTop: SPACE.lg,
     paddingHorizontal: SPACE.sm,
     paddingBottom: SPACE.lg,
