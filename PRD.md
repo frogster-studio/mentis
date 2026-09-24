@@ -102,7 +102,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Category), [apps/a
       "No migration file is created or edited",
       "bun run check is green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "contracts",

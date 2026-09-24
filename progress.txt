@@ -1,0 +1,19 @@
+## Item 1 — api: CategoryEntity carries secondaryColor (2026-09-24)
+
+- `apps/api/src/_database/entities/category.entity.ts`: added `secondaryColor` with
+  `@Column({ type: "varchar", length: 7, name: "secondary_color", default: "#ffffff" })`,
+  placed right after `color`, whose declaration is untouched.
+- No migration written or edited — `migration:generate` is Hugo's command.
+- `bun run check` green from the repo root (typecheck + test + knip + format, every workspace).
+
+Environment note for the next run: this sandbox had no `bun` and the hoisted `node_modules`
+carried darwin-arm64 native bindings only. Installed bun (`~/.bun/bin`) and dropped the
+linux-arm64 bindings for `@swc/core`, `oxc-parser`, `oxc-resolver` and `@biomejs/cli` into
+`node_modules/` (no package.json or lockfile change). The api e2e suite also needs the proxy
+vars cleared — `app.getUrl()` yields `http://[::1]:port`, which `no_proxy` does not match, so
+every in-process request returns the sandbox proxy's 403:
+`env -u NODE_USE_ENV_PROXY -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy bun run check`.
+
+Next: item 2 — `secondaryColor` on the wire (contracts, /admin/categories, /app/themes, the
+admin category form state). Hugo's human step for item 1 (generate and run the migration,
+checking it only adds `secondary_color` with its `'#ffffff'` default) is still pending.

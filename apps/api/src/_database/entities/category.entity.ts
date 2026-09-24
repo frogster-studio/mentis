@@ -25,6 +25,9 @@ export class CategoryEntity extends BaseEntity {
   @Column({ type: "varchar", length: 7 })
   color: string;
 
+  @Column({ type: "varchar", length: 7, name: "secondary_color", default: "#ffffff" })
+  secondaryColor: string;
+
   @Column({ type: "varchar", length: 255 })
   icon: string;
 
