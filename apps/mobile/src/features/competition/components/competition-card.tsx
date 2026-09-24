@@ -14,6 +14,7 @@ import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
 
 const FLAME_IMAGE = require("../../../../assets/images/competition/flame.png");
 const QUESTION_MARK_COMPETITION_IMAGE = require("../../../../assets/images/competition/question-mark.png");
+const PLACEHOLDER_PILL_IMAGE = require("../../../../assets/images/competition/placeholder-pill.png");
 const CATEGORY_BADGE_SIZE = 36;
 
 export interface CompetitionCardProps {
@@ -141,17 +142,19 @@ const PlaceholderPillColumn = ({ position }: { position: number }) => {
 
   return (
     <View style={{ gap: SPACE.lg }}>
-      <FastSquircleView
-        style={[styles.placeholderPill, { transform: [{ rotate: `${deg * -3}deg` }] }]}
-      >
-        <FastSquircleView style={styles.placeholderPillContent} />
-      </FastSquircleView>
-
-      <FastSquircleView
-        style={[styles.placeholderPill, { transform: [{ rotate: `${deg * 7}deg` }] }]}
-      >
-        <FastSquircleView style={styles.placeholderPillContent} />
-      </FastSquircleView>
+      <Image
+        source={PLACEHOLDER_PILL_IMAGE}
+        contentFit="contain"
+        style={[
+          styles.placeholderPillImage,
+          { transform: [{ rotate: `${deg * -3}deg` }], marginLeft: deg * SPACE.lg },
+        ]}
+      />
+      <Image
+        source={PLACEHOLDER_PILL_IMAGE}
+        contentFit="contain"
+        style={[styles.placeholderPillImage, { transform: [{ rotate: `${deg * 7}deg` }] }]}
+      />
     </View>
   );
 };
@@ -246,18 +249,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
   },
-  placeholderPill: {
+  placeholderPillImage: {
     width: 110,
-    height: 36,
-    backgroundColor: `${COLORS.bordeau}35`,
-    padding: 3,
-    alignContent: "flex-start",
-    borderRadius: 11,
-  },
-  placeholderPillContent: {
-    height: 32,
-    width: 32,
-    backgroundColor: `${COLORS.face}70`,
-    borderRadius: 10,
+    aspectRatio: 357 / 105,
   },
 });
