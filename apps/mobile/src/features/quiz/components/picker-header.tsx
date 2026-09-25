@@ -2,6 +2,7 @@ import { usePathname } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 import FastSquircleView from "react-native-fast-squircle";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { usePicker } from "@/components/quiz/picker-provider";
 import { NewButton } from "@/components/ui/new-button";
 import { MAX_CONTENT_WIDTH } from "@/components/ui/screen-container";
 import { PremiumCrownStamp } from "@/features/premium/components/premium-crown-stamp";
@@ -13,7 +14,6 @@ import {
   PICKER_TITLE,
   PRACTICE_TITLE,
 } from "@/features/quiz/constants";
-import { usePicker } from "@/features/quiz/picker-context";
 import { TEXT } from "@/theme/text";
 import { COLORS, CONTROL_SQUARE_SIZE, GUTTER, RADIUS, SPACE } from "@/theme/tokens";
 

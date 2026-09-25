@@ -117,7 +117,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Draw, Premium). Ru
       "iOS simulator: the practice card opens /picker; selecting a Theme tints the page and the tab track; the swipe starts the session on that Theme; the close button leaves",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

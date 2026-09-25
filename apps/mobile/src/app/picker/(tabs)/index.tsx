@@ -1,24 +1,20 @@
 import { useEffect, useMemo } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { ScreenContainer, TAB_SCREEN_EDGES } from "@/components/ui/screen-container";
+import { usePicker } from "@/components/quiz/picker-provider";
 import { ScreenError } from "@/components/ui/screen-error";
 import { ScreenLoading } from "@/components/ui/screen-loading";
 import { useThemes } from "@/features/quiz/api";
-import { SelectionWash, WASH_ALPHA } from "@/features/quiz/components/selection-wash";
 import { ThemeCard } from "@/features/quiz/components/theme-card";
 import { PICKER_ERROR } from "@/features/quiz/constants";
 import { drawThemes } from "@/features/quiz/draw";
-import { usePicker } from "@/features/quiz/picker-context";
 import { prefetchThemeImages } from "@/features/quiz/theme-image-cache";
-import { useColorCrossFade } from "@/features/quiz/use-color-cross-fade";
 import { GUTTER, SPACE } from "@/theme/tokens";
 
-export const PickerScreen = () => {
+export default function Page() {
   const { data, isPending, isError, isFetching, refetch } = useThemes();
   // One Draw per visit: recomputed on every mount, stable while the screen stays up.
   const draw = useMemo(() => (data ? drawThemes(data, Math.random) : []), [data]);
   const { selected, select } = usePicker();
-  const wash = useColorCrossFade(selected ? `${selected.category.color}${WASH_ALPHA}` : null);
 
   // The Draw warms the image cache as it renders, so the Reveal of whichever Theme wins is instant.
   useEffect(() => {
@@ -34,28 +30,26 @@ export const PickerScreen = () => {
       <ScreenError message={PICKER_ERROR} onRetry={() => void refetch()} />
     ) : null;
 
+  if (feedback) {
+    return <View style={styles.feedback}>{feedback}</View>;
+  }
+
   return (
-    <ScreenContainer edges={TAB_SCREEN_EDGES} underlay={<SelectionWash wash={wash} />}>
-      {feedback ? (
-        <View style={styles.feedback}>{feedback}</View>
-      ) : (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
-          {draw.map((theme) => (
-            <ThemeCard
-              key={theme.id}
-              name={theme.name}
-              color={theme.category.color}
-              category={theme.category}
-              noSelection={!selected}
-              isSelected={theme.id === selected?.id}
-              onPress={() => select(theme)}
-            />
-          ))}
-        </ScrollView>
-      )}
-    </ScreenContainer>
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
+      {draw.map((theme) => (
+        <ThemeCard
+          key={theme.id}
+          name={theme.name}
+          color={theme.category.color}
+          category={theme.category}
+          noSelection={!selected}
+          isSelected={theme.id === selected?.id}
+          onPress={() => select(theme)}
+        />
+      ))}
+    </ScrollView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   feedback: {
