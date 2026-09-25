@@ -2,8 +2,9 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { usePathname } from "expo-router";
 import { Tabs } from "expo-router/js-tabs";
 import { StyleSheet } from "react-native";
-import { BottomTabBar, TAB_ICON_SIZE } from "@/components/bottom-tab-bar";
-import { MainHeader, WORLD_PATH } from "@/components/main-header";
+import { TAB_ICON_SIZE } from "@/components/bottom-tab-bar";
+import { MainTabBar, WORLD_ROUTE } from "@/components/main-tab-bar";
+import { PlayerHeader, WORLD_PATH } from "@/components/player-header";
 import { TabScrollProvider } from "@/components/tab-scroll";
 import { useTabSlide } from "@/components/tab-slide";
 import { PaperBackground } from "@/components/ui/paper-background";
@@ -11,9 +12,7 @@ import { HOME_TAB_LABEL } from "@/features/quiz/constants";
 import { WORLD_TAB_LABEL } from "@/features/world/constants";
 import { COLORS } from "@/theme/tokens";
 
-const WORLD_ROUTE = "world";
-
-const TabsLayout = () => {
+export default function Layout() {
   const slide = useTabSlide();
   const isWorld = usePathname() === WORLD_PATH;
 
@@ -23,17 +22,7 @@ const TabsLayout = () => {
       <PaperBackground isDark={isWorld} />
 
       <Tabs
-        tabBar={(props) => {
-          // The pathname lands a render after the tab state, so the bar reads the state its chip follows.
-          const isWorldTab = props.state.routes[props.state.index].name === WORLD_ROUTE;
-          return (
-            <BottomTabBar
-              {...props}
-              isDark={isWorldTab}
-              trackColor={isWorldTab ? COLORS.ink : COLORS.quiet}
-            />
-          );
-        }}
+        tabBar={(props) => <MainTabBar {...props} />}
         screenOptions={{ headerShown: false, sceneStyle: styles.scene, ...slide }}
       >
         <Tabs.Screen
@@ -60,15 +49,13 @@ const TabsLayout = () => {
         />
       </Tabs>
 
-      <MainHeader isDark={isWorld} />
+      <PlayerHeader isWorld={isWorld} />
     </TabScrollProvider>
   );
-};
+}
 
 const styles = StyleSheet.create({
   scene: {
     backgroundColor: COLORS.clear,
   },
 });
-
-export default TabsLayout;

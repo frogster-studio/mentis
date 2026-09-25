@@ -105,7 +105,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Draw, Premium). Ru
       "iOS simulator: Accueil shows the greeting and « Un peu d'entrainement ? »; Monde shows pseudo + points and its title, dark paper; scrolling either tab collapses the sub-header exactly as before",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

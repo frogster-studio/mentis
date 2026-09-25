@@ -7,3 +7,13 @@
   Never `bun install` from the sandbox: it would rewrite the host's node_modules. Run the full `bun run check` on the host.
 - Next: item 2 (MainHeader children + subHeader slot, PlayerHeader, MainTabBar).
 
+## Item 2 — MainHeader frame + slots, PlayerHeader, MainTabBar (done, simulator unverified)
+- `MainHeader({ isDark, subHeader, children })` is now only the frame: absolute SafeAreaView, StatusBar, PaperFade, the bar card holding `children`, then `subHeader`. It imports nothing from src/features/. `useMainHeaderHeight()` stays here.
+- `MainSubHeader({ children })`: same 170 → 0 collapse; the bottom anchoring (marginTop auto, marginBottom xs, paddingHorizontal md) sits on a content View around `children`. The caller styles its own title (`TEXT.mainSubHeaderTitle`, ink).
+- New in src/components/: `PlayerHeader({ isWorld })` (avatar, greeting, menu, PseudoSheet state, sub-header title HOME_TITLE / WORLD_TITLE, exports `WORLD_PATH`); `PlayerGreeting({ isWorld, onPseudoPress })` (the greeting / pseudo + points slot); `MainTabBar` (reads the tab state, exports `WORLD_ROUTE`).
+  The PseudoSheet stays a sibling of the header (outside the absolute SafeAreaView), so its open state lives in PlayerHeader, not in the greeting.
+- `(tabs)/_layout.tsx` is `export default function Layout()`: provider, PaperBackground (isWorld still off the pathname), Tabs with `tabBar={(props) => <MainTabBar {...props} />}`, `<PlayerHeader isWorld={isWorld} />`.
+- Checks, ralph sandbox: typecheck green, mobile tests green (309), `bunx @biomejs/biome@2.5.6 check .` green, `bunx knip@6.31.0` flags only the api test files + @nestjs/testing (same swc binding issue as item 1).
+- NOT done: the iOS simulator step — no simulator in the linux sandbox. To verify on the host: Accueil greeting + « Un peu d'entrainement ? », Monde pseudo + points + dark paper, the collapse on scroll.
+- Next: item 3 (picker to app/picker/(tabs)/, PickerProvider & co in src/components/quiz/). Note: `src/app/` is where routes live (the PRD writes `app/`).
+
