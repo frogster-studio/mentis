@@ -4,7 +4,6 @@ import { Animated, type ColorValue, Pressable, StyleSheet, Text, View } from "re
 import FastSquircleView from "react-native-fast-squircle";
 import { TAB_TRANSITION_EASING, TAB_TRANSITION_MS } from "@/components/tab-transition";
 import { useBottomChromeGap } from "@/components/ui/screen-container";
-import { Squircle } from "@/components/ui/squircle";
 import { TEXT } from "@/theme/text";
 import { COLORS, CONTROL_ICON_SIZE, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
 
@@ -39,16 +38,6 @@ export const BottomTabBar = ({
   return (
     <View style={[styles.overlay, { paddingBottom: bottomGap }]}>
       <FastSquircleView style={[styles.track, { backgroundColor: trackColor }]}>
-        {isDark ? (
-          <Squircle
-            radius={RADIUS.lg}
-            corners="all"
-            color={`${COLORS.face}26`}
-            borderColor={null}
-            borderWidth={null}
-            style={StyleSheet.absoluteFill}
-          />
-        ) : null}
         <View
           style={styles.rail}
           onLayout={(event) => setRailWidth(event.nativeEvent.layout.width)}
@@ -62,14 +51,7 @@ export const BottomTabBar = ({
               ]}
               pointerEvents="none"
             >
-              <Squircle
-                radius={RADIUS.lg}
-                color={COLORS.face}
-                borderColor={COLORS.ink}
-                borderWidth={1}
-                style={styles.chipFace}
-                corners="all"
-              />
+              <View style={styles.chipFace} />
             </Animated.View>
           ) : null}
           {state.routes.map((route, index) => {
@@ -140,11 +122,11 @@ const styles = StyleSheet.create({
   },
   track: {
     padding: TRACK_PADDING,
-    backgroundColor: `${COLORS.catchup}80`,
     borderRadius: RADIUS.round,
   },
   rail: {
     flexDirection: "row",
+    borderRadius: RADIUS.round,
   },
   chip: {
     position: "absolute",
@@ -154,6 +136,10 @@ const styles = StyleSheet.create({
   },
   chipFace: {
     flex: 1,
+    backgroundColor: COLORS.face,
+    borderRadius: RADIUS.round,
+    borderWidth: 1,
+    borderColor: COLORS.ink,
   },
   trigger: {
     flex: 1,

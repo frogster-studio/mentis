@@ -31,7 +31,7 @@ export const SessionResults = ({
           <NewButton
             layout="block"
             shape="full"
-            tone="primary"
+            tone="gradient-primary"
             icon="play-circle-outline"
             label={RESULTS_REPLAY_LABEL}
             accessibilityLabel={null}

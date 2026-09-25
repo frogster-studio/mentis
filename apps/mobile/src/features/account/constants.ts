@@ -6,7 +6,7 @@ export const PROFILE_HISTORY_TAB_LABEL = "Historique";
 export const PROFILE_ACCOUNT_TAB_LABEL = "Compte";
 export const PROFILE_SIGNED_OUT_NAME = "Pas connecté";
 export const PROFILE_STATS_EMPTY = "Aucune statistique pour le moment.";
-export const REPLAY_ONBOARDING_LABEL = "Rejouer l'onboarding";
+export const REPLAY_ONBOARDING_LABEL = "Rejouer l'onboarding (dev)";
 
 export const SIGN_IN_CHIP_LABEL = "se connecter / s’inscrire";
 export const SIGN_IN_TITLE = "Me connecter";
@@ -68,3 +68,4 @@ export const LEGAL_TERMS_LABEL = "Conditions d'utilisation";
 export const LEGAL_SUPPORT_LABEL = "Support";
 
 export const PAYWALL_PREVIEW_LABEL = "Aperçu du paywall (dev)";
+export const TRANSFER_PREVIEW_LABEL = "Aperçu du transfert (dev)";

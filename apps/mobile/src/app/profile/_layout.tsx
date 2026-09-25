@@ -23,8 +23,10 @@ export default function Layout() {
       <ProfileWash />
       {/* Above the scenes, not over them, so the card holds still while the tabs slide under it. */}
       <ProfileHeader />
+      {/* Back leaves Profile for the Home or World it was opened from, never an earlier tab. */}
       <Tabs
-        tabBar={(props) => <BottomTabBar {...props} isDark={false} trackColor={COLORS.catchup} />}
+        backBehavior="none"
+        tabBar={(props) => <BottomTabBar {...props} isDark={false} trackColor={"#B3D2E5"} />}
         screenOptions={{ headerShown: false, sceneStyle: styles.scene, ...slide }}
       >
         <Tabs.Screen

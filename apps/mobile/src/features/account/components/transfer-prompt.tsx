@@ -11,6 +11,7 @@ import {
   TRANSFER_MESSAGE,
   TRANSFER_TITLE,
 } from "@/features/account/constants";
+import { useTransferPreviewStore } from "@/features/account/transfer-preview-store";
 import { useStatsStore } from "@/features/quiz/stats-store";
 import { shouldOfferTransfer } from "@/features/quiz/stats-transfer";
 import { useTransferStore } from "@/features/quiz/transfer-store";
@@ -24,12 +25,20 @@ export const TransferPrompt = () => {
   const dormant = useTransferStore((state) => state.dormant);
   const transferred = useTransferStore((state) => state.transferred);
   const decline = useTransferStore((state) => state.decline);
+  const isPreview = useTransferPreviewStore((state) => state.visible);
+  const closePreview = useTransferPreviewStore((state) => state.close);
   // Success empties the device world, the predicate flips false, and this sheet closes itself.
   const transfer = useMutation({ mutationFn: transferDeviceStats });
 
-  const visible = playerId !== undefined && shouldOfferTransfer(deviceStats, dormant, transferred);
+  const visible =
+    isPreview || (playerId !== undefined && shouldOfferTransfer(deviceStats, dormant, transferred));
+  const onDecline = isPreview ? closePreview : decline;
 
   const onAccept = () => {
+    if (isPreview) {
+      closePreview();
+      return;
+    }
     if (playerId === undefined) {
       return;
     }
@@ -44,7 +53,7 @@ export const TransferPrompt = () => {
       message={TRANSFER_MESSAGE}
       // Dismissing is a reversible decline, never a silent accept — and mid-push nothing dismisses.
       dismissible={!transfer.isPending}
-      onDismiss={decline}
+      onDismiss={onDecline}
     >
       {transfer.isError ? <Text style={styles.error}>{TRANSFER_ERROR}</Text> : null}
       <View style={styles.actions}>
@@ -54,7 +63,7 @@ export const TransferPrompt = () => {
           label={TRANSFER_DECLINE_LABEL}
           icon={null}
           accessibilityLabel={null}
-          onPress={decline}
+          onPress={onDecline}
           disabled={transfer.isPending}
         />
       </View>

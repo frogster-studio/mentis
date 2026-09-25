@@ -83,7 +83,7 @@ export const PseudoSheet = ({ playerId, visible, onDismiss }: PseudoSheetProps) 
           <NewButton
             layout="block"
             shape="rounded"
-            tone="primary"
+            tone="gradient-primary"
             label={PSEUDO_SUBMIT_LABEL}
             icon={null}
             accessibilityLabel={null}
@@ -111,9 +111,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   input: {
-    height: "100%",
     paddingHorizontal: SPACE.lg,
-    ...TEXT.body,
+    ...TEXT.input,
     color: COLORS.ink,
   },
   rule: {

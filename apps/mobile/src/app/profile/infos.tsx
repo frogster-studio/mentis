@@ -6,7 +6,12 @@ import { MAX_CONTENT_WIDTH } from "@/components/ui/screen-container";
 import { useAuthStore } from "@/features/account/auth-store";
 import { AccountActions } from "@/features/account/components/account-actions";
 import { LegalLinks } from "@/features/account/components/legal-links";
-import { PAYWALL_PREVIEW_LABEL, REPLAY_ONBOARDING_LABEL } from "@/features/account/constants";
+import {
+  PAYWALL_PREVIEW_LABEL,
+  REPLAY_ONBOARDING_LABEL,
+  TRANSFER_PREVIEW_LABEL,
+} from "@/features/account/constants";
+import { useTransferPreviewStore } from "@/features/account/transfer-preview-store";
 import { useOnboardingStore } from "@/features/onboarding/store";
 import { usePaywallStore } from "@/features/premium/paywall-store";
 import { useIsPremium } from "@/features/premium/use-is-premium";
@@ -17,6 +22,7 @@ export default function Page() {
   const user = useAuthStore((state) => state.session?.user);
   const isPremium = useIsPremium();
   const openPaywallPreview = usePaywallStore((state) => state.openPreview);
+  const openTransferPreview = useTransferPreviewStore((state) => state.open);
   const replayOnboarding = useOnboardingStore((state) => state.replay);
   const router = useRouter();
 
@@ -48,6 +54,14 @@ export default function Page() {
             accessibilityLabel={null}
             disabled={false}
             onPress={openPaywallPreview}
+          />
+          <QuietButton
+            layout="block"
+            label={TRANSFER_PREVIEW_LABEL}
+            icon={null}
+            accessibilityLabel={null}
+            disabled={false}
+            onPress={openTransferPreview}
           />
         </>
       ) : null}

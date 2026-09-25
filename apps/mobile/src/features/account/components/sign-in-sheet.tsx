@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import FastSquircleView from "react-native-fast-squircle";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NewButton } from "@/components/ui/new-button";
 import { Sheet } from "@/components/ui/sheet";
 import { useAuthStore } from "@/features/account/auth-store";
@@ -17,6 +18,7 @@ export const SignInSheet = () => {
   const close = useSignInStore((state) => state.close);
   const userId = useAuthStore((state) => state.session?.user.id);
   const [signInFailed, setSignInFailed] = useState(false);
+  const { bottom } = useSafeAreaInsets();
 
   useEffect(() => {
     if (visible) {
@@ -41,7 +43,7 @@ export const SignInSheet = () => {
       onDismiss={close}
     >
       {/* The buttons keep their height; only the hero gives way on a short screen. */}
-      <View style={styles.content}>
+      <FastSquircleView style={styles.content}>
         <View style={styles.heroFrame}>
           <SignInHero />
           <View style={styles.close}>
@@ -59,12 +61,12 @@ export const SignInSheet = () => {
           </View>
         </View>
 
-        <FastSquircleView style={styles.buttons}>
+        <View style={[styles.buttons, { marginBottom: bottom }]}>
           {signInFailed ? <Text style={styles.error}>{SIGN_IN_ERROR}</Text> : null}
           <AppleSignInButton onError={() => setSignInFailed(true)} />
           <GoogleSignInButton onError={() => setSignInFailed(true)} />
-        </FastSquircleView>
-      </View>
+        </View>
+      </FastSquircleView>
     </Sheet>
   );
 };
@@ -76,18 +78,13 @@ const styles = StyleSheet.create({
     gap: SPACE.lg,
     height: "100%",
   },
-  heroFrame: {
-    flexShrink: 1,
-  },
+  heroFrame: { flex: 2, width: "100%" },
   close: {
     position: "absolute",
-    top: SPACE.md,
-    right: SPACE.md,
+    top: SPACE.lg,
+    right: SPACE.lg,
   },
-  buttons: {
-    padding: SPACE.lg,
-    gap: SPACE.md,
-  },
+  buttons: { flex: 1, paddingHorizontal: SPACE.lg, paddingTop: SPACE.lg, gap: SPACE.md },
   error: {
     ...TEXT.body,
     color: COLORS.danger,

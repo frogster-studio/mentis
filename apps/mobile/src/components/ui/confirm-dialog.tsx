@@ -37,8 +37,8 @@ export const ConfirmDialog = ({
         <NewButton
           onPress={onCancel}
           layout="block"
-          shape="rounded"
-          tone="primary"
+          shape="full"
+          tone="gradient-primary"
           disabled={false}
           pending={false}
           icon={null}

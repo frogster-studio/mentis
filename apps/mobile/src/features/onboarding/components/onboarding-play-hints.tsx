@@ -66,7 +66,7 @@ export const OnboardingPlayHints = ({ onTry }: OnboardingPlayHintsProps) => {
         <NewButton
           layout="block"
           shape="full"
-          tone="primary"
+          tone="gradient-primary"
           icon="play-circle-outline"
           label={ONBOARDING_TRY_LABEL}
           accessibilityLabel={null}

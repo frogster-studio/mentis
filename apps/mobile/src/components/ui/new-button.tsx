@@ -1,25 +1,31 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { isValidElement, type ReactElement } from "react";
 import { ActivityIndicator, Animated, Pressable, StyleSheet, Text } from "react-native";
-import SquircleView from "react-native-fast-squircle";
+import FastSquircleView from "react-native-fast-squircle";
 import type { CommunityIconName } from "@/components/ui/icon-name";
 import { Squircle } from "@/components/ui/squircle";
 import { PRESS_DEPTH, usePressSink } from "@/components/ui/use-press-sink";
 import { TEXT } from "@/theme/text";
 import { COLORS, CONTROL_ICON_SIZE, CONTROL_SQUARE_SIZE, RADIUS, SPACE } from "@/theme/tokens";
+import { gradient } from "@/utils/gradient";
 
 const PALETTES = {
   default: { face: COLORS.face, edge: COLORS.ink, content: COLORS.ink },
   primary: { face: COLORS.primary, edge: COLORS.ink, content: COLORS.ink },
   inverse: { face: COLORS.ink, edge: COLORS.ink, content: COLORS.face },
   disabled: { face: COLORS.face, edge: COLORS.inkMuted, content: COLORS.inkMuted },
+  "gradient-primary": {
+    face: [COLORS.yellow, COLORS.primary],
+    edge: COLORS.ink,
+    content: COLORS.ink,
+  },
 } as const;
 
 export interface NewButtonProps {
   onPress: () => void;
   layout: "block" | "hug";
   shape: "rounded" | "full";
-  tone: "default" | "primary" | "inverse";
+  tone: "default" | "primary" | "inverse" | "gradient-primary";
   disabled: boolean;
   pending: boolean;
   // A brand mark is a drawn element; everything else is a glyph name.
@@ -63,11 +69,18 @@ export const NewButton = ({
         style={styles.shadow}
       />
       <Animated.View style={{ transform: [{ translateY: travel }] }}>
-        <SquircleView
+        <FastSquircleView
           style={[
             styles.face,
             label === null && styles.iconOnlyFace,
-            { borderRadius: radius, borderColor: palette.edge, backgroundColor: palette.face },
+            { borderRadius: radius, borderColor: palette.edge },
+            typeof palette.face === "string"
+              ? { backgroundColor: palette.face }
+              : {
+                  ...gradient(
+                    `linear-gradient(to top, ${palette.face[0]} 0%, ${palette.face[1]} 60%)`,
+                  ),
+                },
           ]}
         >
           {pending ? (
@@ -88,7 +101,7 @@ export const NewButton = ({
               ) : null}
             </>
           )}
-        </SquircleView>
+        </FastSquircleView>
       </Animated.View>
     </Pressable>
   );

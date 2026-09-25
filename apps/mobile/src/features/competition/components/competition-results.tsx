@@ -39,7 +39,7 @@ export const CompetitionResults = ({
             <NewButton
               layout="block"
               shape="full"
-              tone="primary"
+              tone="gradient-primary"
               icon="replay"
               label={COMPETITION_REPLAY_LABEL}
               accessibilityLabel={null}

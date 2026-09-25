@@ -1,5 +1,15 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { useState } from "react";
+import {
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import FastSquircleView from "react-native-fast-squircle";
 import { NewButton } from "@/components/ui/new-button";
 import { Squircle } from "@/components/ui/squircle";
 import { PAYWALL_CREST_HEIGHT, PaywallCrest } from "@/features/premium/components/paywall-crest";
@@ -20,17 +30,24 @@ import {
   PAYWALL_TERMS_LINK_LABEL,
   PAYWALL_TITLE,
 } from "@/features/premium/constants";
-import type { PaywallSavings } from "@/features/premium/paywall-fit";
+import {
+  FULL_PAYWALL,
+  fullPaywallHeight,
+  type PaywallSavings,
+  paywallFit,
+} from "@/features/premium/paywall-fit";
 import { subscriptionTermsSentence } from "@/features/premium/subscription-terms";
 import { PRIVACY_URL, TERMS_URL } from "@/lib/legal-links";
 import { openExternalLink } from "@/lib/open-external-link";
 import { TEXT } from "@/theme/text";
 import { COLORS, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
+import { gradient } from "@/utils/gradient";
 
 const FEATURE_ICON_SIZE = 24;
 const SKIP_TINT = "4D";
 const PLAN_LABEL_OVERLAP = SPACE.sm;
 const TITLE_GAP = SPACE.xl;
+const PRICE_CARD_COLOR = "#C4DFF0";
 // The paywall never shows on web, so anything that is not Android buys through the App Store.
 const STORE_PLATFORM = Platform.OS === "android" ? "android" : "ios";
 
@@ -38,15 +55,13 @@ const STORE_PLATFORM = Platform.OS === "android" ? "android" : "ios";
 const skipClearance = (fontScale: number) =>
   TEXT.label.lineHeight * fontScale + SPACE.xs * 2 + SPACE.sm;
 
-export const paywallSavings = (fontScale: number): PaywallSavings => ({
+const paywallSavings = (fontScale: number): PaywallSavings => ({
   illustration: PAYWALL_ILLUSTRATION_HEIGHT,
   crest: PAYWALL_CREST_HEIGHT + TITLE_GAP - skipClearance(fontScale),
 });
 
 export interface PaywallOfferProps {
   priceString: string;
-  showsCrest: boolean;
-  showsIllustration: boolean;
   purchaseFailed: boolean;
   isPurchasing: boolean;
   onSkip: () => void;
@@ -55,26 +70,61 @@ export interface PaywallOfferProps {
 
 export const PaywallOffer = ({
   priceString,
-  showsCrest,
-  showsIllustration,
   purchaseFailed,
   isPurchasing,
   onSkip,
   onPurchase,
 }: PaywallOfferProps) => {
   const { fontScale } = useWindowDimensions();
+  const [heroHeight, setHeroHeight] = useState<number | null>(null);
+  const [fullHeroContentHeight, setFullHeroContentHeight] = useState<number | null>(null);
+  const savings = paywallSavings(fontScale);
+  const fit =
+    heroHeight === null || fullHeroContentHeight === null
+      ? FULL_PAYWALL
+      : paywallFit(fullHeroContentHeight, heroHeight, savings);
 
   return (
     <>
-      <Squircle
-        radius={RADIUS.xl}
-        corners="all"
-        color={COLORS.primary}
-        borderColor={null}
-        borderWidth={null}
-        style={styles.hero}
-      >
-        <PaywallHeroGradient />
+      {/* Only the hero gives way on a short screen, so the price card below always shows whole. */}
+      <FastSquircleView style={styles.hero}>
+        <ScrollView
+          contentContainerStyle={styles.heroContent}
+          showsVerticalScrollIndicator={false}
+          scrollEnabled={fit.isScrollable}
+          nestedScrollEnabled
+          onLayout={(event) => setHeroHeight(event.nativeEvent.layout.height)}
+          onContentSizeChange={(_, contentHeight) =>
+            setFullHeroContentHeight(fullPaywallHeight(contentHeight, fit, savings))
+          }
+        >
+          {fit.showsCrest ? <PaywallCrest /> : null}
+          {/* Without the crest the title clears « Passer », which keeps its corner. */}
+          <Text
+            style={[
+              styles.title,
+              { marginTop: fit.showsCrest ? TITLE_GAP : skipClearance(fontScale) },
+            ]}
+          >
+            {PAYWALL_TITLE}
+          </Text>
+
+          <View style={styles.features}>
+            {PAYWALL_FEATURES.map((feature) => (
+              <View key={feature} style={styles.feature}>
+                <MaterialIcons
+                  name="check-circle-outline"
+                  size={FEATURE_ICON_SIZE}
+                  color={COLORS.ink}
+                />
+                <Text style={styles.featureLabel}>{feature}</Text>
+              </View>
+            ))}
+          </View>
+
+          {fit.showsIllustration ? <PaywallIllustration /> : null}
+        </ScrollView>
+
         <Pressable
           style={({ pressed }) => [styles.skip, pressed && styles.pressed]}
           disabled={isPurchasing}
@@ -82,30 +132,7 @@ export const PaywallOffer = ({
         >
           <Text style={styles.skipLabel}>{PAYWALL_SKIP_LABEL}</Text>
         </Pressable>
-
-        {showsCrest ? <PaywallCrest /> : null}
-        {/* Without the crest the title clears « Passer », which keeps its corner. */}
-        <Text
-          style={[styles.title, { marginTop: showsCrest ? TITLE_GAP : skipClearance(fontScale) }]}
-        >
-          {PAYWALL_TITLE}
-        </Text>
-
-        <View style={styles.features}>
-          {PAYWALL_FEATURES.map((feature) => (
-            <View key={feature} style={styles.feature}>
-              <MaterialIcons
-                name="check-circle-outline"
-                size={FEATURE_ICON_SIZE}
-                color={COLORS.ink}
-              />
-              <Text style={styles.featureLabel}>{feature}</Text>
-            </View>
-          ))}
-        </View>
-
-        {showsIllustration ? <PaywallIllustration /> : null}
-      </Squircle>
+      </FastSquircleView>
 
       <View style={styles.plan}>
         <Squircle
@@ -119,14 +146,7 @@ export const PaywallOffer = ({
           <Text style={styles.planLabelText}>{PAYWALL_PLAN_LABEL}</Text>
         </Squircle>
 
-        <Squircle
-          radius={RADIUS.xl}
-          corners="all"
-          color={COLORS.card}
-          borderColor={null}
-          borderWidth={null}
-          style={styles.priceCard}
-        >
+        <FastSquircleView style={styles.priceCard}>
           <View style={styles.price}>
             <Text style={styles.priceValue}>{priceString}</Text>
             <Text style={styles.pricePeriod}>{PAYWALL_PRICE_PERIOD}</Text>
@@ -166,7 +186,7 @@ export const PaywallOffer = ({
               {PAYWALL_PRIVACY_LINK_LABEL}
             </Text>
           </Text>
-        </Squircle>
+        </FastSquircleView>
       </View>
     </>
   );
@@ -174,8 +194,16 @@ export const PaywallOffer = ({
 
 const styles = StyleSheet.create({
   hero: {
-    borderRadius: RADIUS.xl,
+    flex: 1,
+    borderRadius: RADIUS.lg,
+    borderBottomEndRadius: RADIUS.base,
+    borderBottomStartRadius: RADIUS.base,
     borderCurve: "continuous",
+    ...gradient(
+      `radial-gradient(farthest-corner at 50% 100%, ${COLORS.yellow}, ${COLORS.primary})`,
+    ),
+  },
+  heroContent: {
     paddingTop: SPACE.sm,
     paddingHorizontal: SPACE.lg,
     paddingBottom: SPACE.xl,
@@ -229,10 +257,13 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   priceCard: {
-    alignSelf: "stretch",
+    backgroundColor: PRICE_CARD_COLOR,
     paddingTop: SPACE.xl,
     paddingHorizontal: SPACE.lg,
     paddingBottom: SPACE.lg,
+    borderRadius: RADIUS.xl,
+    borderTopEndRadius: RADIUS.base,
+    borderTopStartRadius: RADIUS.base,
   },
   price: {
     flexDirection: "row",

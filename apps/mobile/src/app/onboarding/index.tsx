@@ -57,7 +57,7 @@ export default function Page() {
         <NewButton
           layout="block"
           shape="full"
-          tone="primary"
+          tone="gradient-primary"
           icon="play-circle-outline"
           label={ONBOARDING_SURPRISE_CTA_LABEL}
           accessibilityLabel={null}

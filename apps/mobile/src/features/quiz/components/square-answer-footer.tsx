@@ -38,7 +38,7 @@ export const SquareAnswerFooter = ({
       <NewButton
         layout="block"
         shape="full"
-        tone="primary"
+        tone="gradient-primary"
         icon="check"
         label={CONFIRM_LABEL}
         accessibilityLabel={null}

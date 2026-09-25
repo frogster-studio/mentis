@@ -12,7 +12,7 @@ export const MainTabBar = (props: BottomTabBarProps) => {
     <BottomTabBar
       {...props}
       isDark={isWorldTab}
-      trackColor={isWorldTab ? COLORS.ink : COLORS.quiet}
+      trackColor={isWorldTab ? COLORS.bordeau : COLORS.quiet}
     />
   );
 };

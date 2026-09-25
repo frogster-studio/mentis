@@ -66,7 +66,7 @@ export const CashAnswerFooter = ({
       <NewButton
         layout="hug"
         shape="full"
-        tone="primary"
+        tone="gradient-primary"
         icon="arrow-right"
         label={null}
         accessibilityLabel={CONFIRM_LABEL}
