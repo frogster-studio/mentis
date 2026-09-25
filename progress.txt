@@ -45,3 +45,10 @@
 - NOT done: the iOS simulator step. To verify on the host: the Reveal and a Question show the Category backdrop as before; each profile tab shows the wash once (page area and around the header/tab bar the same tint); the profile tab slide looks right with the paper holding still.
 - Next: item 6 ((tabs)/index and world written in their routes).
 
+## Item 6 — (tabs)/index and world written in their routes (done)
+- `(tabs)/index.tsx` is `export default function Page()`: the onboarding store read plus the old HomeScreen body (header height, `useTabScroll`, the PracticeCard ScrollView). The hooks run first, then `if (!hasOnboarded) return <Redirect href="/onboarding" />`.
+- `(tabs)/world.tsx` is `export default function Page()` with the old WorldScreen body copied verbatim and its styles at the bottom. Nothing is extracted, so no new component file.
+- Deleted: features/quiz/components/home-screen.tsx, features/world/components/world-screen.tsx. No reference to either is left in the repo.
+- Checks, ralph sandbox: mobile typecheck green, 309 tests green, biome only flags the untouched chunked-storage.ts warning, knip only the api noise (no mobile finding).
+- Next: item 7 (profile layout and its 3 pages written in their routes).
+
