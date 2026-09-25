@@ -1,6 +1,8 @@
 import { useEffect, useMemo } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
+import { useMainHeaderHeight } from "@/components/main-header";
 import { usePicker } from "@/components/quiz/picker-provider";
+import { useTabScroll } from "@/components/tab-scroll";
 import { ScreenError } from "@/components/ui/screen-error";
 import { ScreenLoading } from "@/components/ui/screen-loading";
 import { useThemes } from "@/features/quiz/api";
@@ -15,6 +17,8 @@ export default function Page() {
   // One Draw per visit: recomputed on every mount, stable while the screen stays up.
   const draw = useMemo(() => (data ? drawThemes(data, Math.random) : []), [data]);
   const { selected, select } = usePicker();
+  const headerHeight = useMainHeaderHeight();
+  const onScroll = useTabScroll();
 
   // The Draw warms the image cache as it renders, so the Reveal of whichever Theme wins is instant.
   useEffect(() => {
@@ -31,11 +35,16 @@ export default function Page() {
     ) : null;
 
   if (feedback) {
-    return <View style={styles.feedback}>{feedback}</View>;
+    return <View style={[styles.feedback, { paddingTop: headerHeight }]}>{feedback}</View>;
   }
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
+      contentContainerStyle={[styles.list, { paddingTop: headerHeight + SPACE.lg }]}
+    >
       {draw.map((theme) => (
         <ThemeCard
           key={theme.id}
@@ -56,7 +65,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   list: {
-    paddingTop: SPACE.md,
     paddingHorizontal: GUTTER,
     gap: SPACE.sm,
     paddingBottom: 200,

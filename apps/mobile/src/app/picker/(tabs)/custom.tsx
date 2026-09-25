@@ -1,11 +1,18 @@
-import { StyleSheet, View } from "react-native";
+import { ScrollView } from "react-native";
+import { useMainHeaderHeight } from "@/components/main-header";
+import { useTabScroll } from "@/components/tab-scroll";
+import { SPACE } from "@/theme/tokens";
 
 export default function Page() {
-  return <View style={styles.page} />;
-}
+  const headerHeight = useMainHeaderHeight();
+  const onScroll = useTabScroll();
 
-const styles = StyleSheet.create({
-  page: {
-    flex: 1,
-  },
-});
+  return (
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
+      contentContainerStyle={{ paddingTop: headerHeight + SPACE.lg }}
+    />
+  );
+}

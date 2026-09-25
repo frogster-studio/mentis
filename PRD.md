@@ -129,7 +129,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Draw, Premium). Ru
       "iOS simulator scrolled on Classique: the sub-header collapses to nothing, subtitle included, the Theme list scrolls under the header",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

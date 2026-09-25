@@ -26,3 +26,13 @@
 - NOT done: the iOS simulator step. To verify on the host: practice card → /picker; selecting a Theme tints the page and the tab track; the swipe starts the session on that Theme; the close button leaves; Android back is still barred.
 - Next: item 4 (PickerHeader rebuilt on MainHeader + MainSubHeader, TabScrollProvider, pages padded by useMainHeaderHeight).
 
+## Item 4 — PickerHeader on MainHeader + MainSubHeader, floating, collapsing (done, simulator unverified)
+- New `src/components/quiz/picker-header.tsx`: `<MainHeader isDark={false}>` with the bar = PRACTICE_TITLE label slot (flex 1) + help (noop) + close (`leave`); `subHeader` = `<MainSubHeader>` with the title (TEXT.mainSubHeaderTitle, 1 line, adjustsFontSizeToFit, PICKER_TITLE / CUSTOM_PICKER_TITLE off the pathname), the subtitle slot (always there, PICKER_SUBTITLE on Classique only), and the PremiumCrownStamp absolute top-right of the title block on Sur-mesure. All of it sits inside the sub-header, so it collapses with it.
+  The old features/quiz/components/picker-header.tsx is deleted, and with it GUTTER / RADIUS.xl / TEXT.display / maxWidth.
+- `_layout.tsx`: PickerProvider > TabScrollProvider > shell; PickerHeader now renders after `<Tabs>`, so it floats over the scenes like (tabs).
+- `index.tsx`: ScrollView with `onScroll={useTabScroll()}`, throttle 16, paddingTop `useMainHeaderHeight() + SPACE.lg` (as Home); list GUTTER and bottom 200 kept. Loading/error pad by the header height.
+  `custom.tsx`: an empty ScrollView wired the same way.
+- Checks, ralph sandbox: mobile typecheck green, 309 tests green, biome only flags the untouched chunked-storage.ts (as in item 3), knip api-only noise.
+- NOT done: the iOS simulator steps. To verify on the host: rest (MainHeader look, both titles at the same height, crown on Sur-mesure without overlapping the title), Classique scrolled (sub-header collapses to nothing, subtitle included, list under the header), plus the human step about the paper fade over a selected Theme's wash.
+- Next: item 5 (ScreenContainer trades underlay for backdropColor).
+
