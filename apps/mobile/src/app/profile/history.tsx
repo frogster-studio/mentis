@@ -1,3 +1,4 @@
-import { ProfileHistoryScreen } from "@/features/account/components/profile-history-screen";
-
-export default ProfileHistoryScreen;
+// A clear scene over the layout's paper and wash: the history has no content yet.
+export default function Page() {
+  return null;
+}

@@ -52,3 +52,10 @@
 - Checks, ralph sandbox: mobile typecheck green, 309 tests green, biome only flags the untouched chunked-storage.ts warning, knip only the api noise (no mobile finding).
 - Next: item 7 (profile layout and its 3 pages written in their routes).
 
+## Item 7 — the profile layout and its 3 pages written in their routes (done)
+- `git mv`d each file onto its route so its history follows: profile-tabs → `profile/_layout.tsx` (`export default function Layout()`), profile-stats-screen → `profile/index.tsx`, profile-history-screen → `history.tsx`, profile-infos-screen → `infos.tsx` (each `export default function Page()`). Bodies and styles unchanged.
+- The layout's `tabBar` stays inline: it's a fixed `BottomTabBar` (light, `catchup` track) with no conditions, so there's no logic to extract. Nothing else was extracted, so no new component file.
+- ProfileHeader is untouched. No reference to ProfileTabs or Profile*Screen is left in src/.
+- Checks, ralph sandbox: mobile typecheck green, 309 tests green, biome only flags the untouched chunked-storage.ts warning, knip only the api noise.
+- Next: item 8 (the 3 onboarding pages written in their routes).
+

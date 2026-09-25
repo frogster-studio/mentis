@@ -160,7 +160,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Draw, Premium). Ru
       "ProfileHeader is unchanged",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
