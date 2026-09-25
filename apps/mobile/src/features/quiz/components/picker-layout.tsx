@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import { Tabs } from "expo-router/js-tabs";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
-import { AppTabBar, TAB_ICON_SIZE } from "@/components/app-tab-bar";
+import { BottomTabBar, TAB_ICON_SIZE } from "@/components/bottom-tab-bar";
 import { useTabSlide } from "@/components/tab-slide";
 import { PaperBackground } from "@/components/ui/paper-background";
 import { PickerHeader } from "@/features/quiz/components/picker-header";
@@ -51,7 +51,7 @@ export const PickerLayout = () => {
         {/* Above the scenes, not over them, so the card holds still while the tabs slide under it. */}
         <PickerHeader />
         <Tabs
-          tabBar={(props) => <AppTabBar {...props} isDark={false} trackColor={trackColor} />}
+          tabBar={(props) => <BottomTabBar {...props} isDark={false} trackColor={trackColor} />}
           screenOptions={{ headerShown: false, ...slide }}
         >
           <Tabs.Screen

@@ -1,5 +1,5 @@
 import { ScrollView, StyleSheet, Text } from "react-native";
-import { useAppTabBarHeight } from "@/components/app-tab-bar";
+import { useBottomTabBarHeight } from "@/components/bottom-tab-bar";
 import { ScreenContainer, TAB_SCREEN_EDGES } from "@/components/ui/screen-container";
 import { useAuthStore } from "@/features/account/auth-store";
 import { ProfileWash } from "@/features/account/components/profile-wash";
@@ -16,7 +16,7 @@ import { TEXT } from "@/theme/text";
 import { COLORS, GUTTER, SPACE } from "@/theme/tokens";
 
 export const ProfileStatsScreen = () => {
-  const tabBarHeight = useAppTabBarHeight();
+  const tabBarHeight = useBottomTabBarHeight();
   const user = useAuthStore((state) => state.session?.user);
   const isPremium = useIsPremium();
   const openPaywall = usePaywallStore((state) => state.open);

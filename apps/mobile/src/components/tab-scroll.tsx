@@ -4,15 +4,10 @@ import {
   type PropsWithChildren,
   useCallback,
   useContext,
-  useMemo,
   useRef,
-  useState,
   useSyncExternalStore,
 } from "react";
-import { Animated, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
-import { TAB_TRANSITION_EASING, TAB_TRANSITION_MS } from "@/components/tab-transition";
-
-const TabScrollContext = createContext<Animated.Value | null>(null);
+import type { NativeScrollEvent, NativeSyntheticEvent } from "react-native";
 
 interface ScrollYStore {
   subscribe: (listener: () => void) => () => void;
@@ -42,64 +37,46 @@ function createScrollYStore(): ScrollYStore {
 
 // The MainHeader sits outside the scenes, so the focused tab publishes its scroll offset here.
 export const TabScrollProvider = ({ children }: PropsWithChildren) => {
-  const offset = useRef(new Animated.Value(0)).current;
   const scrollY = useRef(createScrollYStore()).current;
 
-  return (
-    <TabScrollContext.Provider value={offset}>
-      <ScrollYStoreContext.Provider value={scrollY}>{children}</ScrollYStoreContext.Provider>
-    </TabScrollContext.Provider>
-  );
+  return <ScrollYStoreContext.Provider value={scrollY}>{children}</ScrollYStoreContext.Provider>;
 };
 
-export function useTabScrollOffset(): Animated.Value {
-  const offset = useContext(TabScrollContext);
-  if (!offset) {
-    throw new Error("useTabScrollOffset must be used inside a TabScrollProvider");
+function useScrollYStore(): ScrollYStore {
+  const store = useContext(ScrollYStoreContext);
+  if (!store) {
+    throw new Error("Tab scroll hooks must be used inside a TabScrollProvider");
   }
-  return offset;
+  return store;
 }
 
 export function useTabScrollY(): number {
-  const store = useContext(ScrollYStoreContext);
-  if (!store) {
-    throw new Error("useTabScrollY must be used inside a TabScrollProvider");
-  }
+  const store = useScrollYStore();
   return useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 }
 
 // Every tab screen calls this; one that never scrolls simply drops the handler and rests at zero.
 export function useTabScroll() {
-  const offset = useTabScrollOffset();
-  const store = useContext(ScrollYStoreContext);
+  const store = useScrollYStore();
   const restingOffset = useRef(0);
-  const [isFocused, setIsFocused] = useState(false);
+  // A ref, not state: re-rendering the whole screen on focus would stall the tab switch.
+  const isFocused = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
-      setIsFocused(true);
-      store?.setY(restingOffset.current);
-      Animated.timing(offset, {
-        toValue: restingOffset.current,
-        duration: TAB_TRANSITION_MS,
-        easing: TAB_TRANSITION_EASING,
-        useNativeDriver: true,
-      }).start();
-      return () => setIsFocused(false);
-    }, [offset, store]),
+      isFocused.current = true;
+      store.setY(restingOffset.current);
+      return () => {
+        isFocused.current = false;
+      };
+    }, [store]),
   );
 
-  const onScroll = useMemo(
-    () =>
-      Animated.event([{ nativeEvent: { contentOffset: { y: offset } } }], {
-        useNativeDriver: false,
-        listener: (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-          const y = event.nativeEvent.contentOffset.y;
-          restingOffset.current = y;
-          store?.setY(y);
-        },
-      }),
-    [offset, store],
+  return useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      restingOffset.current = event.nativeEvent.contentOffset.y;
+      if (isFocused.current) store.setY(restingOffset.current);
+    },
+    [store],
   );
-  return isFocused ? onScroll : undefined;
 }

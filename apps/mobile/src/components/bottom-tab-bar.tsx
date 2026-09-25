@@ -1,14 +1,6 @@
-import type { BottomTabBarProps } from "expo-router/js-tabs";
-import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  Animated,
-  type ColorValue,
-  type LayoutRectangle,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import type { BottomTabBarProps as NavigatorTabBarProps } from "expo-router/js-tabs";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Animated, type ColorValue, Pressable, StyleSheet, Text, View } from "react-native";
 import FastSquircleView from "react-native-fast-squircle";
 import { TAB_TRANSITION_EASING, TAB_TRANSITION_MS } from "@/components/tab-transition";
 import { useBottomChromeGap } from "@/components/ui/screen-container";
@@ -22,45 +14,27 @@ const TRACK_PADDING = SPACE.xxs;
 const TRIGGER_HEIGHT = 49;
 const BAR_HEIGHT = TRIGGER_HEIGHT + TRACK_PADDING * 2;
 
-type TriggerFrame = { x: number; width: number };
-
-const TRAVEL = {
-  duration: TAB_TRANSITION_MS,
-  easing: TAB_TRANSITION_EASING,
-  useNativeDriver: false,
-} as const;
-
 // The bar floats over the screen, so a tab screen pads its content by the whole thing.
-export function useAppTabBarHeight() {
+export function useBottomTabBarHeight() {
   return useBottomChromeGap() + BAR_HEIGHT;
 }
 
-export interface AppTabBarProps extends BottomTabBarProps {
+export interface BottomTabBarProps extends NavigatorTabBarProps {
   isDark: boolean;
   trackColor: ColorValue;
 }
 
-export const AppTabBar = ({
+export const BottomTabBar = ({
   state,
   descriptors,
   navigation,
   isDark,
   trackColor,
-}: AppTabBarProps) => {
+}: BottomTabBarProps) => {
   const bottomGap = useBottomChromeGap();
-  const [frames, setFrames] = useState<Record<string, TriggerFrame>>({});
-  const activeFrame = frames[state.routes[state.index].key];
-  const chip = useChipTravel(activeFrame);
-
-  const measureTrigger = useCallback((key: string, layout: LayoutRectangle) => {
-    setFrames((current) => {
-      const known = current[key];
-      if (known && known.x === layout.x && known.width === layout.width) {
-        return current;
-      }
-      return { ...current, [key]: { x: layout.x, width: layout.width } };
-    });
-  }, []);
+  const [railWidth, setRailWidth] = useState(0);
+  const triggerWidth = railWidth / state.routes.length;
+  const chipOffset = useChipTravel(state.index, triggerWidth);
 
   return (
     <View style={[styles.overlay, { paddingBottom: bottomGap }]}>
@@ -75,10 +49,19 @@ export const AppTabBar = ({
             style={StyleSheet.absoluteFill}
           />
         ) : null}
-        <View style={styles.rail}>
+        <View
+          style={styles.rail}
+          onLayout={(event) => setRailWidth(event.nativeEvent.layout.width)}
+        >
           {/* One chip travels between the triggers, so the selection slides instead of jumping. */}
-          {activeFrame ? (
-            <Animated.View style={[styles.chip, chip]} pointerEvents="none">
+          {railWidth > 0 ? (
+            <Animated.View
+              style={[
+                styles.chip,
+                { width: triggerWidth, transform: [{ translateX: chipOffset }] },
+              ]}
+              pointerEvents="none"
+            >
               <Squircle
                 radius={RADIUS.lg}
                 color={COLORS.face}
@@ -97,7 +80,6 @@ export const AppTabBar = ({
               <Pressable
                 key={route.key}
                 style={({ pressed }) => [styles.trigger, pressed && styles.pressed]}
-                onLayout={(event) => measureTrigger(route.key, event.nativeEvent.layout)}
                 onPress={() => {
                   const event = navigation.emit({
                     type: "tabPress",
@@ -132,31 +114,19 @@ export const AppTabBar = ({
   );
 };
 
-// Width and left are laid-out values, so the travel runs on the JS driver.
-function useChipTravel(frame: TriggerFrame | undefined) {
-  const left = useRef(new Animated.Value(0)).current;
-  const width = useRef(new Animated.Value(0)).current;
-  const placed = useRef(false);
-  const x = frame?.x;
-  const measuredWidth = frame?.width;
+function useChipTravel(activeIndex: number, triggerWidth: number) {
+  const position = useRef(new Animated.Value(activeIndex)).current;
 
   useEffect(() => {
-    if (x === undefined || measuredWidth === undefined) {
-      return;
-    }
-    if (!placed.current) {
-      placed.current = true;
-      left.setValue(x);
-      width.setValue(measuredWidth);
-      return;
-    }
-    Animated.parallel([
-      Animated.timing(left, { toValue: x, ...TRAVEL }),
-      Animated.timing(width, { toValue: measuredWidth, ...TRAVEL }),
-    ]).start();
-  }, [x, measuredWidth, left, width]);
+    Animated.timing(position, {
+      toValue: activeIndex,
+      duration: TAB_TRANSITION_MS,
+      easing: TAB_TRANSITION_EASING,
+      useNativeDriver: true,
+    }).start();
+  }, [activeIndex, position]);
 
-  return { left, width };
+  return useMemo(() => Animated.multiply(position, triggerWidth), [position, triggerWidth]);
 }
 
 const styles = StyleSheet.create({
@@ -179,6 +149,7 @@ const styles = StyleSheet.create({
   chip: {
     position: "absolute",
     top: 0,
+    left: 0,
     height: TRIGGER_HEIGHT,
   },
   chipFace: {

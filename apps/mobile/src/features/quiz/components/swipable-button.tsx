@@ -11,7 +11,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { useAppTabBarHeight } from "@/components/app-tab-bar";
+import { useBottomTabBarHeight } from "@/components/bottom-tab-bar";
 import { MAX_CONTENT_WIDTH } from "@/components/ui/screen-container";
 import { AnimatedChevrons } from "@/features/quiz/components/animated-chevrons";
 import { PICKER_START_LABEL, PICKER_SWIPE_LABEL } from "@/features/quiz/constants";
@@ -37,7 +37,7 @@ export interface SwipableButtonProps {
 
 export const SwipableButton = ({ color, start }: SwipableButtonProps) => {
   // The control floats over the tab bar, so it clears the bar before the screen edge.
-  const bottomGap = useAppTabBarHeight() + SPACE.sm;
+  const bottomGap = useBottomTabBarHeight() + SPACE.sm;
   const fill = useColorCrossFade(color);
   const reveal = useFade(color !== null);
   const [innerWidth, setInnerWidth] = useState(0);

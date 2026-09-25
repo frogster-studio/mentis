@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { ScrollView, StyleSheet } from "react-native";
-import { useAppTabBarHeight } from "@/components/app-tab-bar";
+import { useBottomTabBarHeight } from "@/components/bottom-tab-bar";
 import { QuietButton } from "@/components/ui/quiet-button";
 import { ScreenContainer, TAB_SCREEN_EDGES } from "@/components/ui/screen-container";
 import { useAuthStore } from "@/features/account/auth-store";
@@ -14,7 +14,7 @@ import { useIsPremium } from "@/features/premium/use-is-premium";
 import { GUTTER, SPACE } from "@/theme/tokens";
 
 export const ProfileInfosScreen = () => {
-  const tabBarHeight = useAppTabBarHeight();
+  const tabBarHeight = useBottomTabBarHeight();
   const user = useAuthStore((state) => state.session?.user);
   const isPremium = useIsPremium();
   const openPaywallPreview = usePaywallStore((state) => state.openPreview);

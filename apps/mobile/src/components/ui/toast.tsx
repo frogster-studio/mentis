@@ -1,7 +1,7 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { StyleSheet, Text, View } from "react-native";
 import { Toaster, toast } from "sonner-native";
-import { useAppTabBarHeight } from "@/components/app-tab-bar";
+import { useBottomTabBarHeight } from "@/components/bottom-tab-bar";
 import type { CommunityIconName } from "@/components/ui/icon-name";
 import { Squircle } from "@/components/ui/squircle";
 import { TEXT } from "@/theme/text";
@@ -35,7 +35,7 @@ const Toast = ({ message }: ToastProps) => (
 export const ToastHost = () => (
   <Toaster
     position="bottom-center"
-    offset={useAppTabBarHeight() + SPACE.sm}
+    offset={useBottomTabBarHeight() + SPACE.sm}
     duration={TOAST_DURATION_MS}
     swipeToDismissDirection="left"
     visibleToasts={1}

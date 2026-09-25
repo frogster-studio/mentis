@@ -2,7 +2,7 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { usePathname } from "expo-router";
 import { Tabs } from "expo-router/js-tabs";
 import { StyleSheet } from "react-native";
-import { AppTabBar, TAB_ICON_SIZE } from "@/components/app-tab-bar";
+import { BottomTabBar, TAB_ICON_SIZE } from "@/components/bottom-tab-bar";
 import { MainHeader, WORLD_PATH } from "@/components/main-header";
 import { TabScrollProvider } from "@/components/tab-scroll";
 import { useTabSlide } from "@/components/tab-slide";
@@ -10,6 +10,8 @@ import { PaperBackground } from "@/components/ui/paper-background";
 import { HOME_TAB_LABEL } from "@/features/quiz/constants";
 import { WORLD_TAB_LABEL } from "@/features/world/constants";
 import { COLORS } from "@/theme/tokens";
+
+const WORLD_ROUTE = "world";
 
 const TabsLayout = () => {
   const slide = useTabSlide();
@@ -21,9 +23,17 @@ const TabsLayout = () => {
       <PaperBackground isDark={isWorld} />
 
       <Tabs
-        tabBar={(props) => (
-          <AppTabBar {...props} isDark={isWorld} trackColor={isWorld ? COLORS.ink : COLORS.quiet} />
-        )}
+        tabBar={(props) => {
+          // The pathname lands a render after the tab state, so the bar reads the state its chip follows.
+          const isWorldTab = props.state.routes[props.state.index].name === WORLD_ROUTE;
+          return (
+            <BottomTabBar
+              {...props}
+              isDark={isWorldTab}
+              trackColor={isWorldTab ? COLORS.ink : COLORS.quiet}
+            />
+          );
+        }}
         screenOptions={{ headerShown: false, sceneStyle: styles.scene, ...slide }}
       >
         <Tabs.Screen
@@ -40,7 +50,7 @@ const TabsLayout = () => {
           }}
         />
         <Tabs.Screen
-          name="world"
+          name={WORLD_ROUTE}
           options={{
             title: WORLD_TAB_LABEL,
             tabBarIcon: ({ color }) => (

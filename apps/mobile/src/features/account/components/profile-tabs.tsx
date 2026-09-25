@@ -1,7 +1,7 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Tabs } from "expo-router/js-tabs";
 import { StyleSheet, View } from "react-native";
-import { AppTabBar, TAB_ICON_SIZE } from "@/components/app-tab-bar";
+import { BottomTabBar, TAB_ICON_SIZE } from "@/components/bottom-tab-bar";
 import { useTabSlide } from "@/components/tab-slide";
 import { PaperBackground } from "@/components/ui/paper-background";
 import { ProfileHeader } from "@/features/account/components/profile-header";
@@ -23,7 +23,7 @@ export const ProfileTabs = () => {
       {/* Above the scenes, not over them, so the card holds still while the tabs slide under it. */}
       <ProfileHeader />
       <Tabs
-        tabBar={(props) => <AppTabBar {...props} isDark={false} trackColor={COLORS.catchup} />}
+        tabBar={(props) => <BottomTabBar {...props} isDark={false} trackColor={COLORS.catchup} />}
         screenOptions={{ headerShown: false, ...slide }}
       >
         <Tabs.Screen
