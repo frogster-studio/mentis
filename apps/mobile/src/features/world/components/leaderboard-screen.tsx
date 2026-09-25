@@ -44,7 +44,7 @@ export const LeaderboardScreen = () => {
   }, [page, pageCount, leaderboard.isPlaceholderData]);
 
   return (
-    <ScreenContainer edges={ALL_SCREEN_EDGES} underlay={null}>
+    <ScreenContainer edges={ALL_SCREEN_EDGES} backdropColor={null}>
       <View style={styles.header}>
         <QuietButton
           layout="circle"

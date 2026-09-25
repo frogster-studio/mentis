@@ -53,7 +53,7 @@ export const ResultsScreen = ({
   });
 
   return (
-    <ScreenContainer edges={RESULTS_EDGES} underlay={null}>
+    <ScreenContainer edges={RESULTS_EDGES} backdropColor={null}>
       <Animated.ScrollView
         showsVerticalScrollIndicator={false}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {

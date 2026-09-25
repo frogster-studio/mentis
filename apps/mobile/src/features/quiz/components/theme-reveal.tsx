@@ -31,12 +31,7 @@ interface ThemeRevealProps {
 
 export const ThemeReveal = ({ name, imageUrl, category, secondsLeft }: ThemeRevealProps) => {
   return (
-    <ScreenContainer
-      edges={ALL_SCREEN_EDGES}
-      underlay={
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: `${category.color}40` }]} />
-      }
-    >
+    <ScreenContainer edges={ALL_SCREEN_EDGES} backdropColor={`${category.color}40`}>
       <View style={styles.stack}>
         <View style={styles.caption}>
           <CategoryBadge category={category} isSelected={true} />

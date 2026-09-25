@@ -36,3 +36,12 @@
 - NOT done: the iOS simulator steps. To verify on the host: rest (MainHeader look, both titles at the same height, crown on Sur-mesure without overlapping the title), Classique scrolled (sub-header collapses to nothing, subtitle included, list under the header), plus the human step about the paper fade over a selected Theme's wash.
 - Next: item 5 (ScreenContainer trades underlay for backdropColor).
 
+## Item 5 — ScreenContainer trades underlay for backdropColor (done, simulator unverified)
+- `ScreenContainer({ edges, backdropColor: string | null })`: paints a flat absoluteFill View in that colour over the paper, under the content, when it isn't null. No `underlay` left in src/.
+- play-screen passes `${categoryColor}${BACKDROP_ALPHA}`, theme-reveal `${category.color}40`; results, play-frame, onboarding, end-onboarding and leaderboard pass `null`.
+- Profile, a deviation from the PRD's literal "every other caller passes null": ScreenContainer paints opaque paper, so a profile page passing `null` would hide the layout's wash, and the wash would vanish from the page area. To show the wash once, painted by the layout, the profile pages now drop ScreenContainer, as the picker and (tabs) pages already do: ProfileTabs sets a clear `sceneStyle`, stats and infos render their ScrollView directly (width capped at MAX_CONTENT_WIDTH, centred, for web), and history returns `null`. The paper and wash now hold still while the profile tabs slide, as they do in (tabs) and the picker.
+  `TAB_SCREEN_EDGES` lost its last user, so it's deleted (the left/right insets are 0 in the portrait-locked app).
+- Checks, ralph sandbox: mobile typecheck green, mobile tests green, biome only flags the untouched chunked-storage.ts warning, knip only the api noise.
+- NOT done: the iOS simulator step. To verify on the host: the Reveal and a Question show the Category backdrop as before; each profile tab shows the wash once (page area and around the header/tab bar the same tint); the profile tab slide looks right with the paper holding still.
+- Next: item 6 ((tabs)/index and world written in their routes).
+

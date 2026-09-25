@@ -72,7 +72,7 @@ export const OnboardingScreen = () => {
   ];
 
   return (
-    <ScreenContainer edges={DECK_EDGES} underlay={null}>
+    <ScreenContainer edges={DECK_EDGES} backdropColor={null}>
       <View style={styles.deck} onLayout={(event) => setDeck(event.nativeEvent.layout)}>
         {deck ? (
           <Carousel

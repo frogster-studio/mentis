@@ -1,4 +1,4 @@
-import type { PropsWithChildren, ReactNode } from "react";
+import type { PropsWithChildren } from "react";
 import { Platform, StyleSheet, View } from "react-native";
 import {
   SafeAreaView,
@@ -10,9 +10,6 @@ import { COLORS, SPACE } from "@/theme/tokens";
 
 // Desktop web must not stretch edge-to-edge; on phones the cap never engages.
 export const MAX_CONTENT_WIDTH = 480;
-
-// The AppHeader and the tab bar spend the vertical insets, so a tab screen must never spend them twice.
-export const TAB_SCREEN_EDGES = ["left", "right"] as const;
 
 // SafeAreaView's own default, written out so no screen inherits an edge set it never chose.
 export const ALL_SCREEN_EDGES = ["top", "right", "bottom", "left"] as const;
@@ -27,19 +24,21 @@ export function useBottomChromeGap(): number {
 
 export interface ScreenContainerProps {
   edges: SafeAreaViewProps["edges"];
-  // Painted over the whole paper but under the content — a translucent wash keeps the grid showing.
-  underlay: ReactNode;
+  // Painted flat over the whole paper but under the content — a translucent colour keeps the grid showing.
+  backdropColor: string | null;
 }
 
 export const ScreenContainer = ({
   children,
   edges,
-  underlay,
+  backdropColor,
 }: PropsWithChildren<ScreenContainerProps>) => {
   return (
     <View style={styles.screen}>
       <PaperBackground isDark={false} />
-      {underlay}
+      {backdropColor ? (
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: backdropColor }]} />
+      ) : null}
       <SafeAreaView style={styles.content} edges={edges}>
         {children}
       </SafeAreaView>

@@ -32,17 +32,7 @@ export const PlayScreen = ({
 }: PlayScreenProps) => {
   const hasMultipleQuestions = total > 1;
   return (
-    <ScreenContainer
-      edges={ALL_SCREEN_EDGES}
-      underlay={
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: `${categoryColor}${BACKDROP_ALPHA}` },
-          ]}
-        />
-      }
-    >
+    <ScreenContainer edges={ALL_SCREEN_EDGES} backdropColor={`${categoryColor}${BACKDROP_ALPHA}`}>
       {/* Edge-to-edge Android never resizes for the keyboard, so the padding is the only lift. */}
       <KeyboardAvoidingView style={styles.flex} behavior="padding">
         <View style={styles.card}>

@@ -18,13 +18,14 @@ export const ProfileTabs = () => {
 
   return (
     <View style={styles.shell}>
+      {/* One paper and wash for every tab, under the clear scenes, so neither rides the slide. */}
       <PaperBackground isDark={false} />
       <ProfileWash />
       {/* Above the scenes, not over them, so the card holds still while the tabs slide under it. */}
       <ProfileHeader />
       <Tabs
         tabBar={(props) => <BottomTabBar {...props} isDark={false} trackColor={COLORS.catchup} />}
-        screenOptions={{ headerShown: false, ...slide }}
+        screenOptions={{ headerShown: false, sceneStyle: styles.scene, ...slide }}
       >
         <Tabs.Screen
           name="index"
@@ -60,4 +61,5 @@ export const ProfileTabs = () => {
 
 const styles = StyleSheet.create({
   shell: { flex: 1, backgroundColor: COLORS.background },
+  scene: { backgroundColor: COLORS.clear },
 });

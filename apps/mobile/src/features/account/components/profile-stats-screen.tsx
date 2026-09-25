@@ -1,8 +1,7 @@
 import { ScrollView, StyleSheet, Text } from "react-native";
 import { useBottomTabBarHeight } from "@/components/bottom-tab-bar";
-import { ScreenContainer, TAB_SCREEN_EDGES } from "@/components/ui/screen-container";
+import { MAX_CONTENT_WIDTH } from "@/components/ui/screen-container";
 import { useAuthStore } from "@/features/account/auth-store";
-import { ProfileWash } from "@/features/account/components/profile-wash";
 import { TransferNotice } from "@/features/account/components/transfer-notice";
 import { PROFILE_STATS_EMPTY } from "@/features/account/constants";
 import { PremiumBanner } from "@/features/premium/components/premium-banner";
@@ -29,34 +28,39 @@ export const ProfileStatsScreen = () => {
   const showTransferNotice = !user && transferred && isEmpty && !dismissed;
 
   return (
-    <ScreenContainer edges={TAB_SCREEN_EDGES} underlay={<ProfileWash />}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + SPACE.lg }]}
-      >
-        {user && PURCHASES_SUPPORTED && isPremium !== null ? (
-          <PremiumBanner isPremium={isPremium} onPress={openPaywall} />
-        ) : null}
-        {showTransferNotice ? <TransferNotice /> : null}
-        {isEmpty ? (
-          <Text style={styles.empty}>{PROFILE_STATS_EMPTY}</Text>
-        ) : (
-          cards.map((card) => (
-            <HomeThemeCard
-              key={card.id}
-              name={card.name}
-              average={card.average}
-              sessionCount={card.sessionCount}
-              category={card.category ?? null}
-            />
-          ))
-        )}
-      </ScrollView>
-    </ScreenContainer>
+    <ScrollView
+      style={styles.scroll}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + SPACE.lg }]}
+    >
+      {user && PURCHASES_SUPPORTED && isPremium !== null ? (
+        <PremiumBanner isPremium={isPremium} onPress={openPaywall} />
+      ) : null}
+      {showTransferNotice ? <TransferNotice /> : null}
+      {isEmpty ? (
+        <Text style={styles.empty}>{PROFILE_STATS_EMPTY}</Text>
+      ) : (
+        cards.map((card) => (
+          <HomeThemeCard
+            key={card.id}
+            name={card.name}
+            average={card.average}
+            sessionCount={card.sessionCount}
+            category={card.category ?? null}
+          />
+        ))
+      )}
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
+  // The scene is clear over the layout's paper and wash, so the page caps its own width.
+  scroll: {
+    width: "100%",
+    maxWidth: MAX_CONTENT_WIDTH,
+    alignSelf: "center",
+  },
   content: {
     paddingTop: SPACE.lg,
     paddingHorizontal: GUTTER,

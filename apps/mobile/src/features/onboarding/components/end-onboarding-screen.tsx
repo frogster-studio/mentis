@@ -25,7 +25,7 @@ export const EndOnboardingScreen = () => {
   const outcome = isOnboardingOutcome(outcomeParam) ? outcomeParam : "missed";
 
   return (
-    <ScreenContainer edges={ALL_SCREEN_EDGES} underlay={null}>
+    <ScreenContainer edges={ALL_SCREEN_EDGES} backdropColor={null}>
       <View style={styles.verdict}>
         <EndOnboardingVerdict outcome={outcome} answer={answer ?? ""} />
       </View>

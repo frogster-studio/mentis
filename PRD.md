@@ -140,7 +140,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Draw, Premium). Ru
       "iOS simulator: the Reveal and a Question show the Category backdrop as before; profile tabs show the wash once",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
