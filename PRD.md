@@ -94,7 +94,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Draw, Premium). Ru
       "Conventions: the Screen *-screen.tsx → XxxScreen naming is gone; the two new bullets appear verbatim, the route-file one with its ✅/❌ example",
       "No other line of AGENTS.md changed; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

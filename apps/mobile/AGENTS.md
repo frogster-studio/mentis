@@ -55,13 +55,14 @@
 
 ```
 src/
-  app/                  # expo-router routes — thin files only (re-export/compose from features)
+  app/                  # expo-router routes — each route file writes its page itself; features hold the pieces
   features/quiz/        # practice play, and the Countdown/Carré mechanics competition reuses
   features/competition/ # the daily Attempt: issuance, play, the finalize outbox
   features/account/     # the sign-in sheet, the « Profil » tabs (stats / historique / infos), account deletion
   features/onboarding/  # the once-per-device welcome gate + its store
   features/world/       # « Monde » tab placeholder
   components/           # shared composed components; components/ui/ for shared primitives
+  components/<feature>/ # a feature's components; features/<feature>/components/ is legacy — new files never land there
   lib/                  # api/ (the seam), query client, supabase (auth only) + its SecureStore session
   theme/                # design tokens: COLORS, SPACE, RADIUS, TEXT…
   utils/                # chunk.ts
@@ -83,7 +84,7 @@ Database migrations live in `apps/api/src/_database/migrations/` (shared with th
 
 ## Conventions
 
-- Files kebab-case. Component `post-card.tsx` → `export const PostCard = () => {}` (+ `interface PostCardProps` only if it has props beyond `children`, which comes off `PropsWithChildren` — every prop mandatory: a value no caller varies is a module constant, not an optional prop). Screen `*-screen.tsx` → `XxxScreen`. Hook `use-x.ts` → `useX`. Store `store.ts` → `useQuizStore`. Queries `api.ts` → `useXxx`, `quizKeys`. Constants `constants.ts` → SCREAMING_SNAKE_CASE. Tests co-located `*.test.ts`.
+- Files kebab-case. Component `post-card.tsx` → `export const PostCard = () => {}` (+ `interface PostCardProps` only if it has props beyond `children`, which comes off `PropsWithChildren` — every prop mandatory: a value no caller varies is a module constant, not an optional prop). Hook `use-x.ts` → `useX`. Store `store.ts` → `useQuizStore`. Queries `api.ts` → `useXxx`, `quizKeys`. Constants `constants.ts` → SCREAMING_SNAKE_CASE. Tests co-located `*.test.ts`.
 
   ```tsx
   // ✅ interface PlayProgressBarProps { position: number; total: number }
@@ -91,6 +92,12 @@ Database migrations live in `apps/api/src/_database/migrations/` (shared with th
   // ✅ export const Card = ({ children, onPress }: PropsWithChildren<CardProps>) => { … }
   // ❌ export function PlayProgressBar({ height = 2 }: { height?: number }) { … }
   ```
+- **A route file is the page itself** — `export default function Page()` (`Layout()` in `_layout.tsx`), styles at the bottom, nothing else in the file; never a re-exported `*Screen`. A layout keeps only routing — provider, background, `Tabs`, header, CTA — and imports every other piece.
+  ```tsx
+  // ✅ export default function Page() { … }
+  // ❌ export { PickerScreen as default } from "@/features/quiz/components/picker-screen";
+  ```
+- **A feature's components live in `src/components/<feature>/`**; `src/features/<feature>/` keeps the rest (api, constants, stores, hooks). Its `components/` folder is legacy, moved some day — never add to it.
 - Styling: `StyleSheet.create` in each component file, composing the `src/theme/` tokens — the repo's only shared style module.
 - Short files; split anything reusable into its own component. No speculative props — add a prop only when the current implementation uses it.
 - State props are plain booleans the caller computes (`isSelected`, `noSelection`), never an enum the component decodes.

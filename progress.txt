@@ -1,0 +1,9 @@
+## Item 1 — apps/mobile/AGENTS.md: route-file rule + components/<feature> rule (done)
+- Structure: `app/` line rewritten, `components/<feature>/` line added under `components/`.
+- Conventions: dropped « Screen `*-screen.tsx` → `XxxScreen` » from the naming bullet; the two PRD bullets added verbatim right after it (route-file one with its ✅/❌ block).
+- Checks, ralph sandbox (linux-arm64): bun was missing — installed to ~/.bun, PATH appended to /etc/sandbox-persistent.sh (a running session still needs `export PATH="$HOME/.bun/bin:$PATH"`).
+  node_modules is the macOS host's: typecheck green; tests green except @mentis/api (swc has no linux-arm64 binding); `bun run knip` dies on oxc-parser's binding.
+  `bunx knip@6.31.0` (cache, linux bindings) only flags api test files + @nestjs/testing — the api vitest config fails to load for the same swc reason. `bunx @biomejs/biome@2.5.6 check .` green.
+  Never `bun install` from the sandbox: it would rewrite the host's node_modules. Run the full `bun run check` on the host.
+- Next: item 2 (MainHeader children + subHeader slot, PlayerHeader, MainTabBar).
+
