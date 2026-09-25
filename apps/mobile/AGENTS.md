@@ -125,12 +125,11 @@ Database migrations live in `apps/api/src/_database/migrations/` (shared with th
   // ✅ onPress={() => gatePremium(() => router.push({ pathname: "/competition", params: { kind: "catchup" } }))}
   // ❌ onPress={() => router.push(...)}  // lands on a PREMIUM_REQUIRED screen first
   ```
-- **`AppHeader`** is the tab screens' whole card — greeting row, divider, title — so nothing in it rides the tab slide: the title cross-fades in place, in a slot that hugs it. Scrolling slides the title half up behind the greeting row until the card is a plain rounded header, so a tab screen pads by `useAppHeaderHeight()` and feeds the header through `useTabScroll()`. Every screen sits on `ScreenContainer`'s grid paper.
-- Pushed screens draw their own header row: `QuietButton` circle left (chevron = back, X = quit), `TEXT.screenTitle` centered, balancing spacer right. Content scrolling under a `HeaderCard` vanishes behind its opaque paper band, clipped flat at the card's bottom edge; the results screen's top and bottom bands are the `BlurBand` recipe.
+- Pushed screens draw their own header row: `QuietButton` circle left (chevron = back, X = quit), `TEXT.screenTitle` centered, balancing spacer right; the results screen's top and bottom bands are the `BlurBand` recipe.
 - **Overlaid chrome owns its safe-area inset.** A band pinned over content runs to the screen edge and pads its own row by the inset; the screen under it drops that edge from `ScreenContainer` and pads content by the chrome's full height. Floating bottom chrome pads by `useBottomChromeGap()`, which adds Android's room over the bare navigation bar.
 
   ```tsx
-  // ✅ <ScreenContainer edges={TAB_SCREEN_EDGES}> + paddingTop: useAppHeaderHeight()
+  // ✅ <ScreenContainer edges={TAB_SCREEN_EDGES}> + paddingTop: the chrome's full height
   // ❌ an absolute band at top: 0 inside a SafeAreaView that already padded the top
   ```
 - Feedback states are never bespoke: a pending query renders `ScreenLoading`, a failed one `ScreenError` (pass `onRetry` when a refetch can succeed) — both fill the content area while the screen's chrome stays. Error text is always `TEXT.body` in `danger`, centered. A pending mutation sets its `Button`'s `pending` flag (disables + spinner replaces the label) — never a freestanding spinner.

@@ -1,29 +1,21 @@
-import { Animated } from "react-native";
-import { useAppHeaderHeight } from "@/components/app-header";
-import { useAppTabBarHeight } from "@/components/app-tab-bar";
+import { ScrollView } from "react-native-gesture-handler";
+import { useMainHeaderHeight } from "@/components/main-header";
 import { useTabScroll } from "@/components/tab-scroll";
-import { ScreenContainer, TAB_SCREEN_EDGES } from "@/components/ui/screen-container";
 import { PracticeCard } from "@/features/quiz/components/practice-card";
 import { SPACE } from "@/theme/tokens";
 
 export const HomeScreen = () => {
-  const headerHeight = useAppHeaderHeight("/");
-  const tabBarHeight = useAppTabBarHeight();
+  const headerHeight = useMainHeaderHeight();
   const onScroll = useTabScroll();
 
   return (
-    <ScreenContainer edges={TAB_SCREEN_EDGES} underlay={null}>
-      <Animated.ScrollView
-        showsVerticalScrollIndicator={false}
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-        contentContainerStyle={{
-          paddingTop: headerHeight + SPACE.md,
-          paddingBottom: tabBarHeight,
-        }}
-      >
-        <PracticeCard />
-      </Animated.ScrollView>
-    </ScreenContainer>
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
+      contentContainerStyle={{ paddingTop: headerHeight + SPACE.lg }}
+    >
+      <PracticeCard />
+    </ScrollView>
   );
 };

@@ -11,7 +11,7 @@ export interface PaperBackgroundProps {
 }
 
 export const PaperBackground = ({ isDark }: PaperBackgroundProps) => {
-  // Both tab scenes stay mounted, so on web the two pattern ids must not collide.
+  // Several instances stay mounted at once, so on web their pattern ids must not collide.
   const patternId = `paper-grid-${useId().replace(/\W/g, "")}`;
 
   return (

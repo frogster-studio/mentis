@@ -7,37 +7,48 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import { Animated, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
 import { TAB_TRANSITION_EASING, TAB_TRANSITION_MS } from "@/components/tab-transition";
 
-const TabHeaderContext = createContext<{
-  heights: Record<string, number>;
-  measure: (path: string, height: number) => void;
-}>({ heights: {}, measure: () => {} });
-
-export function useTabHeaderHeight(path: string) {
-  return useContext(TabHeaderContext).heights[path];
-}
-
-export function useMeasureTabHeader() {
-  return useContext(TabHeaderContext).measure;
-}
-
 const TabScrollContext = createContext<Animated.Value | null>(null);
 
-// The AppHeader sits outside the scenes, so the focused tab publishes its scroll offset here.
+interface ScrollYStore {
+  subscribe: (listener: () => void) => () => void;
+  getSnapshot: () => number;
+  setY: (y: number) => void;
+}
+
+const ScrollYStoreContext = createContext<ScrollYStore | null>(null);
+
+function createScrollYStore(): ScrollYStore {
+  let y = 0;
+  const listeners = new Set<() => void>();
+  return {
+    subscribe: (listener) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    getSnapshot: () => y,
+    setY: (next) => {
+      const rounded = Math.round(next);
+      if (rounded === y) return;
+      y = rounded;
+      for (const listener of listeners) listener();
+    },
+  };
+}
+
+// The MainHeader sits outside the scenes, so the focused tab publishes its scroll offset here.
 export const TabScrollProvider = ({ children }: PropsWithChildren) => {
   const offset = useRef(new Animated.Value(0)).current;
+  const scrollY = useRef(createScrollYStore()).current;
 
-  const [heights, setHeights] = useState<Record<string, number>>({});
-  const measure = useCallback((path: string, height: number) => {
-    setHeights((current) => (current[path] === height ? current : { ...current, [path]: height }));
-  }, []);
   return (
-    <TabHeaderContext.Provider value={{ heights, measure }}>
-      <TabScrollContext.Provider value={offset}>{children}</TabScrollContext.Provider>
-    </TabHeaderContext.Provider>
+    <TabScrollContext.Provider value={offset}>
+      <ScrollYStoreContext.Provider value={scrollY}>{children}</ScrollYStoreContext.Provider>
+    </TabScrollContext.Provider>
   );
 };
 
@@ -49,15 +60,25 @@ export function useTabScrollOffset(): Animated.Value {
   return offset;
 }
 
+export function useTabScrollY(): number {
+  const store = useContext(ScrollYStoreContext);
+  if (!store) {
+    throw new Error("useTabScrollY must be used inside a TabScrollProvider");
+  }
+  return useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+}
+
 // Every tab screen calls this; one that never scrolls simply drops the handler and rests at zero.
 export function useTabScroll() {
   const offset = useTabScrollOffset();
+  const store = useContext(ScrollYStoreContext);
   const restingOffset = useRef(0);
   const [isFocused, setIsFocused] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       setIsFocused(true);
+      store?.setY(restingOffset.current);
       Animated.timing(offset, {
         toValue: restingOffset.current,
         duration: TAB_TRANSITION_MS,
@@ -65,18 +86,20 @@ export function useTabScroll() {
         useNativeDriver: true,
       }).start();
       return () => setIsFocused(false);
-    }, [offset]),
+    }, [offset, store]),
   );
 
   const onScroll = useMemo(
     () =>
       Animated.event([{ nativeEvent: { contentOffset: { y: offset } } }], {
-        useNativeDriver: true,
+        useNativeDriver: false,
         listener: (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-          restingOffset.current = event.nativeEvent.contentOffset.y;
+          const y = event.nativeEvent.contentOffset.y;
+          restingOffset.current = y;
+          store?.setY(y);
         },
       }),
-    [offset],
+    [offset, store],
   );
   return isFocused ? onScroll : undefined;
 }
