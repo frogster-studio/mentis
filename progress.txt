@@ -59,3 +59,10 @@
 - Checks, ralph sandbox: mobile typecheck green, 309 tests green, biome only flags the untouched chunked-storage.ts warning, knip only the api noise.
 - Next: item 8 (the 3 onboarding pages written in their routes).
 
+## Item 8 — the 3 onboarding pages written in their routes (done)
+- `git mv`d each screen onto its route (as in item 7): onboarding-screen → `onboarding/index.tsx`, quiz-session-onboarding-screen → `quiz-session.tsx`, end-onboarding-screen → `end.tsx`, each `export default function Page()`. Bodies and styles unchanged.
+- The deck's `DECK_EDGES` module constant can't stay in a route file ("nothing else in the file"), so it moved, with its comment, to `features/onboarding/constants.ts` as `ONBOARDING_DECK_EDGES`. The relative `./surprise-hero` import became `@/features/onboarding/components/surprise-hero`.
+- Nothing was extracted, so no new file in src/components/onboarding/. No reference to the three *Screen names is left in src/.
+- Checks, ralph sandbox: mobile typecheck green, 309 tests green, biome only flags the untouched chunked-storage.ts warning, knip only the api noise.
+- Next: item 9 (competition, session/[themeId] and leaderboard written in their routes).
+

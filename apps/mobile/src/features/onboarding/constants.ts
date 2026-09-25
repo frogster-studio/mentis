@@ -14,6 +14,10 @@ export const ONBOARDING_SURPRISE_CTA_LABEL = "C'est parti";
 export const ONBOARDING_BACK_LABEL = "Page précédente";
 export const ONBOARDING_NEXT_LABEL = "Page suivante";
 export const ONBOARDING_PAGE_SEPARATOR = " / ";
+
+// The pager spends the bottom inset, so the deck takes only the top and the sides.
+export const ONBOARDING_DECK_EDGES = ["top", "left", "right"] as const;
+
 export const END_ONBOARDING_CTA_LABEL = "C'est parti";
 
 // Composed from the button's own label, so the sentence can never name a button that moved on.
