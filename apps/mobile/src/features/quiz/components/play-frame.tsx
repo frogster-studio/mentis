@@ -12,7 +12,7 @@ export interface PlayFrameProps {
 // Nothing is under way yet, so the quit control leaves straight away — no confirmation.
 export const PlayFrame = ({ quitLabel, onQuit, children }: PropsWithChildren<PlayFrameProps>) => {
   return (
-    <ScreenContainer edges={ALL_SCREEN_EDGES} underlay={null}>
+    <ScreenContainer edges={ALL_SCREEN_EDGES} backdropColor={null}>
       <View style={styles.header}>
         <QuietButton
           layout="circle"

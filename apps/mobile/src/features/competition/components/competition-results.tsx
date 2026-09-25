@@ -11,7 +11,7 @@ import {
 } from "@/features/competition/constants";
 import { ResultCard } from "@/features/quiz/components/result-card";
 import { ResultsHomeLink } from "@/features/quiz/components/results-home-link";
-import { ResultsScreen } from "@/features/quiz/components/results-screen";
+import { ResultsView } from "@/features/quiz/components/results-view";
 
 export interface CompetitionResultsProps {
   transcript: AppCompetitionTranscriptResponse;
@@ -29,7 +29,7 @@ export const CompetitionResults = ({
   onGoHome,
 }: CompetitionResultsProps) => {
   return (
-    <ResultsScreen
+    <ResultsView
       score={transcript.score}
       themeName={transcript.themeName}
       outcomes={transcript.answers.map((answer) => answer.correct)}
@@ -69,6 +69,6 @@ export const CompetitionResults = ({
           points={answer.points}
         />
       ))}
-    </ResultsScreen>
+    </ResultsView>
   );
 };

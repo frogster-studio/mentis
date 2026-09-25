@@ -9,7 +9,7 @@ import { COLORS, GUTTER, RADIUS, SPACE } from "@/theme/tokens";
 // The Reveal's wash carried into the session: the Category colour with a hex alpha appended.
 const BACKDROP_ALPHA = "40";
 
-export interface PlayScreenProps {
+export interface PlayViewProps {
   questionText: string;
   position: number;
   total: number;
@@ -20,7 +20,7 @@ export interface PlayScreenProps {
   footer: ReactNode;
 }
 
-export const PlayScreen = ({
+export const PlayView = ({
   questionText,
   position,
   total,
@@ -29,20 +29,10 @@ export const PlayScreen = ({
   questionOpacity,
   header,
   footer,
-}: PlayScreenProps) => {
+}: PlayViewProps) => {
   const hasMultipleQuestions = total > 1;
   return (
-    <ScreenContainer
-      edges={ALL_SCREEN_EDGES}
-      underlay={
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: `${categoryColor}${BACKDROP_ALPHA}` },
-          ]}
-        />
-      }
-    >
+    <ScreenContainer edges={ALL_SCREEN_EDGES} backdropColor={`${categoryColor}${BACKDROP_ALPHA}`}>
       {/* Edge-to-edge Android never resizes for the keyboard, so the padding is the only lift. */}
       <KeyboardAvoidingView style={styles.flex} behavior="padding">
         <View style={styles.card}>

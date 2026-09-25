@@ -1,10 +1,9 @@
-import { ScrollView } from "react-native-gesture-handler";
+import { ScrollView } from "react-native";
 import { useMainHeaderHeight } from "@/components/main-header";
 import { useTabScroll } from "@/components/tab-scroll";
-import { PracticeCard } from "@/features/quiz/components/practice-card";
 import { SPACE } from "@/theme/tokens";
 
-export const HomeScreen = () => {
+export default function Page() {
   const headerHeight = useMainHeaderHeight();
   const onScroll = useTabScroll();
 
@@ -14,8 +13,6 @@ export const HomeScreen = () => {
       onScroll={onScroll}
       scrollEventThrottle={16}
       contentContainerStyle={{ paddingTop: headerHeight + SPACE.lg }}
-    >
-      <PracticeCard />
-    </ScrollView>
+    />
   );
-};
+}
