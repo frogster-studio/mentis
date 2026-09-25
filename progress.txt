@@ -66,3 +66,10 @@
 - Checks, ralph sandbox: mobile typecheck green, 309 tests green, biome only flags the untouched chunked-storage.ts warning, knip only the api noise.
 - Next: item 9 (competition, session/[themeId] and leaderboard written in their routes).
 
+## Item 9 — competition, session/[themeId] and leaderboard written in their routes (done)
+- `git mv`d each screen onto its route (as in items 7 and 8): competition-screen → `app/competition.tsx`, session-screen → `app/session/[themeId].tsx`, leaderboard-screen → `app/leaderboard.tsx`, each `export default function Page()`. Bodies and styles are unchanged; only the arrow became a function.
+- Nothing was extracted: competition and session have no module-level constant or inner component (`quitConfirm` is a JSX value inside Page), and leaderboard already ends with its styles. So there's no new file in src/components/.
+- No reference to CompetitionScreen, SessionScreen or LeaderboardScreen is left in the repo. The only `*-screen.tsx` left are play-screen and results-screen (item 10).
+- Checks, ralph sandbox: mobile typecheck green, 309 tests green, biome only flags the untouched chunked-storage.ts warning (plus the api useParseIntRadix info), knip only the api noise.
+- Next: item 10 (root layout as Layout() with RootNavigator extracted; play-screen/results-screen → play-view/results-view).
+
