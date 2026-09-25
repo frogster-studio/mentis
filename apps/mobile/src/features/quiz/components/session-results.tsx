@@ -1,7 +1,7 @@
 import { NewButton } from "@/components/ui/new-button";
 import { ResultCard } from "@/features/quiz/components/result-card";
 import { ResultsHomeLink } from "@/features/quiz/components/results-home-link";
-import { ResultsScreen } from "@/features/quiz/components/results-screen";
+import { ResultsView } from "@/features/quiz/components/results-view";
 import { RESULTS_HOME_LABEL, RESULTS_REPLAY_LABEL } from "@/features/quiz/constants";
 import { type SessionAnswer, sessionScore } from "@/features/quiz/session-reducer";
 import type { Question } from "@/types/quiz";
@@ -22,7 +22,7 @@ export const SessionResults = ({
   onGoHome,
 }: SessionResultsProps) => {
   return (
-    <ResultsScreen
+    <ResultsView
       score={sessionScore(answers)}
       themeName={themeName}
       outcomes={answers.map((answer) => answer.correct)}
@@ -55,6 +55,6 @@ export const SessionResults = ({
           points={answers[index].points}
         />
       ))}
-    </ResultsScreen>
+    </ResultsView>
   );
 };

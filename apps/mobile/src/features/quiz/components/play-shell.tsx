@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { View } from "react-native";
 import { AnswerFooter } from "@/features/quiz/components/answer-footer";
 import { PlayHeader } from "@/features/quiz/components/play-header";
-import { PlayScreen } from "@/features/quiz/components/play-screen";
+import { PlayView } from "@/features/quiz/components/play-view";
 import type { QuestionPlay } from "@/features/quiz/question-play";
 import type { PlayLoop } from "@/features/quiz/use-play-loop";
 
@@ -36,7 +36,7 @@ export const PlayShell = ({
   onConfirm,
 }: PlayShellProps) => {
   return (
-    <PlayScreen
+    <PlayView
       questionText={loop.transition.question}
       position={loop.transition.position}
       total={total}

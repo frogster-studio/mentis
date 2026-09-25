@@ -191,7 +191,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Draw, Premium). Ru
       "find src -name '*-screen.tsx' returns nothing; grep finds no exported *Screen component",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```

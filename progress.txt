@@ -73,3 +73,11 @@
 - Checks, ralph sandbox: mobile typecheck green, 309 tests green, biome only flags the untouched chunked-storage.ts warning (plus the api useParseIntRadix info), knip only the api noise.
 - Next: item 10 (root layout as Layout() with RootNavigator extracted; play-screen/results-screen → play-view/results-view).
 
+## Item 10 — root layout as Layout() with RootNavigator extracted; play-view and results-view (done)
+- `app/_layout.tsx` is `export default function Layout()`. Its fonts, splash and onboarding-hydration logic are unchanged (the module-level `SplashScreen.preventAutoHideAsync()` stays), and it now imports `RootNavigator`.
+- New `src/components/root-navigator.tsx`: `RootNavigator` moved verbatim (outbox + competition sync, the Stack with its onboarding `animation: "none"`, TransferPrompt, PaywallSheet, SignInSheet, ToastHost).
+- `git mv`d play-screen → `features/quiz/components/play-view.tsx` (`PlayView`, `PlayViewProps`) and results-screen → `results-view.tsx` (`ResultsView`, `ResultsViewProps`). Callers updated: play-shell, session-results, competition-results.
+- `find src -name '*-screen.tsx'` returns nothing. No `*Screen` identifier is left in src/ except the framework ones (ScreenContainer, SplashScreen, Stack/Tabs.Screen). Every route file is `Layout()` or `Page()`.
+- Checks, ralph sandbox: every workspace typecheck green, mobile tests green (309), biome only flags the untouched chunked-storage.ts warning + the api useParseIntRadix info, knip only the api noise.
+- PRD complete. Left for the human: the simulator checks from items 2–5, the on-device picker review, and reading the apps/mobile/AGENTS.md diff. Run `bun run check` on the host (the sandbox can't run api tests or root knip).
+

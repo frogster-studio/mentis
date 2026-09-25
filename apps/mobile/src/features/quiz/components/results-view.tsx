@@ -18,20 +18,20 @@ const HANDOVER = SPACE.lg;
 // Web has no native animated module and warns on every mount; it falls back to JS anyway.
 const NATIVE_DRIVER = Platform.OS !== "web";
 
-export interface ResultsScreenProps {
+export interface ResultsViewProps {
   score: number;
   themeName: string;
   outcomes: boolean[];
   footer: ReactNode;
 }
 
-export const ResultsScreen = ({
+export const ResultsView = ({
   score,
   themeName,
   outcomes,
   children,
   footer,
-}: PropsWithChildren<ResultsScreenProps>) => {
+}: PropsWithChildren<ResultsViewProps>) => {
   const insets = useSafeAreaInsets();
   const bandHeight = useResultsBandHeight();
   const scrollY = useRef(new Animated.Value(0)).current;
