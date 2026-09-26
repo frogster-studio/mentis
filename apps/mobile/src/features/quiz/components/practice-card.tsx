@@ -11,12 +11,14 @@ import {
   PRACTICE_PITCH,
   PRACTICE_TITLE,
 } from "@/features/quiz/constants";
+import { usePracticeStreak } from "@/features/quiz/use-practice-streak";
 import { TEXT } from "@/theme/text";
 import { COLORS, GUTTER, RADIUS, SPACE } from "@/theme/tokens";
 import { gradient } from "@/utils/gradient";
 
 export const PracticeCard = () => {
   const router = useRouter();
+  const streak = usePracticeStreak();
 
   return (
     <FastSquircleView style={styles.card}>
@@ -29,7 +31,7 @@ export const PracticeCard = () => {
         ))}
       </Text>
 
-      <StreakBadge streak={45} />
+      <StreakBadge streak={streak} />
 
       <View>
         <GradientOverlay direction="right" />

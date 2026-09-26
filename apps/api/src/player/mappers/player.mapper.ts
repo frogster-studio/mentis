@@ -1,4 +1,8 @@
-import { type AppAccountStatsResponse, appAccountStatsResponseSchema } from "@mentis/contracts/app";
+import {
+  type AppAccountStatsResponse,
+  type AppStreak,
+  appAccountStatsResponseSchema,
+} from "@mentis/contracts/app";
 import type { QuizSessionEntity } from "../../_database/entities/quiz-session.entity";
 import type { StatBaselineEntity } from "../../_database/entities/stat-baseline.entity";
 
@@ -6,6 +10,7 @@ import type { StatBaselineEntity } from "../../_database/entities/stat-baseline.
 export const toAppAccountStatsResponse = (
   baselines: StatBaselineEntity[],
   sessions: QuizSessionEntity[],
+  streaks: { practiceStreak: AppStreak; competitionStreak: AppStreak },
 ): AppAccountStatsResponse =>
   appAccountStatsResponseSchema.parse({
     baselines: baselines.map((baseline) => ({
@@ -20,4 +25,5 @@ export const toAppAccountStatsResponse = (
       themeName: session.themeName,
       points: session.points,
     })),
+    ...streaks,
   });

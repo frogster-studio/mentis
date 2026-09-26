@@ -7,6 +7,7 @@ import {
   formatSessionCount,
   type HomeCard,
   homeCards,
+  recordPracticeDay,
   recordSession,
   themeAverage,
 } from "./stats";
@@ -56,6 +57,30 @@ describe("recordSession", () => {
     const snapshot = structuredClone(stats);
     recordSession(stats, "marie-antoinette", "Marie Antoinette", 20);
     expect(stats).toStrictEqual(snapshot);
+  });
+});
+
+describe("recordPracticeDay", () => {
+  it("records the Paris day of a first finished session", () => {
+    expect(recordPracticeDay([], "2026-04-01")).toStrictEqual(["2026-04-01"]);
+  });
+
+  it("holds a day once however many sessions finished on it", () => {
+    const days = recordPracticeDay(["2026-04-01"], "2026-04-01");
+    expect(days).toStrictEqual(["2026-04-01"]);
+  });
+
+  it("keeps every distinct day", () => {
+    expect(recordPracticeDay(["2026-04-01"], "2026-04-02")).toStrictEqual([
+      "2026-04-01",
+      "2026-04-02",
+    ]);
+  });
+
+  it("does not mutate the input days", () => {
+    const days = ["2026-04-01"];
+    recordPracticeDay(days, "2026-04-02");
+    expect(days).toStrictEqual(["2026-04-01"]);
   });
 });
 

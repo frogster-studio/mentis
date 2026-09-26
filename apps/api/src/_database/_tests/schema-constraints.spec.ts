@@ -2,6 +2,7 @@ import { getMetadataArgsStorage } from "typeorm";
 import { describe, expect, it } from "vitest";
 import { CompetitionAnswerEntity } from "../entities/competition-answer.entity";
 import { CompetitionAttemptEntity } from "../entities/competition-attempt.entity";
+import { PracticeDayEntity } from "../entities/practice-day.entity";
 import { QuestionEntity } from "../entities/question.entity";
 import { StatBaselineEntity } from "../entities/stat-baseline.entity";
 import { ThemeEntity } from "../entities/theme.entity";
@@ -47,6 +48,10 @@ describe("the natural keys behind every idempotent write", () => {
 
   it("holds one baseline per owner, device and Theme", () => {
     expect(uniqueColumnsOn(StatBaselineEntity)).toEqual(["owner", "device", "themeId"]);
+  });
+
+  it("holds one practice day per owner, device and day", () => {
+    expect(uniqueColumnsOn(PracticeDayEntity)).toEqual(["owner", "device", "day"]);
   });
 });
 

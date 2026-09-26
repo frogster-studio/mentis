@@ -3,6 +3,7 @@ import { foldAccountStats } from "./account-stats";
 import { type DeviceStats, homeCards } from "./stats";
 import {
   buildTransferBaselines,
+  buildTransferPracticeDays,
   INITIAL_TRANSFER_STATE,
   shouldOfferTransfer,
   transferReducer,
@@ -56,6 +57,19 @@ describe("buildTransferBaselines — the baseline payload", () => {
     const snapshot = structuredClone(deviceStats);
     buildTransferBaselines(deviceStats, DEVICE);
     expect(deviceStats).toStrictEqual(snapshot);
+  });
+});
+
+describe("buildTransferPracticeDays — the practice-days payload", () => {
+  it("builds one row per device day, carrying the injected device id", () => {
+    expect(buildTransferPracticeDays(["2026-04-01", "2026-04-02"], DEVICE)).toStrictEqual([
+      { device: DEVICE, day: "2026-04-01" },
+      { device: DEVICE, day: "2026-04-02" },
+    ]);
+  });
+
+  it("builds nothing from a device that never finished a session", () => {
+    expect(buildTransferPracticeDays([], DEVICE)).toStrictEqual([]);
   });
 });
 
