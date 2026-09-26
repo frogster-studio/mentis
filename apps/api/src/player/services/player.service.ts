@@ -2,15 +2,13 @@ import type {
   AppAccountStatsResponse,
   AppQuizSessionPushInput,
   AppStatBaselinePushInput,
-  AppStreak,
 } from "@mentis/contracts/app";
 import { GoneException, Inject, Injectable } from "@nestjs/common";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { SUPABASE } from "../../_config/supabase.config";
 import { toAppAccountStatsResponse } from "../mappers/player.mapper";
 import { AccountGoneError, PlayerRepository } from "../repositories/player.repository";
-
-const NO_STREAK: AppStreak = { lastDay: null, length: 0, longest: 0 };
+import { streakFromDays } from "../utils/streak";
 
 @Injectable()
 export class PlayerService {
@@ -20,13 +18,15 @@ export class PlayerService {
   ) {}
 
   async stats(owner: string): Promise<AppAccountStatsResponse> {
-    const [baselines, sessions] = await Promise.all([
+    const [baselines, sessions, practiceDays, competitionDays] = await Promise.all([
       this.playerRepository.findStatBaselines(owner),
       this.playerRepository.findQuizSessions(owner),
+      this.playerRepository.findPracticeDays(owner),
+      this.playerRepository.findCompetitionDays(owner),
     ]);
     return toAppAccountStatsResponse(baselines, sessions, {
-      practiceStreak: NO_STREAK,
-      competitionStreak: NO_STREAK,
+      practiceStreak: streakFromDays(practiceDays),
+      competitionStreak: streakFromDays(competitionDays),
     });
   }
 

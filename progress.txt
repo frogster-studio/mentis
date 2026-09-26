@@ -21,3 +21,13 @@
 - Not wired yet: item 4 replaces NO_STREAK in PlayerService.stats with streakFromDays(repository days) and drops NO_STREAK.
 - Sandbox: api vitest can't load swc native binary; ran the spec through a throwaway plain vitest config (no decorators in it) — 5/5 green. Host runs full check.
 - Files: apps/api/src/player/utils/streak.ts, apps/api/src/player/_tests/streak.spec.ts, PRD.md.
+
+## Item 4 — GET /app/me/stats carries practiceStreak + competitionStreak (done)
+- PlayerRepository.findPracticeDays: two DISTINCT reads in parallel (quiz_sessions `to_char(finished_at AT TIME ZONE 'Europe/Paris', 'YYYY-MM-DD')`, practice_days `to_char(day, ...)`), unioned with a Set. findCompetitionDays: DISTINCT to_char(attempt.day) by owner, no status filter.
+- to_char everywhere because raw getRawMany of a `date` column comes back as a JS Date from pg (only entity hydration turns it into a string). Checked on a throwaway postgres:16 container: 23:30Z 03-31 -> 04-01, both DST edges right, session timezone/DateStyle don't matter.
+- Competition days are read by PlayerRepository directly (CompetitionAttemptEntity in PlayerModule forFeature), since competition already depends on player (no circular import). PracticeDayEntity added to forFeature now (item 5 reuses it).
+- PlayerService.stats: streakFromDays(practiceDays/competitionDays); NO_STREAK gone.
+- Specs: player/_tests/player.repository.spec.ts (metadata DataSource + mocked runner.query, asserts SQL + union). e2e: fake repo gains findPracticeDays (Paris via competitionDay) / findCompetitionDays, and 2 new cases parse through appAccountStatsResponseSchema; the other-Player case also seeds B's days/attempts.
+- Sandbox: repository + streak specs green via a throwaway esbuild vitest config; the e2e needs SWC metadata, so it has NOT run here. Host must run it.
+- Note for item 5: the e2e deleteUser cascade stub doesn't clear practiceDayRows yet; add it with the push route.
+- Files: apps/api/src/player/repositories/player.repository.ts, services/player.service.ts, modules/player.module.ts, _tests/player.repository.spec.ts, _tests/app-me.e2e-spec.ts, PRD.md.

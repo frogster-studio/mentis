@@ -99,7 +99,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Streak, Device Sta
       "Repository specs in the manner of standing.repository.spec.ts; e2e in app-me.e2e-spec.ts parses the response through the contract",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "api",

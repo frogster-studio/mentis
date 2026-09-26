@@ -1,12 +1,16 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { type DeepPartial, type InsertResult, QueryFailedError, Repository } from "typeorm";
+import { CompetitionAttemptEntity } from "../../_database/entities/competition-attempt.entity";
+import { PracticeDayEntity } from "../../_database/entities/practice-day.entity";
 import { QuizSessionEntity } from "../../_database/entities/quiz-session.entity";
 import { StatBaselineEntity } from "../../_database/entities/stat-baseline.entity";
 
 const OWNER_FK_VIOLATION = "23503";
 
 export class AccountGoneError extends Error {}
+
+const isoDate = (expression: string): string => `to_char(${expression}, 'YYYY-MM-DD')`;
 
 const isOwnerFkViolation = (error: unknown): boolean =>
   error instanceof QueryFailedError &&
@@ -18,6 +22,10 @@ export class PlayerRepository {
     @InjectRepository(QuizSessionEntity) private readonly sessions: Repository<QuizSessionEntity>,
     @InjectRepository(StatBaselineEntity)
     private readonly baselines: Repository<StatBaselineEntity>,
+    @InjectRepository(PracticeDayEntity)
+    private readonly practiceDays: Repository<PracticeDayEntity>,
+    @InjectRepository(CompetitionAttemptEntity)
+    private readonly attempts: Repository<CompetitionAttemptEntity>,
   ) {}
 
   // Oldest-first: the client fold takes the most recently captured Theme name from the last row.
@@ -27,6 +35,33 @@ export class PlayerRepository {
 
   findStatBaselines(owner: string): Promise<StatBaselineEntity[]> {
     return this.baselines.find({ where: { owner } });
+  }
+
+  // A Streak day is the Europe/Paris date, whatever the Player's own timezone.
+  async findPracticeDays(owner: string): Promise<string[]> {
+    const [finishedDays, depositedDays] = await Promise.all([
+      this.sessions
+        .createQueryBuilder("session")
+        .select(`DISTINCT ${isoDate("session.finishedAt AT TIME ZONE 'Europe/Paris'")}`, "day")
+        .where("session.owner = :owner", { owner })
+        .getRawMany<{ day: string }>(),
+      this.practiceDays
+        .createQueryBuilder("practiceDay")
+        .select(`DISTINCT ${isoDate("practiceDay.day")}`, "day")
+        .where("practiceDay.owner = :owner", { owner })
+        .getRawMany<{ day: string }>(),
+    ]);
+    return [...new Set([...finishedDays, ...depositedDays].map((row) => row.day))];
+  }
+
+  // Every Attempt counts, whatever its status, so a quit or expired day still holds the Streak.
+  async findCompetitionDays(owner: string): Promise<string[]> {
+    const rows = await this.attempts
+      .createQueryBuilder("attempt")
+      .select(`DISTINCT ${isoDate("attempt.day")}`, "day")
+      .where("attempt.owner = :owner", { owner })
+      .getRawMany<{ day: string }>();
+    return rows.map((row) => row.day);
   }
 
   async insertQuizSessionsIfAbsent(rows: DeepPartial<QuizSessionEntity>[]): Promise<void> {
