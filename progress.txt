@@ -1,0 +1,7 @@
+## Item 1 — PracticeDayEntity (done)
+- practice_days: id uuid, owner uuid (ManyToOne AuthUserEntity CASCADE), device uuid, day date (string, as competition_attempts.day), created/updated.
+- @Unique("practice_days_one_per_device_day", [owner, device, day]); copied stat-baseline.entity.ts (closest sibling: same owner/device shape).
+- Registration: typeorm.client.ts globs entities/*.entity.ts, knip treats them as entries. NOT added to PlayerModule forFeature yet — item 5 adds it with its repository use.
+- schema-constraints.spec.ts: natural-key test beside the baseline one.
+- Files: apps/api/src/_database/entities/practice-day.entity.ts, apps/api/src/_database/_tests/schema-constraints.spec.ts.
+- Next: Hugo runs migration:generate + migration:run, then the RLS snippet from PRD Human steps, before items 4/5 hit a real DB.

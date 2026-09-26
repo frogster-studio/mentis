@@ -62,7 +62,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Streak, Device Sta
       "Registered wherever the other entities are; no migration file is written or generated",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "contracts",
