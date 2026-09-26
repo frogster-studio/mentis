@@ -138,7 +138,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Streak, Device Sta
       "A declined transfer leaves the days dormant",
       "Vitest on the store and transfer logic; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

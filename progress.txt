@@ -45,3 +45,15 @@
 - Lives in features/account (both Streaks come off the Account stats, StreakBadge lives there; quiz already imports account). Mobile keeps its own run-counting loop rather than sharing the API's streakFromDays: contracts is schemas-only, and mergeStreak(null, days) covers the same need.
 - Not wired yet: items 7-9 consume them. Sandbox: typecheck, non-API tests (mobile 323), biome green (same 4 warnings + 1 info pre-existing).
 - Files: apps/mobile/src/features/account/streak.ts, streak.test.ts, PRD.md.
+
+## Item 7 — Device Stats record practice days, the transfer pushes them (done)
+- stats-store gains practiceDays: string[] (Paris dates) beside stats; recordSession(themeId, name, points, day) writes both; reset empties both. DeviceStats type untouched (fold/shelf keep using it). Old persisted state without practiceDays: zustand persist shallow-merges, so it defaults to [].
+- stats.ts recordPracticeDay(days, day): insertion order, deduped (mergeStreak sorts anyway).
+- stats-transfer.ts buildTransferPracticeDays(days, device): AppPracticeDayPushInput (the contract type itself, no alias).
+- transfer-sync: baselines then practice days, both through pushInBatches, sequential; reset + markTransferred only after both land. A retry replays both (both insert-if-absent). Offer gate unchanged (baselines non-empty): every recorded day comes with a finished session.
+- Session screen: one `finishedAt = new Date()` feeds parisDay (signed out) and the outbox finishedAt (signed in). Abandoned sessions never reach the record effect (status finished only).
+- Decline: untouched, the days sit in the stats store beside the dormant stats.
+- Tests: pure pieces only (recordPracticeDay, buildTransferPracticeDays); transfer-sync orchestration stays untested as before (imports api/query client/stores, no vi.mock precedent) — "empties after both land" is the await order.
+- Sandbox: typecheck, non-API tests (mobile 329), biome green (same 4 warnings + 1 info pre-existing).
+- Next: item 8 (sign-out seed) — seed lives beside practiceDays or in its own store; account-actions.tsx sign-out and delete-account.ts are the hooks.
+- Files: apps/mobile/src/features/quiz/stats.ts, stats.test.ts, stats-store.ts, stats-transfer.ts, stats-transfer.test.ts, transfer-sync.ts, apps/mobile/src/app/session/[themeId].tsx, PRD.md.
