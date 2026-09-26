@@ -31,3 +31,11 @@
 - Sandbox: repository + streak specs green via a throwaway esbuild vitest config; the e2e needs SWC metadata, so it has NOT run here. Host must run it.
 - Note for item 5: the e2e deleteUser cascade stub doesn't clear practiceDayRows yet; add it with the push route.
 - Files: apps/api/src/player/repositories/player.repository.ts, services/player.service.ts, modules/player.module.ts, _tests/player.repository.spec.ts, _tests/app-me.e2e-spec.ts, PRD.md.
+
+## Item 5 — POST /app/me/practice-days (done)
+- Same shape as stat-baselines end to end: MeController.pushPracticeDays (ZodValidationPipe appPracticeDayPushInputSchema, 204) -> PlayerService.pushPracticeDays (empty = no-op, owner from JWT, withAccountGoneEnvelope -> 410) -> PlayerRepository.insertPracticeDaysIfAbsent (insert().orIgnore() on the (owner, device, day) unique, owner FK -> AccountGoneError).
+- deleteAccount comment said "both player tables"; now "every player table".
+- e2e: fake repo insertPracticeDaysIfAbsent + deleteUser cascade clears practiceDayRows; practice-days joined the 401 / 410 / over-cap / empty-batch it.each tables; new cases: body owner ignored, replay + other device dedupe, malformed device/day/datetime -> 400. practiceDayRow takes an optional device.
+- Sandbox: e2e needs SWC, NOT run here; host must run it. typecheck, non-API tests, biome green (4 warnings + 1 info pre-existing, untouched files).
+- Next: item 6 (mobile pure streak functions) — first mobile item; mobile consumer of this route arrives in item 7.
+- Files: apps/api/src/player/controllers/me.controller.ts, services/player.service.ts, repositories/player.repository.ts, _tests/app-me.e2e-spec.ts, PRD.md.

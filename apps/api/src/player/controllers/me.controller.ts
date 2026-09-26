@@ -1,9 +1,11 @@
 import {
   type AppAccountStatsResponse,
+  type AppPracticeDayPushInput,
   type AppProfileResponse,
   type AppPseudoInput,
   type AppQuizSessionPushInput,
   type AppStatBaselinePushInput,
+  appPracticeDayPushInputSchema,
   appPseudoInputSchema,
   appQuizSessionPushInputSchema,
   appStatBaselinePushInputSchema,
@@ -70,6 +72,16 @@ export class MeController {
     baselines: AppStatBaselinePushInput,
   ): Promise<void> {
     return this.playerService.pushStatBaselines(request.user.id, baselines);
+  }
+
+  @Post("practice-days")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  pushPracticeDays(
+    @Req() request: AuthedRequest,
+    @Body(new ZodValidationPipe(appPracticeDayPushInputSchema))
+    practiceDays: AppPracticeDayPushInput,
+  ): Promise<void> {
+    return this.playerService.pushPracticeDays(request.user.id, practiceDays);
   }
 
   @Delete("account")

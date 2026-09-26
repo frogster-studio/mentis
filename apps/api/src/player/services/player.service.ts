@@ -1,5 +1,6 @@
 import type {
   AppAccountStatsResponse,
+  AppPracticeDayPushInput,
   AppQuizSessionPushInput,
   AppStatBaselinePushInput,
 } from "@mentis/contracts/app";
@@ -66,8 +67,23 @@ export class PlayerService {
     );
   }
 
+  async pushPracticeDays(owner: string, practiceDays: AppPracticeDayPushInput): Promise<void> {
+    if (practiceDays.length === 0) {
+      return;
+    }
+    await this.withAccountGoneEnvelope(() =>
+      this.playerRepository.insertPracticeDaysIfAbsent(
+        practiceDays.map((practiceDay) => ({
+          owner,
+          device: practiceDay.device,
+          day: practiceDay.day,
+        })),
+      ),
+    );
+  }
+
   async deleteAccount(owner: string): Promise<void> {
-    // Deleting the auth row cascades both player tables through their owner FK.
+    // Deleting the auth row cascades every player table through its owner FK.
     const { error } = await this.supabase.auth.admin.deleteUser(owner);
     if (error) {
       throw new Error(`account deletion failed: ${error.message}`);

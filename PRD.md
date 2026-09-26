@@ -113,7 +113,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Streak, Device Sta
       "Deleted Account: 410 ACCOUNT_GONE, as stat-baselines",
       "e2e in app-me.e2e-spec.ts; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

@@ -76,6 +76,12 @@ export class PlayerRepository {
     );
   }
 
+  async insertPracticeDaysIfAbsent(rows: DeepPartial<PracticeDayEntity>[]): Promise<void> {
+    await this.insertIfAbsent(() =>
+      this.practiceDays.createQueryBuilder().insert().values(rows).orIgnore().execute(),
+    );
+  }
+
   // Never overwrite: a re-push is a no-op success and a row another Player owns is left alone.
   private async insertIfAbsent(insert: () => Promise<InsertResult>): Promise<void> {
     try {
