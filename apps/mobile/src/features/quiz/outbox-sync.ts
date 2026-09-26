@@ -48,16 +48,20 @@ function seedAckedSessions(playerId: string, batch: OutboxEntry[]): void {
     return;
   }
   queryClient.setQueryData<AppAccountStatsResponse>(accountKeys.stats(playerId), (previous) => {
+    // Never loaded: the next pull brings the acked rows, so nothing is invented in the meantime.
+    if (previous === undefined) {
+      return previous;
+    }
     // A concurrent pull may have landed the same row first; matching by id never counts it twice.
-    const known = new Set((previous?.sessions ?? []).map((session) => session.id));
+    const known = new Set(previous.sessions.map((session) => session.id));
     const fresh = removed.filter((entry) => !known.has(entry.id));
     if (fresh.length === 0) {
       return previous;
     }
     return {
-      baselines: previous?.baselines ?? [],
+      ...previous,
       sessions: [
-        ...(previous?.sessions ?? []),
+        ...previous.sessions,
         ...fresh.map((entry) => ({
           id: entry.id,
           themeId: entry.themeId,

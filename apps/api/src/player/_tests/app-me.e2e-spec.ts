@@ -379,7 +379,12 @@ describe("app me routes e2e", () => {
 
     const response = await authed(tokenA, "/app/me/stats");
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ baselines: [], sessions: [] });
+    expect(await response.json()).toEqual({
+      baselines: [],
+      sessions: [],
+      practiceStreak: { lastDay: null, length: 0, longest: 0 },
+      competitionStreak: { lastDay: null, length: 0, longest: 0 },
+    });
   });
 
   it("POST /app/me/quiz-sessions stores the batch under the JWT sub, ignoring a body owner", async () => {

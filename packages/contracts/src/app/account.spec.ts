@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  appAccountStatsResponseSchema,
+  appPracticeDayPushInputSchema,
   appQuizSessionPushInputSchema,
   appStatBaselinePushInputSchema,
   MAX_PUSH_BATCH,
@@ -20,6 +22,19 @@ const baseline = (overrides: Record<string, unknown> = {}) => ({
   themeName: "Géographie",
   totalPoints: 120,
   sessionCount: 4,
+  ...overrides,
+});
+
+const streak = (overrides: Record<string, unknown> = {}) => ({
+  lastDay: "2026-08-11",
+  length: 3,
+  longest: 5,
+  ...overrides,
+});
+
+const practiceDay = (overrides: Record<string, unknown> = {}) => ({
+  device: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+  day: "2026-08-11",
   ...overrides,
 });
 
@@ -67,5 +82,48 @@ describe("appStatBaselinePushInputSchema", () => {
     expect(appStatBaselinePushInputSchema.safeParse([baseline({ totalPoints: -1 })]).success).toBe(
       false,
     );
+  });
+});
+
+describe("appAccountStatsResponseSchema", () => {
+  const stats = (practiceStreak: unknown) => ({
+    baselines: [],
+    sessions: [],
+    practiceStreak,
+    competitionStreak: { lastDay: null, length: 0, longest: 0 },
+  });
+
+  it("parses both Streaks, a dayless one included", () => {
+    expect(appAccountStatsResponseSchema.parse(stats(streak()))).toEqual(stats(streak()));
+  });
+
+  it("rejects a longest below length", () => {
+    expect(
+      appAccountStatsResponseSchema.safeParse(stats(streak({ length: 6, longest: 5 }))).success,
+    ).toBe(false);
+  });
+
+  it("rejects a lastDay that is not an ISO date", () => {
+    expect(
+      appAccountStatsResponseSchema.safeParse(stats(streak({ lastDay: "2026-08-11T10:00:00Z" })))
+        .success,
+    ).toBe(false);
+  });
+});
+
+describe("appPracticeDayPushInputSchema", () => {
+  it("accepts a full batch and rejects one row more", () => {
+    const full = Array.from({ length: MAX_PUSH_BATCH }, () => practiceDay());
+    expect(appPracticeDayPushInputSchema.safeParse(full).success).toBe(true);
+    expect(appPracticeDayPushInputSchema.safeParse([...full, practiceDay()]).success).toBe(false);
+  });
+
+  it("requires a device uuid and an ISO date", () => {
+    expect(appPracticeDayPushInputSchema.safeParse([practiceDay({ device: "d1" })]).success).toBe(
+      false,
+    );
+    expect(
+      appPracticeDayPushInputSchema.safeParse([practiceDay({ day: "2026-02-30" })]).success,
+    ).toBe(false);
   });
 });

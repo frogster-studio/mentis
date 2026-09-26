@@ -5,3 +5,12 @@
 - schema-constraints.spec.ts: natural-key test beside the baseline one.
 - Files: apps/api/src/_database/entities/practice-day.entity.ts, apps/api/src/_database/_tests/schema-constraints.spec.ts.
 - Next: Hugo runs migration:generate + migration:run, then the RLS snippet from PRD Human steps, before items 4/5 hit a real DB.
+
+## Item 2 — Streak contract + practice-days push input (done)
+- account.ts: private streakSchema { lastDay: iso date | null, length, longest } refined longest >= length; published type AppStreak (as AppCompetitionDayAttempt). appAccountStatsResponseSchema gains practiceStreak + competitionStreak. appPracticeDayPushInputSchema: array of { device uuid, day iso date }, max MAX_PUSH_BATCH.
+- Required fields broke the API parse, so the mapper takes { practiceStreak, competitionStreak } and PlayerService.stats passes a NO_STREAK constant for both. PLACEHOLDER: item 4 replaces NO_STREAK with the repository days through item 3's pure function (and can drop NO_STREAK if the pure function's empty result covers it).
+- e2e "never returns another Player's rows" now expects both zero Streaks (stays true after item 4).
+- mobile outbox-sync seedAckedSessions: spreads previous, and skips seeding when the stats cache was never loaded (used to invent a shelf with baselines []; the next pull brings the acked rows anyway).
+- Note for item 9: acked sessions leave the outbox, so the overlay stops extending the Practice Streak while the cached practiceStreak is still the pre-push one. seedAckedSessions should merge the acked Paris days into practiceStreak (or invalidate stats).
+- Sandbox: biome linux binary not in node_modules; ran ~/.bun/install/cache/@biomejs/cli-linux-arm64@2.5.6@@@1/biome check . instead. Contracts vitest once flaked on a missing zod locale file (FS), green on rerun.
+- Files: packages/contracts/src/app/account.ts, account.spec.ts, apps/api/src/player/mappers/player.mapper.ts, services/player.service.ts, _tests/app-me.e2e-spec.ts, apps/mobile/src/features/quiz/outbox-sync.ts.

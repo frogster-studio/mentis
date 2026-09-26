@@ -74,7 +74,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Streak, Device Sta
       "Specs parse a valid payload and reject a longest below length, a bad date and an oversized batch",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "api",
