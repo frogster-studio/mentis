@@ -47,6 +47,14 @@ export function mergeStreak(streak: AppStreak | null, days: string[]): AppStreak
   };
 }
 
+// Null until the Account stats load, so no Streak is ever shown or kept from nothing.
+export function accountPracticeStreak(
+  accountStreak: AppStreak | undefined,
+  pendingDays: string[],
+): AppStreak | null {
+  return accountStreak === undefined ? null : mergeStreak(accountStreak, pendingDays);
+}
+
 // Yesterday still counts, since today can still be played.
 export function currentStreak({ lastDay, length }: AppStreak, today: string): number {
   if (lastDay === null) {

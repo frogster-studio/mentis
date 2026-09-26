@@ -151,7 +151,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Streak, Device Sta
       "Scenario spec: seed length 5 ending D, device days D+1..D+3, displayed Streak 8",
       "Vitest; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

@@ -6,6 +6,7 @@ import {
   type OutboxEntry,
   outboxReducer,
   overlaySessions,
+  pendingPracticeDays,
   toAccountSession,
 } from "./outbox";
 
@@ -141,6 +142,13 @@ describe("overlaySessions — the id-reconciled optimistic overlay", () => {
   it("is empty once every pending row is synced", () => {
     const state = [entry({ id: "s1" }), entry({ id: "s2" })];
     expect(overlaySessions(state, OWNER, new Set(["s1", "s2"]))).toStrictEqual([]);
+  });
+});
+
+describe("pendingPracticeDays — the Practice Streak overlay", () => {
+  it("dates each pending session on its Paris day", () => {
+    const late = entry({ id: "late", finishedAt: "2026-03-31T23:30:00.000Z" });
+    expect(pendingPracticeDays([entry(), late])).toStrictEqual(["2026-07-22", "2026-04-01"]);
   });
 });
 

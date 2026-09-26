@@ -1,5 +1,6 @@
 // Replaying any transition leaves the same queue, so a flaky push can never double-count a session.
 
+import { parisDay } from "@/features/account/streak";
 import type { AccountSession } from "./account-stats";
 
 // Owner-tagged so a sign-out retains the rows for that Account without bleeding into another world.
@@ -55,4 +56,9 @@ export function overlaySessions(
   return entriesForOwner(state, owner)
     .filter((entry) => !syncedIds.has(entry.id))
     .map(toAccountSession);
+}
+
+// A session both pending and already pulled falls on a day the Account holds, so it counts once.
+export function pendingPracticeDays(entries: OutboxEntry[]): string[] {
+  return entries.map((entry) => parisDay(new Date(entry.finishedAt)));
 }

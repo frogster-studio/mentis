@@ -57,3 +57,14 @@
 - Sandbox: typecheck, non-API tests (mobile 329), biome green (same 4 warnings + 1 info pre-existing).
 - Next: item 8 (sign-out seed) — seed lives beside practiceDays or in its own store; account-actions.tsx sign-out and delete-account.ts are the hooks.
 - Files: apps/mobile/src/features/quiz/stats.ts, stats.test.ts, stats-store.ts, stats-transfer.ts, stats-transfer.test.ts, transfer-sync.ts, apps/mobile/src/app/session/[themeId].tsx, PRD.md.
+
+## Item 8 — sign-out seed (done)
+- streak.ts accountPracticeStreak(accountStreak | undefined, pendingDays): null when stats never loaded, else mergeStreak. It IS the signed-in displayed Streak (item 9 reuses it) and the seed; one function for both.
+- outbox.ts pendingPracticeDays(entries): Paris day per entry; no syncedIds filter needed (days union, a pulled+pending session counts once).
+- Seed stored in stats-store as practiceStreakSeed (beside practiceDays: the signed-out Streak = mergeStreak(practiceStreakSeed, practiceDays), item 9's hook). setPracticeStreakSeed(seed | null). reset (transfer) leaves the seed: unused signed in, rewritten at next sign-out.
+- quiz/practice-streak-seed.ts keepPracticeStreakSeed(playerId): reads the stats cache + owner's outbox, writes the seed. Called in account-actions sign-out BEFORE drainOutbox: the drain acks entries while the cached practiceStreak stays pre-push (item 2 note), so after it the overlay would lose those days.
+- deleteAccount clears the seed beside the transfer reset.
+- Not covered: the 401 global sign-out (lib/api onUnauthenticated) writes no seed, the previous one stays. lib can't import features; accepted, the device returns to its last signed-out world.
+- Item 9 still owes: seedAckedSessions should merge acked Paris days into cached practiceStreak (or invalidate stats), else a drained session drops out of the signed-in Streak until the next pull.
+- Tests: accountPracticeStreak + scenario (5 -> 8 signed out, 8 after transfer, unpushed sessions kept, no seed) in streak.test.ts; pendingPracticeDays in outbox.test.ts. Sandbox: typecheck, non-API tests (mobile 336), biome green (same 4 warnings + 1 info).
+- Files: apps/mobile/src/features/account/streak.ts, streak.test.ts, delete-account.ts, components/account-actions.tsx, apps/mobile/src/features/quiz/outbox.ts, outbox.test.ts, stats-store.ts, practice-streak-seed.ts, PRD.md.
