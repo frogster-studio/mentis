@@ -39,3 +39,9 @@
 - Sandbox: e2e needs SWC, NOT run here; host must run it. typecheck, non-API tests, biome green (4 warnings + 1 info pre-existing, untouched files).
 - Next: item 6 (mobile pure streak functions) — first mobile item; mobile consumer of this route arrives in item 7.
 - Files: apps/api/src/player/controllers/me.controller.ts, services/player.service.ts, repositories/player.repository.ts, _tests/app-me.e2e-spec.ts, PRD.md.
+
+## Item 6 — mobile pure streak functions (done)
+- apps/mobile/src/features/account/streak.ts: parisDay(instant: Date) (Intl formatToParts Europe/Paris, same pattern as catchup-deadline/season-calendar; takes a Date, callers do new Date(entry.finishedAt)), currentStreak(streak, today) (length when today - lastDay <= 1, else 0), mergeStreak(streak | null, days) (expands the Streak's run into its `length` days ending at lastDay, unions with days, recomputes; longest = max(streak.longest, computed)).
+- Lives in features/account (both Streaks come off the Account stats, StreakBadge lives there; quiz already imports account). Mobile keeps its own run-counting loop rather than sharing the API's streakFromDays: contracts is schemas-only, and mergeStreak(null, days) covers the same need.
+- Not wired yet: items 7-9 consume them. Sandbox: typecheck, non-API tests (mobile 323), biome green (same 4 warnings + 1 info pre-existing).
+- Files: apps/mobile/src/features/account/streak.ts, streak.test.ts, PRD.md.

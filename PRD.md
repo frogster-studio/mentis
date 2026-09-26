@@ -126,7 +126,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Streak, Device Sta
       "mergeStreak(null, days) computes from the days alone",
       "Vitest, today injected; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
