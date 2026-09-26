@@ -1,202 +1,192 @@
-# PRD — Picker on the MainHeader, route files as pages
+# PRD — Practice and Competition Streaks
 
-Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Draw, Premium). Rules: [AGENTS.md](AGENTS.md), [apps/mobile/AGENTS.md](apps/mobile/AGENTS.md), [docs/agents/conventions.md](docs/agents/conventions.md).
+Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Streak, Device Stats, Stats Transfer, Stat Baseline, Attempt, Catch-up, Competition Day). Rules: [AGENTS.md](AGENTS.md), [apps/api/AGENTS.md](apps/api/AGENTS.md), [apps/mobile/AGENTS.md](apps/mobile/AGENTS.md), [docs/agents/conventions.md](docs/agents/conventions.md), [ADR 0003](docs/adr/0003-database-admits-only-the-api.md), [ADR 0004](docs/adr/0004-competition-answers-are-judged-server-side.md), [ADR 0005](docs/adr/0005-the-api-reaches-its-data-through-typeorm.md).
 
 ## Decisions
 
-### Route files
+### Streak rules
 
-- A route file is the page itself: `export default function Page()` (`export default function Layout()` in every `_layout.tsx`, the root one included), `StyleSheet.create` styles at the bottom, nothing else in the file. A component inside a route file is always extracted.
-- No route re-exports a `*Screen` any more: every `*-screen.tsx` that a route re-exports is inlined into its route and deleted. This covers every route in the app, not only the picker: `(tabs)` index and world, profile layout and its 3 pages, the 3 onboarding pages, competition, `session/[themeId]`, leaderboard, and the picker.
-- `(tabs)/index.tsx` keeps its onboarding redirect inside `Page`.
-- `play-screen` and `results-screen` are not routes. They are renamed in place to `play-view` / `results-view` (`PlayView`, `ResultsView`), so no `*-screen.tsx` file and no `*Screen` component remains in `src/`.
-- A layout keeps only routing: the provider, the background, `<Tabs>` with its `Tabs.Screen` declarations, the header and the CTA. Any logic (a `tabBar` render with conditions, navigation params, selection state) lives in an imported component.
-- The root layout's `RootNavigator` moves to `src/components/root-navigator.tsx`. Its fonts and splash logic stays in the root `Layout`, and only the signature changes.
+- A day is the Europe/Paris calendar date, for both Streaks, whatever the Player's timezone.
+- Two independent Streaks: a practice day never feeds the Competition Streak, and a competition day never feeds the Practice Streak.
+- A practice day is a day holding at least one Finished Quiz Session. Abandoned Sessions never count. Several sessions on one day count once.
+- A competition day is a day holding at least one Attempt of the Account, whatever its status or finalize reason (active, completed, quit, expired). The day is the Attempt's Competition Day, so a Catch-up mends yesterday. A Replay adds nothing.
+- A Streak on the wire is `{ lastDay: date | null, length: int, longest: int }`. `length` is the run of consecutive days ending at `lastDay`, `longest` the longest run ever, and all three are null/0/0 with no day.
+- The displayed Streak is the current one: `length` when `lastDay` is today or yesterday, otherwise 0. The phone computes it with its own clock, so a cached read never goes stale across midnight.
 
-### Component location
+### API
 
-- A feature's components live in `src/components/<feature>/` (e.g. `src/components/quiz/`). `src/features/<feature>/` keeps the rest: api, constants, stores, hooks.
-- `src/features/<feature>/components/` is legacy: nothing new is added to it. Moving its current content is out of scope.
-- Every component file this PRD creates or rewrites wholesale goes in `src/components/<feature>/`. A file only renamed or lightly edited stays where it is.
-- Cross-feature components go at the root of `src/components/`: `PlayerHeader`, `MainTabBar`, `RootNavigator`.
+- `GET /app/me/stats` becomes the Account's record, the one read home, Monde and Profil share. It keeps `baselines` and `sessions` and gains `practiceStreak` and `competitionStreak`. No streak goes on `standing` (Season-scoped), `competition/day` or the public Leaderboard.
+- Practice days are the Paris dates of the Account's `quiz_sessions.finished_at`, unioned with its `practice_days.day`. Competition days are the distinct `competition_attempts.day` of the Account.
+- The repository returns distinct days; one pure function turns sorted distinct days into `{ lastDay, length, longest }`.
+- A new `practice_days` table holds the days a Stats Transfer deposits: `owner`, `device`, `day`, `unique(owner, device, day)`, cascading from `auth.users`. The entity copies `theme.entity.ts`.
+- `POST /app/me/practice-days` takes an array of at most `MAX_PUSH_BATCH` `{ device, day }` and answers 204 with no body. A replayed push adds nothing, an empty array is a no-op, no token is 401, and a deleted Account is 410 `ACCOUNT_GONE`, exactly like `stat-baselines`.
+- The later Profile stats (games played, Longest Streak, best rank, best score per Theme) land on the same `GET /app/me/stats`. Their work will replace the raw `sessions[]` with server-side per-Theme aggregates. `longest` ships now for the « Plus longue série » tile.
 
-### Headers
+### Mobile
 
-- `MainHeader` is the frame. It owns the absolute positioning over the scenes, the top safe area, `PaperFade`, `StatusBar` and the bar card. It takes the bar content as `children` and the sub-header through a mandatory `subHeader: ReactNode` prop. It keeps its `isDark` prop and imports nothing from any feature.
-- `MainSubHeader` keeps its scroll collapse (`useTabScrollY`, fixed full height of 170 collapsing to 0) and its content becomes `children`, bottom-anchored as today. Its title styling moves to the caller's content.
-- `PlayerHeader` is the `(tabs)` header: the avatar, the greeting (or the pseudo + season points on Monde), the menu button, the `PseudoSheet`, and a `MainSubHeader` whose title follows the tab (`HOME_TITLE` / `WORLD_TITLE`). The greeting slot, which has state, may be its own component.
-- `MainTabBar` holds the `(tabs)` tab-bar logic (dark and ink track on Monde, read off the tab state rather than the pathname).
-- `ProfileHeader` is untouched: the profile look differs too much. Profile does not adopt `MainHeader`.
-
-### Picker
-
-- The routes move to `app/picker/(tabs)/_layout.tsx`, `index.tsx` and `custom.tsx`. The group is `(tabs)`, not `(_tabs)`. The URLs `/picker` and `/picker/custom` are unchanged.
-- The picker adopts the MainHeader look wholesale: the bar at MainHeader geometry, the sub-header at 170 with `TEXT.mainSubHeaderTitle`. The picker's own geometry (`GUTTER`, `RADIUS.xl`, `TEXT.display`, `maxWidth`) goes away.
-- Bar content: the `PRACTICE_TITLE` label, then the help button (still a no-op) and the close button (`leave`).
-- Sub-header content: the title (`PICKER_TITLE` / `CUSTOM_PICKER_TITLE` per tab), the `PICKER_SUBTITLE` line under it on Classique, and the Premium crown stamp at the top right on Sur-mesure.
-- The subtitle slot is reserved on both tabs, so the title sits at the same height on both. The subtitle and the stamp collapse with the sub-header.
-- The header floats over the scenes like `(tabs)`: the picker layout wraps a `TabScrollProvider`. Scene content pads by `useMainHeaderHeight()` and scrolls under the header, and each tab publishes its offset via `useTabScroll()`.
-- Classique is a `ScrollView` of the Draw's `ThemeCard`s. Loading and error states sit below the header. The bottom room for the swipe CTA stays.
-- Sur-mesure is an empty `ScrollView` wired to `useTabScroll()`. Its content is out of scope.
-- The `PaperFade` stays paper-coloured over the picker, even when a Theme is selected. The wash under the status bar is hidden by it, and this is accepted.
-- The selection wash is painted once, by the layout (`PickerBackground` = paper + wash). The pages no longer use `ScreenContainer` at all.
-- `PickerProvider` is a real component. It owns the selection, `leave` (barred back gestures) and the wash cross-fade, and `usePicker()` lives in the same file. It replaces `picker-context.ts`.
-- `PickerTabBar` reads the context for the track colour: the Category colour, else `quiet`.
-- `PickerStartButton` wraps `SwipableButton` and pushes `/session/[themeId]` with the exact params pushed today.
-- Deleted: `picker-layout`, `picker-screen`, `custom-picker-screen`, `picker-context`.
-
-### ScreenContainer
-
-- `underlay: ReactNode` is removed and replaced by a mandatory `backdropColor: string | null`, painted as a flat colour over the paper and under the content.
-- `play-view` passes `${categoryColor}${BACKDROP_ALPHA}`, and `theme-reveal` passes its Category colour at `40`.
-- The profile pages stop painting `ProfileWash`, because the profile layout already paints it. Every other caller passes `null`.
-
-### apps/mobile/AGENTS.md
-
-- In Structure, `app/` reads: `app/  # expo-router routes — each route file writes its page itself; features hold the pieces`.
-- In Structure, under `components/`: `components/<feature>/  # a feature's components; features/<feature>/components/ is legacy — new files never land there`.
-- In Conventions, the `Screen *-screen.tsx → XxxScreen` naming is removed and replaced by this bullet, verbatim:
-
-  > **A route file is the page itself** — `export default function Page()` (`Layout()` in `_layout.tsx`), styles at the bottom, nothing else in the file; never a re-exported `*Screen`. A layout keeps only routing — provider, background, `Tabs`, header, CTA — and imports every other piece.
-  > ```tsx
-  > // ✅ export default function Page() { … }
-  > // ❌ export { PickerScreen as default } from "@/features/quiz/components/picker-screen";
-  > ```
-
-- Followed by this bullet, verbatim:
-
-  > **A feature's components live in `src/components/<feature>/`**; `src/features/<feature>/` keeps the rest (api, constants, stores, hooks). Its `components/` folder is legacy, moved some day — never add to it.
-
-- A component is still `export const X = () => {}`.
+- Signed in, the Practice Streak is the Account's `practiceStreak` merged with the Paris days of the Player's pending outbox sessions, so a session finished offline extends it at once.
+- Signed out, the Device Stats also record the Paris day of every Finished Quiz Session.
+- At sign-out, the device keeps a seed: the Practice Streak displayed at that moment, outbox overlay included. If the Account stats were never loaded, the seed is cleared, so a Player never inherits another Account's Streak. Account deletion clears the seed.
+- Signed out, the Practice Streak is the seed's days (the `length` days ending at its `lastDay`) unioned with the device's practice days; `longest` is the max of the seed's and the computed one. With no seed, it is the device days alone. Scenario that must hold: Account Streak 5, sign out, 3 consecutive days played, the Streak is 8. Sign in, accept the transfer, the Streak is still 8.
+- One pure merge function (a Streak plus a set of days gives a Streak) serves the outbox overlay, the seed and the device. A second pure function gives the current Streak for a Paris date `today`, and a third gives the Paris date of an instant.
+- The Stats Transfer pushes the device's practice days to `POST /app/me/practice-days` in batches, beside the baselines. The device world empties only once both pushes land. A declined transfer leaves the days dormant with the rest of the Device Stats.
+- A finalize also invalidates `accountKeys.stats`, since the Competition Streak moves with every Attempt.
+- The home practice card shows the Practice Streak, signed in or out. The Monde competition card shows the Competition Streak. The badge shows 0 as a number and is never hidden. No « at risk » state.
+- The badge's accessibility label reads « Série : N jours », with « Série : 1 jour » when N is 1. The copy stays in the competition feature's `constants.ts`.
+- `StreakBadge` stays in `features/account/components/`, since it is only lightly edited.
 
 ### Test seams
 
-- No new pure logic, so no new vitest. `bun run check` green closes every item.
-- Visual items are verified on the iOS simulator through the dev client: screenshots at rest and scrolled.
+- API pure function: vitest spec beside `day-offers.spec.ts` / `leaderboard.spec.ts`.
+- API repository reads: specs in the manner of `standing.repository.spec.ts`.
+- API routes: `app-me.e2e-spec.ts` through the Nest testing module.
+- Contracts: the package's `*.spec.ts`, beside `account.spec.ts`.
+- Mobile pure functions and stores: vitest, beside `stats.test.ts`, `outbox.test.ts` and `stats-transfer.test.ts`. The clock and today are always injected.
 
 ### Out of scope
 
-- Moving the existing content of `src/features/<feature>/components/`.
-- The profile header.
-- Sur-mesure's content.
-- The help button's action.
-- A wash-aware fade.
+- The Profile stats tiles and their data (games played, Longest Streak display, average score, best rank, best score per Theme), and reshaping `sessions[]` into aggregates.
+- An « at risk » or grey-flame state, streak notifications, streak freezes.
+- A Streak for any timezone but Europe/Paris.
 
 ## Items
 
 ```json
 [
   {
-    "category": "docs",
-    "description": "apps/mobile/AGENTS.md states the route-file rule and the components/<feature> rule",
+    "category": "api",
+    "description": "PracticeDayEntity: the days a Stats Transfer deposits under an Account",
     "steps": [
-      "Structure: app/ line and the new components/<feature>/ line read as in Decisions",
-      "Conventions: the Screen *-screen.tsx → XxxScreen naming is gone; the two new bullets appear verbatim, the route-file one with its ✅/❌ example",
-      "No other line of AGENTS.md changed; bun run check green"
+      "src/_database/entities/practice-day.entity.ts copies theme.entity.ts: BaseEntity, generated uuid id, owner uuid, device uuid, day date, created/updated columns",
+      "@Unique(owner, device, day) on the entity; ManyToOne AuthUserEntity with onDelete CASCADE on owner",
+      "Registered wherever the other entities are; no migration file is written or generated",
+      "bun run check green"
     ],
-    "passes": true
+    "passes": false
+  },
+  {
+    "category": "contracts",
+    "description": "Streak schema on the Account stats response, and the practice-days push input",
+    "steps": [
+      "A streak schema { lastDay: iso date | null, length: int >= 0, longest: int >= length }",
+      "appAccountStatsResponseSchema gains practiceStreak and competitionStreak",
+      "appPracticeDayPushInputSchema: array of { device: uuid, day: iso date }, max MAX_PUSH_BATCH",
+      "Specs parse a valid payload and reject a longest below length, a bad date and an oversized batch",
+      "bun run check green"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Pure function from distinct days to { lastDay, length, longest }",
+    "steps": [
+      "No day: { lastDay: null, length: 0, longest: 0 }",
+      "Days 01, 02, 03, 05: { lastDay: 05, length: 1, longest: 3 }",
+      "A run crossing a month and a year boundary counts as one run",
+      "Unsorted or duplicated input gives the same result as sorted distinct input",
+      "Vitest spec beside day-offers.spec.ts; bun run check green"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "GET /app/me/stats carries practiceStreak and competitionStreak",
+    "steps": [
+      "Practice days: Paris dates of the Account's quiz_sessions.finished_at unioned with its practice_days.day; two sessions on one Paris day count once",
+      "A session finished at 23:30 UTC on 2026-03-31 (01:30 Paris) counts for 2026-04-01",
+      "Competition days: distinct competition_attempts.day of the Account, every status and finalize reason included",
+      "Another Account's rows never count",
+      "Repository specs in the manner of standing.repository.spec.ts; e2e in app-me.e2e-spec.ts parses the response through the contract",
+      "bun run check green"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "POST /app/me/practice-days deposits a Stats Transfer's practice days",
+    "steps": [
+      "Unauthenticated: 401",
+      "Valid batch: 204 and the rows stored under the token's owner",
+      "The same batch sent twice stores each (owner, device, day) once",
+      "Empty array: 204, nothing written",
+      "Oversized or malformed body: 400 through the ErrorResponse envelope",
+      "Deleted Account: 410 ACCOUNT_GONE, as stat-baselines",
+      "e2e in app-me.e2e-spec.ts; bun run check green"
+    ],
+    "passes": false
   },
   {
     "category": "mobile",
-    "description": "MainHeader takes its bar as children and a subHeader slot; MainSubHeader takes children; the (tabs) content moves to PlayerHeader and MainTabBar",
+    "description": "Pure streak functions: Paris date, current Streak, merge of a Streak and days",
     "steps": [
-      "main-header.tsx and main-sub-header.tsx import nothing from src/features/",
-      "(tabs)/_layout.tsx is export default function Layout() and imports PlayerHeader and MainTabBar from src/components/",
-      "iOS simulator: Accueil shows the greeting and « Un peu d'entrainement ? »; Monde shows pseudo + points and its title, dark paper; scrolling either tab collapses the sub-header exactly as before",
-      "bun run check green"
+      "parisDay of an ISO instant: 2026-03-31T23:30:00Z gives 2026-04-01",
+      "currentStreak: length when lastDay is today or yesterday, 0 when older or null",
+      "mergeStreak({ lastDay: D, length: 5, longest: 5 }, [D+1, D+2, D+3]) gives { lastDay: D+3, length: 8, longest: 8 }",
+      "mergeStreak with days already inside the Streak changes nothing; a gap starts a new run and keeps longest",
+      "mergeStreak(null, days) computes from the days alone",
+      "Vitest, today injected; bun run check green"
     ],
-    "passes": true
+    "passes": false
   },
   {
     "category": "mobile",
-    "description": "The picker lives in app/picker/(tabs)/ as Layout/Page, its logic in src/components/quiz/, the wash painted once",
+    "description": "Device Stats record practice days and the Stats Transfer pushes them",
     "steps": [
-      "app/picker/(tabs)/_layout.tsx, index.tsx, custom.tsx exist with the Layout/Page form; app/picker/ holds nothing else",
-      "PickerProvider (with usePicker), PickerBackground, PickerTabBar, PickerStartButton live in src/components/quiz/; picker-layout, picker-screen, custom-picker-screen, picker-context are deleted",
-      "The pages render no ScreenContainer and no SelectionWash; only PickerBackground paints the wash",
-      "iOS simulator: the practice card opens /picker; selecting a Theme tints the page and the tab track; the swipe starts the session on that Theme; the close button leaves",
-      "bun run check green"
+      "A signed-out Finished Quiz Session records its Paris day once in the Device Stats; an Abandoned Session records nothing",
+      "The transfer pushes the device's practice days to POST /app/me/practice-days in MAX_PUSH_BATCH batches, beside the baselines",
+      "The device world (stats and days) empties only after both pushes land; a failed push leaves it untouched",
+      "A declined transfer leaves the days dormant",
+      "Vitest on the store and transfer logic; bun run check green"
     ],
-    "passes": true
+    "passes": false
   },
   {
     "category": "mobile",
-    "description": "PickerHeader is rebuilt on MainHeader + MainSubHeader, floating, its sub-header collapsing on scroll",
+    "description": "The sign-out seed carries the Account's Practice Streak into the signed-out world",
     "steps": [
-      "PickerHeader lives in src/components/quiz/ and composes MainHeader and MainSubHeader; the old features/quiz/components/picker-header.tsx is deleted",
-      "The picker layout wraps a TabScrollProvider; Classique and Sur-mesure are ScrollViews padded by useMainHeaderHeight() and wired to useTabScroll()",
-      "iOS simulator at rest: MainHeader look; Classique shows « Sur quel thème ? » over the subtitle, Sur-mesure « Sur-mesure » with the crown stamp, both titles at the same height",
-      "iOS simulator scrolled on Classique: the sub-header collapses to nothing, subtitle included, the Theme list scrolls under the header",
-      "bun run check green"
+      "Sign-out writes the displayed Practice Streak (Account merged with the outbox overlay) as the seed",
+      "Sign-out with no loaded Account stats clears the seed",
+      "Account deletion clears the seed",
+      "Signed out: Practice Streak = mergeStreak(seed, device days); no seed: device days alone",
+      "Scenario spec: seed length 5 ending D, device days D+1..D+3, displayed Streak 8",
+      "Vitest; bun run check green"
     ],
-    "passes": true
+    "passes": false
   },
   {
     "category": "mobile",
-    "description": "ScreenContainer trades underlay for backdropColor",
+    "description": "Streak hooks, and the finalize invalidates the Account stats",
     "steps": [
-      "grep finds no underlay in src/",
-      "play-view and theme-reveal pass their Category colour with its alpha; the profile pages no longer render ProfileWash; every other caller passes null",
-      "iOS simulator: the Reveal and a Question show the Category backdrop as before; profile tabs show the wash once",
-      "bun run check green"
+      "usePracticeStreak: signed in, the Account practiceStreak merged with the owner's pending outbox days; signed out, the seed-and-device Streak; both through currentStreak for today",
+      "useCompetitionStreak: the Account competitionStreak through currentStreak; nothing signed out",
+      "pushFinalize invalidates accountKeys.stats beside day, standing and leaderboard",
+      "The merge and selection logic is a pure function under vitest; bun run check green"
     ],
-    "passes": true
+    "passes": false
   },
   {
     "category": "mobile",
-    "description": "(tabs)/index and world write their page in the route; home-screen and world-screen are deleted",
+    "description": "The badges show the real Streaks with a counted accessibility label",
     "steps": [
-      "Both files are export default function Page(); index still redirects to /onboarding before onboarding",
-      "Any component extracted along the way lives in src/components/<feature>/",
+      "The home practice card's StreakBadge shows the Practice Streak, signed in or out, 0 included",
+      "The Monde competition card's StreakBadge shows the Competition Streak, 0 included",
+      "No hardcoded 45 and no hardcoded « Série : 3 jours » remains",
+      "Accessibility label « Série : N jours », « Série : 1 jour » at 1, built from constants in the competition feature",
       "bun run check green"
     ],
-    "passes": true
-  },
-  {
-    "category": "mobile",
-    "description": "The profile layout and its 3 pages are written in their routes; profile-tabs and profile-*-screen are deleted",
-    "steps": [
-      "profile/_layout.tsx is export default function Layout(); index, history, infos are export default function Page()",
-      "ProfileHeader is unchanged",
-      "bun run check green"
-    ],
-    "passes": true
-  },
-  {
-    "category": "mobile",
-    "description": "The 3 onboarding pages are written in their routes; their *-screen files are deleted",
-    "steps": [
-      "onboarding/index, quiz-session, end are export default function Page()",
-      "Any component extracted along the way lives in src/components/onboarding/",
-      "bun run check green"
-    ],
-    "passes": true
-  },
-  {
-    "category": "mobile",
-    "description": "competition, session/[themeId] and leaderboard are written in their routes; their *-screen files are deleted",
-    "steps": [
-      "The three files are export default function Page()",
-      "Any component extracted along the way lives in src/components/<feature>/",
-      "bun run check green"
-    ],
-    "passes": true
-  },
-  {
-    "category": "mobile",
-    "description": "The root layout is Layout() with RootNavigator extracted; play-screen and results-screen become play-view and results-view",
-    "steps": [
-      "app/_layout.tsx is export default function Layout(); RootNavigator lives in src/components/root-navigator.tsx",
-      "PlayView and ResultsView are renamed in place in features/quiz/components/",
-      "find src -name '*-screen.tsx' returns nothing; grep finds no exported *Screen component",
-      "bun run check green"
-    ],
-    "passes": true
+    "passes": false
   }
 ]
 ```
 
 ## Human steps
 
-- After item 4: on-device review of the picker header collapse on iOS and Android, and of how the paper fade reads over a selected Theme's wash.
-- After item 10: read the `apps/mobile/AGENTS.md` diff.
+- After item 1: Hugo runs `bun run migration:generate` then `bun run migration:run` in `apps/api`, before items 4 and 5 meet a real database.
+- Right after the migration: lock the new table on the Supabase dashboard, per ADR 0003 (default privileges already keep `anon` and `authenticated` out):
+
+  ```sql
+  -- Born locked: RLS on and zero policies, so only the owning role the API connects as reaches it.
+  alter table public.practice_days enable row level security;
+  ```
+
+- After item 10: a device review on the simulator — both badges, the 5 → 8 → 8 sign-out and transfer scenario, and a session finished offline extending the Practice Streak at once.

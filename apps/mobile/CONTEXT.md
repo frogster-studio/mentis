@@ -60,6 +60,10 @@ _Avoid_: ranking, scoreboard, ladder
 An Account's own place in the Leaderboard — rank, Season Total, number of ranked Accounts and the Leaderboard page it sits on; none before its first finalized Attempt of the Season. Shown in the Compétition tab's header.
 _Avoid_: my score, position
 
+**Streak**:
+The number of consecutive Europe/Paris days, ending today or yesterday, on which the Player played — 0 once a day is missed. Two independent Streaks: the Practice Streak counts days holding a Finished Quiz Session, the Competition Streak days holding an Attempt whatever its outcome, so a Catch-up mends yesterday. The Longest Streak is the longest such run ever. Signed out, the Practice Streak carries on from the Account's own at sign-out. French UI label: « série ».
+_Avoid_: combo, chain, flame
+
 **Theme**:
 A narrow, specific subject (« Marie Antoinette », « Les Simpson », « Chocolats ») — never as broad as its Category. Every Question belongs to exactly one Theme; every Theme belongs to exactly one Category and has exactly one image. The pool of Themes grows over time. French UI label: « Thème ».
 _Avoid_: topic, sujet
@@ -77,7 +81,7 @@ The average of the Player's finished Quiz Session scores in one Theme, out of 50
 _Avoid_: score (alone), stats, best score
 
 **Device Stats**:
-The per-Theme stats a device accumulates while no one is signed in. Shown on home when signed out; they leave the device only through a Stats Transfer.
+The per-Theme stats and the practice days a device accumulates while no one is signed in. Shown on home when signed out; they leave the device only through a Stats Transfer.
 _Avoid_: local stats, history
 
 **Account Stats**:
