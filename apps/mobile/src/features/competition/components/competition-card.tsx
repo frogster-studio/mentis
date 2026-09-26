@@ -22,6 +22,7 @@ export interface CompetitionCardProps {
   score: number | null;
   colors: string[];
   showStreak: boolean;
+  streak: number;
   showPremium: boolean;
   actionLabel: string;
   onPress: () => void;
@@ -35,6 +36,7 @@ export const CompetitionCard = ({
   score,
   colors,
   showStreak,
+  streak,
   showPremium,
   actionLabel,
   onPress,
@@ -115,7 +117,7 @@ export const CompetitionCard = ({
         </View>
       </Card>
 
-      {showStreak && <StreakBadge streak={45} />}
+      {showStreak && <StreakBadge streak={streak} />}
     </View>
   );
 };

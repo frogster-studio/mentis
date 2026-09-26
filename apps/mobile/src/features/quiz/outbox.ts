@@ -1,6 +1,7 @@
 // Replaying any transition leaves the same queue, so a flaky push can never double-count a session.
 
-import { parisDay } from "@/features/account/streak";
+import type { AppAccountStatsResponse } from "@mentis/contracts/app";
+import { mergeStreak, parisDay } from "@/features/account/streak";
 import type { AccountSession } from "./account-stats";
 
 // Owner-tagged so a sign-out retains the rows for that Account without bleeding into another world.
@@ -59,6 +60,32 @@ export function overlaySessions(
 }
 
 // A session both pending and already pulled falls on a day the Account holds, so it counts once.
-export function pendingPracticeDays(entries: OutboxEntry[]): string[] {
+export function outboxPracticeDays(entries: OutboxEntry[]): string[] {
   return entries.map((entry) => parisDay(new Date(entry.finishedAt)));
+}
+
+// A concurrent pull may have landed the same row first; matching by id never counts it twice.
+// The Streak moves too, or a drained session would drop out of it until the next pull.
+export function withAckedSessions(
+  previous: AppAccountStatsResponse,
+  acked: OutboxEntry[],
+): AppAccountStatsResponse {
+  const known = new Set(previous.sessions.map((session) => session.id));
+  const fresh = acked.filter((entry) => !known.has(entry.id));
+  if (fresh.length === 0) {
+    return previous;
+  }
+  return {
+    ...previous,
+    sessions: [
+      ...previous.sessions,
+      ...fresh.map((entry) => ({
+        id: entry.id,
+        themeId: entry.themeId,
+        themeName: entry.themeName,
+        points: entry.points,
+      })),
+    ],
+    practiceStreak: mergeStreak(previous.practiceStreak, outboxPracticeDays(fresh)),
+  };
 }

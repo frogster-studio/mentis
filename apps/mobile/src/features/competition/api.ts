@@ -5,6 +5,7 @@ import {
   appCompetitionTranscriptResponseSchema,
 } from "@mentis/contracts/app";
 import { skipToken, useQuery } from "@tanstack/react-query";
+import { accountKeys } from "@/features/account/api";
 import { prefetchThemeImages } from "@/features/quiz/theme-image-cache";
 import { worldKeys } from "@/features/world/api";
 import { api } from "@/lib/api";
@@ -85,6 +86,8 @@ export async function pushFinalize(
   // The judged score enters the Season Total, so rank, page and every ranking page move with it.
   void queryClient.invalidateQueries({ queryKey: competitionKeys.standing(owner) });
   void queryClient.invalidateQueries({ queryKey: worldKeys.leaderboard });
+  // Every Attempt lands on its Competition Day, so the Competition Streak moves with it.
+  void queryClient.invalidateQueries({ queryKey: accountKeys.stats(owner) });
   return transcript;
 }
 

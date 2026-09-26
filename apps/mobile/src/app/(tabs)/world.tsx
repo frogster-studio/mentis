@@ -21,6 +21,7 @@ import {
   COMPETITION_START_LABEL,
   COMPETITION_TRY_AGAIN_LABEL,
 } from "@/features/competition/constants";
+import { useCompetitionStreak } from "@/features/competition/use-competition-streak";
 import { usePremiumGate } from "@/features/premium/use-premium-gate";
 import { LeaderboardPreviewCard } from "@/features/world/components/leaderboard-preview-card";
 import { LEADERBOARD_ERROR } from "@/features/world/constants";
@@ -36,6 +37,7 @@ export default function Page() {
   const day = useCompetitionDay(owner);
   const profile = useProfile(owner);
   const standing = useStanding(owner);
+  const competitionStreak = useCompetitionStreak(owner);
   const myPseudo = profile.data?.pseudo ?? null;
   const preview = useLeaderboardPreview(previewPage(owner, standing), myPseudo);
   const gatePremium = usePremiumGate();
@@ -80,6 +82,7 @@ export default function Page() {
               score={best?.score ?? null}
               colors={best ? ["#83D3AF"] : [COLORS.primaryGlow, COLORS.primary]}
               showStreak={true}
+              streak={competitionStreak}
               showPremium={offersReplay}
               themeImage={transcript.data ? { uri: transcript.data.imageUrl } : undefined}
               categoryIcon={

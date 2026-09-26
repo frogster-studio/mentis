@@ -33,6 +33,10 @@ describe("currentStreak", () => {
   it("is 0 with no day", () => {
     expect(currentStreak({ lastDay: null, length: 0, longest: 0 }, "2026-04-10")).toBe(0);
   });
+
+  it("is 0 with no Streak known yet", () => {
+    expect(currentStreak(null, "2026-04-10")).toBe(0);
+  });
 });
 
 describe("mergeStreak", () => {

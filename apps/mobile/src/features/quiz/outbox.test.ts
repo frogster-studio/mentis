@@ -4,10 +4,11 @@ import {
   entriesForOwner,
   type Outbox,
   type OutboxEntry,
+  outboxPracticeDays,
   outboxReducer,
   overlaySessions,
-  pendingPracticeDays,
   toAccountSession,
+  withAckedSessions,
 } from "./outbox";
 
 const OWNER = "owner-a";
@@ -145,10 +146,30 @@ describe("overlaySessions — the id-reconciled optimistic overlay", () => {
   });
 });
 
-describe("pendingPracticeDays — the Practice Streak overlay", () => {
+describe("outboxPracticeDays — the Practice Streak overlay", () => {
   it("dates each pending session on its Paris day", () => {
     const late = entry({ id: "late", finishedAt: "2026-03-31T23:30:00.000Z" });
-    expect(pendingPracticeDays([entry(), late])).toStrictEqual(["2026-07-22", "2026-04-01"]);
+    expect(outboxPracticeDays([entry(), late])).toStrictEqual(["2026-07-22", "2026-04-01"]);
+  });
+});
+
+describe("withAckedSessions — the Account world an ack seeds", () => {
+  const stats = {
+    baselines: [],
+    sessions: [{ id: "pulled", themeId: "geo", themeName: "Géographie", points: 30 }],
+    practiceStreak: { lastDay: "2026-07-21", length: 2, longest: 4 },
+    competitionStreak: { lastDay: null, length: 0, longest: 0 },
+  };
+
+  it("adds the acked session and extends the Practice Streak with its Paris day", () => {
+    const seeded = withAckedSessions(stats, [entry()]);
+    expect(seeded.sessions.map((session) => session.id)).toStrictEqual(["pulled", "session-1"]);
+    expect(seeded.practiceStreak).toStrictEqual({ lastDay: "2026-07-22", length: 3, longest: 4 });
+    expect(seeded.competitionStreak).toBe(stats.competitionStreak);
+  });
+
+  it("leaves the stats untouched when a pull already landed every acked row", () => {
+    expect(withAckedSessions(stats, [entry({ id: "pulled" })])).toBe(stats);
   });
 });
 

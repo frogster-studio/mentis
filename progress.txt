@@ -68,3 +68,15 @@
 - Item 9 still owes: seedAckedSessions should merge acked Paris days into cached practiceStreak (or invalidate stats), else a drained session drops out of the signed-in Streak until the next pull.
 - Tests: accountPracticeStreak + scenario (5 -> 8 signed out, 8 after transfer, unpushed sessions kept, no seed) in streak.test.ts; pendingPracticeDays in outbox.test.ts. Sandbox: typecheck, non-API tests (mobile 336), biome green (same 4 warnings + 1 info).
 - Files: apps/mobile/src/features/account/streak.ts, streak.test.ts, delete-account.ts, components/account-actions.tsx, apps/mobile/src/features/quiz/outbox.ts, outbox.test.ts, stats-store.ts, practice-streak-seed.ts, PRD.md.
+
+## Item 9 — streak hooks + finalize invalidates Account stats (done)
+- quiz/practice-streak.ts practiceStreak(owner, { accountStreak, outbox, seed, deviceDays }): the pure selection. Signed in: accountPracticeStreak(Account, owner's outbox Paris days) (null until stats load); signed out: mergeStreak(seed, device days). Lives in quiz (reads the outbox shape; account/streak can't import quiz/outbox, which imports it).
+- quiz/use-practice-streak.ts usePracticeStreak(): number; competition/use-competition-streak.ts useCompetitionStreak(owner): number (stats query disabled signed out -> 0). Both: currentStreak(streak, parisDay(new Date())) at render.
+- currentStreak now takes AppStreak | null (null = no Streak known yet -> 0), so both hooks share it.
+- pushFinalize invalidates accountKeys.stats(owner) beside day/standing/leaderboard.
+- Item 2/8 debt paid: seedAckedSessions' patch extracted to pure outbox.ts withAckedSessions(previous, acked), which also merges the fresh acked Paris days into practiceStreak (a drained session no longer drops out of the Streak until the next pull). Tested.
+- Renamed pendingPracticeDays -> outboxPracticeDays (now also used on acked entries).
+- Wired both hooks into the badges already (knip would flag unused hook files otherwise): PracticeCard streak={usePracticeStreak()}, CompetitionCard gains a streak prop fed by world.tsx. No hardcoded 45 left.
+- Item 10 remains: accessibility label « Série : N jours » / « 1 jour » from competition constants (COMPETITION_STREAK_LABEL still hardcoded « Série : 3 jours »), verify 0 shown; maybe drop CompetitionCard.showStreak (always true, no caller varies it).
+- Sandbox: typecheck, non-API tests (mobile 343), biome green (same 4 warnings + 1 info). Knip not run here.
+- Files: apps/mobile/src/features/account/streak.ts, streak.test.ts, features/quiz/practice-streak.ts, practice-streak.test.ts, use-practice-streak.ts, outbox.ts, outbox.test.ts, outbox-sync.ts, practice-streak-seed.ts, components/practice-card.tsx, features/competition/api.ts, use-competition-streak.ts, components/competition-card.tsx, app/(tabs)/world.tsx, PRD.md.

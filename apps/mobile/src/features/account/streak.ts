@@ -55,10 +55,10 @@ export function accountPracticeStreak(
   return accountStreak === undefined ? null : mergeStreak(accountStreak, pendingDays);
 }
 
-// Yesterday still counts, since today can still be played.
-export function currentStreak({ lastDay, length }: AppStreak, today: string): number {
-  if (lastDay === null) {
+// Yesterday still counts, since today can still be played. No Streak known yet shows 0.
+export function currentStreak(streak: AppStreak | null, today: string): number {
+  if (streak === null || streak.lastDay === null) {
     return 0;
   }
-  return dayNumber(today) - dayNumber(lastDay) <= 1 ? length : 0;
+  return dayNumber(today) - dayNumber(streak.lastDay) <= 1 ? streak.length : 0;
 }

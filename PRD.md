@@ -162,7 +162,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Streak, Device Sta
       "pushFinalize invalidates accountKeys.stats beside day, standing and leaderboard",
       "The merge and selection logic is a pure function under vitest; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
