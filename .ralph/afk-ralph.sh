@@ -1,20 +1,15 @@
 #!/bin/bash
 set -eo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
 
 # To access Claude's API from Docker Sandbox
 ENV_FILE="${RALPH_ENV_FILE:-$HOME/.config/mentis/ralph.env}"
 [ -f "$ENV_FILE" ] || { echo "missing $ENV_FILE - put CLAUDE_CODE_OAUTH_TOKEN=... in it" >&2; exit 1; }
 
-# Instructions for Ralph to follow on each iteration
-TASK="
-1. Find the highest-priority task and implement it. When building features, build a tiny, end-to-end slice of the feature first, seek feedback, then expand out from there. Tracer bullets comes from the Pragmatic Programmer. When building systems, you want to write code that gets you feedback as quickly as possible. Tracer bullets are small slices of functionality that go through all layers of the system, allowing you to test and validate your approach early. This helps in identifying potential issues and ensures that the overall architecture is sound before investing significant time in development. \
-2. Run your tests and type checks. \
-3. Update the PRD with what was done. \
-4. Append your progress to progress.txt. \
-5. Commit your changes. \
-ONLY WORK ON A SINGLE TASK. \
-If the PRD is complete, output <promise>COMPLETE</promise>."
+# The sandbox lacks swc and oxc-parser linux-arm64 bindings, so the full check runs on the host after each iteration.
+TASK="$(cat .ralph/task.md)
+Exception to step 3, since this sandbox cannot run bun run check in full: run bun run typecheck, the tests of every workspace except @mentis/api, and bunx @biomejs/biome check . instead. Never bun install. The host runs the full check after you."
+CHECK_LOG="/tmp/ralph-$(basename "$PWD")-check.txt"
 
 # One sandbox for every worktree: it mounts the main repo only, so worktrees live under it
 SANDBOX=ralph
@@ -45,6 +40,13 @@ for ((i=1; i<=$1; i++)); do
     --model claude-opus-5-5 --effort high \
     --disallowedTools "Bash(bun run migration:*),Bash(git merge *),Bash(git push *)" \
     --max-turns 200 < /dev/null | tee "$LAST"
+  # check rewrites files through knip --fix and biome --write, so a dirty tree is a failure too.
+  if ! bun run check > "$CHECK_LOG" 2>&1 || [ -n "$(git status --porcelain)" ]; then
+    echo "=== bun run check failed on the host after iteration $i: nothing pushed, fix then rerun ===" >&2
+    tail -n 60 "$CHECK_LOG" >&2
+    git status --short >&2
+    exit 1
+  fi
   git push origin HEAD
   grep -q "<promise>COMPLETE</promise>" "$LAST" && { echo "PRD complete after $i iterations."; exit 0; }
 done
