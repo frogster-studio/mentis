@@ -14,3 +14,10 @@
 - Note for item 9: acked sessions leave the outbox, so the overlay stops extending the Practice Streak while the cached practiceStreak is still the pre-push one. seedAckedSessions should merge the acked Paris days into practiceStreak (or invalidate stats).
 - Sandbox: biome linux binary not in node_modules; ran ~/.bun/install/cache/@biomejs/cli-linux-arm64@2.5.6@@@1/biome check . instead. Contracts vitest once flaked on a missing zod locale file (FS), green on rerun.
 - Files: packages/contracts/src/app/account.ts, account.spec.ts, apps/api/src/player/mappers/player.mapper.ts, services/player.service.ts, _tests/app-me.e2e-spec.ts, apps/mobile/src/features/quiz/outbox-sync.ts.
+
+## Item 3 — streakFromDays pure function (done)
+- apps/api/src/player/utils/streak.ts: streakFromDays(days: string[]): AppStreak. Dedupes + sorts itself (item wants unsorted/dup input tolerated), consecutive = UTC day-number diff of 1 (dates are plain Paris calendar dates, so no DST issue).
+- Lives in player/ (the stats feature owns both Streaks), not competition/; spec in player/_tests/streak.spec.ts, same shape as leaderboard.spec.ts. Did not reuse competition-day daysBefore to avoid a player -> competition util import (competition already depends on player).
+- Not wired yet: item 4 replaces NO_STREAK in PlayerService.stats with streakFromDays(repository days) and drops NO_STREAK.
+- Sandbox: api vitest can't load swc native binary; ran the spec through a throwaway plain vitest config (no decorators in it) — 5/5 green. Host runs full check.
+- Files: apps/api/src/player/utils/streak.ts, apps/api/src/player/_tests/streak.spec.ts, PRD.md.

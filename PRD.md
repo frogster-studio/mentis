@@ -86,7 +86,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Streak, Device Sta
       "Unsorted or duplicated input gives the same result as sorted distinct input",
       "Vitest spec beside day-offers.spec.ts; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "api",
