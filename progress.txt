@@ -80,3 +80,11 @@
 - Item 10 remains: accessibility label « Série : N jours » / « 1 jour » from competition constants (COMPETITION_STREAK_LABEL still hardcoded « Série : 3 jours »), verify 0 shown; maybe drop CompetitionCard.showStreak (always true, no caller varies it).
 - Sandbox: typecheck, non-API tests (mobile 343), biome green (same 4 warnings + 1 info). Knip not run here.
 - Files: apps/mobile/src/features/account/streak.ts, streak.test.ts, features/quiz/practice-streak.ts, practice-streak.test.ts, use-practice-streak.ts, outbox.ts, outbox.test.ts, outbox-sync.ts, practice-streak-seed.ts, components/practice-card.tsx, features/competition/api.ts, use-competition-streak.ts, components/competition-card.tsx, app/(tabs)/world.tsx, PRD.md.
+
+## Item 10 — badges show real Streaks with a counted accessibility label (done)
+- competition/constants.ts: COMPETITION_STREAK_LABEL (hardcoded « Série : 3 jours ») -> STREAK_LABEL « Série : » + STREAK_DAY_SINGULAR/PLURAL, same shape as quiz SESSION_COUNT_SINGULAR/PLURAL.
+- account/streak.ts streakAccessibilityLabel(streak): « Série : N jours », « 1 jour » at 1 (as formatSessionCount); StreakBadge uses it. Tested 0, 1, 8.
+- CompetitionCard.showStreak dropped (always true, no caller varied it: mobile AGENTS rule). Both badges always render, 0 included; practice card was already wired in item 9.
+- Sandbox: typecheck, non-API tests (mobile 345), biome green (same 4 warnings + 1 info). Knip not run here.
+- Next: human device review (PRD Human steps). Every item passes.
+- Files: apps/mobile/src/features/competition/constants.ts, components/competition-card.tsx, features/account/streak.ts, streak.test.ts, components/streak-badge.tsx, app/(tabs)/world.tsx, PRD.md.

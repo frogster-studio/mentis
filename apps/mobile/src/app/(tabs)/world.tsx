@@ -81,7 +81,6 @@ export default function Page() {
               teaser={best ? null : COMPETITION_DAILY_TEASER}
               score={best?.score ?? null}
               colors={best ? ["#83D3AF"] : [COLORS.primaryGlow, COLORS.primary]}
-              showStreak={true}
               streak={competitionStreak}
               showPremium={offersReplay}
               themeImage={transcript.data ? { uri: transcript.data.imageUrl } : undefined}

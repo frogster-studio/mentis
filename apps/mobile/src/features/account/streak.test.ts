@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { accountPracticeStreak, currentStreak, mergeStreak, parisDay } from "./streak";
+import {
+  accountPracticeStreak,
+  currentStreak,
+  mergeStreak,
+  parisDay,
+  streakAccessibilityLabel,
+} from "./streak";
 
 describe("parisDay", () => {
   it("dates a late UTC evening on the next Paris day", () => {
@@ -131,5 +137,16 @@ describe("the sign-out seed scenario", () => {
       length: 3,
       longest: 3,
     });
+  });
+});
+
+describe("streakAccessibilityLabel", () => {
+  it("counts one day in the singular", () => {
+    expect(streakAccessibilityLabel(1)).toBe("Série : 1 jour");
+  });
+
+  it("counts zero and several days in the plural", () => {
+    expect(streakAccessibilityLabel(0)).toBe("Série : 0 jours");
+    expect(streakAccessibilityLabel(8)).toBe("Série : 8 jours");
   });
 });

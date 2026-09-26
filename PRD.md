@@ -174,7 +174,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Streak, Device Sta
       "Accessibility label « Série : N jours », « Série : 1 jour » at 1, built from constants in the competition feature",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```

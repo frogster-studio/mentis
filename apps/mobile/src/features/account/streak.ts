@@ -1,4 +1,9 @@
 import type { AppStreak } from "@mentis/contracts/app";
+import {
+  STREAK_DAY_PLURAL,
+  STREAK_DAY_SINGULAR,
+  STREAK_LABEL,
+} from "@/features/competition/constants";
 
 const PARIS_DATE = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Europe/Paris",
@@ -61,4 +66,8 @@ export function currentStreak(streak: AppStreak | null, today: string): number {
     return 0;
   }
   return dayNumber(today) - dayNumber(streak.lastDay) <= 1 ? streak.length : 0;
+}
+
+export function streakAccessibilityLabel(streak: number): string {
+  return `${STREAK_LABEL} ${streak} ${streak === 1 ? STREAK_DAY_SINGULAR : STREAK_DAY_PLURAL}`;
 }
