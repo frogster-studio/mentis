@@ -140,7 +140,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Account Stats, Dev
       "A Theme holding no game gives no tally",
       "Free of TypeORM, today injected; vitest spec beside streak.spec.ts; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "api",

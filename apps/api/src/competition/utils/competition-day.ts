@@ -10,6 +10,10 @@ const PARIS_DATE = new Intl.DateTimeFormat("en-CA", {
 // A Competition Day is the Europe/Paris date, whatever the Player's own timezone.
 export const competitionDay = (now: Date): string => PARIS_DATE.format(now);
 
+// Alive until the Paris midnight after its issuance — a Catch-up is issued the day after its own.
+export const isDeadAttempt = (issuedAt: Date, today: string): boolean =>
+  competitionDay(issuedAt) < today;
+
 export const daysBefore = (day: string, count: number): string => {
   const shifted = new Date(`${day}T00:00:00Z`);
   shifted.setUTCDate(shifted.getUTCDate() - count);
