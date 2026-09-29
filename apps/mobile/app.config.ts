@@ -78,6 +78,8 @@ const config: ExpoConfig = {
     usesAppleSignIn: true,
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
+      CFBundleDevelopmentRegion: "fr",
+      CFBundleLocalizations: ["fr"],
     },
     privacyManifests: {
       NSPrivacyTracking: false,
