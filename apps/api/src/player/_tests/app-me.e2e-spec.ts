@@ -1,4 +1,4 @@
-import { MAX_PUSH_BATCH } from "@mentis/contracts/app";
+import { appAccountStatsResponseSchema, MAX_PUSH_BATCH } from "@mentis/contracts/app";
 import { errorResponseSchema } from "@mentis/contracts/shared";
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
@@ -7,12 +7,15 @@ import { createLocalJWKSet, exportJWK, generateKeyPair, type JWTPayload, SignJWT
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { ENV } from "../../_config/env.config";
 import { SUPABASE } from "../../_config/supabase.config";
+import { CompetitionAttemptEntity } from "../../_database/entities/competition-attempt.entity";
 import { PlayerProfileEntity } from "../../_database/entities/player-profile.entity";
+import { PracticeDayEntity } from "../../_database/entities/practice-day.entity";
 import { QuizSessionEntity } from "../../_database/entities/quiz-session.entity";
 import { StatBaselineEntity } from "../../_database/entities/stat-baseline.entity";
 import { stubDataSource, testEnv } from "../../_tests/test-env";
 import { AppModule } from "../../app.module";
 import { JWKS } from "../../auth/jwks";
+import { competitionDay } from "../../competition/utils/competition-day";
 import { AccountGoneError, PlayerRepository } from "../repositories/player.repository";
 import { ProfileRepository } from "../repositories/profile.repository";
 import { DIGIT_DRAW } from "../utils/digit-draw";
@@ -28,6 +31,8 @@ const SESSION_3 = "10000000-0000-4000-8000-000000000003";
 let sessionRows: QuizSessionEntity[] = [];
 let baselineRows: StatBaselineEntity[] = [];
 let profileRows: PlayerProfileEntity[] = [];
+let practiceDayRows: PracticeDayEntity[] = [];
+let attemptRows: CompetitionAttemptEntity[] = [];
 let liveOwners = new Set<string>();
 let inserts: string[] = [];
 let draws: number[] = [];
@@ -61,6 +66,23 @@ const baselineRow = (
     ...overrides,
   });
 
+const practiceDayRow = (owner: string, day: string, device = DEVICE_A): PracticeDayEntity =>
+  Object.assign(new PracticeDayEntity(), { owner, device, day });
+
+const attemptRow = (
+  owner: string,
+  day: string,
+  overrides: Partial<CompetitionAttemptEntity> = {},
+): CompetitionAttemptEntity =>
+  Object.assign(new CompetitionAttemptEntity(), {
+    owner,
+    day,
+    kind: "initial",
+    status: "finalized",
+    finalizeReason: "completed",
+    ...overrides,
+  });
+
 const profileRow = (owner: string, pseudo: string): PlayerProfileEntity =>
   Object.assign(new PlayerProfileEntity(), { owner, pseudo, pseudoKey: pseudo.toLowerCase() });
 
@@ -91,6 +113,18 @@ const fakePlayerRepository = {
   async findStatBaselines(owner) {
     return baselineRows.filter((row) => row.owner === owner);
   },
+  async findPracticeDays(owner) {
+    const finishedDays = sessionRows
+      .filter((row) => row.owner === owner)
+      .map((row) => competitionDay(row.finishedAt));
+    const depositedDays = practiceDayRows
+      .filter((row) => row.owner === owner)
+      .map((row) => row.day);
+    return [...new Set([...finishedDays, ...depositedDays])];
+  },
+  async findCompetitionDays(owner) {
+    return [...new Set(attemptRows.filter((row) => row.owner === owner).map((row) => row.day))];
+  },
   async insertQuizSessionsIfAbsent(rows) {
     insertIfAbsent(
       "quiz_sessions",
@@ -110,12 +144,24 @@ const fakePlayerRepository = {
         existing.themeId === row.themeId,
     );
   },
+  async insertPracticeDaysIfAbsent(rows) {
+    insertIfAbsent(
+      "practice_days",
+      practiceDayRows,
+      rows.map((row) => Object.assign(new PracticeDayEntity(), row)),
+      (existing, row) =>
+        existing.owner === row.owner && existing.device === row.device && existing.day === row.day,
+    );
+  },
 } satisfies Pick<
   PlayerRepository,
   | "findQuizSessions"
   | "findStatBaselines"
+  | "findPracticeDays"
+  | "findCompetitionDays"
   | "insertQuizSessionsIfAbsent"
   | "insertStatBaselinesIfAbsent"
+  | "insertPracticeDaysIfAbsent"
 >;
 
 const fakeProfileRepository = {
@@ -153,6 +199,7 @@ const stubSupabase = {
         liveOwners.delete(id);
         sessionRows = sessionRows.filter((row) => row.owner !== id);
         baselineRows = baselineRows.filter((row) => row.owner !== id);
+        practiceDayRows = practiceDayRows.filter((row) => row.owner !== id);
         profileRows = profileRows.filter((row) => row.owner !== id);
         return Promise.resolve({ data: { user: null }, error: null });
       },
@@ -171,6 +218,12 @@ const pushedSession = (id: string, overrides: Record<string, unknown> = {}) => (
 
 const batchSessionId = (index: number) =>
   `10000000-0000-4000-8000-${String(index).padStart(12, "0")}`;
+
+const pushedPracticeDay = (overrides: Record<string, unknown> = {}) => ({
+  device: DEVICE_A,
+  day: "2026-08-11",
+  ...overrides,
+});
 
 const pushedBaseline = (overrides: Record<string, unknown> = {}) => ({
   device: DEVICE_A,
@@ -249,6 +302,8 @@ describe("app me routes e2e", () => {
     sessionRows = [];
     baselineRows = [];
     profileRows = [];
+    practiceDayRows = [];
+    attemptRows = [];
     liveOwners = new Set([PLAYER_A, PLAYER_B]);
     inserts = [];
     draws = [];
@@ -260,6 +315,7 @@ describe("app me routes e2e", () => {
     ["GET", "/app/me/stats"],
     ["POST", "/app/me/quiz-sessions"],
     ["POST", "/app/me/stat-baselines"],
+    ["POST", "/app/me/practice-days"],
     ["DELETE", "/app/me/account"],
   ])("%s %s without a token → 401 UNAUTHENTICATED", async (method, path) => {
     const response = await fetch(`${baseUrl}${path}`, { method });
@@ -373,13 +429,52 @@ describe("app me routes e2e", () => {
     expect(JSON.stringify(body)).not.toContain("finishedAt");
   });
 
-  it("GET /app/me/stats never returns another Player's rows", async () => {
-    sessionRows.push(sessionRow(SESSION_1, PLAYER_B));
-    baselineRows.push(baselineRow(PLAYER_B));
+  it("GET /app/me/stats carries the practice Streak over the Paris days of sessions and deposits", async () => {
+    sessionRows.push(
+      sessionRow(SESSION_1, PLAYER_A, { finishedAt: new Date("2026-03-31T23:30:00.000Z") }),
+      sessionRow(SESSION_2, PLAYER_A, { finishedAt: new Date("2026-04-01T10:00:00.000Z") }),
+    );
+    practiceDayRows.push(
+      practiceDayRow(PLAYER_A, "2026-03-30"),
+      practiceDayRow(PLAYER_A, "2026-03-31"),
+    );
 
     const response = await authed(tokenA, "/app/me/stats");
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ baselines: [], sessions: [] });
+    const body = appAccountStatsResponseSchema.parse(await response.json());
+    expect(body.practiceStreak).toEqual({ lastDay: "2026-04-01", length: 3, longest: 3 });
+    expect(body.competitionStreak).toEqual({ lastDay: null, length: 0, longest: 0 });
+  });
+
+  it("GET /app/me/stats carries the competition Streak over every Attempt's Competition Day", async () => {
+    attemptRows.push(
+      attemptRow(PLAYER_A, "2026-04-01", { status: "active", finalizeReason: null }),
+      attemptRow(PLAYER_A, "2026-04-02", { finalizeReason: "quit" }),
+      attemptRow(PLAYER_A, "2026-04-03", { finalizeReason: "expired" }),
+      attemptRow(PLAYER_A, "2026-04-03", { kind: "replay" }),
+      attemptRow(PLAYER_A, "2026-04-05", { kind: "catchup" }),
+    );
+
+    const response = await authed(tokenA, "/app/me/stats");
+    const body = appAccountStatsResponseSchema.parse(await response.json());
+    expect(body.competitionStreak).toEqual({ lastDay: "2026-04-05", length: 1, longest: 3 });
+    expect(body.practiceStreak).toEqual({ lastDay: null, length: 0, longest: 0 });
+  });
+
+  it("GET /app/me/stats never returns another Player's rows", async () => {
+    sessionRows.push(sessionRow(SESSION_1, PLAYER_B));
+    baselineRows.push(baselineRow(PLAYER_B));
+    practiceDayRows.push(practiceDayRow(PLAYER_B, "2026-08-10"));
+    attemptRows.push(attemptRow(PLAYER_B, "2026-08-11"));
+
+    const response = await authed(tokenA, "/app/me/stats");
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      baselines: [],
+      sessions: [],
+      practiceStreak: { lastDay: null, length: 0, longest: 0 },
+      competitionStreak: { lastDay: null, length: 0, longest: 0 },
+    });
   });
 
   it("POST /app/me/quiz-sessions stores the batch under the JWT sub, ignoring a body owner", async () => {
@@ -433,9 +528,44 @@ describe("app me routes e2e", () => {
     expect(inserts).toEqual(["stat_baselines", "stat_baselines"]);
   });
 
+  it("POST /app/me/practice-days stores the batch under the JWT sub, ignoring a body owner", async () => {
+    const response = await push(tokenA, "/app/me/practice-days", [
+      pushedPracticeDay({ owner: PLAYER_B }),
+    ]);
+    expect(response.status).toBe(204);
+    expect(practiceDayRows).toEqual([practiceDayRow(PLAYER_A, "2026-08-11")]);
+  });
+
+  it("POST /app/me/practice-days is insert-if-absent per (owner, device, day)", async () => {
+    const batch = [pushedPracticeDay(), pushedPracticeDay({ day: "2026-08-12" })];
+    await push(tokenA, "/app/me/practice-days", batch);
+    const again = await push(tokenA, "/app/me/practice-days", [
+      ...batch,
+      pushedPracticeDay({ device: DEVICE_B }),
+    ]);
+    expect(again.status).toBe(204);
+    expect(practiceDayRows).toEqual([
+      practiceDayRow(PLAYER_A, "2026-08-11"),
+      practiceDayRow(PLAYER_A, "2026-08-12"),
+      practiceDayRow(PLAYER_A, "2026-08-11", DEVICE_B),
+    ]);
+    expect(inserts).toEqual(["practice_days", "practice_days"]);
+  });
+
+  it.each([{ device: "d1" }, { day: "2026-02-30" }, { day: "2026-08-11T10:00:00.000Z" }])(
+    "POST /app/me/practice-days with %o → 400 VALIDATION_FAILED",
+    async (overrides) => {
+      const response = await push(tokenA, "/app/me/practice-days", [pushedPracticeDay(overrides)]);
+      expect(response.status).toBe(400);
+      expect(errorResponseSchema.parse(await response.json()).code).toBe("VALIDATION_FAILED");
+      expect(inserts).toEqual([]);
+    },
+  );
+
   it.each([
     ["/app/me/quiz-sessions", [pushedSession(SESSION_1)]],
     ["/app/me/stat-baselines", [pushedBaseline()]],
+    ["/app/me/practice-days", [pushedPracticeDay()]],
   ])("POST %s with a deleted owner → 410 ACCOUNT_GONE", async (path, body) => {
     liveOwners.delete(PLAYER_A);
 
@@ -457,6 +587,7 @@ describe("app me routes e2e", () => {
   it.each([
     ["/app/me/quiz-sessions", (index: number) => pushedSession(batchSessionId(index))],
     ["/app/me/stat-baselines", (_index: number) => pushedBaseline()],
+    ["/app/me/practice-days", (_index: number) => pushedPracticeDay()],
   ])("POST %s with one row over the cap → 400 VALIDATION_FAILED", async (path, row) => {
     const oversized = Array.from({ length: MAX_PUSH_BATCH + 1 }, (_, index) => row(index));
 
@@ -466,7 +597,7 @@ describe("app me routes e2e", () => {
     expect(inserts).toEqual([]);
   });
 
-  it.each(["/app/me/quiz-sessions", "/app/me/stat-baselines"])(
+  it.each(["/app/me/quiz-sessions", "/app/me/stat-baselines", "/app/me/practice-days"])(
     "POST %s with an empty batch → 204 without touching the database",
     async (path) => {
       const response = await push(tokenA, path, []);
@@ -478,12 +609,17 @@ describe("app me routes e2e", () => {
   it("DELETE /app/me/account cascades the player tables and makes later pushes 410", async () => {
     sessionRows.push(sessionRow(SESSION_1, PLAYER_A), sessionRow(SESSION_2, PLAYER_B));
     baselineRows.push(baselineRow(PLAYER_A), baselineRow(PLAYER_B));
+    practiceDayRows.push(
+      practiceDayRow(PLAYER_A, "2026-08-10"),
+      practiceDayRow(PLAYER_B, "2026-08-10"),
+    );
     profileRows.push(profileRow(PLAYER_A, "Eleonore48213"), profileRow(PLAYER_B, "Nico_42"));
 
     const response = await authed(tokenA, "/app/me/account", { method: "DELETE" });
     expect(response.status).toBe(204);
     expect(sessionRows).toEqual([sessionRow(SESSION_2, PLAYER_B)]);
     expect(baselineRows).toEqual([baselineRow(PLAYER_B)]);
+    expect(practiceDayRows).toEqual([practiceDayRow(PLAYER_B, "2026-08-10")]);
     expect(profileRows).toEqual([profileRow(PLAYER_B, "Nico_42")]);
 
     const stranded = await push(tokenA, "/app/me/quiz-sessions", [pushedSession(SESSION_3)]);

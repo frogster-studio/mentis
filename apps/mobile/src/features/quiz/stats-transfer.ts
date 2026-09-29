@@ -1,5 +1,6 @@
 // A move, not a copy: accepting builds baselines while the caller empties the device world.
 
+import type { AppPracticeDayPushInput } from "@mentis/contracts/app";
 import type { StatBaseline } from "./account-stats";
 import type { DeviceStats } from "./stats";
 
@@ -73,6 +74,11 @@ export function buildTransferBaselines(stats: DeviceStats, device: string): Tran
     }
   }
   return baselines;
+}
+
+// Keyed per (owner, device, day) insert-if-absent, so a retried transfer adds no day twice.
+export function buildTransferPracticeDays(days: string[], device: string): AppPracticeDayPushInput {
+  return days.map((day) => ({ device, day }));
 }
 
 function hasPlayedTheme(stats: DeviceStats): boolean {

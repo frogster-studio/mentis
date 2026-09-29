@@ -1,7 +1,9 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ConfigModule } from "../../_config/config.module";
+import { CompetitionAttemptEntity } from "../../_database/entities/competition-attempt.entity";
 import { PlayerProfileEntity } from "../../_database/entities/player-profile.entity";
+import { PracticeDayEntity } from "../../_database/entities/practice-day.entity";
 import { QuizSessionEntity } from "../../_database/entities/quiz-session.entity";
 import { StatBaselineEntity } from "../../_database/entities/stat-baseline.entity";
 import { MeController } from "../controllers/me.controller";
@@ -15,7 +17,13 @@ import { DIGIT_DRAW, randomDigitDraw } from "../utils/digit-draw";
 @Module({
   imports: [
     ConfigModule,
-    TypeOrmModule.forFeature([QuizSessionEntity, StatBaselineEntity, PlayerProfileEntity]),
+    TypeOrmModule.forFeature([
+      QuizSessionEntity,
+      StatBaselineEntity,
+      PracticeDayEntity,
+      CompetitionAttemptEntity,
+      PlayerProfileEntity,
+    ]),
   ],
   controllers: [MeController],
   providers: [

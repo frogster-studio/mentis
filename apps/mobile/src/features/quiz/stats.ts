@@ -37,6 +37,11 @@ export function recordSession(
   };
 }
 
+// A Paris date, held once however many Sessions finished on it.
+export function recordPracticeDay(days: string[], day: string): string[] {
+  return days.includes(day) ? days : [...days, day];
+}
+
 // Always derived, never stored; precondition: sessionCount ≥ 1.
 export function themeAverage(stat: ThemeStat): number {
   return stat.totalPoints / stat.sessionCount;

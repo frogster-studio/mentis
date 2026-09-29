@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
 import { StyleSheet, Text, View } from "react-native";
 import FastSquircleView from "react-native-fast-squircle";
-import { COMPETITION_STREAK_LABEL } from "@/features/competition/constants";
+import { streakAccessibilityLabel } from "@/features/account/streak";
 import { TEXT } from "@/theme/text";
 import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
 
@@ -16,7 +16,7 @@ export const StreakBadge = ({ streak }: StreakBadgeProps) => {
     <View
       style={styles.container}
       pointerEvents="none"
-      accessibilityLabel={COMPETITION_STREAK_LABEL}
+      accessibilityLabel={streakAccessibilityLabel(streak)}
     >
       <FastSquircleView style={styles.badge}>
         <Text style={styles.text}>{streak}</Text>

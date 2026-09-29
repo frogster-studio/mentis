@@ -24,6 +24,7 @@ import {
 import { deleteAccount } from "@/features/account/delete-account";
 import { RestorePurchases } from "@/features/premium/components/restore-purchases";
 import { drainOutbox } from "@/features/quiz/outbox-sync";
+import { keepPracticeStreakSeed } from "@/features/quiz/practice-streak-seed";
 import { useTransferStore } from "@/features/quiz/transfer-store";
 import { PURCHASES_SUPPORTED } from "@/lib/purchases";
 import { TEXT } from "@/theme/text";
@@ -98,6 +99,7 @@ export const AccountActions = ({ user, isPremium }: AccountActionsProps) => {
         onCancel={() => setSignOutVisible(false)}
         onConfirm={async () => {
           setSignOutVisible(false);
+          keepPracticeStreakSeed(userId);
           // Flush before the token dies — anything unpushed stays queued for the next sign-in.
           await drainOutbox(userId);
           await signOut();

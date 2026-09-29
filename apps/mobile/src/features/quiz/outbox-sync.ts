@@ -5,7 +5,7 @@ import { api } from "@/lib/api";
 import { queryClient } from "@/lib/query-client";
 import { useDrainOnTriggers } from "@/lib/use-drain-on-triggers";
 import { isOwnerGoneError, pushInBatches } from "./batch-push";
-import { entriesForOwner, type OutboxEntry } from "./outbox";
+import { entriesForOwner, type OutboxEntry, withAckedSessions } from "./outbox";
 import { useOutboxStore } from "./outbox-store";
 
 // The owner never goes on the wire — the API derives it from the verified token.
@@ -47,26 +47,10 @@ function seedAckedSessions(playerId: string, batch: OutboxEntry[]): void {
   if (removed.length === 0) {
     return;
   }
-  queryClient.setQueryData<AppAccountStatsResponse>(accountKeys.stats(playerId), (previous) => {
-    // A concurrent pull may have landed the same row first; matching by id never counts it twice.
-    const known = new Set((previous?.sessions ?? []).map((session) => session.id));
-    const fresh = removed.filter((entry) => !known.has(entry.id));
-    if (fresh.length === 0) {
-      return previous;
-    }
-    return {
-      baselines: previous?.baselines ?? [],
-      sessions: [
-        ...(previous?.sessions ?? []),
-        ...fresh.map((entry) => ({
-          id: entry.id,
-          themeId: entry.themeId,
-          themeName: entry.themeName,
-          points: entry.points,
-        })),
-      ],
-    };
-  });
+  queryClient.setQueryData<AppAccountStatsResponse>(accountKeys.stats(playerId), (previous) =>
+    // Never loaded: the next pull brings the acked rows, so nothing is invented in the meantime.
+    previous === undefined ? previous : withAckedSessions(previous, removed),
+  );
 }
 
 // Mounted once, at the app root.

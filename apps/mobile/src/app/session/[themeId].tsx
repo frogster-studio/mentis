@@ -6,6 +6,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ScreenError } from "@/components/ui/screen-error";
 import { ScreenLoading } from "@/components/ui/screen-loading";
 import { useAuthStore } from "@/features/account/auth-store";
+import { parisDay } from "@/features/account/streak";
 import { useSessionQuestions } from "@/features/quiz/api";
 import { DevSkipToResults } from "@/features/quiz/components/dev-skip-to-results";
 import { PlayFrame } from "@/features/quiz/components/play-frame";
@@ -98,8 +99,9 @@ export default function Page() {
     if (session?.status === "finished" && !recordedRef.current) {
       recordedRef.current = true;
       const points = sessionScore(session.answers);
+      const finishedAt = new Date();
       if (owner === undefined) {
-        recordSession(themeId, name, points);
+        recordSession(themeId, name, points, parisDay(finishedAt));
       } else {
         enqueue({
           id: randomUUID(),
@@ -107,7 +109,7 @@ export default function Page() {
           themeId,
           themeName: name,
           points,
-          finishedAt: new Date().toISOString(),
+          finishedAt: finishedAt.toISOString(),
         });
         void drainOutbox(owner);
       }

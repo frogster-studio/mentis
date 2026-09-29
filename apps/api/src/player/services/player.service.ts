@@ -1,5 +1,6 @@
 import type {
   AppAccountStatsResponse,
+  AppPracticeDayPushInput,
   AppQuizSessionPushInput,
   AppStatBaselinePushInput,
 } from "@mentis/contracts/app";
@@ -8,6 +9,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { SUPABASE } from "../../_config/supabase.config";
 import { toAppAccountStatsResponse } from "../mappers/player.mapper";
 import { AccountGoneError, PlayerRepository } from "../repositories/player.repository";
+import { streakFromDays } from "../utils/streak";
 
 @Injectable()
 export class PlayerService {
@@ -17,11 +19,16 @@ export class PlayerService {
   ) {}
 
   async stats(owner: string): Promise<AppAccountStatsResponse> {
-    const [baselines, sessions] = await Promise.all([
+    const [baselines, sessions, practiceDays, competitionDays] = await Promise.all([
       this.playerRepository.findStatBaselines(owner),
       this.playerRepository.findQuizSessions(owner),
+      this.playerRepository.findPracticeDays(owner),
+      this.playerRepository.findCompetitionDays(owner),
     ]);
-    return toAppAccountStatsResponse(baselines, sessions);
+    return toAppAccountStatsResponse(baselines, sessions, {
+      practiceStreak: streakFromDays(practiceDays),
+      competitionStreak: streakFromDays(competitionDays),
+    });
   }
 
   async pushQuizSessions(owner: string, sessions: AppQuizSessionPushInput): Promise<void> {
@@ -60,8 +67,23 @@ export class PlayerService {
     );
   }
 
+  async pushPracticeDays(owner: string, practiceDays: AppPracticeDayPushInput): Promise<void> {
+    if (practiceDays.length === 0) {
+      return;
+    }
+    await this.withAccountGoneEnvelope(() =>
+      this.playerRepository.insertPracticeDaysIfAbsent(
+        practiceDays.map((practiceDay) => ({
+          owner,
+          device: practiceDay.device,
+          day: practiceDay.day,
+        })),
+      ),
+    );
+  }
+
   async deleteAccount(owner: string): Promise<void> {
-    // Deleting the auth row cascades both player tables through their owner FK.
+    // Deleting the auth row cascades every player table through its owner FK.
     const { error } = await this.supabase.auth.admin.deleteUser(owner);
     if (error) {
       throw new Error(`account deletion failed: ${error.message}`);

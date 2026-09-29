@@ -1,0 +1,90 @@
+## Item 1 — PracticeDayEntity (done)
+- practice_days: id uuid, owner uuid (ManyToOne AuthUserEntity CASCADE), device uuid, day date (string, as competition_attempts.day), created/updated.
+- @Unique("practice_days_one_per_device_day", [owner, device, day]); copied stat-baseline.entity.ts (closest sibling: same owner/device shape).
+- Registration: typeorm.client.ts globs entities/*.entity.ts, knip treats them as entries. NOT added to PlayerModule forFeature yet — item 5 adds it with its repository use.
+- schema-constraints.spec.ts: natural-key test beside the baseline one.
+- Files: apps/api/src/_database/entities/practice-day.entity.ts, apps/api/src/_database/_tests/schema-constraints.spec.ts.
+- Next: Hugo runs migration:generate + migration:run, then the RLS snippet from PRD Human steps, before items 4/5 hit a real DB.
+
+## Item 2 — Streak contract + practice-days push input (done)
+- account.ts: private streakSchema { lastDay: iso date | null, length, longest } refined longest >= length; published type AppStreak (as AppCompetitionDayAttempt). appAccountStatsResponseSchema gains practiceStreak + competitionStreak. appPracticeDayPushInputSchema: array of { device uuid, day iso date }, max MAX_PUSH_BATCH.
+- Required fields broke the API parse, so the mapper takes { practiceStreak, competitionStreak } and PlayerService.stats passes a NO_STREAK constant for both. PLACEHOLDER: item 4 replaces NO_STREAK with the repository days through item 3's pure function (and can drop NO_STREAK if the pure function's empty result covers it).
+- e2e "never returns another Player's rows" now expects both zero Streaks (stays true after item 4).
+- mobile outbox-sync seedAckedSessions: spreads previous, and skips seeding when the stats cache was never loaded (used to invent a shelf with baselines []; the next pull brings the acked rows anyway).
+- Note for item 9: acked sessions leave the outbox, so the overlay stops extending the Practice Streak while the cached practiceStreak is still the pre-push one. seedAckedSessions should merge the acked Paris days into practiceStreak (or invalidate stats).
+- Sandbox: biome linux binary not in node_modules; ran ~/.bun/install/cache/@biomejs/cli-linux-arm64@2.5.6@@@1/biome check . instead. Contracts vitest once flaked on a missing zod locale file (FS), green on rerun.
+- Files: packages/contracts/src/app/account.ts, account.spec.ts, apps/api/src/player/mappers/player.mapper.ts, services/player.service.ts, _tests/app-me.e2e-spec.ts, apps/mobile/src/features/quiz/outbox-sync.ts.
+
+## Item 3 — streakFromDays pure function (done)
+- apps/api/src/player/utils/streak.ts: streakFromDays(days: string[]): AppStreak. Dedupes + sorts itself (item wants unsorted/dup input tolerated), consecutive = UTC day-number diff of 1 (dates are plain Paris calendar dates, so no DST issue).
+- Lives in player/ (the stats feature owns both Streaks), not competition/; spec in player/_tests/streak.spec.ts, same shape as leaderboard.spec.ts. Did not reuse competition-day daysBefore to avoid a player -> competition util import (competition already depends on player).
+- Not wired yet: item 4 replaces NO_STREAK in PlayerService.stats with streakFromDays(repository days) and drops NO_STREAK.
+- Sandbox: api vitest can't load swc native binary; ran the spec through a throwaway plain vitest config (no decorators in it) — 5/5 green. Host runs full check.
+- Files: apps/api/src/player/utils/streak.ts, apps/api/src/player/_tests/streak.spec.ts, PRD.md.
+
+## Item 4 — GET /app/me/stats carries practiceStreak + competitionStreak (done)
+- PlayerRepository.findPracticeDays: two DISTINCT reads in parallel (quiz_sessions `to_char(finished_at AT TIME ZONE 'Europe/Paris', 'YYYY-MM-DD')`, practice_days `to_char(day, ...)`), unioned with a Set. findCompetitionDays: DISTINCT to_char(attempt.day) by owner, no status filter.
+- to_char everywhere because raw getRawMany of a `date` column comes back as a JS Date from pg (only entity hydration turns it into a string). Checked on a throwaway postgres:16 container: 23:30Z 03-31 -> 04-01, both DST edges right, session timezone/DateStyle don't matter.
+- Competition days are read by PlayerRepository directly (CompetitionAttemptEntity in PlayerModule forFeature), since competition already depends on player (no circular import). PracticeDayEntity added to forFeature now (item 5 reuses it).
+- PlayerService.stats: streakFromDays(practiceDays/competitionDays); NO_STREAK gone.
+- Specs: player/_tests/player.repository.spec.ts (metadata DataSource + mocked runner.query, asserts SQL + union). e2e: fake repo gains findPracticeDays (Paris via competitionDay) / findCompetitionDays, and 2 new cases parse through appAccountStatsResponseSchema; the other-Player case also seeds B's days/attempts.
+- Sandbox: repository + streak specs green via a throwaway esbuild vitest config; the e2e needs SWC metadata, so it has NOT run here. Host must run it.
+- Note for item 5: the e2e deleteUser cascade stub doesn't clear practiceDayRows yet; add it with the push route.
+- Files: apps/api/src/player/repositories/player.repository.ts, services/player.service.ts, modules/player.module.ts, _tests/player.repository.spec.ts, _tests/app-me.e2e-spec.ts, PRD.md.
+
+## Item 5 — POST /app/me/practice-days (done)
+- Same shape as stat-baselines end to end: MeController.pushPracticeDays (ZodValidationPipe appPracticeDayPushInputSchema, 204) -> PlayerService.pushPracticeDays (empty = no-op, owner from JWT, withAccountGoneEnvelope -> 410) -> PlayerRepository.insertPracticeDaysIfAbsent (insert().orIgnore() on the (owner, device, day) unique, owner FK -> AccountGoneError).
+- deleteAccount comment said "both player tables"; now "every player table".
+- e2e: fake repo insertPracticeDaysIfAbsent + deleteUser cascade clears practiceDayRows; practice-days joined the 401 / 410 / over-cap / empty-batch it.each tables; new cases: body owner ignored, replay + other device dedupe, malformed device/day/datetime -> 400. practiceDayRow takes an optional device.
+- Sandbox: e2e needs SWC, NOT run here; host must run it. typecheck, non-API tests, biome green (4 warnings + 1 info pre-existing, untouched files).
+- Next: item 6 (mobile pure streak functions) — first mobile item; mobile consumer of this route arrives in item 7.
+- Files: apps/api/src/player/controllers/me.controller.ts, services/player.service.ts, repositories/player.repository.ts, _tests/app-me.e2e-spec.ts, PRD.md.
+
+## Item 6 — mobile pure streak functions (done)
+- apps/mobile/src/features/account/streak.ts: parisDay(instant: Date) (Intl formatToParts Europe/Paris, same pattern as catchup-deadline/season-calendar; takes a Date, callers do new Date(entry.finishedAt)), currentStreak(streak, today) (length when today - lastDay <= 1, else 0), mergeStreak(streak | null, days) (expands the Streak's run into its `length` days ending at lastDay, unions with days, recomputes; longest = max(streak.longest, computed)).
+- Lives in features/account (both Streaks come off the Account stats, StreakBadge lives there; quiz already imports account). Mobile keeps its own run-counting loop rather than sharing the API's streakFromDays: contracts is schemas-only, and mergeStreak(null, days) covers the same need.
+- Not wired yet: items 7-9 consume them. Sandbox: typecheck, non-API tests (mobile 323), biome green (same 4 warnings + 1 info pre-existing).
+- Files: apps/mobile/src/features/account/streak.ts, streak.test.ts, PRD.md.
+
+## Item 7 — Device Stats record practice days, the transfer pushes them (done)
+- stats-store gains practiceDays: string[] (Paris dates) beside stats; recordSession(themeId, name, points, day) writes both; reset empties both. DeviceStats type untouched (fold/shelf keep using it). Old persisted state without practiceDays: zustand persist shallow-merges, so it defaults to [].
+- stats.ts recordPracticeDay(days, day): insertion order, deduped (mergeStreak sorts anyway).
+- stats-transfer.ts buildTransferPracticeDays(days, device): AppPracticeDayPushInput (the contract type itself, no alias).
+- transfer-sync: baselines then practice days, both through pushInBatches, sequential; reset + markTransferred only after both land. A retry replays both (both insert-if-absent). Offer gate unchanged (baselines non-empty): every recorded day comes with a finished session.
+- Session screen: one `finishedAt = new Date()` feeds parisDay (signed out) and the outbox finishedAt (signed in). Abandoned sessions never reach the record effect (status finished only).
+- Decline: untouched, the days sit in the stats store beside the dormant stats.
+- Tests: pure pieces only (recordPracticeDay, buildTransferPracticeDays); transfer-sync orchestration stays untested as before (imports api/query client/stores, no vi.mock precedent) — "empties after both land" is the await order.
+- Sandbox: typecheck, non-API tests (mobile 329), biome green (same 4 warnings + 1 info pre-existing).
+- Next: item 8 (sign-out seed) — seed lives beside practiceDays or in its own store; account-actions.tsx sign-out and delete-account.ts are the hooks.
+- Files: apps/mobile/src/features/quiz/stats.ts, stats.test.ts, stats-store.ts, stats-transfer.ts, stats-transfer.test.ts, transfer-sync.ts, apps/mobile/src/app/session/[themeId].tsx, PRD.md.
+
+## Item 8 — sign-out seed (done)
+- streak.ts accountPracticeStreak(accountStreak | undefined, pendingDays): null when stats never loaded, else mergeStreak. It IS the signed-in displayed Streak (item 9 reuses it) and the seed; one function for both.
+- outbox.ts pendingPracticeDays(entries): Paris day per entry; no syncedIds filter needed (days union, a pulled+pending session counts once).
+- Seed stored in stats-store as practiceStreakSeed (beside practiceDays: the signed-out Streak = mergeStreak(practiceStreakSeed, practiceDays), item 9's hook). setPracticeStreakSeed(seed | null). reset (transfer) leaves the seed: unused signed in, rewritten at next sign-out.
+- quiz/practice-streak-seed.ts keepPracticeStreakSeed(playerId): reads the stats cache + owner's outbox, writes the seed. Called in account-actions sign-out BEFORE drainOutbox: the drain acks entries while the cached practiceStreak stays pre-push (item 2 note), so after it the overlay would lose those days.
+- deleteAccount clears the seed beside the transfer reset.
+- Not covered: the 401 global sign-out (lib/api onUnauthenticated) writes no seed, the previous one stays. lib can't import features; accepted, the device returns to its last signed-out world.
+- Item 9 still owes: seedAckedSessions should merge acked Paris days into cached practiceStreak (or invalidate stats), else a drained session drops out of the signed-in Streak until the next pull.
+- Tests: accountPracticeStreak + scenario (5 -> 8 signed out, 8 after transfer, unpushed sessions kept, no seed) in streak.test.ts; pendingPracticeDays in outbox.test.ts. Sandbox: typecheck, non-API tests (mobile 336), biome green (same 4 warnings + 1 info).
+- Files: apps/mobile/src/features/account/streak.ts, streak.test.ts, delete-account.ts, components/account-actions.tsx, apps/mobile/src/features/quiz/outbox.ts, outbox.test.ts, stats-store.ts, practice-streak-seed.ts, PRD.md.
+
+## Item 9 — streak hooks + finalize invalidates Account stats (done)
+- quiz/practice-streak.ts practiceStreak(owner, { accountStreak, outbox, seed, deviceDays }): the pure selection. Signed in: accountPracticeStreak(Account, owner's outbox Paris days) (null until stats load); signed out: mergeStreak(seed, device days). Lives in quiz (reads the outbox shape; account/streak can't import quiz/outbox, which imports it).
+- quiz/use-practice-streak.ts usePracticeStreak(): number; competition/use-competition-streak.ts useCompetitionStreak(owner): number (stats query disabled signed out -> 0). Both: currentStreak(streak, parisDay(new Date())) at render.
+- currentStreak now takes AppStreak | null (null = no Streak known yet -> 0), so both hooks share it.
+- pushFinalize invalidates accountKeys.stats(owner) beside day/standing/leaderboard.
+- Item 2/8 debt paid: seedAckedSessions' patch extracted to pure outbox.ts withAckedSessions(previous, acked), which also merges the fresh acked Paris days into practiceStreak (a drained session no longer drops out of the Streak until the next pull). Tested.
+- Renamed pendingPracticeDays -> outboxPracticeDays (now also used on acked entries).
+- Wired both hooks into the badges already (knip would flag unused hook files otherwise): PracticeCard streak={usePracticeStreak()}, CompetitionCard gains a streak prop fed by world.tsx. No hardcoded 45 left.
+- Item 10 remains: accessibility label « Série : N jours » / « 1 jour » from competition constants (COMPETITION_STREAK_LABEL still hardcoded « Série : 3 jours »), verify 0 shown; maybe drop CompetitionCard.showStreak (always true, no caller varies it).
+- Sandbox: typecheck, non-API tests (mobile 343), biome green (same 4 warnings + 1 info). Knip not run here.
+- Files: apps/mobile/src/features/account/streak.ts, streak.test.ts, features/quiz/practice-streak.ts, practice-streak.test.ts, use-practice-streak.ts, outbox.ts, outbox.test.ts, outbox-sync.ts, practice-streak-seed.ts, components/practice-card.tsx, features/competition/api.ts, use-competition-streak.ts, components/competition-card.tsx, app/(tabs)/world.tsx, PRD.md.
+
+## Item 10 — badges show real Streaks with a counted accessibility label (done)
+- competition/constants.ts: COMPETITION_STREAK_LABEL (hardcoded « Série : 3 jours ») -> STREAK_LABEL « Série : » + STREAK_DAY_SINGULAR/PLURAL, same shape as quiz SESSION_COUNT_SINGULAR/PLURAL.
+- account/streak.ts streakAccessibilityLabel(streak): « Série : N jours », « 1 jour » at 1 (as formatSessionCount); StreakBadge uses it. Tested 0, 1, 8.
+- CompetitionCard.showStreak dropped (always true, no caller varied it: mobile AGENTS rule). Both badges always render, 0 included; practice card was already wired in item 9.
+- Sandbox: typecheck, non-API tests (mobile 345), biome green (same 4 warnings + 1 info). Knip not run here.
+- Next: human device review (PRD Human steps). Every item passes.
+- Files: apps/mobile/src/features/competition/constants.ts, components/competition-card.tsx, features/account/streak.ts, streak.test.ts, components/streak-badge.tsx, app/(tabs)/world.tsx, PRD.md.

@@ -62,7 +62,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Streak, Device Sta
       "Registered wherever the other entities are; no migration file is written or generated",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "contracts",
@@ -74,7 +74,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Streak, Device Sta
       "Specs parse a valid payload and reject a longest below length, a bad date and an oversized batch",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "api",
@@ -86,7 +86,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Streak, Device Sta
       "Unsorted or duplicated input gives the same result as sorted distinct input",
       "Vitest spec beside day-offers.spec.ts; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "api",
@@ -99,7 +99,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Streak, Device Sta
       "Repository specs in the manner of standing.repository.spec.ts; e2e in app-me.e2e-spec.ts parses the response through the contract",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "api",
@@ -113,7 +113,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Streak, Device Sta
       "Deleted Account: 410 ACCOUNT_GONE, as stat-baselines",
       "e2e in app-me.e2e-spec.ts; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
@@ -126,7 +126,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Streak, Device Sta
       "mergeStreak(null, days) computes from the days alone",
       "Vitest, today injected; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
@@ -138,7 +138,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Streak, Device Sta
       "A declined transfer leaves the days dormant",
       "Vitest on the store and transfer logic; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
@@ -151,7 +151,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Streak, Device Sta
       "Scenario spec: seed length 5 ending D, device days D+1..D+3, displayed Streak 8",
       "Vitest; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
@@ -162,7 +162,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Streak, Device Sta
       "pushFinalize invalidates accountKeys.stats beside day, standing and leaderboard",
       "The merge and selection logic is a pure function under vitest; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
@@ -174,7 +174,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Streak, Device Sta
       "Accessibility label « Série : N jours », « Série : 1 jour » at 1, built from constants in the competition feature",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```

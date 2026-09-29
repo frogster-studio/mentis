@@ -3,6 +3,7 @@
 import { accountKeys } from "@/features/account/api";
 import { useFinalizeOutboxStore } from "@/features/competition/finalize-outbox-store";
 import { useOutboxStore } from "@/features/quiz/outbox-store";
+import { useStatsStore } from "@/features/quiz/stats-store";
 import { useTransferStore } from "@/features/quiz/transfer-store";
 import { api } from "@/lib/api";
 import { queryClient } from "@/lib/query-client";
@@ -22,4 +23,5 @@ export async function deleteAccount(playerId: string): Promise<void> {
 
   // After the sign-out, or clearing the flags would offer the still-signed-in Player a transfer.
   useTransferStore.getState().reset();
+  useStatsStore.getState().setPracticeStreakSeed(null);
 }

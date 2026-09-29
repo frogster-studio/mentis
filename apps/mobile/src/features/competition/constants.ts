@@ -25,4 +25,6 @@ export const COMPETITION_START_LABEL = "Lancer la session";
 export const COMPETITION_TRY_AGAIN_LABEL = "Retenter ma chance";
 export const COMPETITION_SEE_RESULTS_LABEL = "Voir mes résultats";
 export const COMPETITION_CATCHUP_LABEL = "Retenter ma chance";
-export const COMPETITION_STREAK_LABEL = "Série : 3 jours";
+export const STREAK_LABEL = "Série :";
+export const STREAK_DAY_SINGULAR = "jour";
+export const STREAK_DAY_PLURAL = "jours";
