@@ -7,28 +7,63 @@ import type {
 import { GoneException, Inject, Injectable } from "@nestjs/common";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { SUPABASE } from "../../_config/supabase.config";
+import type { Clock } from "../../competition/types/clock";
+import { CLOCK } from "../../competition/utils/clock";
+import { competitionDay } from "../../competition/utils/competition-day";
 import { toAppAccountStatsResponse } from "../mappers/player.mapper";
 import { AccountGoneError, PlayerRepository } from "../repositories/player.repository";
+import { latestCapturedNames } from "../utils/captured-theme-names";
 import { streakFromDays } from "../utils/streak";
+import { themeTallies } from "../utils/theme-tallies";
 
 @Injectable()
 export class PlayerService {
   constructor(
     private readonly playerRepository: PlayerRepository,
     @Inject(SUPABASE) private readonly supabase: SupabaseClient,
+    @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
   async stats(owner: string): Promise<AppAccountStatsResponse> {
-    const [baselines, sessions, practiceDays, competitionDays] = await Promise.all([
+    const [
+      baselines,
+      sessions,
+      sessionSums,
+      baselineSums,
+      attempts,
+      practiceDays,
+      competitionDays,
+    ] = await Promise.all([
       this.playerRepository.findStatBaselines(owner),
       this.playerRepository.findQuizSessions(owner),
+      this.playerRepository.sumQuizSessionsByTheme(owner),
+      this.playerRepository.sumStatBaselinesByTheme(owner),
+      this.playerRepository.findCompetitionAttempts(owner),
       this.playerRepository.findPracticeDays(owner),
       this.playerRepository.findCompetitionDays(owner),
     ]);
-    return toAppAccountStatsResponse(baselines, sessions, {
-      practiceStreak: streakFromDays(practiceDays),
-      competitionStreak: streakFromDays(competitionDays),
-    });
+    const practiceSums = [...sessionSums, ...baselineSums];
+    const tallies = themeTallies(practiceSums, attempts, competitionDay(this.clock()));
+    const catalog = await this.playerRepository.findThemesWithCategory(
+      tallies.map((tally) => tally.themeId),
+    );
+    const capturedNames = latestCapturedNames([
+      ...practiceSums,
+      ...attempts.map((attempt) => ({
+        themeId: attempt.themeId,
+        themeName: attempt.themeName,
+        capturedAt: attempt.issuedAt,
+      })),
+    ]);
+    return toAppAccountStatsResponse(
+      baselines,
+      sessions,
+      { tallies, catalog, capturedNames },
+      {
+        practiceStreak: streakFromDays(practiceDays),
+        competitionStreak: streakFromDays(competitionDays),
+      },
+    );
   }
 
   async pushQuizSessions(owner: string, sessions: AppQuizSessionPushInput): Promise<void> {

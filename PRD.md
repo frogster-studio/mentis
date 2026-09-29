@@ -155,7 +155,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Account Stats, Dev
       "Repository specs in player.repository.spec.ts; e2e in app-me.e2e-spec.ts parses the response through the contract, today injected",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "api",
