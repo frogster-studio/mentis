@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { MAX_SCORE } from "./competition";
+import { appCategorySchema } from "./theme";
 
 // Mobile chunks every push queue to this size, so a full chunk is never over the cap.
 export const MAX_PUSH_BATCH = 200;
@@ -17,6 +19,36 @@ const quizSessionSchema = z.object({
   points: z.number().int().nonnegative(),
 });
 
+const countSchema = z.number().int().nonnegative();
+const bestScoreSchema = z.number().int().min(0).max(MAX_SCORE).nullable();
+
+const themeTallySchema = z
+  .object({
+    themeId: z.string().min(1),
+    themeName: z.string().min(1),
+    // Null for a Theme the Editor deleted.
+    category: appCategorySchema.nullable(),
+    practice: z.object({
+      sessionCount: countSchema,
+      totalPoints: countSchema,
+      bestScore: bestScoreSchema,
+    }),
+    competition: z
+      .object({
+        attemptCount: countSchema,
+        judgedCount: countSchema,
+        totalPoints: countSchema,
+        bestScore: bestScoreSchema,
+      })
+      .refine((competition) => competition.judgedCount <= competition.attemptCount, {
+        message: "judgedCount is never above attemptCount",
+        path: ["judgedCount"],
+      }),
+  })
+  .refine((tally) => tally.practice.sessionCount + tally.competition.attemptCount > 0, {
+    message: "a tally holds at least one game",
+  });
+
 // length runs back from lastDay; whether it is still current is the phone's call, on its own clock.
 const streakSchema = z
   .object({
@@ -31,6 +63,7 @@ const streakSchema = z
 export type AppStreak = z.infer<typeof streakSchema>;
 
 export const appAccountStatsResponseSchema = z.object({
+  themes: z.array(themeTallySchema),
   baselines: z.array(statBaselineSchema),
   sessions: z.array(quizSessionSchema),
   practiceStreak: streakSchema,
@@ -45,7 +78,7 @@ export const appQuizSessionPushInputSchema = z
 export type AppQuizSessionPushInput = z.infer<typeof appQuizSessionPushInputSchema>;
 
 export const appStatBaselinePushInputSchema = z
-  .array(statBaselineSchema.extend({ device: z.uuid() }))
+  .array(statBaselineSchema.extend({ device: z.uuid(), bestScore: bestScoreSchema }))
   .max(MAX_PUSH_BATCH);
 export type AppStatBaselinePushInput = z.infer<typeof appStatBaselinePushInputSchema>;
 

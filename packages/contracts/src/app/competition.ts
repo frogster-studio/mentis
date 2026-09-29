@@ -8,7 +8,7 @@ export const LEADERBOARD_PAGE_SIZE = 50;
 // The self-reported mode alone prices a correct answer.
 export const COMPETITION_POINTS = { cash: 5, square: 2 } as const;
 
-const MAX_SCORE = COMPETITION_QUESTION_COUNT * COMPETITION_POINTS.cash;
+export const MAX_SCORE = COMPETITION_QUESTION_COUNT * COMPETITION_POINTS.cash;
 const MAX_SEASON_SCORE = MAX_SCORE * 31;
 
 const competitionAttemptKindSchema = z.enum(["initial", "replay", "catchup"]);

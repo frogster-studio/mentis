@@ -13,6 +13,7 @@ export const toAppAccountStatsResponse = (
   streaks: { practiceStreak: AppStreak; competitionStreak: AppStreak },
 ): AppAccountStatsResponse =>
   appAccountStatsResponseSchema.parse({
+    themes: [],
     baselines: baselines.map((baseline) => ({
       themeId: baseline.themeId,
       themeName: baseline.themeName,

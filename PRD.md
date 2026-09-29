@@ -126,7 +126,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Account Stats, Dev
       "Specs in account.spec.ts parse a valid payload and reject each case above, a bestScore of 51 and a malformed category",
       "The API answers themes: [] until the route item lands; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "api",

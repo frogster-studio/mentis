@@ -38,13 +38,21 @@ describe("shouldOfferTransfer — the offer predicate", () => {
 describe("buildTransferBaselines — the baseline payload", () => {
   it("builds one row per played Theme, carrying the injected device id and the totals", () => {
     expect(buildTransferBaselines(deviceStats, DEVICE)).toStrictEqual([
-      { device: DEVICE, themeId: "geo", themeName: "Géographie", totalPoints: 50, sessionCount: 3 },
+      {
+        device: DEVICE,
+        themeId: "geo",
+        themeName: "Géographie",
+        totalPoints: 50,
+        sessionCount: 3,
+        bestScore: null,
+      },
       {
         device: DEVICE,
         themeId: "simpson",
         themeName: "Les Simpson",
         totalPoints: 35,
         sessionCount: 1,
+        bestScore: null,
       },
     ]);
   });

@@ -231,6 +231,7 @@ const pushedBaseline = (overrides: Record<string, unknown> = {}) => ({
   themeName: "Géographie",
   totalPoints: 120,
   sessionCount: 4,
+  bestScore: null,
   ...overrides,
 });
 

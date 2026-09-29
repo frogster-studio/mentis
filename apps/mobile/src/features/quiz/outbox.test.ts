@@ -155,6 +155,7 @@ describe("outboxPracticeDays — the Practice Streak overlay", () => {
 
 describe("withAckedSessions — the Account world an ack seeds", () => {
   const stats = {
+    themes: [],
     baselines: [],
     sessions: [{ id: "pulled", themeId: "geo", themeName: "Géographie", points: 30 }],
     practiceStreak: { lastDay: "2026-07-21", length: 2, longest: 4 },

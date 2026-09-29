@@ -3,3 +3,12 @@
 - No migration touched. schema-constraints.spec.ts untouched, still green (unique is owner/device/themeId, unaffected).
 - Files: apps/api/src/_database/entities/stat-baseline.entity.ts
 - Next: HUMAN STEP — Hugo runs migration:generate + migration:run in apps/api before items 4/5 hit a real DB. Items 2/3 don't need the DB.
+
+## Item 2 — contracts: themes tallies + baseline push bestScore (done)
+- account.ts: private `themeTallySchema` (themeId, themeName, category appCategorySchema|null, practice {sessionCount,totalPoints,bestScore}, competition {attemptCount,judgedCount,totalPoints,bestScore}); refine judged<=attempts (on competition, path judgedCount) + refine sessionCount+attemptCount>0. `themes` added to appAccountStatsResponseSchema beside baselines/sessions.
+- bestScoreSchema = int 0..MAX_SCORE nullable; MAX_SCORE now exported from competition.ts (was private, =50) rather than a second literal 50.
+- bestScore added ONLY to the push schema (statBaselineSchema.extend) — response `baselines` unchanged, they leave in item 10.
+- API mapper answers `themes: []`. Service still ignores bestScore on push (item 5 stores it). e2e `pushedBaseline` fixture gains `bestScore: null` so pushes stay 204.
+- Mobile: `TransferBaseline` alias deleted; buildTransferBaselines returns AppStatBaselinePushInput with `bestScore: null` (item 7 fills the real best) — otherwise the phone would 400 on transfer. outbox.test stats fixture gains `themes: []`.
+- Files: packages/contracts/src/app/{account,account.spec,competition}.ts, apps/api/src/player/{mappers/player.mapper.ts,_tests/app-me.e2e-spec.ts}, apps/mobile/src/features/quiz/{stats-transfer,stats-transfer.test,outbox.test}.ts
+- Sandbox note: biome linux binary missing from node_modules; run `BIOME_BINARY=$(ls ~/.bun/install/cache/@biomejs/cli-linux-arm64@2.5.6@@@1/biome) bunx @biomejs/biome check .` (4 pre-existing warnings, untouched files). API tests not run here.
