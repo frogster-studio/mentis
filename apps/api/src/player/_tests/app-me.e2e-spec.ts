@@ -68,6 +68,7 @@ const baselineRow = (
     themeName: "Géographie",
     totalPoints: 120,
     sessionCount: 4,
+    bestScore: null,
     ...overrides,
   });
 
@@ -479,7 +480,7 @@ describe("app me routes e2e", () => {
         points: 30,
       }),
     );
-    baselineRows.push(baselineRow(PLAYER_A, { bestScore: null }));
+    baselineRows.push(baselineRow(PLAYER_A));
 
     const response = await authed(tokenA, "/app/me/stats");
     expect(response.status).toBe(200);
@@ -688,18 +689,44 @@ describe("app me routes e2e", () => {
   });
 
   it("POST /app/me/stat-baselines is insert-if-absent per (owner, device, themeId)", async () => {
-    await push(tokenA, "/app/me/stat-baselines", [pushedBaseline()]);
+    await push(tokenA, "/app/me/stat-baselines", [pushedBaseline({ bestScore: 45 })]);
     const again = await push(tokenA, "/app/me/stat-baselines", [
-      pushedBaseline({ totalPoints: 999 }),
+      pushedBaseline({ totalPoints: 999, bestScore: 50 }),
       pushedBaseline({ device: DEVICE_B, totalPoints: 60 }),
     ]);
     expect(again.status).toBe(204);
     expect(baselineRows).toEqual([
-      baselineRow(PLAYER_A),
+      baselineRow(PLAYER_A, { bestScore: 45 }),
       baselineRow(PLAYER_A, { device: DEVICE_B, totalPoints: 60 }),
     ]);
     expect(inserts).toEqual(["stat_baselines", "stat_baselines"]);
   });
+
+  it("POST /app/me/stat-baselines stores each deposited best, which GET /app/me/stats then answers", async () => {
+    const response = await push(tokenA, "/app/me/stat-baselines", [
+      pushedBaseline({ bestScore: 45 }),
+      pushedBaseline({ device: DEVICE_B, bestScore: null }),
+    ]);
+    expect(response.status).toBe(204);
+    expect(baselineRows).toEqual([
+      baselineRow(PLAYER_A, { bestScore: 45 }),
+      baselineRow(PLAYER_A, { device: DEVICE_B, bestScore: null }),
+    ]);
+
+    const stats = await authed(tokenA, "/app/me/stats");
+    const body = appAccountStatsResponseSchema.parse(await stats.json());
+    expect(body.themes[0].practice).toEqual({ sessionCount: 8, totalPoints: 240, bestScore: 45 });
+  });
+
+  it.each([{ bestScore: 51 }, { bestScore: -1 }, { bestScore: undefined }])(
+    "POST /app/me/stat-baselines with %o → 400 VALIDATION_FAILED",
+    async (overrides) => {
+      const response = await push(tokenA, "/app/me/stat-baselines", [pushedBaseline(overrides)]);
+      expect(response.status).toBe(400);
+      expect(errorResponseSchema.parse(await response.json()).code).toBe("VALIDATION_FAILED");
+      expect(inserts).toEqual([]);
+    },
+  );
 
   it("POST /app/me/practice-days stores the batch under the JWT sub, ignoring a body owner", async () => {
     const response = await push(tokenA, "/app/me/practice-days", [

@@ -97,6 +97,7 @@ export class PlayerService {
           themeName: baseline.themeName,
           totalPoints: baseline.totalPoints,
           sessionCount: baseline.sessionCount,
+          bestScore: baseline.bestScore,
         })),
       ),
     );

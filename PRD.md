@@ -167,7 +167,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Account Stats, Dev
       "GET /app/me/stats then answers the deposited best in the Theme's practice bestScore",
       "e2e in app-me.e2e-spec.ts; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

@@ -29,3 +29,10 @@
 - e2e fake: one "sum" per row stands in for GROUP BY (tally merges anyway). attemptRow fixture gained themeId/themeName/score/issuedAt. Fake baseline sum reads row.bestScore/createdAt raw → a stats test with baselines must set bestScore (the "owner's world" test sets null). Item 5: service stores bestScore; push tests' baselineRow then needs bestScore.
 - Files: apps/api/src/player/{repositories/player.repository.ts,services/player.service.ts,mappers/player.mapper.ts,modules/player.module.ts,types/captured-theme-name.ts,utils/captured-theme-names.ts,_tests/{app-me.e2e-spec,player.repository.spec,captured-theme-names.spec}.ts}
 - Sandbox: FULL API suite runs here (451 green) with a no-swc tmp config AND proxy vars unset (`env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy`); the 403s were the sandbox proxy, not DI.
+
+## Item 5 — POST /app/me/stat-baselines stores bestScore (done)
+- Service pushStatBaselines maps `bestScore: baseline.bestScore` into the insert. Repo untouched: orIgnore already keeps a replay from changing anything, bestScore included.
+- e2e: baselineRow fixture defaults `bestScore: null` (stored rows now carry it); insert-if-absent test now pushes best 45 then replays 50 → stays 45; new test pushes 45 + null on two devices, stats answers practice {8, 240, 45}; it.each 51 / -1 / missing → 400 VALIDATION_FAILED, no insert.
+- Files: apps/api/src/player/{services/player.service.ts,_tests/app-me.e2e-spec.ts}
+- Sandbox: full API suite green here (455) via the no-swc tmp config + proxy vars unset.
+- Next: item 6 (mobile pure stats functions from tallies) — core abstraction the screen + item 7/8 build on.
