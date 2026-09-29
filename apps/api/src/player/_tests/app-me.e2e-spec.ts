@@ -471,6 +471,7 @@ describe("app me routes e2e", () => {
     const response = await authed(tokenA, "/app/me/stats");
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
+      themes: [],
       baselines: [],
       sessions: [],
       practiceStreak: { lastDay: null, length: 0, longest: 0 },
