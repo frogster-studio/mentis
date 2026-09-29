@@ -44,3 +44,14 @@
 - `categoryGroups(tallies)` → [{ category, rows }], null-category tallies dropped, Categories then Themes sorted by module `Intl.Collator("fr", { sensitivity: "base" })`.
 - Files: apps/mobile/src/features/quiz/{theme-tallies,theme-tallies.test}.ts
 - Next: item 7 folds Device Stats into ThemeTally[] (competition zeros) and records best + captured Category.
+
+## Item 7 — Device Stats best + Category, transfer deposits best (done)
+- ThemeStat gains OPTIONAL `bestScore?` / `category?` — absent = entry persisted before this work (no persist version/migrate: optional type is the honest shape, read with `?? null`). New records always set both.
+- recordSession(stats, themeId, name, category, points): best = max(known best ?? 0, points) — an unknown best + a 20 gives 20 (highest KNOWN, same rule as API baselines). Category captured each record (latest wins).
+- stats.ts `deviceTallies(stats, catalog: ThemeWithCount[])` → ThemeTally[]: practice from the entry, competition zeros, category = catalog's ?? captured ?? null. Caller passes `useCachedThemes().data ?? []` (item 9). No sessionCount>0 filter: only finished Sessions write a row.
+- Session page builds the Category once (useMemo over the params), reused by ThemeReveal and recordSession. Abandoned Session still records nothing: the record effect runs on status "finished" only (page-level, no pure seam to test).
+- buildTransferBaselines: `bestScore: stat.bestScore ?? null`.
+- account-stats.ts (legacy fold, dies item 8/9): stopped calling recordSession (now needs a Category); addBaseline → addTotals shared by baselines + sessions. Behaviour unchanged, its tests untouched.
+- stats-transfer.test: fixture has one Theme with best 30 + category, one legacy; the "fold back into device world" round trip replaced by "baselines deposit each Theme's practice tally exactly" (vs deviceTallies). homeCards round-trip kept until item 9.
+- Files: apps/mobile/src/app/session/[themeId].tsx, apps/mobile/src/features/quiz/{stats,stats.test,stats-store,stats-transfer,stats-transfer.test,account-stats}.ts
+- Next: item 8 (Account tallies = themes + pending outbox overlay; outbox entry captures Category at enqueue — session page already has `category` in hand).

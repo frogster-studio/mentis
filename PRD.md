@@ -196,7 +196,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Account Stats, Dev
       "buildTransferBaselines carries each Theme's bestScore, null when unknown",
       "Vitest beside stats.test.ts and stats-transfer.test.ts; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

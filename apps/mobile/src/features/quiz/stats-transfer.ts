@@ -69,7 +69,7 @@ export function buildTransferBaselines(
         themeName: stat.name,
         totalPoints: stat.totalPoints,
         sessionCount: stat.sessionCount,
-        bestScore: null,
+        bestScore: stat.bestScore ?? null,
       });
     }
   }

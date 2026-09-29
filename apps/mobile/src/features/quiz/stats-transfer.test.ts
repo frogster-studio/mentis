@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { foldAccountStats } from "./account-stats";
-import { type DeviceStats, homeCards } from "./stats";
+import { type DeviceStats, deviceTallies, homeCards } from "./stats";
 import {
   buildTransferBaselines,
   buildTransferPracticeDays,
@@ -11,9 +11,17 @@ import {
 
 const DEVICE = "device-uuid-1";
 
-// A played device world: exactly the shape the Device stats store holds.
+const NATURE = {
+  id: "nature",
+  name: "Nature",
+  color: "#2e7d32",
+  secondaryColor: "#e8f5e9",
+  icon: "park",
+};
+
+// A played device world: one Theme recorded with its best, one recorded before bests were kept.
 const deviceStats: DeviceStats = {
-  geo: { name: "Géographie", totalPoints: 50, sessionCount: 3 },
+  geo: { name: "Géographie", totalPoints: 50, sessionCount: 3, bestScore: 30, category: NATURE },
   simpson: { name: "Les Simpson", totalPoints: 35, sessionCount: 1 },
 };
 
@@ -36,7 +44,7 @@ describe("shouldOfferTransfer — the offer predicate", () => {
 });
 
 describe("buildTransferBaselines — the baseline payload", () => {
-  it("builds one row per played Theme, carrying the injected device id and the totals", () => {
+  it("builds one row per played Theme, carrying the injected device id, the totals and the best, null when unknown", () => {
     expect(buildTransferBaselines(deviceStats, DEVICE)).toStrictEqual([
       {
         device: DEVICE,
@@ -44,7 +52,7 @@ describe("buildTransferBaselines — the baseline payload", () => {
         themeName: "Géographie",
         totalPoints: 50,
         sessionCount: 3,
-        bestScore: null,
+        bestScore: 30,
       },
       {
         device: DEVICE,
@@ -82,9 +90,18 @@ describe("buildTransferPracticeDays — the practice-days payload", () => {
 });
 
 describe("accept — the move conserves the totals exactly once", () => {
-  it("folds the built baselines back into the very device world that was moved", () => {
-    const baselines = buildTransferBaselines(deviceStats, DEVICE);
-    expect(foldAccountStats(baselines, [], [])).toStrictEqual(deviceStats);
+  it("deposits each Theme's practice tally exactly, best included", () => {
+    const deposited = buildTransferBaselines(deviceStats, DEVICE).map(
+      ({ themeId, sessionCount, totalPoints, bestScore }) => ({
+        themeId,
+        practice: { sessionCount, totalPoints, bestScore },
+      }),
+    );
+    const moved = deviceTallies(deviceStats, []).map(({ themeId, practice }) => ({
+      themeId,
+      practice,
+    }));
+    expect(deposited).toStrictEqual(moved);
   });
 
   it("carries the Theme Averages across unchanged (the shelf is identical after the move)", () => {

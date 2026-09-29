@@ -1,7 +1,7 @@
 // The Account world folds into the Device Stats aggregate shape, so shelf rendering never forks.
 
 import type { AppAccountStatsResponse } from "@mentis/contracts/app";
-import { type DeviceStats, recordSession } from "./stats";
+import type { DeviceStats } from "./stats";
 
 // Device totals moved into the Account by a Stats Transfer — one row per (owner, device, Theme).
 export type StatBaseline = AppAccountStatsResponse["baselines"][number];
@@ -13,14 +13,20 @@ export type AccountSession = {
   points: number;
 };
 
-function addBaseline(stats: DeviceStats, baseline: StatBaseline): DeviceStats {
-  const previous = stats[baseline.themeId] ?? { totalPoints: 0, sessionCount: 0 };
+function addTotals(
+  stats: DeviceStats,
+  themeId: string,
+  themeName: string,
+  totalPoints: number,
+  sessionCount: number,
+): DeviceStats {
+  const previous = stats[themeId] ?? { totalPoints: 0, sessionCount: 0 };
   return {
     ...stats,
-    [baseline.themeId]: {
-      name: baseline.themeName,
-      totalPoints: previous.totalPoints + baseline.totalPoints,
-      sessionCount: previous.sessionCount + baseline.sessionCount,
+    [themeId]: {
+      name: themeName,
+      totalPoints: previous.totalPoints + totalPoints,
+      sessionCount: previous.sessionCount + sessionCount,
     },
   };
 }
@@ -33,10 +39,16 @@ export function foldAccountStats(
 ): DeviceStats {
   let stats: DeviceStats = {};
   for (const baseline of baselines) {
-    stats = addBaseline(stats, baseline);
+    stats = addTotals(
+      stats,
+      baseline.themeId,
+      baseline.themeName,
+      baseline.totalPoints,
+      baseline.sessionCount,
+    );
   }
   for (const session of [...synced, ...pending]) {
-    stats = recordSession(stats, session.themeId, session.themeName, session.points);
+    stats = addTotals(stats, session.themeId, session.themeName, session.points, 1);
   }
   return stats;
 }
