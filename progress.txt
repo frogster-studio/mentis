@@ -36,3 +36,11 @@
 - Files: apps/api/src/player/{services/player.service.ts,_tests/app-me.e2e-spec.ts}
 - Sandbox: full API suite green here (455) via the no-swc tmp config + proxy vars unset.
 - Next: item 6 (mobile pure stats functions from tallies) — core abstraction the screen + item 7/8 build on.
+
+## Item 6 — mobile pure figures from tallies (done)
+- New quiz/theme-tallies.ts (own file, not stats.ts: stats.ts keeps Device Stats recording; its homeCards/formatAverage die in item 9). `ThemeTally` = contract `themes[number]` (Category shape == appCategory, so device tallies in item 7 fit it).
+- `statTiles(tallies, isSignedIn)` → { practiceGames, competitionGames (null signed out), overallAverage (null with no score) }. Streaks + rank are NOT here: the screen reads them straight from existing hooks (Longest = streak.longest, rank = Standing read).
+- `themeStatRow(tally)` → { themeId, themeName, gameCount, best (max of non-null bests), average }. Averages = Math.round((practice+competition points)/(sessions+judged)), null at 0.
+- `categoryGroups(tallies)` → [{ category, rows }], null-category tallies dropped, Categories then Themes sorted by module `Intl.Collator("fr", { sensitivity: "base" })`.
+- Files: apps/mobile/src/features/quiz/{theme-tallies,theme-tallies.test}.ts
+- Next: item 7 folds Device Stats into ThemeTally[] (competition zeros) and records best + captured Category.
