@@ -6,6 +6,17 @@ export const PROFILE_HISTORY_TAB_LABEL = "Historique";
 export const PROFILE_ACCOUNT_TAB_LABEL = "Compte";
 export const PROFILE_SIGNED_OUT_NAME = "Pas connecté";
 export const PROFILE_STATS_EMPTY = "Aucune statistique pour le moment.";
+export const PROFILE_STATS_ERROR = "Impossible de charger tes statistiques.";
+export const STATS_GAMES_TITLE = "Parties jouées";
+export const STATS_LONGEST_STREAK_TITLE = "Plus longue série";
+export const STATS_AVERAGE_TITLE = "Score moyen";
+export const STATS_RANK_TITLE = "Classement actuel";
+export const STATS_TABLE_TITLE = "Meilleur score par thème";
+export const STATS_GAMES_COLUMN = "nb. parties";
+export const STATS_BEST_COLUMN = "meilleur score";
+export const STATS_AVERAGE_COLUMN = "moy.";
+export const STATS_MISSING_FIGURE = "--";
+export const STATS_RANK_PREFIX = "n°";
 export const REPLAY_ONBOARDING_LABEL = "Rejouer l'onboarding (dev)";
 
 export const SIGN_IN_CHIP_LABEL = "se connecter / s’inscrire";

@@ -8,7 +8,6 @@ import {
   outboxPracticeDays,
   outboxReducer,
   pushRow,
-  toAccountSession,
   withAckedSessions,
   withPracticeSessions,
 } from "./outbox";
@@ -129,14 +128,6 @@ describe("entriesForOwner — the drained batch and the fold overlay", () => {
 
   it("is empty for an owner with nothing queued", () => {
     expect(entriesForOwner([entry({ owner: OTHER })], OWNER)).toStrictEqual([]);
-  });
-});
-
-describe("toAccountSession — the overlay shape", () => {
-  it("maps a queued entry to the AccountSession the fold overlays", () => {
-    expect(
-      toAccountSession(entry({ themeId: "geo", themeName: "Géographie", points: 35 })),
-    ).toStrictEqual({ themeId: "geo", themeName: "Géographie", points: 35 });
   });
 });
 

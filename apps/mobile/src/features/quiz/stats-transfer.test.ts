@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { foldAccountStats } from "./account-stats";
-import { type DeviceStats, deviceTallies, homeCards } from "./stats";
+import { type DeviceStats, deviceTallies } from "./stats";
 import {
   buildTransferBaselines,
   buildTransferPracticeDays,
@@ -102,11 +101,6 @@ describe("accept — the move conserves the totals exactly once", () => {
       practice,
     }));
     expect(deposited).toStrictEqual(moved);
-  });
-
-  it("carries the Theme Averages across unchanged (the shelf is identical after the move)", () => {
-    const baselines = buildTransferBaselines(deviceStats, DEVICE);
-    expect(homeCards(foldAccountStats(baselines, [], []))).toStrictEqual(homeCards(deviceStats));
   });
 });
 

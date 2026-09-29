@@ -3,7 +3,6 @@
 import type { AppAccountStatsResponse, AppQuizSessionPushInput } from "@mentis/contracts/app";
 import { mergeStreak, parisDay } from "@/features/account/streak";
 import type { Category } from "@/types/quiz";
-import type { AccountSession } from "./account-stats";
 import type { ThemeTally } from "./theme-tallies";
 
 // Owner-tagged so a sign-out retains the rows for that Account without bleeding into another world.
@@ -44,11 +43,6 @@ export function outboxReducer(state: Outbox, action: OutboxAction): Outbox {
 // Only the signed-in owner drains; another Account's retained rows wait for their own sign-in.
 export function entriesForOwner(state: Outbox, owner: string): OutboxEntry[] {
   return state.filter((entry) => entry.owner === owner);
-}
-
-// The fold's overlay shape: a still-pending session sits on the shelf exactly like a landed one.
-export function toAccountSession(entry: OutboxEntry): AccountSession {
-  return { themeId: entry.themeId, themeName: entry.themeName, points: entry.points };
 }
 
 // Neither the owner nor the Category goes on the wire: the API derives one and joins the other.

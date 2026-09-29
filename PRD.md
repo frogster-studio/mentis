@@ -229,7 +229,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Account Stats, Dev
       "HomeThemeCard, useHomeCards, the fold over raw sessions and formatAverage are gone; nothing on the phone reads baselines or sessions",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "contracts",
