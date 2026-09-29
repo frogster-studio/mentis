@@ -240,7 +240,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Account Stats, Dev
       "e2e: the response carries no baselines key and no sessions key",
       "Specs updated in account.spec.ts and app-me.e2e-spec.ts; bun run check green"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```

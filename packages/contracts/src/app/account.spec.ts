@@ -118,14 +118,21 @@ describe("appStatBaselinePushInputSchema", () => {
 describe("appAccountStatsResponseSchema", () => {
   const stats = (practiceStreak: unknown, themes: unknown[] = []) => ({
     themes,
-    baselines: [],
-    sessions: [],
     practiceStreak,
     competitionStreak: { lastDay: null, length: 0, longest: 0 },
   });
 
   it("parses both Streaks, a dayless one included", () => {
     expect(appAccountStatsResponseSchema.parse(stats(streak()))).toEqual(stats(streak()));
+  });
+
+  it("holds themes and both Streaks, and nothing else", () => {
+    const parsed = appAccountStatsResponseSchema.parse({
+      ...stats(streak()),
+      baselines: [],
+      sessions: [],
+    });
+    expect(Object.keys(parsed)).toEqual(["themes", "practiceStreak", "competitionStreak"]);
   });
 
   it("rejects a longest below length", () => {
@@ -146,8 +153,6 @@ describe("appAccountStatsResponseSchema — themes", () => {
   const parse = (row: unknown) =>
     appAccountStatsResponseSchema.safeParse({
       themes: [row],
-      baselines: [],
-      sessions: [],
       practiceStreak: streak(),
       competitionStreak: streak(),
     });

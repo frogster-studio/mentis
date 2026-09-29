@@ -76,3 +76,12 @@
 - Files: apps/mobile/src/app/profile/index.tsx, apps/mobile/src/components/account/{stat-tile,stat-figure,stat-tiles-grid,theme-stats-table}.tsx, apps/mobile/src/features/account/{api,constants,stat-figures,stat-figures.test}.ts, apps/mobile/src/features/quiz/{use-theme-tallies,use-practice-streak,stats,stats.test,outbox,outbox.test,stats-transfer.test,constants}.ts (+ deletions above)
 - Sandbox: typecheck + all non-API tests + biome green; knip not runnable here — host check confirms no new unused export.
 - Next: item 10 — drop baselines + sessions[] from appAccountStatsResponseSchema and the API (mapper/service/repo reads of whole sessions/baselines), update account.spec + app-me e2e; mobile outbox.test fixtures still carry baselines: [] / sessions: [] and must lose them.
+
+## Item 10 — baselines + sessions[] leave the Account stats (done)
+- Contract: appAccountStatsResponseSchema = { themes, practiceStreak, competitionStreak }. statBaselineSchema / quizSessionSchema had no other role than being extended by the push schemas → inlined into appQuizSessionPushInputSchema / appStatBaselinePushInputSchema (counts via countSchema); stale "finishedAt orders the shelf" comment gone. Spec: extra baselines/sessions keys are stripped, keys are exactly the three.
+- API: findQuizSessions / findStatBaselines deleted from the repo (no other caller); service reads sums + attempts + days only; mapper takes themes + streaks. The stats read now touches no whole Quiz Session or Stat Baseline.
+- e2e: "owner's world, sessions asc" test replaced by "themes and Streaks alone": Object.keys exact, no baselines/sessions key, owner/finishedAt off the wire. Fake repo loses the two finders; the other-Player test's expected body loses both keys.
+- Mobile: outbox.test withAckedSessions fixture loses baselines/sessions.
+- Files: packages/contracts/src/app/{account,account.spec}.ts, apps/api/src/player/{mappers/player.mapper,services/player.service,repositories/player.repository,_tests/app-me.e2e-spec}.ts, apps/mobile/src/features/quiz/outbox.test.ts
+- Sandbox: typecheck, every workspace's tests (API 455 via no-swc config) and biome green; knip left to host.
+- All PRD items pass. Human steps left: device review in both auth states, then restyle.

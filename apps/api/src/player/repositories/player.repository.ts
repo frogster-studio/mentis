@@ -111,15 +111,6 @@ export class PlayerRepository {
     return this.themes.find({ where: { id: In(themeIds) }, relations: { category: true } });
   }
 
-  // Oldest-first: the client fold takes the most recently captured Theme name from the last row.
-  findQuizSessions(owner: string): Promise<QuizSessionEntity[]> {
-    return this.sessions.find({ where: { owner }, order: { finishedAt: "ASC" } });
-  }
-
-  findStatBaselines(owner: string): Promise<StatBaselineEntity[]> {
-    return this.baselines.find({ where: { owner } });
-  }
-
   // A Streak day is the Europe/Paris date, whatever the Player's own timezone.
   async findPracticeDays(owner: string): Promise<string[]> {
     const [finishedDays, depositedDays] = await Promise.all([

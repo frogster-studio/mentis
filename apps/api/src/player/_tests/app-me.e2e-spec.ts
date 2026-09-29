@@ -140,14 +140,6 @@ const insertIfAbsent = <Row extends { owner: string }>(
 };
 
 const fakePlayerRepository = {
-  async findQuizSessions(owner) {
-    return sessionRows
-      .filter((row) => row.owner === owner)
-      .sort((left, right) => left.finishedAt.getTime() - right.finishedAt.getTime());
-  },
-  async findStatBaselines(owner) {
-    return baselineRows.filter((row) => row.owner === owner);
-  },
   // One sum per row stands in for GROUP BY: the tally adds up a Theme's sums either way.
   async sumQuizSessionsByTheme(owner) {
     return sessionRows
@@ -221,8 +213,6 @@ const fakePlayerRepository = {
   },
 } satisfies Pick<
   PlayerRepository,
-  | "findQuizSessions"
-  | "findStatBaselines"
   | "sumQuizSessionsByTheme"
   | "sumStatBaselinesByTheme"
   | "findCompetitionAttempts"
@@ -465,40 +455,16 @@ describe("app me routes e2e", () => {
     },
   );
 
-  it("GET /app/me/stats returns the owner's world, sessions finishedAt asc, owner off the wire", async () => {
-    sessionRows.push(
-      sessionRow(SESSION_2, PLAYER_A, {
-        finishedAt: new Date("2026-08-11T12:00:00.000Z"),
-        points: 20,
-      }),
-      sessionRow(SESSION_1, PLAYER_A, {
-        finishedAt: new Date("2026-08-11T09:00:00.000Z"),
-        points: 10,
-      }),
-      sessionRow(SESSION_3, PLAYER_A, {
-        finishedAt: new Date("2026-08-11T15:00:00.000Z"),
-        points: 30,
-      }),
-    );
+  it("GET /app/me/stats answers themes and Streaks alone, no whole session or baseline, owner off the wire", async () => {
+    sessionRows.push(sessionRow(SESSION_1, PLAYER_A), sessionRow(SESSION_2, PLAYER_A));
     baselineRows.push(baselineRow(PLAYER_A));
 
     const response = await authed(tokenA, "/app/me/stats");
     expect(response.status).toBe(200);
     const body = await response.json();
-    expect(body.sessions.map((session: { id: string }) => session.id)).toEqual([
-      SESSION_1,
-      SESSION_2,
-      SESSION_3,
-    ]);
-    expect(body.sessions[0]).toEqual({
-      id: SESSION_1,
-      themeId: "geo",
-      themeName: "Géographie",
-      points: 10,
-    });
-    expect(body.baselines).toEqual([
-      { themeId: "geo", themeName: "Géographie", totalPoints: 120, sessionCount: 4 },
-    ]);
+    expect(Object.keys(body)).toEqual(["themes", "practiceStreak", "competitionStreak"]);
+    expect(body).not.toHaveProperty("baselines");
+    expect(body).not.toHaveProperty("sessions");
     expect(JSON.stringify(body)).not.toContain("owner");
     expect(JSON.stringify(body)).not.toContain("finishedAt");
   });
@@ -644,8 +610,6 @@ describe("app me routes e2e", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
       themes: [],
-      baselines: [],
-      sessions: [],
       practiceStreak: { lastDay: null, length: 0, longest: 0 },
       competitionStreak: { lastDay: null, length: 0, longest: 0 },
     });

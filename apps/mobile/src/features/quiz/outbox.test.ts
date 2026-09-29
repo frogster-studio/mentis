@@ -233,8 +233,6 @@ describe("withAckedSessions — the Account world an ack seeds", () => {
     themes: [
       practiceTally("geo", "Géographie", { sessionCount: 1, totalPoints: 30, bestScore: 30 }),
     ],
-    baselines: [],
-    sessions: [],
     practiceStreak: { lastDay: "2026-07-21", length: 2, longest: 4 },
     competitionStreak: { lastDay: null, length: 0, longest: 0 },
   };

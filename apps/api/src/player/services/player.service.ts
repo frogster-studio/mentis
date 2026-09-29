@@ -25,17 +25,7 @@ export class PlayerService {
   ) {}
 
   async stats(owner: string): Promise<AppAccountStatsResponse> {
-    const [
-      baselines,
-      sessions,
-      sessionSums,
-      baselineSums,
-      attempts,
-      practiceDays,
-      competitionDays,
-    ] = await Promise.all([
-      this.playerRepository.findStatBaselines(owner),
-      this.playerRepository.findQuizSessions(owner),
+    const [sessionSums, baselineSums, attempts, practiceDays, competitionDays] = await Promise.all([
       this.playerRepository.sumQuizSessionsByTheme(owner),
       this.playerRepository.sumStatBaselinesByTheme(owner),
       this.playerRepository.findCompetitionAttempts(owner),
@@ -56,8 +46,6 @@ export class PlayerService {
       })),
     ]);
     return toAppAccountStatsResponse(
-      baselines,
-      sessions,
       { tallies, catalog, capturedNames },
       {
         practiceStreak: streakFromDays(practiceDays),
