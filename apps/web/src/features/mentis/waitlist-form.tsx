@@ -94,7 +94,7 @@ export function WaitlistForm() {
                 ref={iframe}
                 className={styles.formFrame}
                 src={frameUrl}
-                title="Candidature à la bêta Mentis"
+                title="Candidature à la bêta Android de Mentis"
                 referrerPolicy="no-referrer"
                 onError={() => setFailed(true)}
               />

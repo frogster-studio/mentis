@@ -153,6 +153,48 @@
 .heroDetails span {
   display: block;
 }
+.heroDetails a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.download {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  scroll-margin-top: 30px;
+}
+.storeBadge {
+  display: inline-block;
+  transition: transform 150ms ease;
+}
+.storeBadge:hover {
+  transform: translateY(2px);
+}
+.storeBadge img {
+  display: block;
+  width: 168px;
+  height: auto;
+}
+.qrCode {
+  display: none;
+  align-items: center;
+  gap: 14px;
+  max-width: 230px;
+  font-size: 14px;
+  line-height: 1.35;
+}
+.qrCode img {
+  flex-shrink: 0;
+  padding: 6px;
+  background: white;
+  border: 1px solid var(--ink);
+  border-radius: 14px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .qrCode {
+    display: flex;
+  }
+}
 .productArt {
   position: relative;
   width: 100%;
@@ -615,6 +657,13 @@
 .finalLine {
   text-align: center;
   padding-bottom: 72px;
+}
+.finalActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
 }
 .finalLine p {
   font-family: var(--font-mentis-heading), serif;

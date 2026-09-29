@@ -7,6 +7,7 @@ describe("routes", () => {
     expect(PAGE_PATHS).toEqual([
       "/",
       "/mentis",
+      "/mentis/app",
       "/legal",
       "/mentis/privacy",
       "/mentis/terms",
@@ -16,6 +17,7 @@ describe("routes", () => {
   });
 
   it("keeps the Mentis pages under /mentis", () => {
+    expect(ROUTES.app.startsWith("/mentis/")).toBe(true);
     expect(ROUTES.privacy.startsWith("/mentis/")).toBe(true);
     expect(ROUTES.terms.startsWith("/mentis/")).toBe(true);
     expect(ROUTES.support.startsWith("/mentis/")).toBe(true);

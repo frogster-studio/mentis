@@ -16,6 +16,6 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Copy is French; slugs stay English because stores and reviewers read them in a URL.
 - Design and comment rules are the back-office's ([apps/admin/AGENTS.md](../admin/AGENTS.md)): sky on a zinc base, one radius, 2–3 type sizes, Lexend titles / Poppins body. The Mentis mark is the app icon's own layers (`apps/mobile/assets/app-icon/`) imported as static assets, never a redrawn copy.
 - Exception: `/mentis` follows the mobile onboarding artwork, with Epunda Slab Medium titles, Inter Tight Regular body, beige `#F5EBE2`, grid `#EEE4DB`, ink `#250313`, and the `#FFB15F` / `#FFE798` card gradient. Keep these styles scoped to the landing page.
-- Use pill-shaped buttons for every Mentis landing-page CTA at all viewport sizes. ✅ `border-radius: 999px`; ❌ `border-radius: 20px`.
+- Use pill-shaped buttons for every Mentis landing-page CTA at all viewport sizes, except Apple's official App Store badge. ✅ `border-radius: 999px`; ❌ `border-radius: 20px`.
 - The landing header uses `public/mentis/logo.svg` for the mark and keeps `LogoWordmark` for the lettering; derive its favicons from that same mark.
-- The beta waitlist uses an embedded Tally form. No backend or secret is needed; see [README.md](README.md) for maintenance and data retention.
+- iOS ships on the App Store; the QR code points to `/mentis/app`, which sends each device to its store. Android is still in beta: its waitlist uses an embedded Tally form. No backend or secret is needed; see [README.md](README.md) for maintenance and data retention.

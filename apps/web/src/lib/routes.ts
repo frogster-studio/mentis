@@ -1,6 +1,7 @@
 export const ROUTES = {
   home: "/",
   mentis: "/mentis",
+  app: "/mentis/app",
   legal: "/legal",
   privacy: "/mentis/privacy",
   terms: "/mentis/terms",

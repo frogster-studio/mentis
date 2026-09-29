@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import Image from "next/image";
 
+import { AppStoreBadge } from "@/features/mentis/app-store-badge";
 import { LogoWordmark } from "@/features/mentis/logo-wordmark";
 import styles from "@/features/mentis/mentis.module.css";
 import { CompetitionArt, ProductArt } from "@/features/mentis/product-art";
 import { QuizDemo } from "@/features/mentis/quiz-demo";
+import { ANDROID_BETA_ANCHOR, APP_STORE_ID } from "@/features/mentis/store-links";
 import { WAITLIST_CTA } from "@/features/mentis/waitlist-config";
 import { WaitlistForm } from "@/features/mentis/waitlist-form";
 import { PUBLISHER } from "@/lib/publisher";
@@ -26,13 +28,14 @@ const inter = localFont({
 
 const TITLE = "Mentis — La culture générale, à toi de jouer";
 const DESCRIPTION =
-  "Des thèmes à explorer, 25 secondes pour répondre Cash ou Carré. Découvre Mentis et candidate à la bêta iOS et Android. Premium offert aux testeurs sélectionnés pendant la bêta.";
+  "Des thèmes à explorer, 25 secondes pour répondre Cash ou Carré. Mentis est disponible sur l’App Store. Sur Android, rejoins la bêta : Premium offert aux testeurs sélectionnés.";
 const URL = "https://frogster-studio.com/mentis";
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: URL },
+  itunes: { appId: APP_STORE_ID },
   icons: {
     icon: [
       { url: "/mentis/favicon.ico", sizes: "16x16 32x32 48x48", type: "image/x-icon" },
@@ -52,7 +55,7 @@ export const metadata: Metadata = {
         url: `${URL}/social-preview.png`,
         width: 1200,
         height: 630,
-        alt: "Mentis — La culture générale, à toi de jouer. Bêta iOS et Android.",
+        alt: "Mentis — La culture générale, à toi de jouer. Disponible sur l’App Store.",
       },
     ],
   },
@@ -87,8 +90,11 @@ export default function MentisPage() {
             <a href="#essayer" className={styles.navLink}>
               À toi de jouer
             </a>
-            <a href="#beta" className={styles.navCta}>
-              {WAITLIST_CTA}
+            <a href={`#${ANDROID_BETA_ANCHOR}`} className={styles.navLink}>
+              Bêta Android
+            </a>
+            <a href="#telecharger" className={styles.navCta}>
+              Télécharger l’app
             </a>
           </nav>
         </header>
@@ -103,13 +109,17 @@ export default function MentisPage() {
                 Choisis un thème, réponds Cash ou passe en Carré. Dix questions pour tester ce que
                 tu sais et découvrir ce qui t’échappe.
               </p>
-              <a href="#beta" className={`${styles.button} ${styles.primary}`}>
-                {WAITLIST_CTA}
-                <span aria-hidden="true">↗</span>
-              </a>
+              <div className={styles.download} id="telecharger">
+                <AppStoreBadge className={styles.storeBadge} />
+                <div className={styles.qrCode}>
+                  <Image src="/mentis/app-qr.svg" alt="" width={84} height={84} unoptimized />
+                  <p>Scanne ce code avec ton iPhone pour installer Mentis.</p>
+                </div>
+              </div>
               <p className={styles.heroDetails}>
-                <span>Accès limité, invitations progressives.</span>Premium offert aux testeurs
-                sélectionnés pendant la bêta.
+                <span>Disponible sur iPhone.</span>Sur Android, Mentis est en bêta :{" "}
+                <a href={`#${ANDROID_BETA_ANCHOR}`}>deviens testeur</a>, Premium offert aux testeurs
+                sélectionnés.
               </p>
             </div>
             <ProductArt />
@@ -220,17 +230,17 @@ export default function MentisPage() {
               </p>
             </div>
           </section>
-          <section className={styles.beta} id="beta" aria-labelledby="beta-title">
+          <section className={styles.beta} id={ANDROID_BETA_ANCHOR} aria-labelledby="beta-title">
             <div className={styles.betaIntro}>
-              <span className={styles.kicker}>04 / Fais partie des premiers</span>
+              <span className={styles.kicker}>04 / Bêta Android</span>
               <h2 id="beta-title">
-                La suite s’écrit
+                Sur Android,
                 <br />
-                avec toi.
+                on a besoin de toi.
               </h2>
               <p>
-                Mentis est encore en développement et n’est pas disponible au public. Nous ouvrons
-                progressivement la bêta à des testeurs sur iOS et Android.
+                Mentis est disponible sur l’App Store. Sur Android, l’app est encore en bêta : nous
+                cherchons des testeurs pour la peaufiner avant sa sortie sur Google Play.
               </p>
               <div className={styles.premiumNote}>
                 <Image src="/mentis/crown.webp" alt="" width={76} height={70} unoptimized />
@@ -244,10 +254,7 @@ export default function MentisPage() {
                 <p>
                   <strong>La bonne adresse e-mail, c’est important.</strong>
                 </p>
-                <p>
-                  Sur Android, indique l’adresse du compte Google que tu utilises sur le Google Play
-                  Store. Sur iOS, indique l’adresse de ton compte Apple.
-                </p>
+                <p>Indique l’adresse du compte Google que tu utilises sur le Google Play Store.</p>
                 <p>
                   Une adresse différente peut empêcher l’accès à la bêta. Ne communique jamais ton
                   mot de passe.
@@ -284,10 +291,13 @@ export default function MentisPage() {
           </section>
           <div className={styles.finalLine}>
             <p>La curiosité n’attend que toi.</p>
-            <a className={`${styles.button} ${styles.primary}`} href="#beta">
-              {WAITLIST_CTA}
-              <span aria-hidden="true">↗</span>
-            </a>
+            <div className={styles.finalActions}>
+              <AppStoreBadge className={styles.storeBadge} />
+              <a className={`${styles.button} ${styles.primary}`} href={`#${ANDROID_BETA_ANCHOR}`}>
+                {WAITLIST_CTA}
+                <span aria-hidden="true">↗</span>
+              </a>
+            </div>
           </div>
         </main>
         <div className={styles.footerBrand}>
