@@ -55,3 +55,14 @@
 - stats-transfer.test: fixture has one Theme with best 30 + category, one legacy; the "fold back into device world" round trip replaced by "baselines deposit each Theme's practice tally exactly" (vs deviceTallies). homeCards round-trip kept until item 9.
 - Files: apps/mobile/src/app/session/[themeId].tsx, apps/mobile/src/features/quiz/{stats,stats.test,stats-store,stats-transfer,stats-transfer.test,account-stats}.ts
 - Next: item 8 (Account tallies = themes + pending outbox overlay; outbox entry captures Category at enqueue — session page already has `category` in hand).
+
+## Item 8 — Account world reads tallies (done)
+- outbox.ts: OutboxEntry gains required `category: Category` (captured at enqueue; no shim for old persisted entries, PRD rules out compat). `withPracticeSessions(tallies, entries)` folds sessions into practice (count, points, best = max(known ?? 0, points)); unknown Theme → new row with entry's name/Category, competition zeros; known Theme keeps server name/Category/competition. `accountTallies(themes, outbox, owner)` = the owner-filtered overlay; item 9's hook calls it with `stats.themes`. `pushRow` moved from outbox-sync (was private toPushRow) so a test pins the body: no owner, no category.
+- Dedupe by id gone: `overlaySessions` deleted. `withAckedSessions` now folds acked into `themes` + merges streak days, no longer touches `sessions`. seedAckedSessions invalidates accountKeys.stats after the seed (no-op seed when nothing cached).
+- Transitional: legacy useHomeCards overlays `entriesForOwner(...).map(toAccountSession)` with no dedupe; acked sessions leave its shelf until the invalidated read lands. Dies item 9 with foldAccountStats/toAccountSession/AccountSession.
+- useAttempt queryFn invalidates accountKeys.stats after resumeOrIssueAttempt (a resume re-reads harmlessly). Phone overlays no Attempt.
+- Buster api-v1 → api-v2.
+- Conservation test rewritten over tallies (acked tallies + queue overlay == all finished), no longer uses foldAccountStats.
+- Files: apps/mobile/src/features/quiz/{outbox,outbox.test,outbox-sync,use-home-cards,practice-streak.test}.ts, apps/mobile/src/features/competition/api.ts, apps/mobile/src/lib/query-client.ts, apps/mobile/src/app/session/[themeId].tsx
+- Sandbox: knip can't run (oxc-parser native binary missing) — host check must confirm. accountTallies only used by tests until item 9.
+- Next: item 9 screen — hook: signed in `accountTallies(stats.themes, outbox, owner)`, signed out `deviceTallies(deviceStats, useCachedThemes().data ?? [])`; delete useHomeCards, HomeThemeCard, account-stats.ts (+test), toAccountSession, formatAverage, homeCards/attachCategories/themeAverage.

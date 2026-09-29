@@ -1,8 +1,10 @@
 // Replaying any transition leaves the same queue, so a flaky push can never double-count a session.
 
-import type { AppAccountStatsResponse } from "@mentis/contracts/app";
+import type { AppAccountStatsResponse, AppQuizSessionPushInput } from "@mentis/contracts/app";
 import { mergeStreak, parisDay } from "@/features/account/streak";
+import type { Category } from "@/types/quiz";
 import type { AccountSession } from "./account-stats";
+import type { ThemeTally } from "./theme-tallies";
 
 // Owner-tagged so a sign-out retains the rows for that Account without bleeding into another world.
 export type OutboxEntry = {
@@ -10,6 +12,7 @@ export type OutboxEntry = {
   owner: string; // the Account that finished the session (owner tagging)
   themeId: string;
   themeName: string;
+  category: Category; // captured at enqueue, so a first play joins its group before its push lands
   points: number;
   finishedAt: string; // ISO timestamp, injected at enqueue
 };
@@ -48,15 +51,43 @@ export function toAccountSession(entry: OutboxEntry): AccountSession {
   return { themeId: entry.themeId, themeName: entry.themeName, points: entry.points };
 }
 
-// Matching by id keeps an in-flight session — briefly pending and pulled — counted exactly once.
-export function overlaySessions(
-  state: Outbox,
-  owner: string,
-  syncedIds: ReadonlySet<string>,
-): AccountSession[] {
-  return entriesForOwner(state, owner)
-    .filter((entry) => !syncedIds.has(entry.id))
-    .map(toAccountSession);
+// Neither the owner nor the Category goes on the wire: the API derives one and joins the other.
+export function pushRow(entry: OutboxEntry): AppQuizSessionPushInput[number] {
+  return {
+    id: entry.id,
+    themeId: entry.themeId,
+    themeName: entry.themeName,
+    points: entry.points,
+    finishedAt: entry.finishedAt,
+  };
+}
+
+// A pending session on a Theme the Account holds no row for creates it, with its captured Category.
+export function withPracticeSessions(tallies: ThemeTally[], entries: OutboxEntry[]): ThemeTally[] {
+  const byTheme = new Map(tallies.map((tally) => [tally.themeId, tally]));
+  for (const entry of entries) {
+    const tally = byTheme.get(entry.themeId) ?? {
+      themeId: entry.themeId,
+      themeName: entry.themeName,
+      category: entry.category,
+      practice: { sessionCount: 0, totalPoints: 0, bestScore: null },
+      competition: { attemptCount: 0, judgedCount: 0, totalPoints: 0, bestScore: null },
+    };
+    byTheme.set(entry.themeId, {
+      ...tally,
+      practice: {
+        sessionCount: tally.practice.sessionCount + 1,
+        totalPoints: tally.practice.totalPoints + entry.points,
+        bestScore: Math.max(tally.practice.bestScore ?? 0, entry.points),
+      },
+    });
+  }
+  return [...byTheme.values()];
+}
+
+// The phone overlays no Attempt: competition figures come from the server alone.
+export function accountTallies(themes: ThemeTally[], state: Outbox, owner: string): ThemeTally[] {
+  return withPracticeSessions(themes, entriesForOwner(state, owner));
 }
 
 // A session both pending and already pulled falls on a day the Account holds, so it counts once.
@@ -64,28 +95,14 @@ export function outboxPracticeDays(entries: OutboxEntry[]): string[] {
   return entries.map((entry) => parisDay(new Date(entry.finishedAt)));
 }
 
-// A concurrent pull may have landed the same row first; matching by id never counts it twice.
-// The Streak moves too, or a drained session would drop out of it until the next pull.
+// The Streak moves too, or a drained session would drop out of it until the next read.
 export function withAckedSessions(
   previous: AppAccountStatsResponse,
   acked: OutboxEntry[],
 ): AppAccountStatsResponse {
-  const known = new Set(previous.sessions.map((session) => session.id));
-  const fresh = acked.filter((entry) => !known.has(entry.id));
-  if (fresh.length === 0) {
-    return previous;
-  }
   return {
     ...previous,
-    sessions: [
-      ...previous.sessions,
-      ...fresh.map((entry) => ({
-        id: entry.id,
-        themeId: entry.themeId,
-        themeName: entry.themeName,
-        points: entry.points,
-      })),
-    ],
-    practiceStreak: mergeStreak(previous.practiceStreak, outboxPracticeDays(fresh)),
+    themes: withPracticeSessions(previous.themes, acked),
+    practiceStreak: mergeStreak(previous.practiceStreak, outboxPracticeDays(acked)),
   };
 }

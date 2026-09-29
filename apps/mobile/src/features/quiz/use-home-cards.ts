@@ -3,7 +3,7 @@ import { useAccountStats } from "@/features/account/api";
 import { useAuthStore } from "@/features/account/auth-store";
 import { foldAccountStats } from "./account-stats";
 import { useCachedThemes } from "./api";
-import { overlaySessions } from "./outbox";
+import { entriesForOwner, toAccountSession } from "./outbox";
 import { useOutboxStore } from "./outbox-store";
 import { attachCategories, type HomeCard, homeCards } from "./stats";
 import { useStatsStore } from "./stats-store";
@@ -24,8 +24,7 @@ export function useHomeCards(): HomeCard[] {
     }
     // The pending overlay puts a just-finished session on the shelf instantly, offline included.
     const stats = accountStats ?? { baselines: [], sessions: [] };
-    const syncedIds = new Set(stats.sessions.map((session) => session.id));
-    const pending = overlaySessions(outbox, owner, syncedIds);
+    const pending = entriesForOwner(outbox, owner).map(toAccountSession);
     return withCategories(homeCards(foldAccountStats(stats.baselines, stats.sessions, pending)));
   }, [owner, deviceStats, accountStats, outbox, themes]);
 }

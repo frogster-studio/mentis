@@ -211,7 +211,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Account Stats, Dev
       "The persisted query cache's buster is no longer api-v1",
       "Pure logic under vitest beside account-stats.test.ts and outbox.test.ts; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

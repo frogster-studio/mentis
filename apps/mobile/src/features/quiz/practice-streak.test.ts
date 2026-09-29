@@ -1,12 +1,29 @@
 import { describe, expect, it } from "vitest";
+import type { Category } from "@/types/quiz";
 import type { OutboxEntry } from "./outbox";
 import { practiceStreak } from "./practice-streak";
 
 const OWNER = "owner-a";
 const OTHER = "owner-b";
 
+const GEOGRAPHIE: Category = {
+  id: "geographie",
+  name: "Géographie",
+  color: "#1565c0",
+  secondaryColor: "#e3f2fd",
+  icon: "public",
+};
+
 function entry(owner: string, finishedAt: string): OutboxEntry {
-  return { id: finishedAt, owner, themeId: "geo", themeName: "Géographie", points: 35, finishedAt };
+  return {
+    id: finishedAt,
+    owner,
+    themeId: "geo",
+    themeName: "Géographie",
+    category: GEOGRAPHIE,
+    points: 35,
+    finishedAt,
+  };
 }
 
 const accountStreak = { lastDay: "2026-04-10", length: 5, longest: 5 };

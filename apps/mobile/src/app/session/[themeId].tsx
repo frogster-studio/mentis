@@ -118,6 +118,7 @@ export default function Page() {
           owner,
           themeId,
           themeName: name,
+          category,
           points,
           finishedAt: finishedAt.toISOString(),
         });
