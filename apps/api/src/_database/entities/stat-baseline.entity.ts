@@ -41,6 +41,9 @@ export class StatBaselineEntity extends BaseEntity {
   @Column({ type: "integer", name: "session_count" })
   sessionCount: number;
 
+  @Column({ type: "integer", name: "best_score", nullable: true })
+  bestScore: number | null;
+
   @UpdateDateColumn({ type: "timestamptz", name: "updated_at" })
   updatedAt: Date;
 

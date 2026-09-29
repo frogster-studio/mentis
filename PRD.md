@@ -112,7 +112,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Account Stats, Dev
       "schema-constraints.spec.ts still passes",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "contracts",

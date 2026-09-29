@@ -1,0 +1,5 @@
+## Item 1 — StatBaselineEntity.bestScore (done)
+- Added `bestScore: number | null`, `@Column({ type: "integer", name: "best_score", nullable: true })`, same shape as competition-attempt `score` / competition-answer `client_elapsed_ms`.
+- No migration touched. schema-constraints.spec.ts untouched, still green (unique is owner/device/themeId, unaffected).
+- Files: apps/api/src/_database/entities/stat-baseline.entity.ts
+- Next: HUMAN STEP — Hugo runs migration:generate + migration:run in apps/api before items 4/5 hit a real DB. Items 2/3 don't need the DB.
