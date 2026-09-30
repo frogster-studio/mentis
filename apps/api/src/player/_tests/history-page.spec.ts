@@ -60,6 +60,16 @@ describe("historyPage", () => {
     }
   });
 
+  it("names a next page when both reads fall short but together overflow the page", () => {
+    const practice = lines(SessionTypeEnum.PRACTICE, everyMinute(11, 0, 2));
+    const competition = lines(SessionTypeEnum.COMPETITION, everyMinute(10, 1, 2));
+
+    const page = historyPage(practice, competition, SIZE);
+
+    expect(page.sessions).toHaveLength(20);
+    expect(page.nextBefore).toBe(page.sessions[19]?.playedAt);
+  });
+
   it("gives an empty History no line and no next page", () => {
     expect(historyPage([], [], SIZE)).toEqual({ sessions: [], nextBefore: null });
   });
