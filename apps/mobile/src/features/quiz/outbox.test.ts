@@ -47,6 +47,7 @@ function entry(overrides: Partial<OutboxEntry> = {}): OutboxEntry {
     themeName: "Géographie",
     category: GEOGRAPHIE,
     points: 35,
+    questionCount: 10,
     finishedAt: "2026-07-22T10:00:00.000Z",
     ...overrides,
   };
@@ -138,6 +139,7 @@ describe("pushRow — the push body", () => {
       themeId: "geo",
       themeName: "Géographie",
       points: 35,
+      questionCount: 10,
       finishedAt: "2026-07-22T10:00:00.000Z",
     });
   });

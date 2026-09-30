@@ -13,6 +13,7 @@ export type OutboxEntry = {
   themeName: string;
   category: Category; // captured at enqueue, so a first play joins its group before its push lands
   points: number;
+  questionCount: number;
   finishedAt: string; // ISO timestamp, injected at enqueue
 };
 
@@ -52,6 +53,7 @@ export function pushRow(entry: OutboxEntry): AppQuizSessionPushInput[number] {
     themeId: entry.themeId,
     themeName: entry.themeName,
     points: entry.points,
+    questionCount: entry.questionCount,
     finishedAt: entry.finishedAt,
   };
 }

@@ -53,6 +53,7 @@ const sessionRow = (
     themeId: "geo",
     themeName: "Géographie",
     points: 30,
+    questionCount: 10,
     finishedAt: new Date("2026-08-11T10:00:00.000Z"),
     ...overrides,
   });
@@ -272,6 +273,7 @@ const pushedSession = (id: string, overrides: Record<string, unknown> = {}) => (
   themeId: "geo",
   themeName: "Géographie",
   points: 30,
+  questionCount: 10,
   finishedAt: "2026-08-11T10:00:00.000Z",
   ...overrides,
 });
@@ -623,6 +625,23 @@ describe("app me routes e2e", () => {
     expect(sessionRows).toEqual([sessionRow(SESSION_1, PLAYER_A)]);
     expect(inserts).toEqual(["quiz_sessions"]);
   });
+
+  it("POST /app/me/quiz-sessions stores each session's question count", async () => {
+    await push(tokenA, "/app/me/quiz-sessions", [pushedSession(SESSION_1, { questionCount: 15 })]);
+    expect(sessionRows).toEqual([sessionRow(SESSION_1, PLAYER_A, { questionCount: 15 })]);
+  });
+
+  it.each([{ questionCount: undefined }, { questionCount: 0 }])(
+    "POST /app/me/quiz-sessions with %o → 400 VALIDATION_FAILED",
+    async (overrides) => {
+      const response = await push(tokenA, "/app/me/quiz-sessions", [
+        pushedSession(SESSION_1, overrides),
+      ]);
+      expect(response.status).toBe(400);
+      expect(errorResponseSchema.parse(await response.json()).code).toBe("VALIDATION_FAILED");
+      expect(inserts).toEqual([]);
+    },
+  );
 
   it("re-pushing an accepted Quiz Session is a no-op success", async () => {
     await push(tokenA, "/app/me/quiz-sessions", [pushedSession(SESSION_1)]);

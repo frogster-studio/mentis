@@ -120,6 +120,7 @@ export default function Page() {
           themeName: name,
           category,
           points,
+          questionCount: session.questions.length,
           finishedAt: finishedAt.toISOString(),
         });
         void drainOutbox(owner);

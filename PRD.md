@@ -106,7 +106,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (History, Quiz Sess
       "apps/mobile: QUESTIONS_PER_SESSION is QUIZ_SESSION_QUESTION_COUNT from the contracts; OutboxEntry carries questionCount, captured at enqueue in app/session/[themeId].tsx; the push batch sends it; outbox.test.ts and batch-push.test.ts fixtures carry it",
       "bun run check green at the repo root"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "contracts",

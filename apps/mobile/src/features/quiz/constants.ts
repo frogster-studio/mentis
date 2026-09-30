@@ -1,3 +1,4 @@
+import { QUIZ_SESSION_QUESTION_COUNT } from "@mentis/contracts/app";
 import type { IconName } from "@/components/ui/icon-name";
 
 export const HOME_TAB_LABEL = "Practice";
@@ -36,7 +37,7 @@ export const THEME_REVEAL_DURATION_MS = 3_000;
 export const THEME_REVEAL_TICK_MS = 1_000;
 export const POINTS_CASH = 5;
 export const POINTS_SQUARE = 2;
-export const QUESTIONS_PER_SESSION = 10;
+export const QUESTIONS_PER_SESSION = QUIZ_SESSION_QUESTION_COUNT;
 export const COUNTDOWN_DURATION_SECONDS = COUNTDOWN_DURATION_MS / 1000;
 // The score ceiling a Theme Average is measured against on the home shelf.
 export const MAX_SESSION_SCORE = POINTS_CASH * QUESTIONS_PER_SESSION;

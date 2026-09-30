@@ -3,3 +3,10 @@
 - No migration touched. Hugo: `bun run migration:generate` + `migration:run` in apps/api before live API uses column.
 - check green (api 455 tests). Pre-existing biome warnings in mobile, not ours.
 - Next: item 2 (push carries questionCount) — fixtures typed as QuizSessionEntity may need the field once service maps it.
+
+## Item 2 — push carries questionCount (done)
+- contracts account.ts: QUIZ_SESSION_QUESTION_COUNT = 10 beside push schema; push row requires questionCount int ≥ 1. account.spec: missing / 0 refused.
+- api player.service pushQuizSessions maps questionCount. e2e: fixtures carry it (sessionRow + pushedSession), new tests: stores pushed count (15), missing/0 → 400 no insert.
+- mobile: QUESTIONS_PER_SESSION = QUIZ_SESSION_QUESTION_COUNT (alias kept, used by copy + MAX_SESSION_SCORE). OutboxEntry.questionCount; enqueue captures session.questions.length (what was actually played, not the constant); pushRow sends it. outbox.test + practice-streak.test fixtures updated. batch-push.test uses plain numbers, no entry fixture → untouched.
+- Checks: typecheck all, tests non-api green, api 458 via no-swc workaround, biome clean (pre-existing warnings only).
+- Next: item 3 (History contract: SessionTypeEnum, history.ts).

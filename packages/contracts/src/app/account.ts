@@ -55,6 +55,8 @@ export const appAccountStatsResponseSchema = z.object({
 });
 export type AppAccountStatsResponse = z.infer<typeof appAccountStatsResponseSchema>;
 
+export const QUIZ_SESSION_QUESTION_COUNT = 10;
+
 export const appQuizSessionPushInputSchema = z
   .array(
     z.object({
@@ -62,6 +64,7 @@ export const appQuizSessionPushInputSchema = z
       themeId: z.string().min(1),
       themeName: z.string().min(1),
       points: countSchema,
+      questionCount: z.number().int().min(1),
       finishedAt: z.iso.datetime({ offset: true }),
     }),
   )

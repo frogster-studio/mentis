@@ -12,6 +12,7 @@ const session = (overrides: Record<string, unknown> = {}) => ({
   themeId: "geo",
   themeName: "Géographie",
   points: 35,
+  questionCount: 10,
   finishedAt: "2026-08-11T10:00:00.000Z",
   ...overrides,
 });
@@ -83,6 +84,15 @@ describe("appQuizSessionPushInputSchema", () => {
         session({ finishedAt: "2026-08-11T12:00:00+02:00" }),
       ]).success,
     ).toBe(true);
+  });
+
+  it("requires a question count of at least one", () => {
+    expect(
+      appQuizSessionPushInputSchema.safeParse([session({ questionCount: undefined })]).success,
+    ).toBe(false);
+    expect(appQuizSessionPushInputSchema.safeParse([session({ questionCount: 0 })]).success).toBe(
+      false,
+    );
   });
 });
 

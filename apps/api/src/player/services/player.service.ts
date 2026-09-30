@@ -66,6 +66,7 @@ export class PlayerService {
           themeId: session.themeId,
           themeName: session.themeName,
           points: session.points,
+          questionCount: session.questionCount,
           finishedAt: new Date(session.finishedAt),
         })),
       ),
