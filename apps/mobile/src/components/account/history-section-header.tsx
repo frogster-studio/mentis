@@ -12,9 +12,11 @@ export const HistorySectionHeader = ({ title }: HistorySectionHeaderProps) => {
 
 const styles = StyleSheet.create({
   title: {
-    ...TEXT.input,
+    ...TEXT.caption,
     color: COLORS.ink,
+    opacity: 0.6,
     paddingTop: SPACE.md,
     paddingBottom: SPACE.xs,
+    marginLeft: SPACE.xs,
   },
 });

@@ -6,8 +6,7 @@ import { POINTS_UNIT } from "@/features/quiz/constants";
 import { LEADERBOARD_EMPTY } from "@/features/world/constants";
 import { TEXT } from "@/theme/text";
 import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
-
-const MEDAL_IMAGE = require("../../../../assets/images/competition/medal.png");
+import { MEDAL_IMAGE } from "@/utils/assets";
 
 export interface LeaderboardPreviewCardProps {
   entries: AppCompetitionLeaderboardPageResponse["entries"];
@@ -80,9 +79,10 @@ const styles = StyleSheet.create({
   empty: { ...TEXT.body, color: COLORS.face, paddingVertical: SPACE.xs },
   medal: {
     position: "absolute",
-    aspectRatio: 243 / 408,
+    aspectRatio: 237 / 393,
     height: "100%",
-    left: -SPACE.md,
+    left: SPACE.xxs,
+    top: SPACE.lg,
     transform: [{ rotate: "-15deg" }],
   },
 });

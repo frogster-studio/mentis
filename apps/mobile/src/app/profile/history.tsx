@@ -62,13 +62,11 @@ export default function Page() {
 }
 
 const styles = StyleSheet.create({
-  // The scene is clear over the layout's paper and wash, so the page caps its own width.
   list: {
     width: "100%",
     maxWidth: MAX_CONTENT_WIDTH,
     alignSelf: "center",
   },
-  // Grows to the viewport, so a loading or failed read fills the space under the header.
   content: {
     flexGrow: 1,
     paddingTop: SPACE.lg,
