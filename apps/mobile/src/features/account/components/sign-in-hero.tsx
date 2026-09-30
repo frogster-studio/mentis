@@ -9,7 +9,6 @@ import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
 
 const HERO = require("../../../../assets/images/sign-in/sign-in-image.webp");
 const MENTIS_WORDMARK = require("../../../../assets/images/sign-in/mentis-wordmark.svg");
-const PILL_BADGE_SHADE_ALPHA = "1A";
 
 const SCATTERED_PILLS = [
   {

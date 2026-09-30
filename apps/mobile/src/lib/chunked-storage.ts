@@ -23,7 +23,7 @@ const readChunkCount = async (store: StringStore, key: string): Promise<number> 
   return Number.isInteger(count) && count >= 0 ? count : 0;
 };
 
-const removeChunks = (store: StringStore, key: string, from: number, to: number): Promise<void[]> =>
+const removeChunks = (store: StringStore, key: string, from: number, to: number) =>
   Promise.all(
     Array.from({ length: Math.max(to - from, 0) }, (_, offset) =>
       store.removeItem(chunkKey(key, from + offset)),

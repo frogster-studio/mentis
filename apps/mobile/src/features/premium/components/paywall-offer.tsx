@@ -13,7 +13,6 @@ import FastSquircleView from "react-native-fast-squircle";
 import { NewButton } from "@/components/ui/new-button";
 import { Squircle } from "@/components/ui/squircle";
 import { PAYWALL_CREST_HEIGHT, PaywallCrest } from "@/features/premium/components/paywall-crest";
-import { PaywallHeroGradient } from "@/features/premium/components/paywall-hero-gradient";
 import {
   PAYWALL_ILLUSTRATION_HEIGHT,
   PaywallIllustration,

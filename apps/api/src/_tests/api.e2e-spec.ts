@@ -29,7 +29,7 @@ class ProbeController {
 }
 
 const oversizeBody = JSON.stringify({
-  filler: "x".repeat(Number.parseInt(JSON_BODY_LIMIT) * 1024),
+  filler: "x".repeat(Number.parseInt(JSON_BODY_LIMIT, 10) * 1024),
 });
 
 describe("api spine e2e", () => {
