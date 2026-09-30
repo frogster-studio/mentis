@@ -80,3 +80,5 @@ export const LEGAL_SUPPORT_LABEL = "Support";
 
 export const PAYWALL_PREVIEW_LABEL = "Aperçu du paywall (dev)";
 export const TRANSFER_PREVIEW_LABEL = "Aperçu du transfert (dev)";
+
+export const PROFILE_USER_ID_LABEL = "Identifiant";

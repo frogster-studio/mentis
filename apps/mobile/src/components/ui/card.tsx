@@ -1,6 +1,6 @@
 import type { PropsWithChildren, ReactNode } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
-import { Squircle } from "@/components/ui/squircle";
+import FastSquircleView from "react-native-fast-squircle";
 import { COLORS, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
 
 export interface CardProps {
@@ -10,17 +10,17 @@ export interface CardProps {
 
 export const Card = ({ children, onPress, background }: PropsWithChildren<CardProps>) => {
   const surface = (
-    <Squircle
-      radius={RADIUS.base}
-      color={background === null ? COLORS.card : null}
-      style={null}
-      corners="all"
-      borderColor={null}
-      borderWidth={null}
+    <FastSquircleView
+      style={[
+        styles.container,
+        {
+          backgroundColor: background === null ? COLORS.card : undefined,
+        },
+      ]}
     >
       {background}
-      <View style={styles.card}>{children}</View>
-    </Squircle>
+      <View style={styles.content}>{children}</View>
+    </FastSquircleView>
   );
 
   if (!onPress) {
@@ -39,8 +39,7 @@ export const Card = ({ children, onPress, background }: PropsWithChildren<CardPr
 };
 
 const styles = StyleSheet.create({
-  card: {
-    padding: SPACE.lg,
-  },
+  container: { borderRadius: RADIUS.base },
+  content: { padding: SPACE.lg },
   pressed: PRESSED,
 });

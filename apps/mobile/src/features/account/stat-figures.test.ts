@@ -14,12 +14,12 @@ describe("countFigure", () => {
 
 describe("scoreFigure", () => {
   it("reads an integer score over 50", () => {
-    expect(scoreFigure(35)).toBe("35/50");
-    expect(scoreFigure(0)).toBe("0/50");
+    expect(scoreFigure(35)).toEqual(["35", "/50"]);
+    expect(scoreFigure(0)).toEqual(["0", "/50"]);
   });
 
   it("reads « -- » with no score", () => {
-    expect(scoreFigure(null)).toBe("--");
+    expect(scoreFigure(null)).toEqual(["--"]);
   });
 });
 

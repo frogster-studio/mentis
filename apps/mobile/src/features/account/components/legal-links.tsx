@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
   },
   divided: {
     borderTopWidth: 1,
-    borderTopColor: COLORS.divider,
+    borderTopColor: COLORS.background,
   },
   label: {
     ...TEXT.body,

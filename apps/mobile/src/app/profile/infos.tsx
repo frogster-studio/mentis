@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { ScrollView, StyleSheet } from "react-native";
+import { ScrollView, StyleSheet, Text } from "react-native";
 import { useBottomTabBarHeight } from "@/components/bottom-tab-bar";
 import { QuietButton } from "@/components/ui/quiet-button";
 import { MAX_CONTENT_WIDTH } from "@/components/ui/screen-container";
@@ -8,6 +8,7 @@ import { AccountActions } from "@/features/account/components/account-actions";
 import { LegalLinks } from "@/features/account/components/legal-links";
 import {
   PAYWALL_PREVIEW_LABEL,
+  PROFILE_USER_ID_LABEL,
   REPLAY_ONBOARDING_LABEL,
   TRANSFER_PREVIEW_LABEL,
 } from "@/features/account/constants";
@@ -15,7 +16,8 @@ import { useTransferPreviewStore } from "@/features/account/transfer-preview-sto
 import { useOnboardingStore } from "@/features/onboarding/store";
 import { usePaywallStore } from "@/features/premium/paywall-store";
 import { useIsPremium } from "@/features/premium/use-is-premium";
-import { GUTTER, SPACE } from "@/theme/tokens";
+import { TEXT } from "@/theme/text";
+import { COLORS, GUTTER, SPACE } from "@/theme/tokens";
 
 export default function Page() {
   const tabBarHeight = useBottomTabBarHeight();
@@ -65,6 +67,13 @@ export default function Page() {
           />
         </>
       ) : null}
+      {user ? (
+        <Text selectable style={styles.userId}>
+          {PROFILE_USER_ID_LABEL}
+          {"\n"}
+          {user.id}
+        </Text>
+      ) : null}
     </ScrollView>
   );
 }
@@ -80,5 +89,10 @@ const styles = StyleSheet.create({
     paddingTop: SPACE.lg,
     paddingHorizontal: GUTTER,
     gap: SPACE.md,
+  },
+  userId: {
+    ...TEXT.smallText,
+    color: COLORS.inkMuted,
+    textAlign: "center",
   },
 });

@@ -19,9 +19,6 @@ export const StatFigure = ({ value, isCompetition, opensSignIn }: StatFigureProp
 
   return (
     <View style={styles.row}>
-      {isCompetition ? (
-        <Image source={MEDAL_IMAGE} contentFit="contain" style={styles.medal} />
-      ) : null}
       {/* The value alone is the target, so only the « -- » invites the signed-out Player in. */}
       {opensSignIn ? (
         <Pressable
@@ -36,13 +33,21 @@ export const StatFigure = ({ value, isCompetition, opensSignIn }: StatFigureProp
       ) : (
         text
       )}
+
+      {isCompetition ? (
+        <Image source={MEDAL_IMAGE} contentFit="contain" style={styles.medal} />
+      ) : null}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  row: { flexDirection: "row", alignItems: "center", gap: SPACE.xs },
-  medal: { width: SPACE.md, aspectRatio: 243 / 408 },
-  value: { ...TEXT.statValue, color: COLORS.ink },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACE.xxs,
+  },
+  medal: { width: SPACE.lg, aspectRatio: 243 / 408 },
+  value: { ...TEXT.statText, color: COLORS.ink },
   pressed: PRESSED,
 });

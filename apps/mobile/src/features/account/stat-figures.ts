@@ -5,8 +5,8 @@ export function countFigure(count: number | null): string {
   return count === null ? STATS_MISSING_FIGURE : String(count);
 }
 
-export function scoreFigure(score: number | null): string {
-  return score === null ? STATS_MISSING_FIGURE : `${score}${RESULTS_SCORE_MAX_LABEL}`;
+export function scoreFigure(score: number | null): string[] {
+  return score === null ? [STATS_MISSING_FIGURE] : [String(score), RESULTS_SCORE_MAX_LABEL];
 }
 
 export function rankFigure(rank: number | null): string {

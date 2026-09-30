@@ -14,14 +14,15 @@ export interface StatTileProps {
 
 export const StatTile = ({ title, hasFlame, children }: PropsWithChildren<StatTileProps>) => {
   return (
-    <View style={styles.tile}>
+    <View style={styles.container}>
       <Card background={null} onPress={null}>
+        {hasFlame ? <Image source={FLAME_IMAGE} contentFit="contain" style={styles.flame} /> : null}
         <View style={styles.header}>
-          <Text style={styles.title}>{title}</Text>
-          {hasFlame ? (
-            <Image source={FLAME_IMAGE} contentFit="contain" style={styles.flame} />
-          ) : null}
+          <Text style={styles.title} numberOfLines={1}>
+            {title}
+          </Text>
         </View>
+
         <View style={styles.figures}>{children}</View>
       </Card>
     </View>
@@ -29,9 +30,27 @@ export const StatTile = ({ title, hasFlame, children }: PropsWithChildren<StatTi
 };
 
 const styles = StyleSheet.create({
-  tile: { flex: 1 },
+  container: { flex: 1 },
   header: { flexDirection: "row", alignItems: "center", gap: SPACE.xs },
-  title: { ...TEXT.caption, flexShrink: 1, color: COLORS.inkMuted },
-  flame: { height: SPACE.lg, aspectRatio: 219 / 249 },
-  figures: { marginTop: SPACE.xs, gap: SPACE.xxs },
+  title: {
+    ...TEXT.input,
+    flex: 1,
+    color: COLORS.ink,
+    marginRight: SPACE.xs,
+    paddingBottom: SPACE.xs,
+  },
+  flame: {
+    position: "absolute",
+    aspectRatio: 219 / 249,
+    height: "100%",
+    top: -SPACE.lg,
+    right: -SPACE.lg,
+    transform: [{ rotate: "6deg" }],
+  },
+  figures: {
+    marginTop: SPACE.xs,
+    gap: SPACE.md,
+    flexDirection: "row",
+    alignItems: "center",
+  },
 });
