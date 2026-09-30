@@ -47,7 +47,6 @@ const FEATURE_ICON_SIZE = 24;
 const SKIP_TINT = "4D";
 const PLAN_LABEL_OVERLAP = SPACE.sm;
 const TITLE_GAP = SPACE.xl;
-const PRICE_CARD_COLOR = "#C4DFF0";
 // The paywall never shows on web, so anything that is not Android buys through the App Store.
 const STORE_PLATFORM = Platform.OS === "android" ? "android" : "ios";
 
@@ -257,7 +256,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   priceCard: {
-    backgroundColor: PRICE_CARD_COLOR,
+    backgroundColor: COLORS.catchupMist,
     paddingTop: SPACE.xl,
     paddingHorizontal: SPACE.lg,
     paddingBottom: SPACE.lg,
