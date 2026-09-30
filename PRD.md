@@ -157,7 +157,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (History, Quiz Sess
       "21 lines newest first across both kinds: the first call answers 20 with nextBefore = the 20th playedAt; ?before=<that> answers the 21st with nextBefore null; owner never on the wire",
       "app-me.e2e-spec.ts covers each case through the Nest testing module with the fake PlayerRepository; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

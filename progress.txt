@@ -31,3 +31,12 @@
 - player.repository.spec.ts: SQL of both reads with/without cursor (owner, status, order, limit, sum, params), durationMs number/null conversion.
 - Checks: typecheck all, tests non-api green, api 467 via no-swc workaround, biome clean (pre-existing warnings only).
 - Next: item 6 (GET /app/me/history: controller, service, mapper, e2e). Fake PlayerRepository in app-me.e2e-spec needs the two new methods.
+
+## Item 6 — GET /app/me/history (done)
+- BUG FOUND in item 4 historyPage, fixed in its own commit (fix(api)): 11 practice + 10 competition → both reads short → nextBefore null, yet merge cut the 21st line forever. Ends now only when both reads short AND merged ≤ size. history-page.spec gained that case.
+- me.controller GET history, @Query ZodValidationPipe(appHistoryQuerySchema). PlayerService.history: before → Date|null, both repo reads in parallel (HISTORY_PAGE_SIZE), historyPage, findThemesWithCategory on the page's distinct themeIds, mapper.
+- mappers/history.mapper.ts: toPracticeLine / toCompetitionLine (entity → HistoryLine, ISO playedAt, competition score ?? 0, questionIds.length) + toAppHistoryPageResponse (fills category from catalog, null for deleted Theme, parses contract → owner stripped).
+- types/history-line.ts: HistoryLine = Omit<AppHistorySession, "category"> (precedent ThemeTally = Pick of contract): lines merge before the catalog read, so category comes after.
+- e2e: fake repo gains findQuizSessionsBefore / findFinalizedAttemptsBefore (SUM semantics over answerRows), attemptRow default questionIds (10), numberedId helper (batchSessionId now uses it). Tests: 401, bad before ×2 → 400, empty, practice line full shape, 3 finalized Attempts (completed/quit catchup/expired: score, 10 questions, elapsed sum, issuedAt), deleted Theme, active + dead + other Player excluded, 21 lines paged 20 + 1 with owner off the wire.
+- Checks: typecheck all, tests non-api green, api 477 via no-swc workaround, biome clean (pre-existing warnings only).
+- Next: item 7 (mobile useHistory infinite query + seam request + invalidations) — or item 8 (pure sections/figures/copy); 7 first (integration).

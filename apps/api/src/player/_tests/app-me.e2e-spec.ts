@@ -1,4 +1,9 @@
-import { appAccountStatsResponseSchema, MAX_PUSH_BATCH } from "@mentis/contracts/app";
+import {
+  appAccountStatsResponseSchema,
+  appHistoryPageResponseSchema,
+  MAX_PUSH_BATCH,
+} from "@mentis/contracts/app";
+import { SessionTypeEnum } from "@mentis/contracts/enums";
 import { errorResponseSchema } from "@mentis/contracts/shared";
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
@@ -8,6 +13,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { ENV } from "../../_config/env.config";
 import { SUPABASE } from "../../_config/supabase.config";
 import { CategoryEntity } from "../../_database/entities/category.entity";
+import { CompetitionAnswerEntity } from "../../_database/entities/competition-answer.entity";
 import { CompetitionAttemptEntity } from "../../_database/entities/competition-attempt.entity";
 import { PlayerProfileEntity } from "../../_database/entities/player-profile.entity";
 import { PracticeDayEntity } from "../../_database/entities/practice-day.entity";
@@ -30,13 +36,22 @@ const DEVICE_B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const SESSION_1 = "10000000-0000-4000-8000-000000000001";
 const SESSION_2 = "10000000-0000-4000-8000-000000000002";
 const SESSION_3 = "10000000-0000-4000-8000-000000000003";
+const ATTEMPT_1 = "20000000-0000-4000-8000-000000000001";
+const ATTEMPT_2 = "20000000-0000-4000-8000-000000000002";
+const ATTEMPT_3 = "20000000-0000-4000-8000-000000000003";
 const NOW = new Date("2026-08-20T10:00:00.000Z");
+
+const numberedId = (prefix: number, index: number) =>
+  `${prefix}0000000-0000-4000-8000-${String(index).padStart(12, "0")}`;
+
+const COMPETITION_QUESTIONS = Array.from({ length: 10 }, (_, index) => numberedId(3, index));
 
 let sessionRows: QuizSessionEntity[] = [];
 let baselineRows: StatBaselineEntity[] = [];
 let profileRows: PlayerProfileEntity[] = [];
 let practiceDayRows: PracticeDayEntity[] = [];
 let attemptRows: CompetitionAttemptEntity[] = [];
+let answerRows: CompetitionAnswerEntity[] = [];
 let themeRows: ThemeEntity[] = [];
 let liveOwners = new Set<string>();
 let inserts: string[] = [];
@@ -87,12 +102,16 @@ const attemptRow = (
     kind: "initial",
     themeId: "geo",
     themeName: "Géographie",
+    questionIds: COMPETITION_QUESTIONS,
     status: "finalized",
     finalizeReason: "completed",
     score: 30,
     issuedAt: new Date(`${day}T10:00:00.000Z`),
     ...overrides,
   });
+
+const answerRow = (attemptId: string, clientElapsedMs: number | null): CompetitionAnswerEntity =>
+  Object.assign(new CompetitionAnswerEntity(), { attemptId, clientElapsedMs });
 
 const categoryRow = (id: string, name: string): CategoryEntity =>
   Object.assign(new CategoryEntity(), {
@@ -169,6 +188,33 @@ const fakePlayerRepository = {
   async findCompetitionAttempts(owner) {
     return attemptRows.filter((row) => row.owner === owner);
   },
+  async findQuizSessionsBefore(owner, before, limit) {
+    return sessionRows
+      .filter((row) => row.owner === owner && (before === null || row.finishedAt < before))
+      .toSorted((a, b) => b.finishedAt.getTime() - a.finishedAt.getTime())
+      .slice(0, limit);
+  },
+  // SUM skips a null elapsed, and answers none when every one is null.
+  async findFinalizedAttemptsBefore(owner, before, limit) {
+    return attemptRows
+      .filter(
+        (row) =>
+          row.owner === owner &&
+          row.status === "finalized" &&
+          (before === null || row.issuedAt < before),
+      )
+      .toSorted((a, b) => b.issuedAt.getTime() - a.issuedAt.getTime())
+      .slice(0, limit)
+      .map((entity) => {
+        const elapsed = answerRows
+          .filter((answer) => answer.attemptId === entity.id)
+          .flatMap((answer) => (answer.clientElapsedMs === null ? [] : [answer.clientElapsedMs]));
+        return {
+          entity,
+          durationMs: elapsed.length === 0 ? null : elapsed.reduce((sum, ms) => sum + ms, 0),
+        };
+      });
+  },
   async findThemesWithCategory(themeIds) {
     return themeRows.filter((row) => themeIds.includes(row.id));
   },
@@ -217,6 +263,8 @@ const fakePlayerRepository = {
   | "sumQuizSessionsByTheme"
   | "sumStatBaselinesByTheme"
   | "findCompetitionAttempts"
+  | "findQuizSessionsBefore"
+  | "findFinalizedAttemptsBefore"
   | "findThemesWithCategory"
   | "findPracticeDays"
   | "findCompetitionDays"
@@ -278,8 +326,7 @@ const pushedSession = (id: string, overrides: Record<string, unknown> = {}) => (
   ...overrides,
 });
 
-const batchSessionId = (index: number) =>
-  `10000000-0000-4000-8000-${String(index).padStart(12, "0")}`;
+const batchSessionId = (index: number) => numberedId(1, index);
 
 const pushedPracticeDay = (overrides: Record<string, unknown> = {}) => ({
   device: DEVICE_A,
@@ -369,6 +416,7 @@ describe("app me routes e2e", () => {
     profileRows = [];
     practiceDayRows = [];
     attemptRows = [];
+    answerRows = [];
     themeRows = [];
     liveOwners = new Set([PLAYER_A, PLAYER_B]);
     inserts = [];
@@ -379,6 +427,7 @@ describe("app me routes e2e", () => {
     ["GET", "/app/me/profile"],
     ["PUT", "/app/me/pseudo"],
     ["GET", "/app/me/stats"],
+    ["GET", "/app/me/history"],
     ["POST", "/app/me/quiz-sessions"],
     ["POST", "/app/me/stat-baselines"],
     ["POST", "/app/me/practice-days"],
@@ -615,6 +664,167 @@ describe("app me routes e2e", () => {
       practiceStreak: { lastDay: null, length: 0, longest: 0 },
       competitionStreak: { lastDay: null, length: 0, longest: 0 },
     });
+  });
+
+  it("GET /app/me/history of an Account with no line → an empty last page", async () => {
+    const response = await authed(tokenA, "/app/me/history");
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ sessions: [], nextBefore: null });
+  });
+
+  it.each(["yesterday", "2026-08-20T10:00:00"])(
+    "GET /app/me/history?before=%s → 400 VALIDATION_FAILED",
+    async (before) => {
+      const response = await authed(tokenA, `/app/me/history?before=${before}`);
+      expect(response.status).toBe(400);
+      expect(errorResponseSchema.parse(await response.json()).code).toBe("VALIDATION_FAILED");
+    },
+  );
+
+  it("GET /app/me/history answers a practice line under its captured name and the Theme's current Category", async () => {
+    themeRows.push(themeRow("geo", "Géographie du monde", categoryRow("monde", "Monde"), false));
+    sessionRows.push(sessionRow(SESSION_1, PLAYER_A, { points: 35, questionCount: 12 }));
+
+    const response = await authed(tokenA, "/app/me/history");
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      sessions: [
+        {
+          id: SESSION_1,
+          type: SessionTypeEnum.PRACTICE,
+          themeId: "geo",
+          themeName: "Géographie",
+          category: {
+            id: "monde",
+            name: "Monde",
+            color: "#2e7d32",
+            secondaryColor: "#e8f5e9",
+            icon: "park",
+          },
+          score: 35,
+          questionCount: 12,
+          durationMs: null,
+          playedAt: "2026-08-11T10:00:00.000Z",
+        },
+      ],
+      nextBefore: null,
+    });
+  });
+
+  it("GET /app/me/history answers each finalized Attempt with its score, question count, play time and start", async () => {
+    attemptRows.push(
+      attemptRow(PLAYER_A, "2026-08-19", { id: ATTEMPT_1, score: 42 }),
+      attemptRow(PLAYER_A, "2026-08-18", {
+        id: ATTEMPT_2,
+        kind: "catchup",
+        finalizeReason: "quit",
+        score: 12,
+        issuedAt: new Date("2026-08-19T08:00:00.000Z"),
+      }),
+      attemptRow(PLAYER_A, "2026-08-17", { id: ATTEMPT_3, finalizeReason: "expired", score: 0 }),
+    );
+    answerRows.push(
+      answerRow(ATTEMPT_1, 5_000),
+      answerRow(ATTEMPT_1, 7_000),
+      answerRow(ATTEMPT_1, null),
+      answerRow(ATTEMPT_2, 3_000),
+      answerRow(ATTEMPT_3, null),
+    );
+
+    const response = await authed(tokenA, "/app/me/history");
+    const body = appHistoryPageResponseSchema.parse(await response.json());
+    const competitionLine = {
+      type: SessionTypeEnum.COMPETITION,
+      themeId: "geo",
+      themeName: "Géographie",
+      category: null,
+      questionCount: 10,
+    };
+    expect(body).toEqual({
+      sessions: [
+        {
+          ...competitionLine,
+          id: ATTEMPT_1,
+          score: 42,
+          durationMs: 12_000,
+          playedAt: "2026-08-19T10:00:00.000Z",
+        },
+        {
+          ...competitionLine,
+          id: ATTEMPT_2,
+          score: 12,
+          durationMs: 3_000,
+          playedAt: "2026-08-19T08:00:00.000Z",
+        },
+        {
+          ...competitionLine,
+          id: ATTEMPT_3,
+          score: 0,
+          durationMs: null,
+          playedAt: "2026-08-17T10:00:00.000Z",
+        },
+      ],
+      nextBefore: null,
+    });
+  });
+
+  it("GET /app/me/history names a deleted Theme's line by its captured name, without a Category", async () => {
+    sessionRows.push(sessionRow(SESSION_1, PLAYER_A, { themeName: "Géo" }));
+
+    const response = await authed(tokenA, "/app/me/history");
+    const body = appHistoryPageResponseSchema.parse(await response.json());
+    expect(body.sessions).toEqual([
+      expect.objectContaining({ themeId: "geo", themeName: "Géo", category: null }),
+    ]);
+  });
+
+  it("GET /app/me/history leaves out active Attempts, dead ones included, and another Player's rows", async () => {
+    attemptRows.push(
+      attemptRow(PLAYER_A, "2026-08-20", {
+        id: ATTEMPT_1,
+        status: "active",
+        finalizeReason: null,
+        score: null,
+      }),
+      attemptRow(PLAYER_A, "2026-08-18", {
+        id: ATTEMPT_2,
+        status: "active",
+        finalizeReason: null,
+        score: null,
+      }),
+      attemptRow(PLAYER_B, "2026-08-19", { id: ATTEMPT_3 }),
+    );
+    sessionRows.push(sessionRow(SESSION_1, PLAYER_B));
+
+    const response = await authed(tokenA, "/app/me/history");
+    expect(await response.json()).toEqual({ sessions: [], nextBefore: null });
+  });
+
+  it("GET /app/me/history pages 21 lines of both kinds newest first, owner never on the wire", async () => {
+    const minute = (index: number) => new Date(Date.UTC(2026, 7, 1, 0, index));
+    for (let index = 0; index < 21; index += 1) {
+      if (index % 2 === 0) {
+        sessionRows.push(sessionRow(numberedId(1, index), PLAYER_A, { finishedAt: minute(index) }));
+      } else {
+        attemptRows.push(
+          attemptRow(PLAYER_A, "2026-08-01", { id: numberedId(2, index), issuedAt: minute(index) }),
+        );
+      }
+    }
+
+    const first = await authed(tokenA, "/app/me/history");
+    const firstText = await first.text();
+    expect(firstText).not.toContain("owner");
+    const firstPage = appHistoryPageResponseSchema.parse(JSON.parse(firstText));
+    expect(firstPage.sessions.map((line) => line.playedAt)).toEqual(
+      Array.from({ length: 20 }, (_, offset) => minute(20 - offset).toISOString()),
+    );
+    expect(firstPage.nextBefore).toBe(minute(1).toISOString());
+
+    const second = await authed(tokenA, `/app/me/history?before=${firstPage.nextBefore}`);
+    const secondPage = appHistoryPageResponseSchema.parse(await second.json());
+    expect(secondPage.sessions.map((line) => line.id)).toEqual([numberedId(1, 0)]);
+    expect(secondPage.nextBefore).toBeNull();
   });
 
   it("POST /app/me/quiz-sessions stores the batch under the JWT sub, ignoring a body owner", async () => {
