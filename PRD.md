@@ -180,7 +180,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (History, Quiz Sess
       "features/account/constants.ts holds HISTORY_SIGNED_OUT « Connecte-toi pour retrouver ton historique. », HISTORY_EMPTY « Aucune partie pour le moment. », HISTORY_ERROR « Impossible de charger ton historique. », the questions unit, the minute and second units",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

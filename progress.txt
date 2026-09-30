@@ -49,3 +49,13 @@
 - KNIP RISK: useHistory has no consumer until item 9 (history.tsx); host `knip --fix` would strip its export. Do item 9 before the host check, or re-export after.
 - Checks: typecheck all, tests non-api green (mobile 351), biome clean (pre-existing warnings only). API untouched.
 - Next: item 8 (pure historySections, durationFigure, copy), then item 9 (page).
+
+## Item 8 — pure historySections, durationFigure, History copy (done)
+- history-sections.ts: historySections(sessions, today) → { title, data }[]. Device-local day (getFullYear/Month/Date), yesterday via Date(y, m, d-1) (DST-safe). Titles « Aujourd'hui » / « Hier » / fr-FR weekday+day+month, + year outside today's year. Groups consecutive lines by title (a title names exactly one day; pages are newest first so a day's lines are contiguous). Section type kept private.
+- stat-figures.ts durationFigure(ms): floor seconds; « 45 s », « 1 min », « 2 min 13 s ».
+- constants.ts: HISTORY_SIGNED_OUT / HISTORY_EMPTY / HISTORY_ERROR, HISTORY_TODAY / HISTORY_YESTERDAY (headings are copy too), HISTORY_QUESTIONS_UNIT « questions », DURATION_MINUTE_UNIT « min », DURATION_SECOND_UNIT « s ». constants.test non-empty list gains the three captions.
+- Tests: history-sections.test (empty, today/yesterday across midnight, same-year « lundi 28 septembre », previous-year « mercredi 31 décembre 2025 », one-day grouping in order), stat-figures.test durationFigure. Dates built with local constructors → TZ-independent.
+- NOT COMMITTED, not mine: working tree had api.ts `useHistory` un-exported (looks like a host knip --fix, the risk noted in item 7) → biome noUnusedVariables warning. Left out of this commit. Item 9 needs `export` back on useHistory.
+- KNIP RISK grows: HISTORY_QUESTIONS_UNIT, HISTORY_TODAY/YESTERDAY via historySections, durationFigure, historySections have no app consumer until item 9. Run knip only after item 9.
+- Checks: typecheck all, tests non-api green (mobile 359), biome clean on our files (pre-existing warnings + the api.ts one above). API untouched.
+- Next: item 9 (history.tsx page, history-row, category-label extraction, section header).
