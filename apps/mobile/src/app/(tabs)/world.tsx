@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import { StyleSheet, useWindowDimensions, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { useMainHeaderHeight } from "@/components/main-header";
+import { MAIN_SUB_HEADER_VISIBLE_HEIGHT } from "@/components/main-sub-header";
 import { useTabScroll } from "@/components/tab-scroll";
 import { iconNameOrFallback } from "@/components/ui/icon-name";
 import { ScreenError } from "@/components/ui/screen-error";
@@ -32,7 +33,7 @@ import { COLORS, GUTTER, SPACE } from "@/theme/tokens";
 
 export default function Page() {
   const router = useRouter();
-  const headerHeight = useMainHeaderHeight();
+  const headerHeight = useMainHeaderHeight() + MAIN_SUB_HEADER_VISIBLE_HEIGHT;
   const owner = useAuthStore((state) => state.session?.user.id);
   const day = useCompetitionDay(owner);
   const profile = useProfile(owner);

@@ -4,7 +4,6 @@ export const PROFILE_STATS_TAB_LABEL = "Stats";
 export const PROFILE_HISTORY_TAB_LABEL = "Historique";
 // App Store 5.1.1(v): the tab must read as account settings, or Review cannot find the deletion.
 export const PROFILE_ACCOUNT_TAB_LABEL = "Compte";
-export const PROFILE_SIGNED_OUT_NAME = "Pas connecté";
 export const PROFILE_STATS_EMPTY = "Aucune statistique pour le moment.";
 export const PROFILE_STATS_ERROR = "Impossible de charger tes statistiques.";
 export const STATS_GAMES_TITLE = "Parties jouées";

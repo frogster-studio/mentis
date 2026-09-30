@@ -5,8 +5,8 @@ import { TEXT } from "@/theme/text";
 import { COLORS, RADIUS } from "@/theme/tokens";
 import { gradient } from "@/utils/gradient";
 
-const MARK_SIZE = 48;
-const HEAD_SIZE = 50;
+const MARK_SIZE = 32;
+const HEAD_SIZE = 26;
 
 export interface ProfilePortraitProps {
   photoUrl: string | null;
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
     ),
   },
   neutral: { backgroundColor: COLORS.primary },
-  initial: { ...TEXT.profilePortraitInitial, color: COLORS.ink },
+  initial: { ...TEXT.statValue, color: COLORS.ink },
   head: {
     width: HEAD_SIZE,
     height: HEAD_SIZE,

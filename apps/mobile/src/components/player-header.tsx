@@ -32,6 +32,7 @@ export const PlayerHeader = ({ isWorld }: PlayerHeaderProps) => {
     <>
       <MainHeader
         isDark={isWorld}
+        paperColor={isWorld ? COLORS.ink : COLORS.background}
         subHeader={
           <MainSubHeader>
             <Text style={styles.title} numberOfLines={2}>

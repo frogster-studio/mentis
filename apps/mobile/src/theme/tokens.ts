@@ -15,6 +15,7 @@ export const COLORS = {
   catchup: "#60A5FA",
   catchupWash: "#DDE5D7",
   catchupMist: "#C4DFF0",
+  catchupTrack: "#B3D2E5",
   success: "#22C55E",
   danger: "#EF4444",
   scrim: "rgba(37, 3, 19, 0.4)",

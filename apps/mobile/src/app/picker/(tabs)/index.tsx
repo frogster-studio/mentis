@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useMainHeaderHeight } from "@/components/main-header";
+import { MAIN_SUB_HEADER_VISIBLE_HEIGHT } from "@/components/main-sub-header";
 import { usePicker } from "@/components/quiz/picker-provider";
 import { useTabScroll } from "@/components/tab-scroll";
 import { ScreenError } from "@/components/ui/screen-error";
@@ -17,7 +18,7 @@ export default function Page() {
   // One Draw per visit: recomputed on every mount, stable while the screen stays up.
   const draw = useMemo(() => (data ? drawThemes(data, Math.random) : []), [data]);
   const { selected, select } = usePicker();
-  const headerHeight = useMainHeaderHeight();
+  const headerHeight = useMainHeaderHeight() + MAIN_SUB_HEADER_VISIBLE_HEIGHT;
   const onScroll = useTabScroll();
 
   // The Draw warms the image cache as it renders, so the Reveal of whichever Theme wins is instant.

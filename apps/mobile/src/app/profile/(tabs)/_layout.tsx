@@ -1,12 +1,11 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Tabs } from "expo-router/js-tabs";
 import { StyleSheet, View } from "react-native";
-import { ProfileBottomFade } from "@/components/account/profile-bottom-fade";
-import { BottomTabBar, TAB_ICON_SIZE } from "@/components/bottom-tab-bar";
+import { ProfileBackground } from "@/components/account/profile-background";
+import { ProfileHeader } from "@/components/account/profile-header";
+import { ProfileTabBar } from "@/components/account/profile-tab-bar";
+import { TAB_ICON_SIZE } from "@/components/bottom-tab-bar";
 import { useTabSlide } from "@/components/tab-slide";
-import { PaperBackground } from "@/components/ui/paper-background";
-import { ProfileHeader } from "@/features/account/components/profile-header";
-import { ProfileWash } from "@/features/account/components/profile-wash";
 import {
   PROFILE_ACCOUNT_TAB_LABEL,
   PROFILE_HISTORY_TAB_LABEL,
@@ -20,19 +19,11 @@ export default function Layout() {
   return (
     <View style={styles.shell}>
       {/* One paper and wash for every tab, under the clear scenes, so neither rides the slide. */}
-      <PaperBackground isDark={false} />
-      <ProfileWash />
-      {/* Above the scenes, not over them, so the card holds still while the tabs slide under it. */}
-      <ProfileHeader />
+      <ProfileBackground />
       {/* Back leaves Profile for the Home or World it was opened from, never an earlier tab. */}
       <Tabs
         backBehavior="none"
-        tabBar={(props) => (
-          <>
-            <ProfileBottomFade />
-            <BottomTabBar {...props} isDark={false} trackColor={"#B3D2E5"} />
-          </>
-        )}
+        tabBar={(props) => <ProfileTabBar {...props} />}
         screenOptions={{ headerShown: false, sceneStyle: styles.scene, ...slide }}
       >
         <Tabs.Screen
@@ -63,6 +54,7 @@ export default function Layout() {
           }}
         />
       </Tabs>
+      <ProfileHeader />
     </View>
   );
 }
