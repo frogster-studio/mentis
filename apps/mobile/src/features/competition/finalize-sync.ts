@@ -1,3 +1,4 @@
+import { accountKeys } from "@/features/account/api";
 import { useAuthStore } from "@/features/account/auth-store";
 import { queryClient } from "@/lib/query-client";
 import { useDrainOnTriggers } from "@/lib/use-drain-on-triggers";
@@ -15,6 +16,8 @@ export async function drainFinalizeOutbox(playerId: string): Promise<void> {
     } catch (error) {
       if (isPermanentRefusal(error)) {
         useFinalizeOutboxStore.getState().ack(batch.attemptId);
+        // An ATTEMPT_EXPIRED refusal means the API already buried it as a zero History line.
+        void queryClient.invalidateQueries({ queryKey: accountKeys.history(playerId) });
       }
       // Anything else is transient: the batch waits for the next trigger.
     }

@@ -168,7 +168,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (History, Quiz Sess
       "outbox-sync.ts invalidates accountKeys.history(playerId) beside the stats on a Quiz Session ack; finalize-sync.ts invalidates it after a finalize ack; transfer-sync.ts is untouched",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

@@ -40,3 +40,12 @@
 - e2e: fake repo gains findQuizSessionsBefore / findFinalizedAttemptsBefore (SUM semantics over answerRows), attemptRow default questionIds (10), numberedId helper (batchSessionId now uses it). Tests: 401, bad before ×2 → 400, empty, practice line full shape, 3 finalized Attempts (completed/quit catchup/expired: score, 10 questions, elapsed sum, issuedAt), deleted Theme, active + dead + other Player excluded, 21 lines paged 20 + 1 with owner off the wire.
 - Checks: typecheck all, tests non-api green, api 477 via no-swc workaround, biome clean (pre-existing warnings only).
 - Next: item 7 (mobile useHistory infinite query + seam request + invalidations) — or item 8 (pure sections/figures/copy); 7 first (integration).
+
+## Item 7 — mobile useHistory (done)
+- requests.ts: historyPageRequest(before) GET /app/me/history query { before } (seam drops undefined → no query string), fetchHistoryPage parses appHistoryPageResponseSchema. requests.test: path, no query for newest, before param, parsed page with owner stripped.
+- api.ts: accountKeys.history(playerId) under ACCOUNT_QUERY_ROOT (persisted); useHistory = useInfiniteQuery, initialPageParam `undefined as string | undefined` (TPageParam inference), getNextPageParam nextBefore ?? undefined, enabled signed in, default staleTime.
+- Invalidations: outbox-sync seedAckedSessions beside stats. Finalize ack: DEVIATION from PRD wording — put in pushFinalize (competition/api.ts) beside stats, since both useTranscript (online completion) and drainFinalizeOutbox go through it; finalize-sync alone would miss the online path. finalize-sync also invalidates on a permanent-refusal ack (ATTEMPT_EXPIRED = server already zero-finalized it into a line). transfer-sync untouched.
+- Note: zero-finalize of dead days happens server-side on any Competition touch, no client ack → that line shows once the History is stale (accepted by PRD focus rule).
+- KNIP RISK: useHistory has no consumer until item 9 (history.tsx); host `knip --fix` would strip its export. Do item 9 before the host check, or re-export after.
+- Checks: typecheck all, tests non-api green (mobile 351), biome clean (pre-existing warnings only). API untouched.
+- Next: item 8 (pure historySections, durationFigure, copy), then item 9 (page).

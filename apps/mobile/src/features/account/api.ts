@@ -1,6 +1,6 @@
 import { appAccountStatsResponseSchema } from "@mentis/contracts/app";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { fetchProfile, setPseudo } from "@/features/account/requests";
+import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+import { fetchHistoryPage, fetchProfile, setPseudo } from "@/features/account/requests";
 import { api } from "@/lib/api";
 import { ACCOUNT_QUERY_ROOT, LONG_STALE_TIME_MS, queryClient } from "@/lib/query-client";
 
@@ -8,6 +8,7 @@ import { ACCOUNT_QUERY_ROOT, LONG_STALE_TIME_MS, queryClient } from "@/lib/query
 export const accountKeys = {
   stats: (playerId: string) => [ACCOUNT_QUERY_ROOT, "stats", playerId] as const,
   profile: (playerId: string) => [ACCOUNT_QUERY_ROOT, "profile", playerId] as const,
+  history: (playerId: string) => [ACCOUNT_QUERY_ROOT, "history", playerId] as const,
 };
 
 export function useAccountStats(playerId: string | undefined) {
@@ -15,6 +16,17 @@ export function useAccountStats(playerId: string | undefined) {
     queryKey: accountKeys.stats(playerId ?? ""),
     queryFn: () =>
       api.requestJson({ method: "GET", path: "/app/me/stats" }, appAccountStatsResponseSchema),
+    enabled: playerId !== undefined,
+  });
+}
+
+// Under the persisted root, every loaded page reads offline; the acks invalidate it, never a local line.
+export function useHistory(playerId: string | undefined) {
+  return useInfiniteQuery({
+    queryKey: accountKeys.history(playerId ?? ""),
+    queryFn: ({ pageParam }) => fetchHistoryPage(api, pageParam),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (page) => page.nextBefore ?? undefined,
     enabled: playerId !== undefined,
   });
 }
