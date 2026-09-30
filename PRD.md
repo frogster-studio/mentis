@@ -142,7 +142,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (History, Quiz Sess
       "player.repository.spec.ts: the generated SQL carries the owner parameter, the status filter, the order, the limit and the elapsed sum; a null before emits no cursor predicate",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "api",
