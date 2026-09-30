@@ -1,18 +1,43 @@
 import { describe, expect, it } from "vitest";
-import { type AccountSession, foldAccountStats } from "./account-stats";
+import type { Category } from "@/types/quiz";
 import {
+  accountTallies,
   entriesForOwner,
   type Outbox,
   type OutboxEntry,
   outboxPracticeDays,
   outboxReducer,
-  overlaySessions,
-  toAccountSession,
+  pushRow,
   withAckedSessions,
+  withPracticeSessions,
 } from "./outbox";
+import type { ThemeTally } from "./theme-tallies";
 
 const OWNER = "owner-a";
 const OTHER = "owner-b";
+
+const GEOGRAPHIE: Category = {
+  id: "geographie",
+  name: "Géographie",
+  color: "#1565c0",
+  secondaryColor: "#e3f2fd",
+  icon: "public",
+};
+
+const NO_COMPETITION: ThemeTally["competition"] = {
+  attemptCount: 0,
+  judgedCount: 0,
+  totalPoints: 0,
+  bestScore: null,
+};
+
+function practiceTally(
+  themeId: string,
+  themeName: string,
+  practice: ThemeTally["practice"],
+): ThemeTally {
+  return { themeId, themeName, category: GEOGRAPHIE, practice, competition: NO_COMPETITION };
+}
 
 function entry(overrides: Partial<OutboxEntry> = {}): OutboxEntry {
   return {
@@ -20,6 +45,7 @@ function entry(overrides: Partial<OutboxEntry> = {}): OutboxEntry {
     owner: OWNER,
     themeId: "geo",
     themeName: "Géographie",
+    category: GEOGRAPHIE,
     points: 35,
     finishedAt: "2026-07-22T10:00:00.000Z",
     ...overrides,
@@ -105,44 +131,93 @@ describe("entriesForOwner — the drained batch and the fold overlay", () => {
   });
 });
 
-describe("toAccountSession — the overlay shape", () => {
-  it("maps a queued entry to the AccountSession the fold overlays", () => {
-    expect(
-      toAccountSession(entry({ themeId: "geo", themeName: "Géographie", points: 35 })),
-    ).toStrictEqual({ themeId: "geo", themeName: "Géographie", points: 35 });
+describe("pushRow — the push body", () => {
+  it("carries neither the owner nor the captured Category", () => {
+    expect(pushRow(entry())).toStrictEqual({
+      id: "session-1",
+      themeId: "geo",
+      themeName: "Géographie",
+      points: 35,
+      finishedAt: "2026-07-22T10:00:00.000Z",
+    });
   });
 });
 
-describe("overlaySessions — the id-reconciled optimistic overlay", () => {
-  it("maps the owner’s pending rows to the fold shape when nothing is synced yet", () => {
-    const state = [
-      entry({ id: "s1", themeId: "geo", themeName: "Géographie", points: 30 }),
-      entry({ id: "s2", themeId: "simpson", themeName: "Les Simpson", points: 40 }),
+describe("withPracticeSessions — a session folds into its Theme's practice", () => {
+  it("moves the count, the points and the best of the Theme's row", () => {
+    const themes = [
+      practiceTally("geo", "Géographie", { sessionCount: 2, totalPoints: 60, bestScore: 30 }),
     ];
-    expect(overlaySessions(state, OWNER, new Set())).toStrictEqual([
-      { themeId: "geo", themeName: "Géographie", points: 30 },
-      { themeId: "simpson", themeName: "Les Simpson", points: 40 },
+    expect(
+      withPracticeSessions(themes, [entry({ points: 40 }), entry({ points: 10 })]),
+    ).toStrictEqual([
+      practiceTally("geo", "Géographie", { sessionCount: 4, totalPoints: 110, bestScore: 40 }),
     ]);
   });
 
-  it("drops a pending row a pull has already landed, so a session in flight counts once", () => {
-    const state = [entry({ id: "s1", points: 30 }), entry({ id: "s2", points: 40 })];
-    // s1 already sits in the synced pull → only s2 stays on the overlay.
-    expect(overlaySessions(state, OWNER, new Set(["s1"]))).toStrictEqual([
-      { themeId: "geo", themeName: "Géographie", points: 40 },
+  it("gives a Theme whose best is unknown the session's points as its best", () => {
+    const themes = [
+      practiceTally("geo", "Géographie", { sessionCount: 3, totalPoints: 90, bestScore: null }),
+    ];
+    expect(withPracticeSessions(themes, [entry({ points: 20 })])[0]?.practice.bestScore).toBe(20);
+  });
+
+  it("keeps the Account's name, Category and competition figures on a known Theme", () => {
+    const competition = { attemptCount: 2, judgedCount: 1, totalPoints: 30, bestScore: 30 };
+    const themes: ThemeTally[] = [
+      {
+        themeId: "geo",
+        themeName: "Géographie du monde",
+        category: null,
+        practice: { sessionCount: 0, totalPoints: 0, bestScore: null },
+        competition,
+      },
+    ];
+    expect(withPracticeSessions(themes, [entry({ points: 25 })])).toStrictEqual([
+      {
+        themeId: "geo",
+        themeName: "Géographie du monde",
+        category: null,
+        practice: { sessionCount: 1, totalPoints: 25, bestScore: 25 },
+        competition,
+      },
     ]);
   });
 
-  it("never overlays another Account’s rows", () => {
-    const state = [entry({ id: "s1", owner: OTHER }), entry({ id: "s2", owner: OWNER })];
-    expect(overlaySessions(state, OWNER, new Set())).toStrictEqual([
-      { themeId: "geo", themeName: "Géographie", points: 35 },
+  it("creates the row of a Theme the Account lacks, with the entry's captured Category", () => {
+    expect(
+      withPracticeSessions([], [entry({ themeId: "alpes", themeName: "Les Alpes", points: 15 })]),
+    ).toStrictEqual([
+      practiceTally("alpes", "Les Alpes", { sessionCount: 1, totalPoints: 15, bestScore: 15 }),
     ]);
   });
 
-  it("is empty once every pending row is synced", () => {
-    const state = [entry({ id: "s1" }), entry({ id: "s2" })];
-    expect(overlaySessions(state, OWNER, new Set(["s1", "s2"]))).toStrictEqual([]);
+  it("never mutates the Account's tallies", () => {
+    const themes = [
+      practiceTally("geo", "Géographie", { sessionCount: 1, totalPoints: 10, bestScore: 10 }),
+    ];
+    const snapshot = structuredClone(themes);
+    withPracticeSessions(themes, [entry()]);
+    expect(themes).toStrictEqual(snapshot);
+  });
+});
+
+describe("accountTallies — the Account's themes overlaid with its pending sessions", () => {
+  it("overlays only the owner's pending sessions", () => {
+    const state = [
+      entry({ id: "s1", owner: OTHER, points: 50 }),
+      entry({ id: "s2", owner: OWNER, points: 30 }),
+    ];
+    expect(accountTallies([], state, OWNER)).toStrictEqual([
+      practiceTally("geo", "Géographie", { sessionCount: 1, totalPoints: 30, bestScore: 30 }),
+    ]);
+  });
+
+  it("is the Account's themes as read when nothing is pending", () => {
+    const themes = [
+      practiceTally("geo", "Géographie", { sessionCount: 1, totalPoints: 10, bestScore: 10 }),
+    ];
+    expect(accountTallies(themes, [], OWNER)).toStrictEqual(themes);
   });
 });
 
@@ -155,21 +230,20 @@ describe("outboxPracticeDays — the Practice Streak overlay", () => {
 
 describe("withAckedSessions — the Account world an ack seeds", () => {
   const stats = {
-    baselines: [],
-    sessions: [{ id: "pulled", themeId: "geo", themeName: "Géographie", points: 30 }],
+    themes: [
+      practiceTally("geo", "Géographie", { sessionCount: 1, totalPoints: 30, bestScore: 30 }),
+    ],
     practiceStreak: { lastDay: "2026-07-21", length: 2, longest: 4 },
     competitionStreak: { lastDay: null, length: 0, longest: 0 },
   };
 
-  it("adds the acked session and extends the Practice Streak with its Paris day", () => {
-    const seeded = withAckedSessions(stats, [entry()]);
-    expect(seeded.sessions.map((session) => session.id)).toStrictEqual(["pulled", "session-1"]);
+  it("folds the acked session into its Theme and extends the Practice Streak with its Paris day", () => {
+    const seeded = withAckedSessions(stats, [entry({ points: 40 })]);
+    expect(seeded.themes).toStrictEqual([
+      practiceTally("geo", "Géographie", { sessionCount: 2, totalPoints: 70, bestScore: 40 }),
+    ]);
     expect(seeded.practiceStreak).toStrictEqual({ lastDay: "2026-07-22", length: 3, longest: 4 });
     expect(seeded.competitionStreak).toBe(stats.competitionStreak);
-  });
-
-  it("leaves the stats untouched when a pull already landed every acked row", () => {
-    expect(withAckedSessions(stats, [entry({ id: "pulled" })])).toBe(stats);
   });
 });
 
@@ -199,30 +273,27 @@ describe("replay-idempotence invariant — a flaky push never corrupts totals", 
   });
 
   it("conserves totals through an ugly network dance: each session counts once — never twice, never zero", () => {
-    // At every step fold(synced ∪ pending) must equal fold(all finished sessions).
+    // At every step the acked tallies overlaid with the queue must equal every finished session.
     const finished: OutboxEntry[] = [
       entry({ id: "s1", themeId: "geo", themeName: "Géographie", points: 30 }),
       entry({ id: "s2", themeId: "geo", themeName: "Géographie", points: 20 }),
       entry({ id: "s3", themeId: "simpson", themeName: "Les Simpson", points: 40 }),
     ];
-    const truth = foldAccountStats([], finished.map(toAccountSession), []);
+    const truth = withPracticeSessions([], finished);
 
     let queue: Outbox = [];
-    const synced: AccountSession[] = [];
-    const assertConserved = () =>
-      expect(
-        foldAccountStats([], synced, entriesForOwner(queue, OWNER).map(toAccountSession)),
-      ).toStrictEqual(truth);
+    let acked: ThemeTally[] = [];
+    const assertConserved = () => expect(accountTallies(acked, queue, OWNER)).toStrictEqual(truth);
     const ackBatch = (ids: string[]) => {
       const removed = queue.filter((e) => ids.includes(e.id));
       queue = outboxReducer(queue, { type: "ack", ids });
-      synced.push(...removed.map(toAccountSession));
+      acked = withPracticeSessions(acked, removed);
     };
 
     for (const e of finished) {
       queue = outboxReducer(queue, { type: "enqueue", entry: e });
     }
-    assertConserved(); // all three pending, none synced
+    assertConserved(); // all three pending, none acked
 
     ackBatch([]); // a failed push acks nothing → pure retention
     assertConserved();

@@ -41,6 +41,8 @@ export function useAttempt(
             const attempt = await resumeOrIssueAttempt(api, kind);
             // The drawn Theme may be newer than any cached list, so issuance itself warms its image.
             prefetchThemeImages([attempt.imageUrl]);
+            // An Attempt counts as a game from its issuance, before any judge.
+            void queryClient.invalidateQueries({ queryKey: accountKeys.stats(playerId ?? "") });
             return attempt;
           },
     enabled: playerId !== undefined,

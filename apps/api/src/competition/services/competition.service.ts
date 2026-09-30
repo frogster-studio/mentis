@@ -42,7 +42,13 @@ import type { DrawnTheme } from "../types/drawn-theme";
 import type { NewCompetitionAnswer } from "../types/new-competition-answer";
 import type { ServedAttempt } from "../types/served-attempt";
 import { CLOCK } from "../utils/clock";
-import { competitionDay, daysBefore, seasonBounds, sharesSeason } from "../utils/competition-day";
+import {
+  competitionDay,
+  daysBefore,
+  isDeadAttempt,
+  seasonBounds,
+  sharesSeason,
+} from "../utils/competition-day";
 import { offersCatchUp, offersReplay } from "../utils/day-offers";
 import { judgeAttempt } from "../utils/judge-attempt";
 import {
@@ -283,8 +289,7 @@ export class CompetitionService {
     day: string,
   ): Promise<CompetitionAttemptEntity[]> {
     const active = await this.competitionRepository.findActiveAttempts(owner);
-    // Alive until the Paris midnight after its issuance — a Catch-up is issued the day after its own.
-    const isDead = (attempt: CompetitionAttemptEntity) => competitionDay(attempt.issuedAt) < day;
+    const isDead = (attempt: CompetitionAttemptEntity) => isDeadAttempt(attempt.issuedAt, day);
     await Promise.all(active.filter(isDead).map((attempt) => this.zeroFinalize(attempt)));
     return active.filter((attempt) => !isDead(attempt));
   }

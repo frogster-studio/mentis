@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   segment: {
     flex: 1,
     height: SEGMENT_HEIGHT,
-    backgroundColor: COLORS.divider,
+    backgroundColor: COLORS.background,
   },
   segmentPast: {
     backgroundColor: COLORS.inkMuted,

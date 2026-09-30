@@ -4,13 +4,12 @@ import { fetchProfile, setPseudo } from "@/features/account/requests";
 import { api } from "@/lib/api";
 import { ACCOUNT_QUERY_ROOT, LONG_STALE_TIME_MS, queryClient } from "@/lib/query-client";
 
-// Keyed by Player id so one Player's shelf never bleeds into another's; the wire ignores the id.
+// Keyed by Player id so one Player's stats never bleed into another's; the wire ignores the id.
 export const accountKeys = {
   stats: (playerId: string) => [ACCOUNT_QUERY_ROOT, "stats", playerId] as const,
   profile: (playerId: string) => [ACCOUNT_QUERY_ROOT, "profile", playerId] as const,
 };
 
-// Sessions arrive oldest-first, so the fold's last-name-wins yields the freshest Theme name.
 export function useAccountStats(playerId: string | undefined) {
   return useQuery({
     queryKey: accountKeys.stats(playerId ?? ""),

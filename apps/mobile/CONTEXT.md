@@ -77,15 +77,23 @@ The 10 Themes offered on the picker screen after « Commencer », sampled unifor
 _Avoid_: random themes, selection
 
 **Theme Average**:
-The average of the Player's finished Quiz Session scores in one Theme, out of 50. Shown on the home screen only for Themes played at least once, sorted descending; unplayed Themes don't appear there.
+The average of the scores the Player holds in one Theme, out of 50 — Finished Quiz Sessions and judged Attempts alike, shown rounded to the nearest integer. French UI label: « moy. ».
 _Avoid_: score (alone), stats, best score
 
+**Theme Best**:
+The highest score the Player holds in one Theme, out of 50, across Finished Quiz Sessions and judged Attempts. French UI label: « meilleur score ».
+_Avoid_: high score, record
+
+**Overall Average**:
+The average of every score the Player holds, all Themes together, out of 50 — Finished Quiz Sessions and judged Attempts alike, shown rounded to the nearest integer. French UI label: « Score moyen ».
+_Avoid_: global score, mean
+
 **Device Stats**:
-The per-Theme stats and the practice days a device accumulates while no one is signed in. Shown on home when signed out; they leave the device only through a Stats Transfer.
+The per-Theme stats and the practice days a device accumulates while no one is signed in. Shown in « Profil › Stats » when signed out; they leave the device only through a Stats Transfer.
 _Avoid_: local stats, history
 
 **Account Stats**:
-All Quiz Sessions recorded under an Account across its devices, plus any transferred Device Stats. Shown on home while signed in.
+Everything recorded under an Account across its devices: its Quiz Sessions, any transferred Device Stats and its competition record. Shown in « Profil › Stats » while signed in.
 _Avoid_: cloud stats, synced stats
 
 **Stats Transfer**:

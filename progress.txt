@@ -1,90 +1,87 @@
-## Item 1 — PracticeDayEntity (done)
-- practice_days: id uuid, owner uuid (ManyToOne AuthUserEntity CASCADE), device uuid, day date (string, as competition_attempts.day), created/updated.
-- @Unique("practice_days_one_per_device_day", [owner, device, day]); copied stat-baseline.entity.ts (closest sibling: same owner/device shape).
-- Registration: typeorm.client.ts globs entities/*.entity.ts, knip treats them as entries. NOT added to PlayerModule forFeature yet — item 5 adds it with its repository use.
-- schema-constraints.spec.ts: natural-key test beside the baseline one.
-- Files: apps/api/src/_database/entities/practice-day.entity.ts, apps/api/src/_database/_tests/schema-constraints.spec.ts.
-- Next: Hugo runs migration:generate + migration:run, then the RLS snippet from PRD Human steps, before items 4/5 hit a real DB.
+## Item 1 — StatBaselineEntity.bestScore (done)
+- Added `bestScore: number | null`, `@Column({ type: "integer", name: "best_score", nullable: true })`, same shape as competition-attempt `score` / competition-answer `client_elapsed_ms`.
+- No migration touched. schema-constraints.spec.ts untouched, still green (unique is owner/device/themeId, unaffected).
+- Files: apps/api/src/_database/entities/stat-baseline.entity.ts
+- Next: HUMAN STEP — Hugo runs migration:generate + migration:run in apps/api before items 4/5 hit a real DB. Items 2/3 don't need the DB.
 
-## Item 2 — Streak contract + practice-days push input (done)
-- account.ts: private streakSchema { lastDay: iso date | null, length, longest } refined longest >= length; published type AppStreak (as AppCompetitionDayAttempt). appAccountStatsResponseSchema gains practiceStreak + competitionStreak. appPracticeDayPushInputSchema: array of { device uuid, day iso date }, max MAX_PUSH_BATCH.
-- Required fields broke the API parse, so the mapper takes { practiceStreak, competitionStreak } and PlayerService.stats passes a NO_STREAK constant for both. PLACEHOLDER: item 4 replaces NO_STREAK with the repository days through item 3's pure function (and can drop NO_STREAK if the pure function's empty result covers it).
-- e2e "never returns another Player's rows" now expects both zero Streaks (stays true after item 4).
-- mobile outbox-sync seedAckedSessions: spreads previous, and skips seeding when the stats cache was never loaded (used to invent a shelf with baselines []; the next pull brings the acked rows anyway).
-- Note for item 9: acked sessions leave the outbox, so the overlay stops extending the Practice Streak while the cached practiceStreak is still the pre-push one. seedAckedSessions should merge the acked Paris days into practiceStreak (or invalidate stats).
-- Sandbox: biome linux binary not in node_modules; ran ~/.bun/install/cache/@biomejs/cli-linux-arm64@2.5.6@@@1/biome check . instead. Contracts vitest once flaked on a missing zod locale file (FS), green on rerun.
-- Files: packages/contracts/src/app/account.ts, account.spec.ts, apps/api/src/player/mappers/player.mapper.ts, services/player.service.ts, _tests/app-me.e2e-spec.ts, apps/mobile/src/features/quiz/outbox-sync.ts.
+## Item 2 — contracts: themes tallies + baseline push bestScore (done)
+- account.ts: private `themeTallySchema` (themeId, themeName, category appCategorySchema|null, practice {sessionCount,totalPoints,bestScore}, competition {attemptCount,judgedCount,totalPoints,bestScore}); refine judged<=attempts (on competition, path judgedCount) + refine sessionCount+attemptCount>0. `themes` added to appAccountStatsResponseSchema beside baselines/sessions.
+- bestScoreSchema = int 0..MAX_SCORE nullable; MAX_SCORE now exported from competition.ts (was private, =50) rather than a second literal 50.
+- bestScore added ONLY to the push schema (statBaselineSchema.extend) — response `baselines` unchanged, they leave in item 10.
+- API mapper answers `themes: []`. Service still ignores bestScore on push (item 5 stores it). e2e `pushedBaseline` fixture gains `bestScore: null` so pushes stay 204.
+- Mobile: `TransferBaseline` alias deleted; buildTransferBaselines returns AppStatBaselinePushInput with `bestScore: null` (item 7 fills the real best) — otherwise the phone would 400 on transfer. outbox.test stats fixture gains `themes: []`.
+- Files: packages/contracts/src/app/{account,account.spec,competition}.ts, apps/api/src/player/{mappers/player.mapper.ts,_tests/app-me.e2e-spec.ts}, apps/mobile/src/features/quiz/{stats-transfer,stats-transfer.test,outbox.test}.ts
+- Sandbox note: biome linux binary missing from node_modules; run `BIOME_BINARY=$(ls ~/.bun/install/cache/@biomejs/cli-linux-arm64@2.5.6@@@1/biome) bunx @biomejs/biome check .` (4 pre-existing warnings, untouched files). API tests not run here.
 
-## Item 3 — streakFromDays pure function (done)
-- apps/api/src/player/utils/streak.ts: streakFromDays(days: string[]): AppStreak. Dedupes + sorts itself (item wants unsorted/dup input tolerated), consecutive = UTC day-number diff of 1 (dates are plain Paris calendar dates, so no DST issue).
-- Lives in player/ (the stats feature owns both Streaks), not competition/; spec in player/_tests/streak.spec.ts, same shape as leaderboard.spec.ts. Did not reuse competition-day daysBefore to avoid a player -> competition util import (competition already depends on player).
-- Not wired yet: item 4 replaces NO_STREAK in PlayerService.stats with streakFromDays(repository days) and drops NO_STREAK.
-- Sandbox: api vitest can't load swc native binary; ran the spec through a throwaway plain vitest config (no decorators in it) — 5/5 green. Host runs full check.
-- Files: apps/api/src/player/utils/streak.ts, apps/api/src/player/_tests/streak.spec.ts, PRD.md.
+## Item 3 — pure themeTallies (done)
+- player/utils/theme-tallies.ts: `themeTallies(practiceSums: PracticeSum[], attempts: TalliedAttempt[], today: string): ThemeTally[]`. Merges any number of PracticeSum per themeId (item 4 feeds one from sessions GROUP BY, one from baselines GROUP BY), counts each Attempt, judged = finalized (stored score) or dead (0). Tallies with 0 games dropped. Output in first-seen order (phone sorts).
+- Types in player/types/: PracticeSum {themeId,sessionCount,totalPoints,bestScore|null}; TalliedAttempt {themeId,status,score,issuedAt} — CompetitionAttemptEntity satisfies it structurally, so item 4 can pass whole attempt entities; ThemeTally = Pick of contract row (themeId, practice, competition) — themeName/category joined from DB in item 4.
+- Dead rule extracted to competition/utils/competition-day.ts `isDeadAttempt(issuedAt, today)` (Paris date of issuedAt < today, NOT attempt.day — a Catch-up is issued the day after its own); competition.service attemptsStillInPlay now uses it. One rule, two callers.
+- Finalized with null score (shouldn't happen) reads as unjudged.
+- Files: apps/api/src/player/{utils/theme-tallies.ts,types/{practice-sum,tallied-attempt,theme-tally}.ts,_tests/theme-tallies.spec.ts}, apps/api/src/competition/{utils/competition-day.ts,services/competition.service.ts}
+- Sandbox note: API vitest needs @swc/core native binary (missing). Pure specs ran via a throwaway config without the swc plugin (copy apps/api/vitest.config.ts minus `plugins`, as apps/api/vitest.tmp-noswc.config.ts, run, delete) — theme-tallies, streak, competition-day, day-offers green. competition e2e (touched service) NOT run here: host check must confirm.
+- Next: item 4 wires stats(): repo grouped SUM/COUNT/MAX for sessions + baselines by owner, attempts by owner, join themes/categories; clock injected into PlayerService (CLOCK symbol lives in competition/utils/clock.ts).
 
-## Item 4 — GET /app/me/stats carries practiceStreak + competitionStreak (done)
-- PlayerRepository.findPracticeDays: two DISTINCT reads in parallel (quiz_sessions `to_char(finished_at AT TIME ZONE 'Europe/Paris', 'YYYY-MM-DD')`, practice_days `to_char(day, ...)`), unioned with a Set. findCompetitionDays: DISTINCT to_char(attempt.day) by owner, no status filter.
-- to_char everywhere because raw getRawMany of a `date` column comes back as a JS Date from pg (only entity hydration turns it into a string). Checked on a throwaway postgres:16 container: 23:30Z 03-31 -> 04-01, both DST edges right, session timezone/DateStyle don't matter.
-- Competition days are read by PlayerRepository directly (CompetitionAttemptEntity in PlayerModule forFeature), since competition already depends on player (no circular import). PracticeDayEntity added to forFeature now (item 5 reuses it).
-- PlayerService.stats: streakFromDays(practiceDays/competitionDays); NO_STREAK gone.
-- Specs: player/_tests/player.repository.spec.ts (metadata DataSource + mocked runner.query, asserts SQL + union). e2e: fake repo gains findPracticeDays (Paris via competitionDay) / findCompetitionDays, and 2 new cases parse through appAccountStatsResponseSchema; the other-Player case also seeds B's days/attempts.
-- Sandbox: repository + streak specs green via a throwaway esbuild vitest config; the e2e needs SWC metadata, so it has NOT run here. Host must run it.
-- Note for item 5: the e2e deleteUser cascade stub doesn't clear practiceDayRows yet; add it with the push route.
-- Files: apps/api/src/player/repositories/player.repository.ts, services/player.service.ts, modules/player.module.ts, _tests/player.repository.spec.ts, _tests/app-me.e2e-spec.ts, PRD.md.
+## Item 4 — GET /app/me/stats answers themes (done)
+- Repo: `sumQuizSessionsByTheme` / `sumStatBaselinesByTheme` (GROUP BY theme_id, owner-filtered, count/sum/max in SQL; bigint strings -> Number) each also return the latest captured name + capturedAt via `(array_agg(themeName ORDER BY finishedAt|createdAt DESC))[1]`, typed `PracticeSum & CapturedThemeName`. `findCompetitionAttempts` (whole entities, fed straight to themeTallies). `findThemesWithCategory(ids)`: find In(ids) + category relation, no published filter, [] short-circuit.
+- Deleted Theme name: new pure `latestCapturedNames` (utils/captured-theme-names.ts) across session sums, baseline sums and attempts (issuedAt) — latest capture wins. Category null.
+- Service: CLOCK injected into PlayerService (PlayerModule provides systemClock; e2e overrides CLOCK), today = competitionDay(clock()). Themes read is a 2nd round after tallies (needs ids). Mapper joins tally + ThemeEntity (zod strips category extras) + captured name.
+- e2e fake: one "sum" per row stands in for GROUP BY (tally merges anyway). attemptRow fixture gained themeId/themeName/score/issuedAt. Fake baseline sum reads row.bestScore/createdAt raw → a stats test with baselines must set bestScore (the "owner's world" test sets null). Item 5: service stores bestScore; push tests' baselineRow then needs bestScore.
+- Files: apps/api/src/player/{repositories/player.repository.ts,services/player.service.ts,mappers/player.mapper.ts,modules/player.module.ts,types/captured-theme-name.ts,utils/captured-theme-names.ts,_tests/{app-me.e2e-spec,player.repository.spec,captured-theme-names.spec}.ts}
+- Sandbox: FULL API suite runs here (451 green) with a no-swc tmp config AND proxy vars unset (`env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy`); the 403s were the sandbox proxy, not DI.
 
-## Item 5 — POST /app/me/practice-days (done)
-- Same shape as stat-baselines end to end: MeController.pushPracticeDays (ZodValidationPipe appPracticeDayPushInputSchema, 204) -> PlayerService.pushPracticeDays (empty = no-op, owner from JWT, withAccountGoneEnvelope -> 410) -> PlayerRepository.insertPracticeDaysIfAbsent (insert().orIgnore() on the (owner, device, day) unique, owner FK -> AccountGoneError).
-- deleteAccount comment said "both player tables"; now "every player table".
-- e2e: fake repo insertPracticeDaysIfAbsent + deleteUser cascade clears practiceDayRows; practice-days joined the 401 / 410 / over-cap / empty-batch it.each tables; new cases: body owner ignored, replay + other device dedupe, malformed device/day/datetime -> 400. practiceDayRow takes an optional device.
-- Sandbox: e2e needs SWC, NOT run here; host must run it. typecheck, non-API tests, biome green (4 warnings + 1 info pre-existing, untouched files).
-- Next: item 6 (mobile pure streak functions) — first mobile item; mobile consumer of this route arrives in item 7.
-- Files: apps/api/src/player/controllers/me.controller.ts, services/player.service.ts, repositories/player.repository.ts, _tests/app-me.e2e-spec.ts, PRD.md.
+## Item 5 — POST /app/me/stat-baselines stores bestScore (done)
+- Service pushStatBaselines maps `bestScore: baseline.bestScore` into the insert. Repo untouched: orIgnore already keeps a replay from changing anything, bestScore included.
+- e2e: baselineRow fixture defaults `bestScore: null` (stored rows now carry it); insert-if-absent test now pushes best 45 then replays 50 → stays 45; new test pushes 45 + null on two devices, stats answers practice {8, 240, 45}; it.each 51 / -1 / missing → 400 VALIDATION_FAILED, no insert.
+- Files: apps/api/src/player/{services/player.service.ts,_tests/app-me.e2e-spec.ts}
+- Sandbox: full API suite green here (455) via the no-swc tmp config + proxy vars unset.
+- Next: item 6 (mobile pure stats functions from tallies) — core abstraction the screen + item 7/8 build on.
 
-## Item 6 — mobile pure streak functions (done)
-- apps/mobile/src/features/account/streak.ts: parisDay(instant: Date) (Intl formatToParts Europe/Paris, same pattern as catchup-deadline/season-calendar; takes a Date, callers do new Date(entry.finishedAt)), currentStreak(streak, today) (length when today - lastDay <= 1, else 0), mergeStreak(streak | null, days) (expands the Streak's run into its `length` days ending at lastDay, unions with days, recomputes; longest = max(streak.longest, computed)).
-- Lives in features/account (both Streaks come off the Account stats, StreakBadge lives there; quiz already imports account). Mobile keeps its own run-counting loop rather than sharing the API's streakFromDays: contracts is schemas-only, and mergeStreak(null, days) covers the same need.
-- Not wired yet: items 7-9 consume them. Sandbox: typecheck, non-API tests (mobile 323), biome green (same 4 warnings + 1 info pre-existing).
-- Files: apps/mobile/src/features/account/streak.ts, streak.test.ts, PRD.md.
+## Item 6 — mobile pure figures from tallies (done)
+- New quiz/theme-tallies.ts (own file, not stats.ts: stats.ts keeps Device Stats recording; its homeCards/formatAverage die in item 9). `ThemeTally` = contract `themes[number]` (Category shape == appCategory, so device tallies in item 7 fit it).
+- `statTiles(tallies, isSignedIn)` → { practiceGames, competitionGames (null signed out), overallAverage (null with no score) }. Streaks + rank are NOT here: the screen reads them straight from existing hooks (Longest = streak.longest, rank = Standing read).
+- `themeStatRow(tally)` → { themeId, themeName, gameCount, best (max of non-null bests), average }. Averages = Math.round((practice+competition points)/(sessions+judged)), null at 0.
+- `categoryGroups(tallies)` → [{ category, rows }], null-category tallies dropped, Categories then Themes sorted by module `Intl.Collator("fr", { sensitivity: "base" })`.
+- Files: apps/mobile/src/features/quiz/{theme-tallies,theme-tallies.test}.ts
+- Next: item 7 folds Device Stats into ThemeTally[] (competition zeros) and records best + captured Category.
 
-## Item 7 — Device Stats record practice days, the transfer pushes them (done)
-- stats-store gains practiceDays: string[] (Paris dates) beside stats; recordSession(themeId, name, points, day) writes both; reset empties both. DeviceStats type untouched (fold/shelf keep using it). Old persisted state without practiceDays: zustand persist shallow-merges, so it defaults to [].
-- stats.ts recordPracticeDay(days, day): insertion order, deduped (mergeStreak sorts anyway).
-- stats-transfer.ts buildTransferPracticeDays(days, device): AppPracticeDayPushInput (the contract type itself, no alias).
-- transfer-sync: baselines then practice days, both through pushInBatches, sequential; reset + markTransferred only after both land. A retry replays both (both insert-if-absent). Offer gate unchanged (baselines non-empty): every recorded day comes with a finished session.
-- Session screen: one `finishedAt = new Date()` feeds parisDay (signed out) and the outbox finishedAt (signed in). Abandoned sessions never reach the record effect (status finished only).
-- Decline: untouched, the days sit in the stats store beside the dormant stats.
-- Tests: pure pieces only (recordPracticeDay, buildTransferPracticeDays); transfer-sync orchestration stays untested as before (imports api/query client/stores, no vi.mock precedent) — "empties after both land" is the await order.
-- Sandbox: typecheck, non-API tests (mobile 329), biome green (same 4 warnings + 1 info pre-existing).
-- Next: item 8 (sign-out seed) — seed lives beside practiceDays or in its own store; account-actions.tsx sign-out and delete-account.ts are the hooks.
-- Files: apps/mobile/src/features/quiz/stats.ts, stats.test.ts, stats-store.ts, stats-transfer.ts, stats-transfer.test.ts, transfer-sync.ts, apps/mobile/src/app/session/[themeId].tsx, PRD.md.
+## Item 7 — Device Stats best + Category, transfer deposits best (done)
+- ThemeStat gains OPTIONAL `bestScore?` / `category?` — absent = entry persisted before this work (no persist version/migrate: optional type is the honest shape, read with `?? null`). New records always set both.
+- recordSession(stats, themeId, name, category, points): best = max(known best ?? 0, points) — an unknown best + a 20 gives 20 (highest KNOWN, same rule as API baselines). Category captured each record (latest wins).
+- stats.ts `deviceTallies(stats, catalog: ThemeWithCount[])` → ThemeTally[]: practice from the entry, competition zeros, category = catalog's ?? captured ?? null. Caller passes `useCachedThemes().data ?? []` (item 9). No sessionCount>0 filter: only finished Sessions write a row.
+- Session page builds the Category once (useMemo over the params), reused by ThemeReveal and recordSession. Abandoned Session still records nothing: the record effect runs on status "finished" only (page-level, no pure seam to test).
+- buildTransferBaselines: `bestScore: stat.bestScore ?? null`.
+- account-stats.ts (legacy fold, dies item 8/9): stopped calling recordSession (now needs a Category); addBaseline → addTotals shared by baselines + sessions. Behaviour unchanged, its tests untouched.
+- stats-transfer.test: fixture has one Theme with best 30 + category, one legacy; the "fold back into device world" round trip replaced by "baselines deposit each Theme's practice tally exactly" (vs deviceTallies). homeCards round-trip kept until item 9.
+- Files: apps/mobile/src/app/session/[themeId].tsx, apps/mobile/src/features/quiz/{stats,stats.test,stats-store,stats-transfer,stats-transfer.test,account-stats}.ts
+- Next: item 8 (Account tallies = themes + pending outbox overlay; outbox entry captures Category at enqueue — session page already has `category` in hand).
 
-## Item 8 — sign-out seed (done)
-- streak.ts accountPracticeStreak(accountStreak | undefined, pendingDays): null when stats never loaded, else mergeStreak. It IS the signed-in displayed Streak (item 9 reuses it) and the seed; one function for both.
-- outbox.ts pendingPracticeDays(entries): Paris day per entry; no syncedIds filter needed (days union, a pulled+pending session counts once).
-- Seed stored in stats-store as practiceStreakSeed (beside practiceDays: the signed-out Streak = mergeStreak(practiceStreakSeed, practiceDays), item 9's hook). setPracticeStreakSeed(seed | null). reset (transfer) leaves the seed: unused signed in, rewritten at next sign-out.
-- quiz/practice-streak-seed.ts keepPracticeStreakSeed(playerId): reads the stats cache + owner's outbox, writes the seed. Called in account-actions sign-out BEFORE drainOutbox: the drain acks entries while the cached practiceStreak stays pre-push (item 2 note), so after it the overlay would lose those days.
-- deleteAccount clears the seed beside the transfer reset.
-- Not covered: the 401 global sign-out (lib/api onUnauthenticated) writes no seed, the previous one stays. lib can't import features; accepted, the device returns to its last signed-out world.
-- Item 9 still owes: seedAckedSessions should merge acked Paris days into cached practiceStreak (or invalidate stats), else a drained session drops out of the signed-in Streak until the next pull.
-- Tests: accountPracticeStreak + scenario (5 -> 8 signed out, 8 after transfer, unpushed sessions kept, no seed) in streak.test.ts; pendingPracticeDays in outbox.test.ts. Sandbox: typecheck, non-API tests (mobile 336), biome green (same 4 warnings + 1 info).
-- Files: apps/mobile/src/features/account/streak.ts, streak.test.ts, delete-account.ts, components/account-actions.tsx, apps/mobile/src/features/quiz/outbox.ts, outbox.test.ts, stats-store.ts, practice-streak-seed.ts, PRD.md.
+## Item 8 — Account world reads tallies (done)
+- outbox.ts: OutboxEntry gains required `category: Category` (captured at enqueue; no shim for old persisted entries, PRD rules out compat). `withPracticeSessions(tallies, entries)` folds sessions into practice (count, points, best = max(known ?? 0, points)); unknown Theme → new row with entry's name/Category, competition zeros; known Theme keeps server name/Category/competition. `accountTallies(themes, outbox, owner)` = the owner-filtered overlay; item 9's hook calls it with `stats.themes`. `pushRow` moved from outbox-sync (was private toPushRow) so a test pins the body: no owner, no category.
+- Dedupe by id gone: `overlaySessions` deleted. `withAckedSessions` now folds acked into `themes` + merges streak days, no longer touches `sessions`. seedAckedSessions invalidates accountKeys.stats after the seed (no-op seed when nothing cached).
+- Transitional: legacy useHomeCards overlays `entriesForOwner(...).map(toAccountSession)` with no dedupe; acked sessions leave its shelf until the invalidated read lands. Dies item 9 with foldAccountStats/toAccountSession/AccountSession.
+- useAttempt queryFn invalidates accountKeys.stats after resumeOrIssueAttempt (a resume re-reads harmlessly). Phone overlays no Attempt.
+- Buster api-v1 → api-v2.
+- Conservation test rewritten over tallies (acked tallies + queue overlay == all finished), no longer uses foldAccountStats.
+- Files: apps/mobile/src/features/quiz/{outbox,outbox.test,outbox-sync,use-home-cards,practice-streak.test}.ts, apps/mobile/src/features/competition/api.ts, apps/mobile/src/lib/query-client.ts, apps/mobile/src/app/session/[themeId].tsx
+- Sandbox: knip can't run (oxc-parser native binary missing) — host check must confirm. accountTallies only used by tests until item 9.
+- Next: item 9 screen — hook: signed in `accountTallies(stats.themes, outbox, owner)`, signed out `deviceTallies(deviceStats, useCachedThemes().data ?? [])`; delete useHomeCards, HomeThemeCard, account-stats.ts (+test), toAccountSession, formatAverage, homeCards/attachCategories/themeAverage.
 
-## Item 9 — streak hooks + finalize invalidates Account stats (done)
-- quiz/practice-streak.ts practiceStreak(owner, { accountStreak, outbox, seed, deviceDays }): the pure selection. Signed in: accountPracticeStreak(Account, owner's outbox Paris days) (null until stats load); signed out: mergeStreak(seed, device days). Lives in quiz (reads the outbox shape; account/streak can't import quiz/outbox, which imports it).
-- quiz/use-practice-streak.ts usePracticeStreak(): number; competition/use-competition-streak.ts useCompetitionStreak(owner): number (stats query disabled signed out -> 0). Both: currentStreak(streak, parisDay(new Date())) at render.
-- currentStreak now takes AppStreak | null (null = no Streak known yet -> 0), so both hooks share it.
-- pushFinalize invalidates accountKeys.stats(owner) beside day/standing/leaderboard.
-- Item 2/8 debt paid: seedAckedSessions' patch extracted to pure outbox.ts withAckedSessions(previous, acked), which also merges the fresh acked Paris days into practiceStreak (a drained session no longer drops out of the Streak until the next pull). Tested.
-- Renamed pendingPracticeDays -> outboxPracticeDays (now also used on acked entries).
-- Wired both hooks into the badges already (knip would flag unused hook files otherwise): PracticeCard streak={usePracticeStreak()}, CompetitionCard gains a streak prop fed by world.tsx. No hardcoded 45 left.
-- Item 10 remains: accessibility label « Série : N jours » / « 1 jour » from competition constants (COMPETITION_STREAK_LABEL still hardcoded « Série : 3 jours »), verify 0 shown; maybe drop CompetitionCard.showStreak (always true, no caller varies it).
-- Sandbox: typecheck, non-API tests (mobile 343), biome green (same 4 warnings + 1 info). Knip not run here.
-- Files: apps/mobile/src/features/account/streak.ts, streak.test.ts, features/quiz/practice-streak.ts, practice-streak.test.ts, use-practice-streak.ts, outbox.ts, outbox.test.ts, outbox-sync.ts, practice-streak-seed.ts, components/practice-card.tsx, features/competition/api.ts, use-competition-streak.ts, components/competition-card.tsx, app/(tabs)/world.tsx, PRD.md.
+## Item 9 — Profil › Stats screen: four tiles + table (done)
+- Page app/profile/index.tsx wires data only: useAccountStats (loading/error gate, signed in only; error shown only when no data), useStanding (rank = isSuccess ? rank : null → « -- » pending/failed/none), usePracticeStreakRecord().longest, competitionStreak.longest (null signed out), useThemeTallies. Empty text when categoryGroups is empty (covers zero game). TransferNotice rule unchanged, now on tallies.length === 0.
+- New hooks: features/quiz/use-theme-tallies.ts (signed in accountTallies(stats.themes, outbox, owner), signed out deviceTallies(deviceStats, cached catalog)); use-practice-streak.ts split → usePracticeStreakRecord (AppStreak|null) + usePracticeStreak (current, unchanged for PracticeCard).
+- Pure formatters features/account/stat-figures.ts (+test): countFigure / scoreFigure ("35/50", reuses RESULTS_SCORE_MAX_LABEL) / rankFigure ("n°850"); null → STATS_MISSING_FIGURE "--". Copy in account constants.
+- Components in src/components/account/ (new-home rule): StatTile (Card + title + optional flame), StatFigure (value, isCompetition → medal, opensSignIn → only the value is a bare Pressable opening the sign-in sheet), StatTilesGrid (2×2), ThemeStatsTable (Card, header row, CategoryPill per group: iconBg=color, color=secondaryColor like practice-hero). Existing flame.png/medal.png, tokens only; table columns are flex ratios (Hugo restyles).
+- Deleted: HomeThemeCard, CategoryChip (its only user), useHomeCards, account-stats.ts(+test), toAccountSession, HomeCard/homeCards/attachCategories/themeAverage/formatAverage/formatSessionCount, SESSION_COUNT_* constants, their tests; stale "fold" comment in account/api.ts.
+- Files: apps/mobile/src/app/profile/index.tsx, apps/mobile/src/components/account/{stat-tile,stat-figure,stat-tiles-grid,theme-stats-table}.tsx, apps/mobile/src/features/account/{api,constants,stat-figures,stat-figures.test}.ts, apps/mobile/src/features/quiz/{use-theme-tallies,use-practice-streak,stats,stats.test,outbox,outbox.test,stats-transfer.test,constants}.ts (+ deletions above)
+- Sandbox: typecheck + all non-API tests + biome green; knip not runnable here — host check confirms no new unused export.
+- Next: item 10 — drop baselines + sessions[] from appAccountStatsResponseSchema and the API (mapper/service/repo reads of whole sessions/baselines), update account.spec + app-me e2e; mobile outbox.test fixtures still carry baselines: [] / sessions: [] and must lose them.
 
-## Item 10 — badges show real Streaks with a counted accessibility label (done)
-- competition/constants.ts: COMPETITION_STREAK_LABEL (hardcoded « Série : 3 jours ») -> STREAK_LABEL « Série : » + STREAK_DAY_SINGULAR/PLURAL, same shape as quiz SESSION_COUNT_SINGULAR/PLURAL.
-- account/streak.ts streakAccessibilityLabel(streak): « Série : N jours », « 1 jour » at 1 (as formatSessionCount); StreakBadge uses it. Tested 0, 1, 8.
-- CompetitionCard.showStreak dropped (always true, no caller varied it: mobile AGENTS rule). Both badges always render, 0 included; practice card was already wired in item 9.
-- Sandbox: typecheck, non-API tests (mobile 345), biome green (same 4 warnings + 1 info). Knip not run here.
-- Next: human device review (PRD Human steps). Every item passes.
-- Files: apps/mobile/src/features/competition/constants.ts, components/competition-card.tsx, features/account/streak.ts, streak.test.ts, components/streak-badge.tsx, app/(tabs)/world.tsx, PRD.md.
+## Item 10 — baselines + sessions[] leave the Account stats (done)
+- Contract: appAccountStatsResponseSchema = { themes, practiceStreak, competitionStreak }. statBaselineSchema / quizSessionSchema had no other role than being extended by the push schemas → inlined into appQuizSessionPushInputSchema / appStatBaselinePushInputSchema (counts via countSchema); stale "finishedAt orders the shelf" comment gone. Spec: extra baselines/sessions keys are stripped, keys are exactly the three.
+- API: findQuizSessions / findStatBaselines deleted from the repo (no other caller); service reads sums + attempts + days only; mapper takes themes + streaks. The stats read now touches no whole Quiz Session or Stat Baseline.
+- e2e: "owner's world, sessions asc" test replaced by "themes and Streaks alone": Object.keys exact, no baselines/sessions key, owner/finishedAt off the wire. Fake repo loses the two finders; the other-Player test's expected body loses both keys.
+- Mobile: outbox.test withAckedSessions fixture loses baselines/sessions.
+- Files: packages/contracts/src/app/{account,account.spec}.ts, apps/api/src/player/{mappers/player.mapper,services/player.service,repositories/player.repository,_tests/app-me.e2e-spec}.ts, apps/mobile/src/features/quiz/outbox.test.ts
+- Sandbox: typecheck, every workspace's tests (API 455 via no-swc config) and biome green; knip left to host.
+- All PRD items pass. Human steps left: device review in both auth states, then restyle.

@@ -1,7 +1,7 @@
 import { squareChoices } from "@mentis/answer-matching";
 import { randomUUID } from "expo-crypto";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ScreenError } from "@/components/ui/screen-error";
 import { ScreenLoading } from "@/components/ui/screen-loading";
@@ -49,6 +49,16 @@ export default function Page() {
     categorySecondaryColor: string;
     categoryIcon: string;
   }>();
+  const category = useMemo(
+    () => ({
+      id: categoryId,
+      name: categoryName,
+      color: categoryColor,
+      secondaryColor: categorySecondaryColor,
+      icon: categoryIcon,
+    }),
+    [categoryId, categoryName, categoryColor, categorySecondaryColor, categoryIcon],
+  );
   const router = useRouter();
   const { data: questions, isError, isFetching, refetch } = useSessionQuestions(themeId);
 
@@ -101,36 +111,26 @@ export default function Page() {
       const points = sessionScore(session.answers);
       const finishedAt = new Date();
       if (owner === undefined) {
-        recordSession(themeId, name, points, parisDay(finishedAt));
+        recordSession(themeId, name, category, points, parisDay(finishedAt));
       } else {
         enqueue({
           id: randomUUID(),
           owner,
           themeId,
           themeName: name,
+          category,
           points,
           finishedAt: finishedAt.toISOString(),
         });
         void drainOutbox(owner);
       }
     }
-  }, [session, themeId, name, owner, recordSession, enqueue]);
+  }, [session, themeId, name, category, owner, recordSession, enqueue]);
 
   // The Theme is fixed by the pick, so the Reveal plays once here — a replay never repeats it.
   if (!isRevealDone) {
     return (
-      <ThemeReveal
-        name={name}
-        imageUrl={imageUrl}
-        category={{
-          id: categoryId,
-          name: categoryName,
-          color: categoryColor,
-          secondaryColor: categorySecondaryColor,
-          icon: categoryIcon,
-        }}
-        secondsLeft={secondsLeft}
-      />
+      <ThemeReveal name={name} imageUrl={imageUrl} category={category} secondsLeft={secondsLeft} />
     );
   }
 

@@ -6,6 +6,8 @@ import { PlayerProfileEntity } from "../../_database/entities/player-profile.ent
 import { PracticeDayEntity } from "../../_database/entities/practice-day.entity";
 import { QuizSessionEntity } from "../../_database/entities/quiz-session.entity";
 import { StatBaselineEntity } from "../../_database/entities/stat-baseline.entity";
+import { ThemeEntity } from "../../_database/entities/theme.entity";
+import { CLOCK, systemClock } from "../../competition/utils/clock";
 import { MeController } from "../controllers/me.controller";
 import { PlayerRepository } from "../repositories/player.repository";
 import { ProfileRepository } from "../repositories/profile.repository";
@@ -23,6 +25,7 @@ import { DIGIT_DRAW, randomDigitDraw } from "../utils/digit-draw";
       PracticeDayEntity,
       CompetitionAttemptEntity,
       PlayerProfileEntity,
+      ThemeEntity,
     ]),
   ],
   controllers: [MeController],
@@ -32,6 +35,7 @@ import { DIGIT_DRAW, randomDigitDraw } from "../utils/digit-draw";
     ProfileRepository,
     ProfileService,
     { provide: DIGIT_DRAW, useValue: randomDigitDraw },
+    { provide: CLOCK, useValue: systemClock },
   ],
   exports: [ProfileService],
 })

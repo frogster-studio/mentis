@@ -1,8 +1,6 @@
 import type { IconName } from "@/components/ui/icon-name";
 
 export const HOME_TAB_LABEL = "Practice";
-export const SESSION_COUNT_SINGULAR = "partie";
-export const SESSION_COUNT_PLURAL = "parties";
 export const PICKER_TITLE = "Sur quel thème ?";
 export const PICKER_ERROR = "Impossible de charger les thèmes.";
 export const PICKER_BACK_LABEL = "Retour";

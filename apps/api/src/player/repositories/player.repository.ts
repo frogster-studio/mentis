@@ -1,16 +1,50 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { type DeepPartial, type InsertResult, QueryFailedError, Repository } from "typeorm";
+import {
+  type DeepPartial,
+  In,
+  type InsertResult,
+  QueryFailedError,
+  Repository,
+  type SelectQueryBuilder,
+} from "typeorm";
 import { CompetitionAttemptEntity } from "../../_database/entities/competition-attempt.entity";
 import { PracticeDayEntity } from "../../_database/entities/practice-day.entity";
 import { QuizSessionEntity } from "../../_database/entities/quiz-session.entity";
 import { StatBaselineEntity } from "../../_database/entities/stat-baseline.entity";
+import { ThemeEntity } from "../../_database/entities/theme.entity";
+import type { CapturedThemeName } from "../types/captured-theme-name";
+import type { PracticeSum } from "../types/practice-sum";
 
 const OWNER_FK_VIOLATION = "23503";
 
 export class AccountGoneError extends Error {}
 
 const isoDate = (expression: string): string => `to_char(${expression}, 'YYYY-MM-DD')`;
+
+type RawPracticeSum = {
+  themeId: string;
+  sessionCount: string;
+  totalPoints: string;
+  bestScore: number | null;
+  themeName: string;
+  capturedAt: Date | string;
+};
+
+// Postgres answers count and sum as bigint, which the driver hands over as a string.
+const practiceSumsOf = async <Entity extends object>(
+  query: SelectQueryBuilder<Entity>,
+): Promise<(PracticeSum & CapturedThemeName)[]> => {
+  const rows = await query.getRawMany<RawPracticeSum>();
+  return rows.map((row) => ({
+    themeId: row.themeId,
+    sessionCount: Number(row.sessionCount),
+    totalPoints: Number(row.totalPoints),
+    bestScore: row.bestScore,
+    themeName: row.themeName,
+    capturedAt: new Date(row.capturedAt),
+  }));
+};
 
 const isOwnerFkViolation = (error: unknown): boolean =>
   error instanceof QueryFailedError &&
@@ -26,15 +60,55 @@ export class PlayerRepository {
     private readonly practiceDays: Repository<PracticeDayEntity>,
     @InjectRepository(CompetitionAttemptEntity)
     private readonly attempts: Repository<CompetitionAttemptEntity>,
+    @InjectRepository(ThemeEntity) private readonly themes: Repository<ThemeEntity>,
   ) {}
 
-  // Oldest-first: the client fold takes the most recently captured Theme name from the last row.
-  findQuizSessions(owner: string): Promise<QuizSessionEntity[]> {
-    return this.sessions.find({ where: { owner }, order: { finishedAt: "ASC" } });
+  sumQuizSessionsByTheme(owner: string): Promise<(PracticeSum & CapturedThemeName)[]> {
+    return practiceSumsOf(
+      this.sessions
+        .createQueryBuilder("session")
+        .select("session.themeId", "themeId")
+        .addSelect("count(session.id)", "sessionCount")
+        .addSelect("sum(session.points)", "totalPoints")
+        .addSelect("max(session.points)", "bestScore")
+        .addSelect(
+          "(array_agg(session.themeName ORDER BY session.finishedAt DESC))[1]",
+          "themeName",
+        )
+        .addSelect("max(session.finishedAt)", "capturedAt")
+        .where("session.owner = :owner", { owner })
+        .groupBy("session.themeId"),
+    );
   }
 
-  findStatBaselines(owner: string): Promise<StatBaselineEntity[]> {
-    return this.baselines.find({ where: { owner } });
+  sumStatBaselinesByTheme(owner: string): Promise<(PracticeSum & CapturedThemeName)[]> {
+    return practiceSumsOf(
+      this.baselines
+        .createQueryBuilder("baseline")
+        .select("baseline.themeId", "themeId")
+        .addSelect("sum(baseline.sessionCount)", "sessionCount")
+        .addSelect("sum(baseline.totalPoints)", "totalPoints")
+        .addSelect("max(baseline.bestScore)", "bestScore")
+        .addSelect(
+          "(array_agg(baseline.themeName ORDER BY baseline.createdAt DESC))[1]",
+          "themeName",
+        )
+        .addSelect("max(baseline.createdAt)", "capturedAt")
+        .where("baseline.owner = :owner", { owner })
+        .groupBy("baseline.themeId"),
+    );
+  }
+
+  findCompetitionAttempts(owner: string): Promise<CompetitionAttemptEntity[]> {
+    return this.attempts.find({ where: { owner } });
+  }
+
+  // Published or not: a Theme the Player has played keeps its row once withdrawn.
+  async findThemesWithCategory(themeIds: string[]): Promise<ThemeEntity[]> {
+    if (themeIds.length === 0) {
+      return [];
+    }
+    return this.themes.find({ where: { id: In(themeIds) }, relations: { category: true } });
   }
 
   // A Streak day is the Europe/Paris date, whatever the Player's own timezone.

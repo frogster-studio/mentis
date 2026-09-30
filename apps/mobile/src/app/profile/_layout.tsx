@@ -1,6 +1,7 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Tabs } from "expo-router/js-tabs";
 import { StyleSheet, View } from "react-native";
+import { ProfileBottomFade } from "@/components/account/profile-bottom-fade";
 import { BottomTabBar, TAB_ICON_SIZE } from "@/components/bottom-tab-bar";
 import { useTabSlide } from "@/components/tab-slide";
 import { PaperBackground } from "@/components/ui/paper-background";
@@ -26,7 +27,12 @@ export default function Layout() {
       {/* Back leaves Profile for the Home or World it was opened from, never an earlier tab. */}
       <Tabs
         backBehavior="none"
-        tabBar={(props) => <BottomTabBar {...props} isDark={false} trackColor={"#B3D2E5"} />}
+        tabBar={(props) => (
+          <>
+            <ProfileBottomFade />
+            <BottomTabBar {...props} isDark={false} trackColor={"#B3D2E5"} />
+          </>
+        )}
         screenOptions={{ headerShown: false, sceneStyle: styles.scene, ...slide }}
       >
         <Tabs.Screen

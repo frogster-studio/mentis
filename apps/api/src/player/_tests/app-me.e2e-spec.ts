@@ -7,14 +7,17 @@ import { createLocalJWKSet, exportJWK, generateKeyPair, type JWTPayload, SignJWT
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { ENV } from "../../_config/env.config";
 import { SUPABASE } from "../../_config/supabase.config";
+import { CategoryEntity } from "../../_database/entities/category.entity";
 import { CompetitionAttemptEntity } from "../../_database/entities/competition-attempt.entity";
 import { PlayerProfileEntity } from "../../_database/entities/player-profile.entity";
 import { PracticeDayEntity } from "../../_database/entities/practice-day.entity";
 import { QuizSessionEntity } from "../../_database/entities/quiz-session.entity";
 import { StatBaselineEntity } from "../../_database/entities/stat-baseline.entity";
+import { ThemeEntity } from "../../_database/entities/theme.entity";
 import { stubDataSource, testEnv } from "../../_tests/test-env";
 import { AppModule } from "../../app.module";
 import { JWKS } from "../../auth/jwks";
+import { CLOCK } from "../../competition/utils/clock";
 import { competitionDay } from "../../competition/utils/competition-day";
 import { AccountGoneError, PlayerRepository } from "../repositories/player.repository";
 import { ProfileRepository } from "../repositories/profile.repository";
@@ -27,12 +30,14 @@ const DEVICE_B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const SESSION_1 = "10000000-0000-4000-8000-000000000001";
 const SESSION_2 = "10000000-0000-4000-8000-000000000002";
 const SESSION_3 = "10000000-0000-4000-8000-000000000003";
+const NOW = new Date("2026-08-20T10:00:00.000Z");
 
 let sessionRows: QuizSessionEntity[] = [];
 let baselineRows: StatBaselineEntity[] = [];
 let profileRows: PlayerProfileEntity[] = [];
 let practiceDayRows: PracticeDayEntity[] = [];
 let attemptRows: CompetitionAttemptEntity[] = [];
+let themeRows: ThemeEntity[] = [];
 let liveOwners = new Set<string>();
 let inserts: string[] = [];
 let draws: number[] = [];
@@ -63,6 +68,7 @@ const baselineRow = (
     themeName: "Géographie",
     totalPoints: 120,
     sessionCount: 4,
+    bestScore: null,
     ...overrides,
   });
 
@@ -78,9 +84,38 @@ const attemptRow = (
     owner,
     day,
     kind: "initial",
+    themeId: "geo",
+    themeName: "Géographie",
     status: "finalized",
     finalizeReason: "completed",
+    score: 30,
+    issuedAt: new Date(`${day}T10:00:00.000Z`),
     ...overrides,
+  });
+
+const categoryRow = (id: string, name: string): CategoryEntity =>
+  Object.assign(new CategoryEntity(), {
+    id,
+    slug: id,
+    name,
+    color: "#2e7d32",
+    secondaryColor: "#e8f5e9",
+    icon: "park",
+  });
+
+const themeRow = (
+  id: string,
+  name: string,
+  category: CategoryEntity,
+  published = true,
+): ThemeEntity =>
+  Object.assign(new ThemeEntity(), {
+    id,
+    slug: id,
+    name,
+    categoryId: category.id,
+    category,
+    published,
   });
 
 const profileRow = (owner: string, pseudo: string): PlayerProfileEntity =>
@@ -105,13 +140,36 @@ const insertIfAbsent = <Row extends { owner: string }>(
 };
 
 const fakePlayerRepository = {
-  async findQuizSessions(owner) {
+  // One sum per row stands in for GROUP BY: the tally adds up a Theme's sums either way.
+  async sumQuizSessionsByTheme(owner) {
     return sessionRows
       .filter((row) => row.owner === owner)
-      .sort((left, right) => left.finishedAt.getTime() - right.finishedAt.getTime());
+      .map((row) => ({
+        themeId: row.themeId,
+        sessionCount: 1,
+        totalPoints: row.points,
+        bestScore: row.points,
+        themeName: row.themeName,
+        capturedAt: row.finishedAt,
+      }));
   },
-  async findStatBaselines(owner) {
-    return baselineRows.filter((row) => row.owner === owner);
+  async sumStatBaselinesByTheme(owner) {
+    return baselineRows
+      .filter((row) => row.owner === owner)
+      .map((row) => ({
+        themeId: row.themeId,
+        sessionCount: row.sessionCount,
+        totalPoints: row.totalPoints,
+        bestScore: row.bestScore,
+        themeName: row.themeName,
+        capturedAt: row.createdAt,
+      }));
+  },
+  async findCompetitionAttempts(owner) {
+    return attemptRows.filter((row) => row.owner === owner);
+  },
+  async findThemesWithCategory(themeIds) {
+    return themeRows.filter((row) => themeIds.includes(row.id));
   },
   async findPracticeDays(owner) {
     const finishedDays = sessionRows
@@ -155,8 +213,10 @@ const fakePlayerRepository = {
   },
 } satisfies Pick<
   PlayerRepository,
-  | "findQuizSessions"
-  | "findStatBaselines"
+  | "sumQuizSessionsByTheme"
+  | "sumStatBaselinesByTheme"
+  | "findCompetitionAttempts"
+  | "findThemesWithCategory"
   | "findPracticeDays"
   | "findCompetitionDays"
   | "insertQuizSessionsIfAbsent"
@@ -231,6 +291,7 @@ const pushedBaseline = (overrides: Record<string, unknown> = {}) => ({
   themeName: "Géographie",
   totalPoints: 120,
   sessionCount: 4,
+  bestScore: null,
   ...overrides,
 });
 
@@ -284,6 +345,8 @@ describe("app me routes e2e", () => {
       .useValue(fakeProfileRepository)
       .overrideProvider(DIGIT_DRAW)
       .useValue(() => draws.shift() ?? 0)
+      .overrideProvider(CLOCK)
+      .useValue(() => NOW)
       .overrideProvider(SUPABASE)
       .useValue(stubSupabase)
       .overrideProvider(JWKS)
@@ -304,6 +367,7 @@ describe("app me routes e2e", () => {
     profileRows = [];
     practiceDayRows = [];
     attemptRows = [];
+    themeRows = [];
     liveOwners = new Set([PLAYER_A, PLAYER_B]);
     inserts = [];
     draws = [];
@@ -391,40 +455,16 @@ describe("app me routes e2e", () => {
     },
   );
 
-  it("GET /app/me/stats returns the owner's world, sessions finishedAt asc, owner off the wire", async () => {
-    sessionRows.push(
-      sessionRow(SESSION_2, PLAYER_A, {
-        finishedAt: new Date("2026-08-11T12:00:00.000Z"),
-        points: 20,
-      }),
-      sessionRow(SESSION_1, PLAYER_A, {
-        finishedAt: new Date("2026-08-11T09:00:00.000Z"),
-        points: 10,
-      }),
-      sessionRow(SESSION_3, PLAYER_A, {
-        finishedAt: new Date("2026-08-11T15:00:00.000Z"),
-        points: 30,
-      }),
-    );
+  it("GET /app/me/stats answers themes and Streaks alone, no whole session or baseline, owner off the wire", async () => {
+    sessionRows.push(sessionRow(SESSION_1, PLAYER_A), sessionRow(SESSION_2, PLAYER_A));
     baselineRows.push(baselineRow(PLAYER_A));
 
     const response = await authed(tokenA, "/app/me/stats");
     expect(response.status).toBe(200);
     const body = await response.json();
-    expect(body.sessions.map((session: { id: string }) => session.id)).toEqual([
-      SESSION_1,
-      SESSION_2,
-      SESSION_3,
-    ]);
-    expect(body.sessions[0]).toEqual({
-      id: SESSION_1,
-      themeId: "geo",
-      themeName: "Géographie",
-      points: 10,
-    });
-    expect(body.baselines).toEqual([
-      { themeId: "geo", themeName: "Géographie", totalPoints: 120, sessionCount: 4 },
-    ]);
+    expect(Object.keys(body)).toEqual(["themes", "practiceStreak", "competitionStreak"]);
+    expect(body).not.toHaveProperty("baselines");
+    expect(body).not.toHaveProperty("sessions");
     expect(JSON.stringify(body)).not.toContain("owner");
     expect(JSON.stringify(body)).not.toContain("finishedAt");
   });
@@ -461,6 +501,105 @@ describe("app me routes e2e", () => {
     expect(body.practiceStreak).toEqual({ lastDay: null, length: 0, longest: 0 });
   });
 
+  it("GET /app/me/stats tallies each Theme the owner played, under its current name and Category", async () => {
+    const monde = categoryRow("monde", "Monde");
+    const culture = categoryRow("culture", "Culture");
+    themeRows.push(
+      themeRow("geo", "Géographie du monde", monde),
+      themeRow("art", "Arts", culture, false),
+    );
+    sessionRows.push(
+      sessionRow(SESSION_1, PLAYER_A, { points: 30 }),
+      sessionRow(SESSION_2, PLAYER_A, { points: 40 }),
+      sessionRow(SESSION_3, PLAYER_B, { points: 50 }),
+    );
+    baselineRows.push(
+      baselineRow(PLAYER_A, { sessionCount: 3, totalPoints: 90, bestScore: 45 }),
+      baselineRow(PLAYER_B, { bestScore: 50 }),
+    );
+    attemptRows.push(
+      attemptRow(PLAYER_A, "2026-08-18", { themeId: "art", themeName: "Arts", score: 35 }),
+      attemptRow(PLAYER_B, "2026-08-18", { themeId: "art", themeName: "Arts", score: 50 }),
+    );
+
+    const response = await authed(tokenA, "/app/me/stats");
+    expect(response.status).toBe(200);
+    const body = appAccountStatsResponseSchema.parse(await response.json());
+    expect(body.themes).toEqual([
+      {
+        themeId: "geo",
+        themeName: "Géographie du monde",
+        category: {
+          id: "monde",
+          name: "Monde",
+          color: "#2e7d32",
+          secondaryColor: "#e8f5e9",
+          icon: "park",
+        },
+        practice: { sessionCount: 5, totalPoints: 160, bestScore: 45 },
+        competition: { attemptCount: 0, judgedCount: 0, totalPoints: 0, bestScore: null },
+      },
+      {
+        themeId: "art",
+        themeName: "Arts",
+        category: {
+          id: "culture",
+          name: "Culture",
+          color: "#2e7d32",
+          secondaryColor: "#e8f5e9",
+          icon: "park",
+        },
+        practice: { sessionCount: 0, totalPoints: 0, bestScore: null },
+        competition: { attemptCount: 1, judgedCount: 1, totalPoints: 35, bestScore: 35 },
+      },
+    ]);
+  });
+
+  it("GET /app/me/stats names a deleted Theme by its most recently captured name, without a Category", async () => {
+    sessionRows.push(
+      sessionRow(SESSION_1, PLAYER_A, {
+        themeName: "Géo",
+        finishedAt: new Date("2026-08-10T10:00:00.000Z"),
+      }),
+    );
+    attemptRows.push(attemptRow(PLAYER_A, "2026-08-12", { themeName: "Géographie" }));
+
+    const response = await authed(tokenA, "/app/me/stats");
+    const body = appAccountStatsResponseSchema.parse(await response.json());
+    expect(body.themes).toEqual([
+      expect.objectContaining({ themeId: "geo", themeName: "Géographie", category: null }),
+    ]);
+  });
+
+  it("GET /app/me/stats counts an Attempt left active on an earlier Paris day as judged at 0, finalizing nothing", async () => {
+    attemptRows.push(
+      attemptRow(PLAYER_A, "2026-08-19", {
+        status: "active",
+        finalizeReason: null,
+        score: null,
+        issuedAt: new Date("2026-08-19T21:30:00.000Z"),
+      }),
+      attemptRow(PLAYER_A, "2026-08-20", {
+        kind: "replay",
+        status: "active",
+        finalizeReason: null,
+        score: null,
+        issuedAt: new Date("2026-08-19T22:30:00.000Z"),
+      }),
+      attemptRow(PLAYER_A, "2026-08-18", { score: 20 }),
+    );
+
+    const response = await authed(tokenA, "/app/me/stats");
+    const body = appAccountStatsResponseSchema.parse(await response.json());
+    expect(body.themes[0].competition).toEqual({
+      attemptCount: 3,
+      judgedCount: 2,
+      totalPoints: 20,
+      bestScore: 20,
+    });
+    expect(attemptRows.map((row) => row.status)).toEqual(["active", "active", "finalized"]);
+  });
+
   it("GET /app/me/stats never returns another Player's rows", async () => {
     sessionRows.push(sessionRow(SESSION_1, PLAYER_B));
     baselineRows.push(baselineRow(PLAYER_B));
@@ -470,8 +609,7 @@ describe("app me routes e2e", () => {
     const response = await authed(tokenA, "/app/me/stats");
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
-      baselines: [],
-      sessions: [],
+      themes: [],
       practiceStreak: { lastDay: null, length: 0, longest: 0 },
       competitionStreak: { lastDay: null, length: 0, longest: 0 },
     });
@@ -515,18 +653,44 @@ describe("app me routes e2e", () => {
   });
 
   it("POST /app/me/stat-baselines is insert-if-absent per (owner, device, themeId)", async () => {
-    await push(tokenA, "/app/me/stat-baselines", [pushedBaseline()]);
+    await push(tokenA, "/app/me/stat-baselines", [pushedBaseline({ bestScore: 45 })]);
     const again = await push(tokenA, "/app/me/stat-baselines", [
-      pushedBaseline({ totalPoints: 999 }),
+      pushedBaseline({ totalPoints: 999, bestScore: 50 }),
       pushedBaseline({ device: DEVICE_B, totalPoints: 60 }),
     ]);
     expect(again.status).toBe(204);
     expect(baselineRows).toEqual([
-      baselineRow(PLAYER_A),
+      baselineRow(PLAYER_A, { bestScore: 45 }),
       baselineRow(PLAYER_A, { device: DEVICE_B, totalPoints: 60 }),
     ]);
     expect(inserts).toEqual(["stat_baselines", "stat_baselines"]);
   });
+
+  it("POST /app/me/stat-baselines stores each deposited best, which GET /app/me/stats then answers", async () => {
+    const response = await push(tokenA, "/app/me/stat-baselines", [
+      pushedBaseline({ bestScore: 45 }),
+      pushedBaseline({ device: DEVICE_B, bestScore: null }),
+    ]);
+    expect(response.status).toBe(204);
+    expect(baselineRows).toEqual([
+      baselineRow(PLAYER_A, { bestScore: 45 }),
+      baselineRow(PLAYER_A, { device: DEVICE_B, bestScore: null }),
+    ]);
+
+    const stats = await authed(tokenA, "/app/me/stats");
+    const body = appAccountStatsResponseSchema.parse(await stats.json());
+    expect(body.themes[0].practice).toEqual({ sessionCount: 8, totalPoints: 240, bestScore: 45 });
+  });
+
+  it.each([{ bestScore: 51 }, { bestScore: -1 }, { bestScore: undefined }])(
+    "POST /app/me/stat-baselines with %o → 400 VALIDATION_FAILED",
+    async (overrides) => {
+      const response = await push(tokenA, "/app/me/stat-baselines", [pushedBaseline(overrides)]);
+      expect(response.status).toBe(400);
+      expect(errorResponseSchema.parse(await response.json()).code).toBe("VALIDATION_FAILED");
+      expect(inserts).toEqual([]);
+    },
+  );
 
   it("POST /app/me/practice-days stores the batch under the JWT sub, ignoring a body owner", async () => {
     const response = await push(tokenA, "/app/me/practice-days", [

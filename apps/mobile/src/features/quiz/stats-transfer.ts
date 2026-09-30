@@ -1,11 +1,7 @@
 // A move, not a copy: accepting builds baselines while the caller empties the device world.
 
-import type { AppPracticeDayPushInput } from "@mentis/contracts/app";
-import type { StatBaseline } from "./account-stats";
+import type { AppPracticeDayPushInput, AppStatBaselinePushInput } from "@mentis/contracts/app";
 import type { DeviceStats } from "./stats";
-
-// The owner is added at insert time, so the pure seam knows the device, never the Account.
-export type TransferBaseline = StatBaseline & { device: string };
 
 export type TransferState = {
   // The Player declined — cleared only at sign-out.
@@ -60,8 +56,11 @@ export function shouldOfferTransfer(
 }
 
 // Keyed per (owner, device, Theme) insert-if-absent, so a retried transfer can never double-count.
-export function buildTransferBaselines(stats: DeviceStats, device: string): TransferBaseline[] {
-  const baselines: TransferBaseline[] = [];
+export function buildTransferBaselines(
+  stats: DeviceStats,
+  device: string,
+): AppStatBaselinePushInput {
+  const baselines: AppStatBaselinePushInput = [];
   for (const [themeId, stat] of Object.entries(stats)) {
     if (stat.sessionCount > 0) {
       baselines.push({
@@ -70,6 +69,7 @@ export function buildTransferBaselines(stats: DeviceStats, device: string): Tran
         themeName: stat.name,
         totalPoints: stat.totalPoints,
         sessionCount: stat.sessionCount,
+        bestScore: stat.bestScore ?? null,
       });
     }
   }

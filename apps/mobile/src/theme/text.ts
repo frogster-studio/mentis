@@ -37,4 +37,8 @@ export const TEXT = {
   revealCount: { fontFamily: FACES.heading, fontSize: 200, lineHeight: 300, letterSpacing: -12 },
   smallText: { fontFamily: FACES.regular, fontSize: 12 },
   smallTextStrong: { fontFamily: FACES.emphasis, fontSize: 12 },
+  statText: { fontFamily: FACES.regular, fontSize: 30 },
+  statTextLine: { fontFamily: FACES.regular, fontSize: 16, letterSpacing: 0 },
+  statRowValue: { fontFamily: FACES.emphasis, fontSize: 16 },
+  statCategoryStrong: { fontFamily: FACES.emphasis, fontSize: 13 },
 } as const satisfies Record<string, TextStyle>;
