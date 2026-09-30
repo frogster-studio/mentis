@@ -4,8 +4,7 @@ import { SIGN_IN_TITLE } from "@/features/account/constants";
 import { useSignInStore } from "@/features/account/sign-in-store";
 import { TEXT } from "@/theme/text";
 import { COLORS, PRESSED, SPACE } from "@/theme/tokens";
-
-const MEDAL_IMAGE = require("../../../assets/images/competition/medal.png");
+import { MEDAL_IMAGE } from "@/utils/assets";
 
 export interface StatFigureProps {
   value: string;
@@ -45,9 +44,9 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: SPACE.xxs,
+    gap: SPACE.xs,
   },
-  medal: { width: SPACE.lg, aspectRatio: 243 / 408 },
+  medal: { width: SPACE.xl, aspectRatio: 237 / 393, marginBottom: -SPACE.sm },
   value: { ...TEXT.statText, color: COLORS.ink },
   pressed: PRESSED,
 });

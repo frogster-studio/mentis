@@ -21,9 +21,8 @@ import { useSignInStore } from "@/features/account/sign-in-store";
 import { avatarUrlOf, fullNameOf } from "@/features/account/user-metadata";
 import { TEXT } from "@/theme/text";
 import { COLORS, CONTROL_SQUARE_SIZE, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
-
 // The pseudo is the Competition name, so the Competition medal sits beside it.
-const MEDAL = require("../../../assets/images/competition/medal.png");
+import { MEDAL_IMAGE } from "@/utils/assets";
 
 const CHIP_TINT = "14";
 
@@ -72,7 +71,7 @@ export const ProfileHeader = () => {
             ) : profile.data ? (
               <>
                 <Chip label={profile.data.pseudo} onPress={() => setPseudoVisible(true)} />
-                <Image source={MEDAL} style={styles.medal} contentFit="contain" />
+                <Image source={MEDAL_IMAGE} style={styles.medal} contentFit="contain" />
               </>
             ) : null}
           </View>
@@ -169,7 +168,8 @@ const styles = StyleSheet.create({
   },
   medal: {
     width: SPACE.md,
-    aspectRatio: 243 / 408,
+    aspectRatio: 237 / 393,
+    marginBottom: -SPACE.xxs,
   },
   pressed: PRESSED,
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countFigure, rankFigure, scoreFigure } from "./stat-figures";
+import { countFigure, durationFigure, rankFigure, scoreFigure } from "./stat-figures";
 
 describe("countFigure", () => {
   it("reads a count, zero included", () => {
@@ -30,5 +30,20 @@ describe("rankFigure", () => {
 
   it("reads « -- » with no rank", () => {
     expect(rankFigure(null)).toBe("--");
+  });
+});
+
+describe("durationFigure", () => {
+  it("reads minutes and seconds", () => {
+    expect(durationFigure(133_000)).toBe("2 min 13 s");
+  });
+
+  it("reads seconds alone under a minute, rounded down", () => {
+    expect(durationFigure(45_000)).toBe("45 s");
+    expect(durationFigure(59_999)).toBe("59 s");
+  });
+
+  it("drops the seconds on a whole minute", () => {
+    expect(durationFigure(60_000)).toBe("1 min");
   });
 });

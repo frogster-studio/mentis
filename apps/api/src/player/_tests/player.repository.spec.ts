@@ -209,3 +209,87 @@ describe("PlayerRepository.findThemesWithCategory", () => {
     expect(query).not.toHaveBeenCalled();
   });
 });
+
+describe("PlayerRepository.findQuizSessionsBefore", () => {
+  it("reads the owner's newest sessions finished before the cursor, a page at most", async () => {
+    const { repository, sqlFrom } = await repositoryHarness({});
+    const before = new Date("2026-09-28T10:00:00.000Z");
+
+    await repository.findQuizSessionsBefore(OWNER, before, 20);
+
+    const { sql, parameters } = sqlFrom("quiz_sessions");
+    expect(sql).toContain('"QuizSessionEntity"."owner" = $1');
+    expect(sql).toContain('"QuizSessionEntity"."finished_at" < $2');
+    expect(sql).toContain('ORDER BY "QuizSessionEntity"."finished_at" DESC');
+    expect(sql).toContain("LIMIT 20");
+    expect(parameters).toEqual([OWNER, before]);
+  });
+
+  it("reads from the newest session when no cursor is given", async () => {
+    const { repository, sqlFrom } = await repositoryHarness({});
+
+    await repository.findQuizSessionsBefore(OWNER, null, 20);
+
+    const { sql, parameters } = sqlFrom("quiz_sessions");
+    expect(sql).not.toContain("<");
+    expect(parameters).toEqual([OWNER]);
+  });
+});
+
+describe("PlayerRepository.findFinalizedAttemptsBefore", () => {
+  const attemptRecord = (id: string, score: number, durationMs: string | null) => ({
+    attempt_id: id,
+    attempt_score: score,
+    durationMs,
+  });
+
+  it("reads the owner's newest finalized Attempts started before the cursor, a page at most", async () => {
+    const { repository, sqlFrom } = await repositoryHarness({});
+    const before = new Date("2026-09-28T10:00:00.000Z");
+
+    await repository.findFinalizedAttemptsBefore(OWNER, before, 20);
+
+    const { sql, parameters } = sqlFrom("competition_attempts");
+    expect(sql).toContain('sum("answer"."client_elapsed_ms") AS "durationMs"');
+    expect(sql).toContain('LEFT JOIN "competition_answers" "answer"');
+    expect(sql).toContain('"attempt"."owner" = $1');
+    expect(sql).toContain('"attempt"."status" = $2');
+    expect(sql).toContain('"attempt"."issued_at" < $3');
+    expect(sql).toContain('GROUP BY "attempt"."id"');
+    expect(sql).toContain('ORDER BY "attempt"."issued_at" DESC');
+    expect(sql).toContain("LIMIT 20");
+    expect(parameters).toEqual([OWNER, "finalized", before]);
+  });
+
+  it("reads from the newest Attempt when no cursor is given", async () => {
+    const { repository, sqlFrom } = await repositoryHarness({});
+
+    await repository.findFinalizedAttemptsBefore(OWNER, null, 20);
+
+    const { sql, parameters } = sqlFrom("competition_attempts");
+    expect(sql).not.toContain("<");
+    expect(parameters).toEqual([OWNER, "finalized"]);
+  });
+
+  it("reads the summed play time as a number, null when no answer carries one", async () => {
+    const { repository } = await repositoryHarness({
+      competition_attempts: [
+        attemptRecord("played", 30, "133000"),
+        attemptRecord("expired", 0, null),
+      ],
+    });
+
+    const attempts = await repository.findFinalizedAttemptsBefore(OWNER, null, 20);
+
+    expect(
+      attempts.map(({ entity, durationMs }) => ({
+        id: entity.id,
+        score: entity.score,
+        durationMs,
+      })),
+    ).toEqual([
+      { id: "played", score: 30, durationMs: 133_000 },
+      { id: "expired", score: 0, durationMs: null },
+    ]);
+  });
+});

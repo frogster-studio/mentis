@@ -41,6 +41,7 @@ function seedAckedSessions(playerId: string, batch: OutboxEntry[]): void {
     previous === undefined ? previous : withAckedSessions(previous, removed),
   );
   void queryClient.invalidateQueries({ queryKey: accountKeys.stats(playerId) });
+  void queryClient.invalidateQueries({ queryKey: accountKeys.history(playerId) });
 }
 
 // Mounted once, at the app root.

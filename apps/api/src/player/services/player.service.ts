@@ -1,8 +1,11 @@
-import type {
-  AppAccountStatsResponse,
-  AppPracticeDayPushInput,
-  AppQuizSessionPushInput,
-  AppStatBaselinePushInput,
+import {
+  type AppAccountStatsResponse,
+  type AppHistoryPageResponse,
+  type AppHistoryQuery,
+  type AppPracticeDayPushInput,
+  type AppQuizSessionPushInput,
+  type AppStatBaselinePushInput,
+  HISTORY_PAGE_SIZE,
 } from "@mentis/contracts/app";
 import { GoneException, Inject, Injectable } from "@nestjs/common";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -10,9 +13,15 @@ import { SUPABASE } from "../../_config/supabase.config";
 import type { Clock } from "../../competition/types/clock";
 import { CLOCK } from "../../competition/utils/clock";
 import { competitionDay } from "../../competition/utils/competition-day";
+import {
+  toAppHistoryPageResponse,
+  toCompetitionLine,
+  toPracticeLine,
+} from "../mappers/history.mapper";
 import { toAppAccountStatsResponse } from "../mappers/player.mapper";
 import { AccountGoneError, PlayerRepository } from "../repositories/player.repository";
 import { latestCapturedNames } from "../utils/captured-theme-names";
+import { historyPage } from "../utils/history-page";
 import { streakFromDays } from "../utils/streak";
 import { themeTallies } from "../utils/theme-tallies";
 
@@ -54,6 +63,23 @@ export class PlayerService {
     );
   }
 
+  async history(owner: string, query: AppHistoryQuery): Promise<AppHistoryPageResponse> {
+    const before = query.before === undefined ? null : new Date(query.before);
+    const [sessions, attempts] = await Promise.all([
+      this.playerRepository.findQuizSessionsBefore(owner, before, HISTORY_PAGE_SIZE),
+      this.playerRepository.findFinalizedAttemptsBefore(owner, before, HISTORY_PAGE_SIZE),
+    ]);
+    const page = historyPage(
+      sessions.map(toPracticeLine),
+      attempts.map(toCompetitionLine),
+      HISTORY_PAGE_SIZE,
+    );
+    const catalog = await this.playerRepository.findThemesWithCategory([
+      ...new Set(page.sessions.map((line) => line.themeId)),
+    ]);
+    return toAppHistoryPageResponse(page, catalog);
+  }
+
   async pushQuizSessions(owner: string, sessions: AppQuizSessionPushInput): Promise<void> {
     if (sessions.length === 0) {
       return;
@@ -66,6 +92,7 @@ export class PlayerService {
           themeId: session.themeId,
           themeName: session.themeName,
           points: session.points,
+          questionCount: session.questionCount,
           finishedAt: new Date(session.finishedAt),
         })),
       ),

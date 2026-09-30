@@ -1,10 +1,13 @@
 import {
   type AppAccountStatsResponse,
+  type AppHistoryPageResponse,
+  type AppHistoryQuery,
   type AppPracticeDayPushInput,
   type AppProfileResponse,
   type AppPseudoInput,
   type AppQuizSessionPushInput,
   type AppStatBaselinePushInput,
+  appHistoryQuerySchema,
   appPracticeDayPushInputSchema,
   appPseudoInputSchema,
   appQuizSessionPushInputSchema,
@@ -19,6 +22,7 @@ import {
   HttpStatus,
   Post,
   Put,
+  Query,
   Req,
   UseGuards,
 } from "@nestjs/common";
@@ -53,6 +57,14 @@ export class MeController {
   @Get("stats")
   stats(@Req() request: AuthedRequest): Promise<AppAccountStatsResponse> {
     return this.playerService.stats(request.user.id);
+  }
+
+  @Get("history")
+  history(
+    @Req() request: AuthedRequest,
+    @Query(new ZodValidationPipe(appHistoryQuerySchema)) query: AppHistoryQuery,
+  ): Promise<AppHistoryPageResponse> {
+    return this.playerService.history(request.user.id, query);
   }
 
   @Post("quiz-sessions")

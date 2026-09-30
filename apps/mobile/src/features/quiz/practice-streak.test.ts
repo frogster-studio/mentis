@@ -22,6 +22,7 @@ function entry(owner: string, finishedAt: string): OutboxEntry {
     themeName: "Géographie",
     category: GEOGRAPHIE,
     points: 35,
+    questionCount: 10,
     finishedAt,
   };
 }

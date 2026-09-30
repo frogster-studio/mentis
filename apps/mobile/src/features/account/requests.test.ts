@@ -1,6 +1,14 @@
+import { SessionTypeEnum } from "@mentis/contracts/enums";
 import { describe, expect, it, vi } from "vitest";
 import { type ApiClient, ApiError, createApiClient } from "@/lib/api/client";
-import { fetchProfile, profileRequest, setPseudo, setPseudoRequest } from "./requests";
+import {
+  fetchHistoryPage,
+  fetchProfile,
+  historyPageRequest,
+  profileRequest,
+  setPseudo,
+  setPseudoRequest,
+} from "./requests";
 
 const BASE_URL = "https://api.test";
 
@@ -82,5 +90,50 @@ describe("setPseudo", () => {
       statusCode: 409,
     });
     await expect(setPseudo(api, "Eleonore")).rejects.toBeInstanceOf(ApiError);
+  });
+});
+
+describe("fetchHistoryPage", () => {
+  const line = {
+    id: "3f1c9a52-8d4e-4b7a-9c21-5e6f7a8b9c0d",
+    type: SessionTypeEnum.COMPETITION,
+    themeId: "histoire",
+    themeName: "Histoire de France",
+    category: null,
+    score: 35,
+    questionCount: 10,
+    durationMs: 133_000,
+    playedAt: "2026-09-28T18:04:11.000Z",
+    owner: "a1b2c3d4-0000-4000-8000-000000000000",
+  };
+
+  it("reads the guarded History path", () => {
+    expect(historyPageRequest(undefined).path).toBe("/app/me/history");
+  });
+
+  it("sends no query string for the newest page", async () => {
+    const { api, calls } = client({ sessions: [], nextBefore: null });
+
+    await fetchHistoryPage(api, undefined);
+
+    expect(calls[0].url).toBe(`${BASE_URL}/app/me/history`);
+  });
+
+  it("carries the cursor as the before query parameter", async () => {
+    const { api, calls } = client({ sessions: [], nextBefore: null });
+
+    await fetchHistoryPage(api, "2026-09-28T18:04:11.000Z");
+
+    expect(new URL(calls[0].url).searchParams.get("before")).toBe("2026-09-28T18:04:11.000Z");
+  });
+
+  it("parses the page through the contract, so no unlisted key reaches the screen", async () => {
+    const { api } = client({ sessions: [line], nextBefore: line.playedAt });
+
+    const { owner: _owner, ...published } = line;
+    await expect(fetchHistoryPage(api, undefined)).resolves.toStrictEqual({
+      sessions: [published],
+      nextBefore: "2026-09-28T18:04:11.000Z",
+    });
   });
 });

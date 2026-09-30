@@ -90,6 +90,8 @@ export async function pushFinalize(
   void queryClient.invalidateQueries({ queryKey: worldKeys.leaderboard });
   // Every Attempt lands on its Competition Day, so the Competition Streak moves with it.
   void queryClient.invalidateQueries({ queryKey: accountKeys.stats(owner) });
+  // A finalized Attempt is a History line, whatever its finalize reason.
+  void queryClient.invalidateQueries({ queryKey: accountKeys.history(owner) });
   return transcript;
 }
 

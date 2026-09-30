@@ -16,6 +16,14 @@ export const STATS_BEST_COLUMN = "meilleur score";
 export const STATS_AVERAGE_COLUMN = "moy.";
 export const STATS_MISSING_FIGURE = "--";
 export const STATS_RANK_PREFIX = "n°";
+export const HISTORY_SIGNED_OUT = "Connecte-toi pour retrouver ton historique.";
+export const HISTORY_EMPTY = "Aucune partie pour le moment.";
+export const HISTORY_ERROR = "Impossible de charger ton historique.";
+export const HISTORY_TODAY = "Aujourd'hui";
+export const HISTORY_YESTERDAY = "Hier";
+export const HISTORY_QUESTIONS_UNIT = "questions";
+export const DURATION_MINUTE_UNIT = "min";
+export const DURATION_SECOND_UNIT = "s";
 export const REPLAY_ONBOARDING_LABEL = "Rejouer l'onboarding (dev)";
 
 export const SIGN_IN_CHIP_LABEL = "se connecter / s’inscrire";
