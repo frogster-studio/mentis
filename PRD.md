@@ -118,7 +118,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (History, Quiz Sess
       "history.spec.ts: 21 lines fail, a query without before parses to no before key, nextBefore null parses, a line with owner loses it, a line with durationMs null and one with a number both parse",
       "bun run check green at the repo root"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "api",

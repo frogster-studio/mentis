@@ -10,3 +10,10 @@
 - mobile: QUESTIONS_PER_SESSION = QUIZ_SESSION_QUESTION_COUNT (alias kept, used by copy + MAX_SESSION_SCORE). OutboxEntry.questionCount; enqueue captures session.questions.length (what was actually played, not the constant); pushRow sends it. outbox.test + practice-streak.test fixtures updated. batch-push.test uses plain numbers, no entry fixture → untouched.
 - Checks: typecheck all, tests non-api green, api 458 via no-swc workaround, biome clean (pre-existing warnings only).
 - Next: item 3 (History contract: SessionTypeEnum, history.ts).
+
+## Item 3 — History contract (done)
+- enums/session-type.enum.ts SessionTypeEnum PRACTICE/COMPETITION, re-exported.
+- app/history.ts: HISTORY_PAGE_SIZE 20, appHistoryQuerySchema { before?: iso datetime offset }, appHistoryPageResponseSchema { sessions max 20, nextBefore nullable }, types AppHistoryQuery/AppHistoryPageResponse/AppHistorySession. Line schema private (historySessionSchema), type exported for api/mobile. playedAt + cursors share one iso-offset schema. score no max (questionCount is scale).
+- history.spec.ts: query absent/offset/bad, cap 20 vs 21, last page + empty, owner stripped, nullable duration/category, invalid fields.
+- Checks: typecheck all, tests non-api green, biome clean (pre-existing warnings only). API untouched.
+- Next: item 4 (pure historyPage in api src/player/utils/).
