@@ -1,8 +1,6 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { StyleSheet, Text, View } from "react-native";
 import FastSquircleView from "react-native-fast-squircle";
-import { CategoryPill } from "@/components/category-pill";
-import { Card } from "@/components/ui/card";
 import { iconNameOrFallback } from "@/components/ui/icon-name";
 import {
   STATS_AVERAGE_COLUMN,
