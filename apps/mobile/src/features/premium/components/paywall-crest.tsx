@@ -1,20 +1,20 @@
 import { Image } from "expo-image";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { LogoMark } from "@/components/logo-mark";
 import { Squircle } from "@/components/ui/squircle";
 import { LaurelBranch } from "@/features/premium/components/laurel-branch";
+import { TEXT } from "@/theme/text";
 import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
 
 const CROWN = require("../../../../assets/images/premium-crown.png");
 
-const CROWN_WIDTH = 48;
+const CROWN_WIDTH = 90;
 const CROWN_HEIGHT = 42;
 const CROWN_BADGE_OVERLAP = 7;
 const LAUREL_WIDTH = 42;
 const LAUREL_HEIGHT = 77;
-const BADGE_WIDTH = 64;
-const BADGE_HEIGHT = 81;
-const BADGE_MARK_SIZE = 40;
+const BADGE_MARK_SIZE = 38;
+const BADGE_HEIGHT = 70;
 
 export const PAYWALL_CREST_HEIGHT = CROWN_HEIGHT - CROWN_BADGE_OVERLAP + BADGE_HEIGHT;
 
@@ -40,6 +40,8 @@ export const PaywallCrest = () => {
       <View style={styles.crownSlot}>
         <Image source={CROWN} style={styles.crown} contentFit="contain" />
       </View>
+
+      <Text style={styles.badgeLabel}>Premium</Text>
     </View>
   );
 };
@@ -51,14 +53,14 @@ const styles = StyleSheet.create({
   },
   crownSlot: {
     position: "absolute",
-    top: 0,
+    top: -SPACE.xs,
     left: 0,
     right: 0,
     alignItems: "center",
   },
   crown: {
     width: CROWN_WIDTH,
-    height: CROWN_HEIGHT,
+    aspectRatio: 252 / 159,
   },
   wreath: {
     flexDirection: "row",
@@ -69,9 +71,13 @@ const styles = StyleSheet.create({
     transform: [{ scaleX: -1 }],
   },
   badge: {
-    width: BADGE_WIDTH,
     height: BADGE_HEIGHT,
+    aspectRatio: 3 / 4,
     alignItems: "center",
     justifyContent: "center",
+  },
+  badgeLabel: {
+    textTransform: "uppercase",
+    ...TEXT.premiumLabel,
   },
 });
