@@ -130,7 +130,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (History, Quiz Sess
       "Both empty: [] and null; 20 competition + 0 practice: nextBefore is the 20th playedAt",
       "src/player/_tests/history-page.spec.ts covers the four cases; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "api",

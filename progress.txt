@@ -17,3 +17,9 @@
 - history.spec.ts: query absent/offset/bad, cap 20 vs 21, last page + empty, owner stripped, nullable duration/category, invalid fields.
 - Checks: typecheck all, tests non-api green, biome clean (pre-existing warnings only). API untouched.
 - Next: item 4 (pure historyPage in api src/player/utils/).
+
+## Item 4 — pure historyPage (done)
+- api src/player/utils/history-page.ts: historyPage<Line extends Pick<AppHistorySession, "playedAt">>(practice, competition, size) → { sessions, nextBefore }. Generic (still accepts AppHistorySession[]) so item 6 can merge lines before findThemesWithCategory fills category, then map. Sort by Date.parse (offsets may differ), slice size; nextBefore null only when both reads < size, else last line's playedAt.
+- _tests/history-page.spec.ts: 12+8 → 20 desc null; 20+3 → cut, nextBefore 20th, cut lines ≤ it; empty; 20 competition alone.
+- Checks: typecheck all, tests non-api green, api 462 via no-swc workaround, biome clean (pre-existing warnings only).
+- Next: item 5 (repository reads findQuizSessionsBefore / findFinalizedAttemptsBefore + aggregate type in types/).
