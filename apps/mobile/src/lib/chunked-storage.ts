@@ -23,12 +23,13 @@ const readChunkCount = async (store: StringStore, key: string): Promise<number> 
   return Number.isInteger(count) && count >= 0 ? count : 0;
 };
 
-const removeChunks = (store: StringStore, key: string, from: number, to: number): Promise<void[]> =>
-  Promise.all(
+const removeChunks = async (store: StringStore, key: string, from: number, to: number) => {
+  await Promise.all(
     Array.from({ length: Math.max(to - from, 0) }, (_, offset) =>
       store.removeItem(chunkKey(key, from + offset)),
     ),
   );
+};
 
 // The key itself holds the chunk count, written last so a crash mid-write leaves the old value readable.
 export const createChunkedStorage = (store: StringStore): StringStore => ({

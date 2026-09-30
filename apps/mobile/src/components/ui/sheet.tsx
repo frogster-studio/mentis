@@ -1,7 +1,6 @@
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { type PropsWithChildren, useEffect, useRef } from "react";
 import { Platform, StyleSheet, Text, View } from "react-native";
-import { opacity } from "react-native-reanimated/lib/typescript/Colors";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MAX_CONTENT_WIDTH } from "@/components/ui/screen-container";
 import { TEXT } from "@/theme/text";
