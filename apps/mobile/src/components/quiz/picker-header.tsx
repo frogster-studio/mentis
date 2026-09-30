@@ -27,6 +27,7 @@ export const PickerHeader = () => {
   return (
     <MainHeader
       isDark={false}
+      paperColor={COLORS.background}
       subHeader={
         <MainSubHeader>
           <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>

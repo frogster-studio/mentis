@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import { ScrollView, StyleSheet, Text } from "react-native";
 import { useBottomTabBarHeight } from "@/components/bottom-tab-bar";
+import { useMainHeaderHeight } from "@/components/main-header";
 import { QuietButton } from "@/components/ui/quiet-button";
 import { MAX_CONTENT_WIDTH } from "@/components/ui/screen-container";
 import { useAuthStore } from "@/features/account/auth-store";
@@ -21,6 +22,7 @@ import { COLORS, GUTTER, SPACE } from "@/theme/tokens";
 
 export default function Page() {
   const tabBarHeight = useBottomTabBarHeight();
+  const headerHeight = useMainHeaderHeight();
   const user = useAuthStore((state) => state.session?.user);
   const isPremium = useIsPremium();
   const openPaywallPreview = usePaywallStore((state) => state.openPreview);
@@ -32,7 +34,10 @@ export default function Page() {
     <ScrollView
       style={styles.scroll}
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + SPACE.lg }]}
+      contentContainerStyle={[
+        styles.content,
+        { paddingTop: headerHeight + SPACE.lg, paddingBottom: tabBarHeight + SPACE.lg },
+      ]}
     >
       <LegalLinks />
       {user ? <AccountActions user={user} isPremium={isPremium} /> : null}
@@ -86,7 +91,6 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   content: {
-    paddingTop: SPACE.lg,
     paddingHorizontal: GUTTER,
     gap: SPACE.md,
   },

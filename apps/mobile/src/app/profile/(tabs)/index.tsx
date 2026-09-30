@@ -2,6 +2,7 @@ import { ScrollView, StyleSheet, Text } from "react-native";
 import { StatTilesGrid } from "@/components/account/stat-tiles-grid";
 import { ThemeStatsTable } from "@/components/account/theme-stats-table";
 import { useBottomTabBarHeight } from "@/components/bottom-tab-bar";
+import { useMainHeaderHeight } from "@/components/main-header";
 import { MAX_CONTENT_WIDTH } from "@/components/ui/screen-container";
 import { ScreenError } from "@/components/ui/screen-error";
 import { ScreenLoading } from "@/components/ui/screen-loading";
@@ -23,6 +24,7 @@ import { COLORS, GUTTER, SPACE } from "@/theme/tokens";
 
 export default function Page() {
   const tabBarHeight = useBottomTabBarHeight();
+  const headerHeight = useMainHeaderHeight();
   const owner = useAuthStore((state) => state.session?.user.id);
   const isSignedIn = owner !== undefined;
   const isPremium = useIsPremium();
@@ -51,7 +53,10 @@ export default function Page() {
     <ScrollView
       style={styles.scroll}
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + SPACE.lg }]}
+      contentContainerStyle={[
+        styles.content,
+        { paddingTop: headerHeight + SPACE.lg, paddingBottom: tabBarHeight + SPACE.lg },
+      ]}
     >
       {isSignedIn && PURCHASES_SUPPORTED && isPremium !== null ? (
         <PremiumBanner isPremium={isPremium} onPress={openPaywall} />
@@ -91,7 +96,6 @@ const styles = StyleSheet.create({
   // Grows to the viewport, so a loading or failed read fills the space under the banners.
   content: {
     flexGrow: 1,
-    paddingTop: SPACE.lg,
     paddingHorizontal: GUTTER,
     gap: SPACE.md,
   },

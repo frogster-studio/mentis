@@ -2,7 +2,6 @@ import type { PropsWithChildren, ReactNode } from "react";
 import { StatusBar, StyleSheet, View } from "react-native";
 import FastSquircleView from "react-native-fast-squircle";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { MAIN_SUB_HEADER_VISIBLE_HEIGHT } from "@/components/main-sub-header";
 import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
 import { gradient } from "@/utils/gradient";
 
@@ -11,23 +10,24 @@ const MAIN_HEADER_TOP_GAP = SPACE.sm;
 
 // The header floats over the scenes, so a scene pads its content by this.
 export function useMainHeaderHeight() {
-  return (
-    useSafeAreaInsets().top +
-    MAIN_HEADER_TOP_GAP +
-    MAIN_HEADER_HEIGHT +
-    MAIN_SUB_HEADER_VISIBLE_HEIGHT
-  );
+  return useSafeAreaInsets().top + MAIN_HEADER_TOP_GAP + MAIN_HEADER_HEIGHT;
 }
 
 interface MainHeaderProps {
   isDark: boolean;
-  subHeader: ReactNode;
+  paperColor: string;
+  subHeader: ReactNode | null;
 }
 
-export const MainHeader = ({ isDark, subHeader, children }: PropsWithChildren<MainHeaderProps>) => (
+export const MainHeader = ({
+  isDark,
+  paperColor,
+  subHeader,
+  children,
+}: PropsWithChildren<MainHeaderProps>) => (
   <SafeAreaView edges={["top"]} style={styles.header}>
     <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
-    <PaperFade isDark={isDark} />
+    <PaperFade paperColor={paperColor} />
 
     <FastSquircleView style={styles.bar}>{children}</FastSquircleView>
 
@@ -36,13 +36,12 @@ export const MainHeader = ({ isDark, subHeader, children }: PropsWithChildren<Ma
 );
 
 interface PaperFadeProps {
-  isDark: boolean;
+  paperColor: string;
 }
 
 // Matches the paper under the scenes, so content scrolling up fades into the page itself.
-const PaperFade = ({ isDark }: PaperFadeProps) => {
+const PaperFade = ({ paperColor }: PaperFadeProps) => {
   const { top } = useSafeAreaInsets();
-  const paperColor = isDark ? COLORS.ink : COLORS.background;
 
   return (
     <>

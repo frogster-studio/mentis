@@ -31,7 +31,6 @@ export const TEXT = {
   question: { fontFamily: FACES.heading, fontSize: 30, lineHeight: 35, letterSpacing: -1.2 },
   sectionTitle: { fontFamily: FACES.onboarding, fontSize: 35, letterSpacing: -1.5 },
   display: { fontFamily: FACES.heading, fontSize: 48, letterSpacing: -2 },
-  profilePortraitInitial: { fontFamily: FACES.heading, fontSize: 48 },
   statValue: { fontFamily: FACES.emphasis, fontSize: 26, lineHeight: 32 },
   heroScore: { fontFamily: FACES.emphasis, fontSize: 100, lineHeight: 116 },
   revealCount: { fontFamily: FACES.heading, fontSize: 200, lineHeight: 300, letterSpacing: -12 },
