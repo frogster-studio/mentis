@@ -193,7 +193,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (History, Quiz Sess
       "Signed out: HISTORY_SIGNED_OUT caption centered and no query; signed in pending: ScreenLoading; failed with no data: ScreenError HISTORY_ERROR with onRetry; success with no line: HISTORY_EMPTY caption",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```

@@ -1,7 +1,6 @@
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { StyleSheet, Text, View } from "react-native";
 import FastSquircleView from "react-native-fast-squircle";
-import { iconNameOrFallback } from "@/components/ui/icon-name";
+import { CategoryLabel } from "@/components/account/category-label";
 import {
   STATS_AVERAGE_COLUMN,
   STATS_BEST_COLUMN,
@@ -13,7 +12,6 @@ import { RESULTS_SCORE_MAX_LABEL } from "@/features/quiz/constants";
 import type { CategoryGroup } from "@/features/quiz/theme-tallies";
 import { TEXT } from "@/theme/text";
 import { COLORS, SPACE } from "@/theme/tokens";
-import type { Category } from "@/types/quiz";
 
 export interface ThemeStatsTableProps {
   groups: CategoryGroup[];
@@ -29,7 +27,9 @@ export const ThemeStatsTable = ({ groups }: ThemeStatsTableProps) => {
       {groups.map(({ category, rows }) => (
         <View key={category.id} style={styles.group}>
           <View style={styles.row}>
-            <CategoryLabel category={category} />
+            <View style={styles.categoryColumn}>
+              <CategoryLabel category={category} />
+            </View>
             <Text style={[styles.column, styles.heading]}>{STATS_GAMES_COLUMN}</Text>
             <Text style={[styles.column, styles.heading]}>{STATS_BEST_COLUMN}</Text>
             <Text style={[styles.column, styles.heading]}>{STATS_AVERAGE_COLUMN}</Text>
@@ -59,19 +59,6 @@ export const ThemeStatsTable = ({ groups }: ThemeStatsTableProps) => {
   );
 };
 
-const CategoryLabel = ({ category }: { category: Category }) => {
-  return (
-    <View style={{ flex: 2 }}>
-      <FastSquircleView style={[styles.categoryContainer, { backgroundColor: category.color }]}>
-        <MaterialIcons name={iconNameOrFallback(category.icon)} size={16} color={COLORS.ink} />
-        <Text style={styles.categoryName} numberOfLines={1}>
-          {category.name}
-        </Text>
-      </FastSquircleView>
-    </View>
-  );
-};
-
 const styles = StyleSheet.create({
   container: { backgroundColor: COLORS.card, paddingVertical: SPACE.lg, borderRadius: SPACE.lg },
   title: { ...TEXT.input, color: COLORS.ink, paddingHorizontal: SPACE.lg },
@@ -84,16 +71,7 @@ const styles = StyleSheet.create({
   name: { flex: 2, ...TEXT.statTextLine, color: COLORS.ink, marginVertical: SPACE.xs },
   column: { flex: 1, textAlign: "right" },
   heading: { ...TEXT.smallText, color: COLORS.inkMuted },
-  categoryContainer: {
-    alignSelf: "flex-start",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACE.xs,
-    paddingHorizontal: SPACE.sm,
-    paddingVertical: SPACE.xs,
-    borderRadius: SPACE.xs,
-  },
-  categoryName: { flexShrink: 1, ...TEXT.statCategoryStrong, textTransform: "uppercase" },
+  categoryColumn: { flex: 2 },
   statRowValue: {
     textAlignVertical: "center",
     alignSelf: "center",

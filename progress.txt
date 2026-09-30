@@ -59,3 +59,12 @@
 - KNIP RISK grows: HISTORY_QUESTIONS_UNIT, HISTORY_TODAY/YESTERDAY via historySections, durationFigure, historySections have no app consumer until item 9. Run knip only after item 9.
 - Checks: typecheck all, tests non-api green (mobile 359), biome clean on our files (pre-existing warnings + the api.ts one above). API untouched.
 - Next: item 9 (history.tsx page, history-row, category-label extraction, section header).
+
+## Item 9 — « Historique » page (done)
+- components/account/category-label.tsx: CategoryLabel extracted (icon size → CATEGORY_ICON_SIZE); the flex: 2 column wrapper stays in theme-stats-table (table layout, not the label's).
+- history-row.tsx: FastSquircleView card like the table sibling. Header: theme name (flex) + scoreFigure value/scale + medal (StatFigure's PNG, width SPACE.md) for COMPETITION. Details row: CategoryLabel when non-null, « N questions » (the line's questionCount, not the constant), durationFigure when known. No tap.
+- history-section-header.tsx: TEXT.input ink title, as-is (no capitalize: would uppercase « Septembre »).
+- app/profile/history.tsx: SectionList over historySections(all loaded pages, new Date()). States via ListEmptyComponent so one layout: signed out caption / ScreenLoading / ScreenError + refetch / empty caption; content flexGrow 1 so loading & error fill. onEndReached guarded by hasNextPage && !isFetchingNextPage, threshold 0.5; footer ActivityIndicator primary while isFetchingNextPage. Separator inline (route file holds only Page + styles).
+- useHistory was already exported again in the tree (item 8 note resolved).
+- Checks: typecheck all, tests non-api green (mobile 359), biome clean. API untouched.
+- All items pass. Human: knip on host now safe (every History export has a consumer); device review + line restyle.
