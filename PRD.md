@@ -1,103 +1,87 @@
-# PRD — Account stats in Profil › Stats
+# PRD — History in Profil › Historique
 
-Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Account Stats, Device Stats, Stat Baseline, Stats Transfer, Theme Average, Theme Best, Overall Average, Streak, Attempt, Standing, Season, Category). Rules: [AGENTS.md](AGENTS.md), [apps/api/AGENTS.md](apps/api/AGENTS.md), [apps/mobile/AGENTS.md](apps/mobile/AGENTS.md), [docs/agents/conventions.md](docs/agents/conventions.md), [ADR 0003](docs/adr/0003-database-admits-only-the-api.md), [ADR 0004](docs/adr/0004-competition-answers-are-judged-server-side.md), [ADR 0005](docs/adr/0005-the-api-reaches-its-data-through-typeorm.md), [ADR 0009](docs/adr/0009-season-standings-are-materialized-per-account-at-finalize.md), [mobile ADR 0003](apps/mobile/docs/adr/0003-append-only-session-sync.md).
+Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (History, Quiz Session, Abandoned Session, Attempt, Competition Session, Competition Day, Theme, Category, Account, Player, Account Stats, Device Stats, Stats Transfer). Rules: [AGENTS.md](AGENTS.md), [apps/api/AGENTS.md](apps/api/AGENTS.md), [apps/mobile/AGENTS.md](apps/mobile/AGENTS.md), [docs/agents/conventions.md](docs/agents/conventions.md), [ADR 0003](docs/adr/0003-database-admits-only-the-api.md), [ADR 0004](docs/adr/0004-competition-answers-are-judged-server-side.md), [ADR 0005](docs/adr/0005-the-api-reaches-its-data-through-typeorm.md), [mobile ADR 0003](apps/mobile/docs/adr/0003-append-only-session-sync.md).
 
 ## Decisions
 
-### What counts as a game
+### What the History holds
 
-- Practice: only a Finished Quiz Session counts. An Abandoned Session counts nowhere, exactly as the quit dialog promises.
-- Competition: an Attempt counts from its issuance, whatever its kind (initial, Replay, Catch-up) and whatever its state. This is the same set as the Competition Streak.
-- Every Attempt counts on its own: a Replay is a second game, never a replacement of the first.
-- A judged Attempt is a finalized one (completed, quit with its partial score, expired at 0) or a dead one. A dead Attempt is still active but was issued on a Paris day before today, and it counts as a game at 0.
-- An Attempt not yet judged (in play, or waiting in the finalize outbox) counts in the game counts, and enters no average and no best until it is judged.
-- Every score is out of 50, in practice and in competition.
+- A practice line is a Finished Quiz Session, the only kind `quiz_sessions` stores; an Abandoned Session never reaches the API.
+- A competition line is a finalized Attempt whatever its finalize reason: completed, quit with its partial score, expired at 0. It is the set the Account Stats count as judged.
+- An Attempt still active never appears: in play, waiting in the finalize outbox, or dead on an earlier Competition Day but not yet zero-finalized. It has no score.
+- A Finished Quiz Session waiting in the outbox never appears: the History is server truth alone; the ack invalidates the read and the line appears then.
+- Signed out, the History is empty: a device keeps no list of its sessions, only per-Theme aggregates.
 
-### The four tiles
+### The line
 
-- « Parties jouées » holds two figures: the Finished Quiz Sessions (Stat Baselines and pending outbox sessions included) and the Attempts issued.
-- « Plus longue série » holds two figures: the Longest Practice Streak and the Longest Competition Streak.
-- The Longest Practice Streak is the `longest` of the existing computation: signed in, the Account's Practice Streak merged with the owner's pending outbox days; signed out, the sign-out seed merged with the device's days.
-- « Score moyen » is the Overall Average: practice points plus judged competition points, divided by Finished Quiz Sessions plus judged Attempts. It reads « -- » when the Player holds no score.
-- « Classement actuel » is the Standing's rank in the current Season, read through the existing Standing read. No new route.
-- The rank reads « n°850 ». It reads « -- » with no rank, while the Standing is pending, and when the Standing failed.
-- Every average is rounded to the nearest integer, a half going up (34.5 gives 35). The one-decimal format disappears.
+- One wire shape for both kinds: `{ id, type, themeId, themeName, category, score, questionCount, durationMs, playedAt }`.
+- `id` is the Quiz Session id (phone-minted) or the Attempt id.
+- `type` is `SessionTypeEnum`, `PRACTICE` or `COMPETITION`, in `packages/contracts/src/enums/session-type.enum.ts` (UPPERCASE keys and values, per conventions). Named `type`, never `kind`: `kind` is the Attempt's initial / replay / catchup and stays off the History.
+- `themeName` is the name captured when the session was played (the row's own column), never the current catalog name.
+- `category` is the Theme's current Category (`appCategorySchema`: id, name, color, secondaryColor, icon), read through the existing `findThemesWithCategory`, published or withdrawn alike; null when the Editor deleted the Theme.
+- `score` is the Quiz Session's `points` or the Attempt's `score`: a non-negative integer with no /50 cap on the wire, the line's `questionCount` is its scale.
+- `questionCount`: competition reads `questionIds.length`; practice reads the new `question_count` column.
+- `durationMs`: competition is the sum of the Attempt's answers' `clientElapsedMs` (the play time, Theme Reveal and outbox delay excluded), null when no answer carries one (an expired Attempt); practice is always null, nothing is stored. Never `finalizedAt − issuedAt`.
+- `playedAt`: practice `finishedAt`, competition `issuedAt` (when the Player started), ISO with offset. Never `finalizedAt`, never the Competition Day: a Catch-up played today sits under today.
 
-### The table « Meilleur score par thème »
+### The question count column
 
-- One row per Theme holding at least one game, practice or competition, with three columns: « nb. parties », « meilleur score », « moy. ».
-- « nb. parties » is the Theme's Finished Quiz Sessions plus its Attempts issued.
-- « meilleur score » is the Theme Best: the highest known score, practice and competition together. Totals recorded without a best contribute none, and it reads « -- » when no best is known.
-- « moy. » is the Theme Average: the Theme's practice points plus judged competition points, divided by its sessions plus judged Attempts. It reads « -- » when the Theme holds no score.
-- A Theme whose only game is an unjudged Attempt reads 1, « -- », « -- ».
-- Rows are grouped by Category. Categories are in alphabetical order, Themes in alphabetical order inside each, in French collation, insensitive to case and accents.
-- The phone sorts, since it adds the pending sessions.
-- A Theme left without a Category is absent from the table, and its games still count in the tiles. There is no « Autres » group.
+- `QuizSessionEntity` gains `questionCount` as `@Column({ type: "smallint", name: "question_count", default: 10 })`: every session before the column was a 10-Question one, and the generated migration fills existing rows through the default.
+- `appQuizSessionPushInputSchema` requires `questionCount` (integer ≥ 1); the API stores it; a body without it is 400.
+- `QUIZ_SESSION_QUESTION_COUNT = 10` lives in the contracts beside the push schema; mobile's `QUESTIONS_PER_SESSION` is that constant, one source.
+- The outbox entry captures `questionCount` at enqueue, like the Theme name and the Category; the push sends it.
+- A variable question count later also changes the /50 scale of every average: a separate decision, not this PRD.
 
-### Signed out
+### Pagination
 
-- The screen is the same. The practice figures come from the Device Stats: games played, Overall Average, Longest Practice Streak and the table rows.
-- The three competition figures read « -- »: competition games played, Longest Competition Streak and rank.
-- Only the « -- » itself is pressable, and it opens the sign-in sheet. A new minimal component may carry it.
-- Signed in, no figure is pressable.
-- A dormant device world (declined Stats Transfer) stays hidden while signed in.
+- `GET /app/me/history?before=<ISO datetime>`, guarded by `SupabaseUserGuard` + `AuthenticatedThrottlerGuard` like every `/app/me` route; unauthenticated is 401.
+- `before` is optional: absent reads the newest page; present, every line has `playedAt` strictly before it. It is validated through `ZodValidationPipe` on `@Query`, like the Leaderboard's page.
+- The response is `{ sessions, nextBefore }`: at most `HISTORY_PAGE_SIZE = 20` lines newest first; `nextBefore` is the page's last `playedAt` when more may exist, null when the History ends.
+- Two owner-scoped reads per page, each ordered desc and limited to the page size: Quiz Sessions by `finishedAt`, finalized Attempts by `issuedAt`. A pure function merges them newest first and cuts at the page size.
+- `nextBefore` is null only when both reads returned fewer than a page; otherwise it is the page's last `playedAt`. Lines cut from the merge are re-read by the next page.
+- Two lines of one Account inside the same millisecond would lose the older one to the strict cursor: accepted, an Account cannot play two sessions in one millisecond.
+- No new index: `quiz_sessions_owner_idx` and `competition_attempts_owner_day_idx` serve; an Account holds a few hundred lines.
+- The service parses the payload through `appHistoryPageResponseSchema`, so `owner` and every unlisted column stay off the wire.
 
-### API
+### Mobile read
 
-- `GET /app/me/stats` stays the one read. It answers `themes`, `practiceStreak` and `competitionStreak`.
-- A `themes` row holds `themeId`, `themeName`, `category` (nullable), `practice: { sessionCount, totalPoints, bestScore }` and `competition: { attemptCount, judgedCount, totalPoints, bestScore }`. Both `bestScore` are nullable.
-- No total travels: the phone derives the four tiles and the table from the rows alone.
-- The database is the primary source of a Theme's name and Category. Each row is joined to its Theme and Category, published or not.
-- A Theme the Editor deleted keeps its most recently captured name and a null `category`.
-- Practice tallies are the Account's Quiz Sessions plus its Stat Baselines. The practice `bestScore` is the highest of the session points and of the baselines' known bests.
-- The sums are computed by the database. Whole Quiz Sessions never travel.
-- The stats read finalizes nothing. A dead Attempt is counted as judged at 0 by the tally, from today's Paris date, with the clock injected.
-- Another Account's rows never count.
-- `stat_baselines` gains a nullable `best_score`. `POST /app/me/stat-baselines` takes a `bestScore` (an integer from 0 to 50, or null) on each baseline and stores it. Insert-if-absent is unchanged.
-- The contract is transitional during the loop: `themes` lands beside `baselines` and `sessions[]`, which leave in the last item once the phone stops reading them. Every commit keeps `check` green.
-- No compatibility with installed builds: no versioning, no shim.
+- `useHistory(playerId)` is a `useInfiniteQuery` keyed `accountKeys.history(playerId)` under `ACCOUNT_QUERY_ROOT`, so every loaded page persists and reads offline like the Stats; enabled only signed in; default `STALE_TIME_MS`.
+- `initialPageParam` is undefined; `getNextPageParam` returns `nextBefore`, or undefined when it is null.
+- The request goes through the seam (`api.requestJson` with `query: { before }`), parsed by the contract schema, in `features/account/requests.ts`.
+- Invalidated on the Quiz Session outbox ack (`outbox-sync.ts`, beside the stats) and on the finalize ack (`finalize-sync.ts`); a Stats Transfer deposits baselines, never a line, so `transfer-sync.ts` is untouched. A focus refetches only what is stale.
+- An invalidated infinite query refetches its loaded pages in order: accepted.
 
-### Mobile
+### The screen
 
-- The Stats tab derives everything from one list of tallies, the same shape in both worlds: the Account's `themes` overlaid with the pending outbox sessions, or the Device Stats.
-- A pending outbox session folds into its Theme's `practice` (count, points, best). It creates the row when the Account holds none for that Theme.
-- An outbox entry captures its Category at enqueue, so a Theme played for the first time shows in the table before its push lands. The Category never goes on the wire.
-- The dedupe by session id is gone. When a push is acked, the acked sessions fold into the cached tallies, then the Account stats are invalidated.
-- A read landing between the server insert and the ack may count a session twice until the next read. This is accepted.
-- The competition figures come from the server alone. The phone overlays no Attempt, so none is ever counted twice.
-- Issuing an Attempt invalidates the Account stats, as a finalize already does.
-- The Device Stats record, per Theme, the best score and the Category captured at record time, beside the name and the totals.
-- A Device Stats entry recorded before this work holds neither: its best is unknown, and its Category comes from the catalog or not at all.
-- Signed out, the tab reads the catalog itself. The catalog's Category wins when the catalog holds the Theme, the captured one otherwise.
-- The Stats Transfer deposits each Theme's best score with its baseline, null when unknown.
-- The persisted query cache's buster changes, so stats in the old shape are dropped at hydration.
-- The old Theme card list, its hook, the fold over raw sessions and the one-decimal format are deleted.
+- `history.tsx` is the page itself. The list is a `SectionList`, one section per calendar day of the device, `stickySectionHeadersEnabled={false}`, no scroll indicator, width capped by `MAX_CONTENT_WIDTH`, content padded `SPACE.lg` top, `GUTTER` sides and `tabBarHeight + SPACE.lg` bottom, like the Stats page.
+- `onEndReached` calls `fetchNextPage` only while `hasNextPage && !isFetchingNextPage`, `onEndReachedThreshold` 0.5; the list footer is an `ActivityIndicator` in `COLORS.primary` while the next page loads, nothing otherwise.
+- Day heading: « Aujourd'hui », « Hier », otherwise `Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long" })` (« lundi 28 septembre »), the year appended when the day is outside the current year. Computed by a pure `historySections(sessions, today)`, the clock injected.
+- A line shows the Theme name, the Category label (icon + name on the Category color: the `CategoryLabel` extracted from `theme-stats-table.tsx` into `src/components/account/category-label.tsx`; none when `category` is null), the score through `scoreFigure` (« 35/50 »), the medal image for a competition line as `StatFigure` does, « 10 questions », and the duration through `durationFigure` when known, nothing when null.
+- `durationFigure(ms)`: « 2 min 13 s », « 45 s » under a minute, « 1 min » on a whole minute, seconds rounded down; in `stat-figures.ts`.
+- A line has no tap in this version.
+- States: signed out → caption « Connecte-toi pour retrouver ton historique. » with no action (the header chip signs in); pending → `ScreenLoading`; failed with no data → `ScreenError` « Impossible de charger ton historique. » with `onRetry`; success with no line → caption « Aucune partie pour le moment. ». Captions in `TEXT.caption`, `COLORS.inkMuted`, centered, like `PROFILE_STATS_EMPTY`.
+- Copy in `features/account/constants.ts`, French, SCREAMING_SNAKE_CASE; the tab label stays `PROFILE_HISTORY_TAB_LABEL`.
+- Colors only from `COLORS`, text styles only from `TEXT`, spacing from `SPACE`/`GUTTER`; rounded surfaces as the siblings in `src/components/account/` do. Hugo restyles the line after the device review.
 
-### Screen
+### Areas to include
 
-- Ralph delivers the right figures in the mockup's structure. Hugo restyles the screen afterwards to match the design.
-- The order is: `PremiumBanner` and `TransferNotice` unchanged on top, the four tiles in a 2×2 grid, then the table card grouped under a Category pill.
-- Existing primitives and tokens only. No new `TEXT` token, colour or asset.
-- The existing medal image marks the competition figures. The existing flame image decorates « Plus longue série ».
-- With zero game: the counts read 0, the Longest Streaks read 0, the Overall Average and the rank read « -- », and « Aucune statistique pour le moment. » replaces the table.
-- Signed in with no cache: `ScreenLoading` while the stats are pending, `ScreenError` with a retry when they failed. The Standing never blocks the screen.
-- The copy is French, in the account feature's constants.
+- Contracts: the `SessionTypeEnum`, the History query and page schemas, the push schema, the question-count and page-size constants, their specs.
+- API player feature: the `QuizSessionEntity` column, the repository reads, the pure page merge in `utils/`, the service and mapper, the `/app/me/history` controller route, the push mapping.
+- Mobile account feature: the seam request, the infinite query hook and its key, the pure sections and figures, the copy, the invalidations in the quiz outbox sync and the competition finalize sync, the outbox entry's question count.
+- Mobile account components: the row, the section header, the extracted Category label, and the « Historique » page.
 
 ### Test seams
 
-- API pure function: a vitest spec beside `streak.spec.ts`.
-- API repository reads: `player.repository.spec.ts`, with its metadata DataSource and mocked query runner.
-- API routes: `app-me.e2e-spec.ts`, through the Nest testing module and its fake repository, today injected.
-- Contracts: `account.spec.ts`.
-- Mobile pure functions and stores: vitest beside `stats.test.ts`, `account-stats.test.ts`, `outbox.test.ts` and `stats-transfer.test.ts`. No component rendering test. Today is always injected.
+- Contracts: `packages/contracts/src/app/history.spec.ts` and `account.spec.ts`, after `competition.spec.ts` (page-size cap, nullable fields, `owner` stripped).
+- API pure merge: `src/player/_tests/history-page.spec.ts`, after `theme-tallies.spec.ts`.
+- API repository SQL: the metadata harness of `src/player/_tests/player.repository.spec.ts`, checking the owner filter, the status filter, the order, the limit and the elapsed sum.
+- API route: `src/player/_tests/app-me.e2e-spec.ts` through the Nest testing module, the fake `PlayerRepository` rows and minted JWTs, as every `/app/me` test.
+- Mobile seam: `features/account/requests.test.ts` (path, `before` query, parsed page), after the profile tests.
+- Mobile pure: `history-sections.test.ts`, `stat-figures.test.ts`, `outbox.test.ts` — vitest on pure TS, no component rendering.
 
 ### Out of scope
 
-- The header's « Alias » line, the third tab's label (it stays « Compte »), and the Historique tab with its future paginated route.
-- Matching the mockup's pixels, and any new design token.
-- A pressable rank leading to the Leaderboard, past Seasons and a best rank.
-- Any change to curation: deleting a played Theme stays possible.
-- Compatibility with installed builds and with data recorded before this work.
+- Sorting, filtering, a tap on a line, the competition transcript, the Attempt kind on the wire, an overlay of pending outbox sessions, a device-side History, a new index, the practice duration, the /50 scale for a variable question count, FlashList.
 
 ## Items
 
@@ -105,148 +89,117 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Account Stats, Dev
 [
   {
     "category": "api",
-    "description": "StatBaselineEntity gains a nullable bestScore",
+    "description": "QuizSessionEntity gains questionCount (question_count, smallint, default 10)",
     "steps": [
-      "The entity carries bestScore: integer, nullable, column best_score, in the shape of its sibling columns",
-      "No migration file is written, generated or edited",
-      "schema-constraints.spec.ts still passes",
-      "bun run check green"
+      "quiz-session.entity.ts declares questionCount: number as @Column({ type: \"smallint\", name: \"question_count\", default: 10 }), in the shape of theme.entity.ts, no `!`",
+      "No migration file is added or edited; bun run typecheck and bun run test stay green in apps/api",
+      "bun run check green at the repo root"
     ],
-    "passes": true
+    "passes": false
   },
   {
     "category": "contracts",
-    "description": "The Account stats carry per-Theme tallies, and a Stat Baseline push carries its best score",
+    "description": "The Quiz Session push carries questionCount, stored by the API and sent by the mobile outbox",
     "steps": [
-      "A Theme tally schema: themeId, themeName, category (appCategorySchema or null), practice { sessionCount, totalPoints, bestScore }, competition { attemptCount, judgedCount, totalPoints, bestScore }",
-      "Counts and points are non-negative integers; bestScore is an integer from 0 to 50, or null",
-      "A tally whose judgedCount exceeds its attemptCount is rejected; so is a tally holding no game (sessionCount + attemptCount = 0)",
-      "appAccountStatsResponseSchema gains themes, beside baselines and sessions which stay until the last item",
-      "Each row of appStatBaselinePushInputSchema gains bestScore: an integer from 0 to 50, or null; a missing bestScore is rejected",
-      "Specs in account.spec.ts parse a valid payload and reject each case above, a bestScore of 51 and a malformed category",
-      "The API answers themes: [] until the route item lands; bun run check green"
+      "packages/contracts/src/app/account.ts exports QUIZ_SESSION_QUESTION_COUNT = 10 and appQuizSessionPushInputSchema requires questionCount as an integer ≥ 1; account.spec.ts refuses a session without it and one with 0",
+      "POST /app/me/quiz-sessions stores questionCount on the row: PlayerService.pushQuizSessions maps it, the e2e fake rows carry it, every session fixture in app-me.e2e-spec.ts sends it",
+      "apps/mobile: QUESTIONS_PER_SESSION is QUIZ_SESSION_QUESTION_COUNT from the contracts; OutboxEntry carries questionCount, captured at enqueue in app/session/[themeId].tsx; the push batch sends it; outbox.test.ts and batch-push.test.ts fixtures carry it",
+      "bun run check green at the repo root"
     ],
-    "passes": true
-  },
-  {
-    "category": "api",
-    "description": "Pure function from an Account's per-Theme sums and Attempts to its tallies",
-    "steps": [
-      "Two sessions of 30 and 40 plus a baseline of 3 sessions, 90 points and best 45 give practice { sessionCount: 5, totalPoints: 160, bestScore: 45 }",
-      "A baseline with a null best and no session gives practice bestScore null; beside a session of 20 it gives 20",
-      "Finalized Attempts completed at 35, quit at 10 and expired at 0 on one Theme give competition { attemptCount: 3, judgedCount: 3, totalPoints: 45, bestScore: 35 }",
-      "An active Attempt issued on an earlier Paris day counts as judged at 0; one issued today counts in attemptCount alone",
-      "A Theme whose only game is an unjudged Attempt gives attemptCount 1, judgedCount 0, bestScore null",
-      "A Theme holding no game gives no tally",
-      "Free of TypeORM, today injected; vitest spec beside streak.spec.ts; bun run check green"
-    ],
-    "passes": true
-  },
-  {
-    "category": "api",
-    "description": "GET /app/me/stats carries themes, each joined to its Theme and Category",
-    "steps": [
-      "Unauthenticated: 401",
-      "themes holds one row per Theme the owner has a Quiz Session, a Stat Baseline or an Attempt on; another Account's rows never count",
-      "Each row carries the Theme's current name and its Category from the database, for a published and an unpublished Theme alike",
-      "A Theme deleted from the catalog keeps its most recently captured name and a null category",
-      "The sums are grouped by Theme in SQL and filtered by owner; the repository spec asserts both",
-      "An active Attempt issued yesterday (Paris) is answered as judged at 0, and the read finalizes nothing",
-      "Repository specs in player.repository.spec.ts; e2e in app-me.e2e-spec.ts parses the response through the contract, today injected",
-      "bun run check green"
-    ],
-    "passes": true
-  },
-  {
-    "category": "api",
-    "description": "POST /app/me/stat-baselines stores the deposited best score",
-    "steps": [
-      "A baseline pushed with bestScore 45 is stored with it; one pushed with null is stored null",
-      "A replayed push changes nothing, bestScore included",
-      "bestScore 51, negative or missing: 400 through the ErrorResponse envelope",
-      "GET /app/me/stats then answers the deposited best in the Theme's practice bestScore",
-      "e2e in app-me.e2e-spec.ts; bun run check green"
-    ],
-    "passes": true
-  },
-  {
-    "category": "mobile",
-    "description": "Pure stats functions: the four tiles and the table from a list of tallies",
-    "steps": [
-      "Games played: practice is the sum of sessionCount, competition the sum of attemptCount, unjudged Attempts included",
-      "Overall Average: 230 sessions totalling 8000 points and 10 judged Attempts totalling 400 give 35; 34.5 gives 35; no score gives null",
-      "Table row: nb. parties = sessionCount + attemptCount; Theme Best = the highest known best, null when none; Theme Average over sessionCount + judgedCount, null at 0",
-      "A Theme whose only game is an unjudged Attempt gives 1, null, null",
-      "Groups: Categories alphabetical, Themes alphabetical inside, French collation insensitive to case and accents (« Écologie » before « Histoire »)",
-      "A tally without a Category is absent from the groups and still counted by the tiles",
-      "In the signed-out world the competition figures are null, never 0",
-      "Vitest beside stats.test.ts; bun run check green"
-    ],
-    "passes": true
-  },
-  {
-    "category": "mobile",
-    "description": "Device Stats record each Theme's best score and Category, and the Stats Transfer deposits the best score",
-    "steps": [
-      "A signed-out Finished Quiz Session raises the Theme's best when its points are higher, and records the Theme's Category",
-      "An Abandoned Session records nothing",
-      "An entry persisted before this item reads with an unknown best and no captured Category, without a crash",
-      "Device Stats fold into tallies: practice from the device, competition empty",
-      "The catalog's Category wins when the catalog holds the Theme, the captured one otherwise, none when neither knows it",
-      "buildTransferBaselines carries each Theme's bestScore, null when unknown",
-      "Vitest beside stats.test.ts and stats-transfer.test.ts; bun run check green"
-    ],
-    "passes": true
-  },
-  {
-    "category": "mobile",
-    "description": "The Account world reads tallies: pending sessions overlay them, an ack seeds then invalidates, an issuance invalidates",
-    "steps": [
-      "The Account tallies are the stats' themes overlaid with the owner's pending outbox sessions: count, points and best move",
-      "A pending session on a Theme the Account lacks creates the row, with the entry's captured Category",
-      "An outbox entry captures its Category at enqueue, and the push body never carries it",
-      "An ack folds the acked sessions into the cached themes, then invalidates the Account stats; with no cache loaded it seeds nothing",
-      "The acked days still extend the cached Practice Streak",
-      "Issuing an Attempt invalidates the Account stats, and the phone overlays no Attempt",
-      "The persisted query cache's buster is no longer api-v1",
-      "Pure logic under vitest beside account-stats.test.ts and outbox.test.ts; bun run check green"
-    ],
-    "passes": true
-  },
-  {
-    "category": "mobile",
-    "description": "Profil › Stats shows the four tiles and the table, signed in or out",
-    "steps": [
-      "PremiumBanner and TransferNotice stay on top, unchanged",
-      "Four tiles in a 2×2 grid: « Parties jouées », « Plus longue série », « Score moyen », « Classement actuel »",
-      "Then the card « Meilleur score par thème », columns « nb. parties », « meilleur score », « moy. », rows grouped under a Category pill",
-      "Signed in: every figure comes from the Account tallies, the Streaks and the Standing, and no figure is pressable",
-      "The rank reads « n°850 », and « -- » with no rank or while the Standing is pending or failed",
-      "Signed out: practice figures come from the Device Stats; the three competition figures read « -- », and each « -- » alone opens the sign-in sheet",
-      "Zero game: counts 0, Longest Streaks 0, Overall Average « -- », and « Aucune statistique pour le moment. » in place of the table",
-      "Signed in with no cache: ScreenLoading while pending, ScreenError with a retry on failure",
-      "Scores read as integers over 50; the medal image marks competition figures, the flame image sits on « Plus longue série »; existing tokens and primitives only",
-      "HomeThemeCard, useHomeCards, the fold over raw sessions and formatAverage are gone; nothing on the phone reads baselines or sessions",
-      "bun run check green"
-    ],
-    "passes": true
+    "passes": false
   },
   {
     "category": "contracts",
-    "description": "baselines and sessions[] leave the Account stats, in the contract and the API",
+    "description": "The History contract: SessionTypeEnum, HISTORY_PAGE_SIZE, the query and the page schemas",
     "steps": [
-      "appAccountStatsResponseSchema holds themes, practiceStreak and competitionStreak, and nothing else",
-      "The API reads no whole Quiz Session and no whole Stat Baseline to answer the stats",
-      "e2e: the response carries no baselines key and no sessions key",
-      "Specs updated in account.spec.ts and app-me.e2e-spec.ts; bun run check green"
+      "packages/contracts/src/enums/session-type.enum.ts exports SessionTypeEnum { PRACTICE = \"PRACTICE\", COMPETITION = \"COMPETITION\" }, re-exported by enums/index.ts",
+      "packages/contracts/src/app/history.ts exports HISTORY_PAGE_SIZE = 20, appHistoryQuerySchema ({ before: ISO datetime with offset, optional }), appHistoryPageResponseSchema ({ sessions: lines, max HISTORY_PAGE_SIZE; nextBefore: ISO datetime with offset, nullable }) and the types AppHistoryQuery, AppHistoryPageResponse, AppHistorySession; app/index.ts re-exports it",
+      "A line parses as { id: uuid, type: SessionTypeEnum, themeId: non-empty string, themeName: non-empty string, category: appCategorySchema nullable, score: integer ≥ 0, questionCount: integer ≥ 1, durationMs: integer ≥ 0 nullable, playedAt: ISO datetime with offset }; an owner key is stripped",
+      "history.spec.ts: 21 lines fail, a query without before parses to no before key, nextBefore null parses, a line with owner loses it, a line with durationMs null and one with a number both parse",
+      "bun run check green at the repo root"
     ],
-    "passes": true
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Pure historyPage merges practice and competition lines newest first, cuts at the page size and names nextBefore",
+    "steps": [
+      "src/player/utils/history-page.ts exports historyPage(practice: AppHistorySession[], competition: AppHistorySession[], size: number): { sessions: AppHistorySession[]; nextBefore: string | null }, TypeORM-free",
+      "12 practice + 8 competition lines, size 20: 20 lines ordered by playedAt desc, nextBefore null",
+      "20 practice + 3 competition lines, size 20: 20 lines, nextBefore is the 20th line's playedAt, every cut line is older than or equal to it",
+      "Both empty: [] and null; 20 competition + 0 practice: nextBefore is the 20th playedAt",
+      "src/player/_tests/history-page.spec.ts covers the four cases; bun run check green"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "PlayerRepository reads a page of Quiz Sessions and of finalized Attempts before an instant, each Attempt with its summed elapsed",
+    "steps": [
+      "findQuizSessionsBefore(owner, before: Date | null, limit): QuizSessionEntity[] — owner filter, finishedAt < before when given, ORDER BY finishedAt DESC, LIMIT limit, whole entities",
+      "findFinalizedAttemptsBefore(owner, before: Date | null, limit): { entity: CompetitionAttemptEntity; durationMs: number | null }[] — owner filter, status = 'finalized', issuedAt < before when given, ORDER BY issuedAt DESC, LIMIT limit; durationMs is SUM(competition_answers.client_elapsed_ms) per Attempt, null when every answer's is null, read as a number never a string",
+      "src/player/types/ holds the aggregate type composing the entity, no flat restatement of its columns",
+      "player.repository.spec.ts: the generated SQL carries the owner parameter, the status filter, the order, the limit and the elapsed sum; a null before emits no cursor predicate",
+      "bun run check green"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "GET /app/me/history answers one page of the Account's History",
+    "steps": [
+      "Unauthenticated: 401 UNAUTHENTICATED envelope; a before that is not an ISO datetime: 400",
+      "MeController.history(@Query ZodValidationPipe(appHistoryQuerySchema)) → PlayerService.history(owner, query): the two repository reads in parallel with HISTORY_PAGE_SIZE, historyPage, then findThemesWithCategory on the page's themeIds; the mapper assembles the lines and parses appHistoryPageResponseSchema",
+      "No line: { sessions: [], nextBefore: null }",
+      "A practice line: type PRACTICE, score = points, questionCount = the row's, durationMs null, playedAt = finishedAt, themeName = the captured name, category = the current Theme's Category",
+      "A completed Attempt: type COMPETITION, score, questionCount = questionIds.length, durationMs = the answers' sum, playedAt = issuedAt; an expired one: score 0, durationMs null; a quit one: its partial score",
+      "An active Attempt, a dead one not yet zero-finalized, and another Player's rows never appear; a deleted Theme's line carries category null and its captured name",
+      "21 lines newest first across both kinds: the first call answers 20 with nextBefore = the 20th playedAt; ?before=<that> answers the 21st with nextBefore null; owner never on the wire",
+      "app-me.e2e-spec.ts covers each case through the Nest testing module with the fake PlayerRepository; bun run check green"
+    ],
+    "passes": false
+  },
+  {
+    "category": "mobile",
+    "description": "useHistory reads the History through the seam as an infinite query, invalidated by both acks",
+    "steps": [
+      "features/account/requests.ts exports fetchHistoryPage(api, before: string | undefined): GET /app/me/history with query { before }, parsed by appHistoryPageResponseSchema; requests.test.ts proves the path, that an undefined before sends no query string, and the parsed page",
+      "features/account/api.ts exports accountKeys.history(playerId) under ACCOUNT_QUERY_ROOT and useHistory(playerId: string | undefined): useInfiniteQuery enabled signed in only, initialPageParam undefined, getNextPageParam = page.nextBefore ?? undefined, default staleTime",
+      "outbox-sync.ts invalidates accountKeys.history(playerId) beside the stats on a Quiz Session ack; finalize-sync.ts invalidates it after a finalize ack; transfer-sync.ts is untouched",
+      "bun run check green"
+    ],
+    "passes": false
+  },
+  {
+    "category": "mobile",
+    "description": "Pure historySections and durationFigure, and the History copy",
+    "steps": [
+      "features/account/history-sections.ts exports historySections(sessions: AppHistorySession[], today: Date): { title: string; data: AppHistorySession[] }[] — sections in the pages' order, one per device-local calendar day, titled « Aujourd'hui », « Hier », else fr-FR « lundi 28 septembre », with the year when the day is outside today's year",
+      "history-sections.test.ts: today and yesterday titles, a same-year day, a previous-year day carries its year, an empty list gives no section, lines of one day share a section",
+      "stat-figures.ts exports durationFigure(ms: number): string — 133_000 → « 2 min 13 s », 45_000 → « 45 s », 60_000 → « 1 min », 59_999 → « 59 s »; stat-figures.test.ts covers them",
+      "features/account/constants.ts holds HISTORY_SIGNED_OUT « Connecte-toi pour retrouver ton historique. », HISTORY_EMPTY « Aucune partie pour le moment. », HISTORY_ERROR « Impossible de charger ton historique. », the questions unit, the minute and second units",
+      "bun run check green"
+    ],
+    "passes": false
+  },
+  {
+    "category": "mobile",
+    "description": "The « Historique » page lists the History by day, loading the next page on scroll",
+    "steps": [
+      "apps/mobile/src/app/profile/history.tsx is the page: a SectionList over historySections(every loaded page's sessions, now), stickySectionHeadersEnabled false, no scroll indicator, width capped by MAX_CONTENT_WIDTH, contentContainer paddingTop SPACE.lg, paddingHorizontal GUTTER, paddingBottom tabBarHeight + SPACE.lg",
+      "onEndReached fetches the next page only while hasNextPage && !isFetchingNextPage, threshold 0.5; ListFooterComponent is an ActivityIndicator (COLORS.primary) while isFetchingNextPage, nothing otherwise",
+      "src/components/account/history-row.tsx renders a line: Theme name, CategoryLabel when category is not null, scoreFigure score, the medal image for COMPETITION, « 10 questions », durationFigure when durationMs is not null; tokens only, no tap",
+      "src/components/account/category-label.tsx is the CategoryLabel extracted from theme-stats-table.tsx, which now imports it; src/components/account/history-section-header.tsx renders a section title",
+      "Signed out: HISTORY_SIGNED_OUT caption centered and no query; signed in pending: ScreenLoading; failed with no data: ScreenError HISTORY_ERROR with onRetry; success with no line: HISTORY_EMPTY caption",
+      "bun run check green"
+    ],
+    "passes": false
   }
 ]
 ```
 
 ## Human steps
 
-- After item 1: Hugo runs `bun run migration:generate` then `bun run migration:run` in `apps/api`, before items 4 and 5 meet a real database. No lock SQL is needed, since `best_score` joins a table that is already locked.
-- After item 10: a device review in both auth states — the four tiles, the table, each « -- » opening the sign-in sheet, a session finished offline showing at once, and an Attempt counted right after its issuance.
-- After the review: Hugo restyles the screen to match the design.
+- After item 1, before the live API runs with the column: `bun run migration:generate` then `bun run migration:run` in `apps/api` — the column lands with its default; no grant or RLS to touch, table-level privileges cover a new column.
+- Before item 9's device review: on every dev device, an outbox entry enqueued before item 2 has no `questionCount` and would fail the push — sign out or clear the app storage.
+- After item 9: device review of « Historique » signed in and signed out, then the restyle of the line.

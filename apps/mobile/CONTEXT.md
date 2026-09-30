@@ -104,6 +104,10 @@ _Avoid_: merge, import
 The per-Theme totals (points, session count) a Stats Transfer deposits under an Account, frozen at transfer time. Keyed by (Account, device, Theme).
 _Avoid_: baseline (alone), transferred stats
 
+**History**:
+The Account's Finished Quiz Sessions and finalized Attempts, newest first, each under the Theme name captured when it was played, with its score. The phone groups them by the device's calendar day. Only an Account holds one: a device keeps no list of its sessions. French UI label: « Historique ».
+_Avoid_: log, activity, timeline
+
 **Question**:
 A prompt tied to exactly one Theme, answerable in both modes: it has one canonical correct answer and exactly 3 wrong choices for Square mode. Similar — even identical — wording may exist under different Themes; those are distinct Questions with distinct ids.
 
