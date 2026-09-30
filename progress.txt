@@ -1,0 +1,5 @@
+## Item 1 — QuizSessionEntity.questionCount (done)
+- quiz-session.entity.ts: questionCount smallint question_count default 10, after points. No comment (history-only why, forbidden by conventions).
+- No migration touched. Hugo: `bun run migration:generate` + `migration:run` in apps/api before live API uses column.
+- check green (api 455 tests). Pre-existing biome warnings in mobile, not ours.
+- Next: item 2 (push carries questionCount) — fixtures typed as QuizSessionEntity may need the field once service maps it.

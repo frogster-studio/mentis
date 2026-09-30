@@ -35,6 +35,9 @@ export class QuizSessionEntity extends BaseEntity {
   @Column({ type: "integer" })
   points: number;
 
+  @Column({ type: "smallint", name: "question_count", default: 10 })
+  questionCount: number;
+
   @Column({ type: "timestamptz", name: "finished_at" })
   finishedAt: Date;
 

@@ -95,7 +95,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (History, Quiz Sess
       "No migration file is added or edited; bun run typecheck and bun run test stay green in apps/api",
       "bun run check green at the repo root"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "contracts",
