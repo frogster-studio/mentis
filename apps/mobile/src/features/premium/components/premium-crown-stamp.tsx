@@ -3,29 +3,37 @@ import { StyleSheet, Text, View } from "react-native";
 import FastSquircleView from "react-native-fast-squircle";
 import { TEXT } from "@/theme/text";
 import { SPACE } from "@/theme/tokens";
-
-const CROWN_IMAGE = require("../../../../assets/images/premium-crown.png");
+import { CROWN_IMAGE } from "@/utils/assets";
 
 export const PremiumCrownStamp = () => {
   return (
-    <View style={styles.container}>
-      <Image
-        source={CROWN_IMAGE}
-        contentFit="contain"
-        style={styles.image}
-        pointerEvents="none"
-        accessible={false}
-      />
-      <FastSquircleView style={styles.labelContainer}>
-        <Text style={styles.label}>Premium</Text>
-      </FastSquircleView>
-    </View>
+    <FastSquircleView style={styles.labelContainer}>
+      <View style={styles.crownSlot}>
+        <Image
+          source={CROWN_IMAGE}
+          contentFit="contain"
+          style={styles.image}
+          pointerEvents="none"
+          accessible={false}
+        />
+      </View>
+
+      <Text style={styles.label}>Premium</Text>
+    </FastSquircleView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { alignItems: "center", transform: [{ rotate: "6deg" }] },
-  image: { width: 80, aspectRatio: 252 / 159, marginBottom: -SPACE.sm, zIndex: 1 },
+  crownSlot: {
+    position: "absolute",
+    top: -SPACE.xxl,
+    alignSelf: "center",
+  },
+  image: {
+    width: 80,
+    aspectRatio: 333 / 273,
+    marginBottom: -SPACE.sm,
+  },
   labelContainer: {
     borderRadius: 4,
     backgroundColor: "#FEE24F",

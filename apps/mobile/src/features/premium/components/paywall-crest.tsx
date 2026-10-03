@@ -1,14 +1,11 @@
 import { Image } from "expo-image";
 import { StyleSheet, Text, View } from "react-native";
 import { LogoMark } from "@/components/logo-mark";
-import { Squircle } from "@/components/ui/squircle";
 import { LaurelBranch } from "@/features/premium/components/laurel-branch";
 import { TEXT } from "@/theme/text";
 import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
+import { CROWN_IMAGE } from "@/utils/assets";
 
-const CROWN = require("../../../../assets/images/premium-crown.png");
-
-const CROWN_WIDTH = 90;
 const CROWN_HEIGHT = 42;
 const CROWN_BADGE_OVERLAP = 7;
 const LAUREL_WIDTH = 42;
@@ -25,20 +22,13 @@ export const PaywallCrest = () => {
         <View style={styles.mirrored}>
           <LaurelBranch color={COLORS.background} width={LAUREL_WIDTH} height={LAUREL_HEIGHT} />
         </View>
-        <Squircle
-          radius={RADIUS.lg}
-          corners="all"
-          color={COLORS.ink}
-          borderColor={null}
-          borderWidth={null}
-          style={styles.badge}
-        >
+        <View style={styles.badge}>
           <LogoMark color={COLORS.background} size={BADGE_MARK_SIZE} />
-        </Squircle>
+        </View>
         <LaurelBranch color={COLORS.background} width={LAUREL_WIDTH} height={LAUREL_HEIGHT} />
       </View>
       <View style={styles.crownSlot}>
-        <Image source={CROWN} style={styles.crown} contentFit="contain" />
+        <Image source={CROWN_IMAGE} style={styles.crown} contentFit="contain" />
       </View>
 
       <Text style={styles.badgeLabel}>Premium</Text>
@@ -53,14 +43,14 @@ const styles = StyleSheet.create({
   },
   crownSlot: {
     position: "absolute",
-    top: -SPACE.xs,
+    top: -SPACE.lg,
     left: 0,
     right: 0,
     alignItems: "center",
   },
   crown: {
-    width: CROWN_WIDTH,
-    aspectRatio: 252 / 159,
+    width: 120,
+    aspectRatio: 333 / 273,
   },
   wreath: {
     flexDirection: "row",
@@ -75,6 +65,8 @@ const styles = StyleSheet.create({
     aspectRatio: 3 / 4,
     alignItems: "center",
     justifyContent: "center",
+    borderRadius: RADIUS.round,
+    backgroundColor: COLORS.ink,
   },
   badgeLabel: {
     textTransform: "uppercase",

@@ -28,7 +28,6 @@ export interface NewButtonProps {
   tone: "default" | "primary" | "inverse" | "gradient-primary";
   disabled: boolean;
   pending: boolean;
-  // A brand mark is a drawn element; everything else is a glyph name.
   icon: CommunityIconName | ReactElement | null;
   label: string | null;
   accessibilityLabel: string | null;

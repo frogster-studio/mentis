@@ -72,7 +72,7 @@ export const YesterdayCompetitionCard = ({ onPress, onExpire }: YesterdayCompeti
           pending={false}
           onPress={onPress}
         />
-        <View style={styles.premiumContainer}>
+        <View style={styles.premiumStampSlot}>
           <PremiumCrownStamp />
         </View>
       </View>
@@ -88,7 +88,12 @@ const styles = StyleSheet.create({
   subtitle: { ...TEXT.caption, opacity: 0.8, color: COLORS.ink },
   time: { ...TEXT.captionStrong, color: COLORS.ink },
   imageContainer: { flex: 9 },
-  premiumContainer: { position: "absolute", top: -SPACE.xl, right: -SPACE.sm },
+  premiumStampSlot: {
+    position: "absolute",
+    top: SPACE.md,
+    right: 0,
+    transform: [{ rotate: "6deg" }],
+  },
   image: {
     position: "absolute",
     bottom: -SPACE.xxs,

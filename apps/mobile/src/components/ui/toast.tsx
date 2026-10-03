@@ -1,6 +1,6 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { StyleSheet, Text, View } from "react-native";
-import { Toaster, toast } from "sonner-native";
+import { Toaster, type ToastPosition, toast } from "sonner-native";
 import { useBottomTabBarHeight } from "@/components/bottom-tab-bar";
 import type { CommunityIconName } from "@/components/ui/icon-name";
 import { Squircle } from "@/components/ui/squircle";
@@ -9,13 +9,12 @@ import { COLORS, CONTROL_ICON_SIZE, GUTTER, RADIUS, SPACE } from "@/theme/tokens
 
 const TOAST_DURATION_MS = 4000;
 
-const TOAST_ICON: CommunityIconName = "check-circle-outline";
-
 interface ToastProps {
   message: string;
+  icon: CommunityIconName;
 }
 
-const Toast = ({ message }: ToastProps) => (
+const Toast = ({ message, icon }: ToastProps) => (
   <Squircle
     radius={RADIUS.base}
     corners="all"
@@ -25,7 +24,7 @@ const Toast = ({ message }: ToastProps) => (
     style={styles.surface}
   >
     <View style={styles.row}>
-      <MaterialCommunityIcons name={TOAST_ICON} size={CONTROL_ICON_SIZE} color={COLORS.ink} />
+      <MaterialCommunityIcons name={icon} size={CONTROL_ICON_SIZE} color={COLORS.ink} />
       <Text style={styles.message}>{message}</Text>
     </View>
   </Squircle>
@@ -42,8 +41,8 @@ export const ToastHost = () => (
   />
 );
 
-export const showToast = (message: string) => {
-  toast.custom(<Toast message={message} />);
+export const showToast = (message: string, icon: CommunityIconName, position: ToastPosition) => {
+  toast.custom(<Toast message={message} icon={icon} />, { position });
 };
 
 const styles = StyleSheet.create({

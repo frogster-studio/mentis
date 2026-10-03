@@ -6,12 +6,9 @@ import { LaurelBranch } from "@/features/premium/components/laurel-branch";
 import { PREMIUM_ACTIVE_TITLE, PREMIUM_CTA_LABEL } from "@/features/premium/constants";
 import { TEXT } from "@/theme/text";
 import { COLORS, CONTROL_ICON_SIZE, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
+import { CROWN_IMAGE } from "@/utils/assets";
 import { gradient } from "@/utils/gradient";
 
-const CROWN = require("../../../../assets/images/premium-crown.png");
-
-// The crest is measured off the mockup: the crown sits inside the wreath, not above it.
-const CROWN_WIDTH = 110;
 const LAUREL_WIDTH = 34;
 const LAUREL_HEIGHT = 61;
 
@@ -37,7 +34,7 @@ export const PremiumBanner = ({ isPremium, onPress }: PremiumBannerProps) => {
             <LaurelBranch color={COLORS.background} width={LAUREL_WIDTH} height={LAUREL_HEIGHT} />
           </View>
           <View style={styles.crownSlot}>
-            <Image source={CROWN} style={styles.crown} contentFit="contain" />
+            <Image source={CROWN_IMAGE} style={styles.crown} contentFit="contain" />
           </View>
         </View>
         <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>
@@ -76,7 +73,7 @@ const styles = StyleSheet.create({
   },
   crownSlot: {
     position: "absolute",
-    top: -SPACE.lg,
+    top: 0,
     left: 0,
     right: 0,
     bottom: 0,
@@ -84,8 +81,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   crown: {
-    width: CROWN_WIDTH,
-    aspectRatio: 252 / 159,
+    width: 110,
+    aspectRatio: 333 / 273,
   },
   title: {
     ...TEXT.rowTitle,

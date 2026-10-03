@@ -43,7 +43,7 @@ export const AccountActions = ({ user, isPremium }: AccountActionsProps) => {
     mutationFn: deleteAccount,
     // The sign-out inside it unmounts this screen, so only the Mutation's own callback survives.
     onSuccess: () => {
-      showToast(DELETE_ACCOUNT_DONE);
+      showToast(DELETE_ACCOUNT_DONE, "check-circle-outline", "bottom-center");
       router.dismissTo("/");
     },
   });

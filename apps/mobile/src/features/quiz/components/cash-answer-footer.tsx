@@ -54,7 +54,7 @@ export const CashAnswerFooter = ({
       </SquircleView>
       <NewButton
         layout="hug"
-        shape="full"
+        shape="rounded"
         tone="default"
         icon="grid-large"
         label={null}
@@ -65,7 +65,7 @@ export const CashAnswerFooter = ({
       />
       <NewButton
         layout="hug"
-        shape="full"
+        shape="rounded"
         tone="gradient-primary"
         icon="arrow-right"
         label={null}

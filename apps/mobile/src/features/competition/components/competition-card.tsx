@@ -11,9 +11,9 @@ import { PremiumCrownStamp } from "@/features/premium/components/premium-crown-s
 import { RESULTS_SCORE_MAX_LABEL } from "@/features/quiz/constants";
 import { TEXT } from "@/theme/text";
 import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
+import { PLACEHOLDER_PILL_IMAGE } from "@/utils/assets";
 
 const QUESTION_MARK_COMPETITION_IMAGE = require("../../../../assets/images/competition/question-mark.png");
-const PLACEHOLDER_PILL_IMAGE = require("../../../../assets/images/competition/placeholder-pill.png");
 const CATEGORY_BADGE_SIZE = 36;
 
 export interface CompetitionCardProps {
@@ -107,7 +107,7 @@ export const CompetitionCard = ({
               onPress={onPress}
             />
             {showPremium ? (
-              <View style={styles.premiumContainer}>
+              <View style={styles.premiumStampSlot}>
                 <PremiumCrownStamp />
               </View>
             ) : null}
@@ -183,10 +183,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  premiumContainer: {
+  premiumStampSlot: {
     position: "absolute",
-    top: -SPACE.xl,
-    right: -SPACE.sm,
+    top: SPACE.md,
+    right: 0,
+    transform: [{ rotate: "6deg" }],
   },
   questionMark: {
     aspectRatio: 135 / 222,

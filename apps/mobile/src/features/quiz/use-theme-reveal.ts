@@ -1,3 +1,4 @@
+import * as Haptics from "expo-haptics";
 import { useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
 import { THEME_REVEAL_DURATION_MS, THEME_REVEAL_TICK_MS } from "./constants";
@@ -15,15 +16,20 @@ export function useThemeReveal(isRevealable: boolean): { isDone: boolean; second
     if (!isRevealable) {
       return;
     }
-    // The duration hangs off its own timer, so a drifting tick can never stretch the Reveal.
-    const ending = setTimeout(() => setIsDone(true), THEME_REVEAL_DURATION_MS);
-    const tick = setInterval(
-      () => setSecondsLeft((remaining) => Math.max(remaining - 1, 1)),
-      THEME_REVEAL_TICK_MS,
+    const ticks = Array.from({ length: REVEAL_SECONDS }, (_, elapsedSeconds) =>
+      setTimeout(() => {
+        setSecondsLeft(REVEAL_SECONDS - elapsedSeconds);
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }, elapsedSeconds * THEME_REVEAL_TICK_MS),
     );
+    // The duration hangs off its own timer, so a drifting tick can never stretch the Reveal.
+    const ending = setTimeout(() => {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setIsDone(true);
+    }, THEME_REVEAL_DURATION_MS);
     return () => {
+      ticks.forEach(clearTimeout);
       clearTimeout(ending);
-      clearInterval(tick);
     };
   }, [isRevealable]);
 

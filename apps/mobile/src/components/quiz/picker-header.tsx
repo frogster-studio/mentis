@@ -42,7 +42,7 @@ export const PickerHeader = () => {
             )}
           </View>
           {isCustom ? (
-            <View style={styles.stamp}>
+            <View style={styles.premiumStampSlot}>
               <PremiumCrownStamp />
             </View>
           ) : null}
@@ -87,5 +87,10 @@ const styles = StyleSheet.create({
   title: { ...TEXT.mainSubHeaderTitle, color: COLORS.ink },
   subtitleSlot: { height: TEXT.captionStrong.lineHeight, marginTop: SPACE.xs },
   subtitle: { ...TEXT.caption, color: COLORS.inkMuted },
-  stamp: { position: "absolute", top: 0, right: 0 },
+  premiumStampSlot: {
+    position: "absolute",
+    top: SPACE.md,
+    right: SPACE.xl,
+    transform: [{ rotate: "6deg" }],
+  },
 });

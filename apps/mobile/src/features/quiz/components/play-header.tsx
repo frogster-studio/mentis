@@ -35,7 +35,7 @@ export const PlayHeader = ({
       <View style={styles.spacer} />
       <NewButton
         layout="hug"
-        shape="full"
+        shape="rounded"
         tone="default"
         icon="close"
         label={null}
