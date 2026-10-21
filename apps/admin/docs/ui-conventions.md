@@ -18,9 +18,9 @@ whitespace, one radius, 2–3 type sizes, Lexend headings / Poppins body.)
   one white plane divided by `divide-x divide-zinc-200` hairlines — no per-column
   border, radius or shadow. A **focused page** (login) centers its content on the
   `bg-zinc-50` canvas as a white `border rounded-lg shadow-xs` surface.
-- Workspace column widths are fixed multiples of the narrowest column, with the last
-  column taking the remainder (`minmax`); below their sum the workspace scrolls
-  horizontally rather than squeezing.
+- Workspace columns resize by dragging their separators, VS Code style (neighbors push
+  nearest-first down to their minimums); the last column takes the remainder, and only
+  below the sum of minimums does the workspace scroll horizontally.
 - One radius everywhere: `rounded-lg`. Badges keep their pill shape.
 
 ## Buttons

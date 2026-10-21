@@ -30,6 +30,7 @@ import { CategoryBadge } from "./category-badge";
 import { Column } from "./column";
 import { DetailPane } from "./detail-pane";
 import { FloorBlockDialog } from "./floor-block-dialog";
+import { ResizableColumns } from "./resizable-columns";
 import { Row } from "./row";
 import { StagingSwitch } from "./staging-switch";
 
@@ -203,7 +204,7 @@ export const CurationDashboard = () => {
         </p>
       ) : null}
       <div className="min-h-0 flex-1 overflow-x-auto">
-        <div className="grid h-full min-w-[78.5rem] grid-cols-[13rem_19.5rem_26rem_minmax(20rem,1fr)] divide-x divide-zinc-200">
+        <ResizableColumns listNames={["Categories", "Themes", "Questions"]}>
           <Column
             title="Categories"
             isLoading={categories.isPending || themes.isPending}
@@ -300,7 +301,7 @@ export const CurationDashboard = () => {
             onQuestionSaved={onQuestionSaved}
             onQuestionDeleted={onQuestionDeleted}
           />
-        </div>
+        </ResizableColumns>
       </div>
 
       {floorBlock ? (
