@@ -25,3 +25,16 @@
 - Theme row's Category name / Question row's Theme name are not in the result: the UI looks them up (not searched, never highlighted).
 - Files: apps/admin/src/features/curation/search-catalog{,.test}.ts
 - Next: Search bar item; fetch corpus with listQuestions() without themeId under ["curation","questions"] prefix.
+
+## Item 4 — header center slot holds the Search bar, grouped results as the Editor types — DONE
+- api.ts useCatalogQuestions(): GET /questions no query, key = curationKeys.allQuestions (["curation","questions"]) → refetchCatalogColumns reaches it on Question save/delete; flip's onSettled invalidates ["curation","questions",themeId] only (prefix match never hits the shorter key) → no refetch.
+- Slot: AppHeader takes `center?: ReactNode`; the dashboard now renders AppHeader + <main> itself (fragment). page.tsx: <Suspense fallback={<AppHeader />}> so the prerendered shell (useSearchParams bails to CSR up to Suspense) still shows the header.
+- components/catalog-search.tsx: props categories/themes/questions all `| undefined` (stable refs for useMemo; questions undefined = corpus pending → Questions group "Loading…", searched with []). Open = focused && query has a word; blur closes (item 5 needs onMouseDown preventDefault on options, like icon-field).
+- No find (and corpus loaded) → "No results." outside the listbox, aria-expanded false. Empty groups hidden. Corpus error joins the dashboard's alert banner.
+- ARIA: input role=combobox aria-autocomplete=list aria-expanded aria-controls; div role=listbox; groups = <fieldset><legend> (biome useSemanticElements refuses role=group; no biome-ignore anywhere in the repo); options = div role=option tabIndex=-1 aria-selected=false (biome useFocusableInteractive; li+option refused too).
+- Highlight = <mark class="bg-transparent font-medium text-sky-700">, only on name/text/answer/found wrong choices; Category name on Theme row, Theme name on Question row plain.
+- Panel absolute under the input, w-[40rem] centered, max-h-[70vh] scroll, shadow-lg like color-field popover. Input w-96, CONTROL styles.
+- Spec renders the whole dashboard (next/navigation mocked, getFromApi by path) + a hook harness for save-refetch/flip-no-refetch. Needs the 10ms setTimeout settle after render (React Query notifies on a timer; prior art theme-image.test) or it flakes.
+- Docs: ui-conventions "The header's center slot holds the Catalog search."
+- Files: apps/admin/src/{app/page.tsx,components/app-header.tsx,features/curation/api.ts,features/curation/components/{curation-dashboard,catalog-search,catalog-search.test}.tsx}, apps/admin/docs/ui-conventions.md
+- Next: item 5 — Option gets onSelect + id; dashboard passes goTo-like onSelect (needs Theme→categoryId, Question→theme→categoryId); keep query, close list; scroll-into-view flag only for search selections.

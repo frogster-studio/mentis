@@ -128,7 +128,7 @@ Vocabulary: [apps/admin/CONTEXT.md](apps/admin/CONTEXT.md) (Editor, Catalog, Cat
       "The admin UI conventions carry the header center-slot line",
       "happy-dom component spec driving the combobox by role, API client mocked"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "admin",

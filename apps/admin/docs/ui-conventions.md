@@ -10,6 +10,7 @@ whitespace, one radius, 2–3 type sizes, Lexend headings / Poppins body.)
   backdrop-blur border-b`, `h-14`, viewport-wide with `px-6` gutters.
 - Header layout is a 3-column grid (`grid-cols-[1fr_auto_1fr]`) — brand left, primary
   action dead-center, session actions right.
+- The header's center slot holds the Catalog search.
 - Header-level icon buttons are **40px** (`size-10`).
 
 ## Surfaces
