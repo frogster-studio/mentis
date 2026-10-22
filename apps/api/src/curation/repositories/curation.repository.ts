@@ -161,7 +161,10 @@ export class CurationRepository {
     return (affected ?? 0) > 0;
   }
 
-  listQuestions(themeId: string): Promise<QuestionEntity[]> {
-    return this.questions.find({ where: { themeId }, order: { createdAt: "DESC", id: "DESC" } });
+  listQuestions(themeId: string | undefined): Promise<QuestionEntity[]> {
+    return this.questions.find({
+      where: themeId === undefined ? {} : { themeId },
+      order: { createdAt: "DESC", id: "DESC" },
+    });
   }
 }

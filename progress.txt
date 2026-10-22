@@ -1,0 +1,7 @@
+## Item 1 — GET /admin/questions lists every Question when themeId absent — DONE
+- Contract: adminQuestionListQuerySchema.themeId → z.guid().optional(); `{ themeId: "" }` still 400s (guid fails), `?themeId=` too.
+- Repository: listQuestions(themeId: string | undefined), explicit `where: themeId === undefined ? {} : { themeId }` rather than leaning on TypeORM silently skipping undefined where keys. Same order createdAt desc, id desc.
+- Service/controller untouched: they already pass query.themeId through.
+- Tests: contract spec parses {} + rejects { themeId: "x" }; e2e adds "/admin/questions" to LIST_ROUTES (401/403/200) + a cross-Theme newest-first read; "" dropped from the 400 cases.
+- Files: packages/contracts/src/admin/question{,.spec}.ts, apps/api/src/curation/repositories/curation.repository.ts, apps/api/src/curation/_tests/admin-curation.e2e-spec.ts
+- Next: admin client still always sends themeId; the corpus query lands with the Search bar item.

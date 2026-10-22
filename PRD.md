@@ -87,7 +87,7 @@ Vocabulary: [apps/admin/CONTEXT.md](apps/admin/CONTEXT.md) (Editor, Catalog, Cat
       "Unauthenticated: 401; non-Editor: 403",
       "e2e through the Nest testing module with fakeCurationRepository"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "admin",
