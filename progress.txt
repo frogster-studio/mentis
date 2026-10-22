@@ -13,3 +13,15 @@
 - Per-query-word lists (not a boolean) so searchCatalog can AND query words across a Question's fields and count whole finds; deduped query words keep "che che" from double-counting.
 - Files: apps/admin/src/features/curation/search-words{,.test}.ts
 - Next: searchCatalog (item 3) composes findQueryWords per field; highlight spans = the finds of the shown field.
+
+## Item 3 — searchCatalog answers ranked, capped Categories/Themes/Questions groups with uncapped totals — DONE
+- Module apps/admin/src/features/curation/search-catalog.ts: searchCatalog(query, { categories, themes, questions }) → CatalogSearch | null (null = no query word → list stays closed).
+- Groups { total, results }; NameResult<Item> = { item, nameHighlights } for Category + Theme (one generic searchNames); QuestionResult = { item, textHighlights, answerHighlights, foundWrongChoices: { wrongChoice, highlights }[] }.
+- Question = union of answer/text/3 wrong choices: each query word needs a find in any field (findQueryWords per field, then AND per query word index). Aliases/misspellings/explanation never read.
+- Rank: whole query words desc → fieldRank (QUESTION_FIELD_RANK answer 0 / text 1 / wrongChoice 2; names 0) → label length → localeCompare "fr". SEARCH_CAPS { 3, 5, 8 } exported for the spec.
+- Highlights deduped by start ("che chevalier" highlights chevalier once), sorted.
+- No const enum: admin tsconfig has isolatedModules.
+- Questions take a plain array; pending corpus → UI passes [] and shows "Loading…" itself in the next item.
+- Theme row's Category name / Question row's Theme name are not in the result: the UI looks them up (not searched, never highlighted).
+- Files: apps/admin/src/features/curation/search-catalog{,.test}.ts
+- Next: Search bar item; fetch corpus with listQuestions() without themeId under ["curation","questions"] prefix.

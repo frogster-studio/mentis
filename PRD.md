@@ -114,7 +114,7 @@ Vocabulary: [apps/admin/CONTEXT.md](apps/admin/CONTEXT.md) (Editor, Catalog, Cat
       "A Question result lists the wrong choices holding a find, every shown field with its highlight spans",
       "vitest pure spec"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "admin",
