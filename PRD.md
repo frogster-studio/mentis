@@ -141,7 +141,7 @@ Vocabulary: [apps/admin/CONTEXT.md](apps/admin/CONTEXT.md) (Editor, Catalog, Cat
       "The selected row scrolls into view once its column renders; a deep link or Back scrolls nothing",
       "happy-dom component spec"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "admin",

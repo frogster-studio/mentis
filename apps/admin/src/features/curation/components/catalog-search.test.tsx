@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act } from "react";
+import { act, useSyncExternalStore } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getFromApi, sendToApi } from "@/lib/api/client";
@@ -13,7 +13,19 @@ vi.mock("@/lib/api/client", () => ({
   sendToApi: vi.fn(),
   deleteFromApi: vi.fn(),
 }));
-vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams() }));
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(useLocationSearch()),
+}));
+
+// Like Next's shallow routing, the params follow pushState and popstate alike.
+const useLocationSearch = () =>
+  useSyncExternalStore(
+    (onChange) => {
+      window.addEventListener("popstate", onChange);
+      return () => window.removeEventListener("popstate", onChange);
+    },
+    () => window.location.search,
+  );
 
 let root: Root;
 let container: HTMLDivElement;
@@ -60,6 +72,14 @@ const options = () => Array.from(container.querySelectorAll('[role="option"]'));
 const groupLabels = () =>
   Array.from(container.querySelectorAll('[role="listbox"] legend')).map((node) => node.textContent);
 const marks = () => Array.from(container.querySelectorAll("mark"));
+const option = (text: string) =>
+  options().find((node) => node.textContent?.includes(text)) as HTMLElement;
+const button = (label: string) =>
+  container.querySelector(`button[aria-label="${label}"]`) as HTMLButtonElement;
+const detailsName = () =>
+  (container.querySelector('main input[aria-label="Name"]') as HTMLInputElement | null)?.value;
+const detailsQuestion = () =>
+  (container.querySelector("main textarea") as HTMLTextAreaElement | null)?.value;
 
 // React reads the input through its own value tracker, so a raw assignment would look like no change.
 const nativeValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set as (
@@ -67,12 +87,27 @@ const nativeValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 
   value: string,
 ) => void;
 
-async function search(text: string) {
+async function type(input: HTMLInputElement, text: string) {
   await act(async () => {
-    combobox().focus();
-    nativeValue.call(combobox(), text);
-    combobox().dispatchEvent(new Event("input", { bubbles: true }));
+    input.focus();
+    nativeValue.call(input, text);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
   });
+}
+
+const search = (text: string) => type(combobox(), text);
+
+const settle = () =>
+  act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  });
+
+async function click(node: HTMLElement) {
+  await act(async () => {
+    node.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
+    node.click();
+  });
+  await settle();
 }
 
 const newClient = () =>
@@ -91,14 +126,13 @@ async function renderDashboard() {
       </QueryClientProvider>,
     );
   });
-  await act(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 10));
-  });
+  await settle();
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  window.history.replaceState(null, "", "/");
   corpus = async () => [BAYARD];
   vi.mocked(getFromApi).mockImplementation(async (path: string, _schema, query) => {
     if (path === "/categories") return [HISTOIRE];
@@ -250,5 +284,110 @@ describe("the Questions corpus", () => {
     );
     expect(sendToApi).toHaveBeenCalled();
     expect(corpusFetches()).toBe(1);
+  });
+});
+
+describe("selecting a result", () => {
+  it("selects a Category, a Theme or a Question in the columns and in Details", async () => {
+    await renderDashboard();
+    await search("histoire");
+    await click(option("Histoire"));
+    expect(window.location.search).toBe(`?category=${HISTOIRE.id}`);
+    expect(detailsName()).toBe("Histoire");
+
+    await search("chevalerie");
+    await click(option("Chevalerie"));
+    expect(window.location.search).toBe(`?category=${HISTOIRE.id}&theme=${CHEVALERIE.id}`);
+    expect(detailsName()).toBe("Chevalerie");
+
+    await search("bayard");
+    await click(option("Quel"));
+    expect(window.location.search).toBe(
+      `?category=${HISTOIRE.id}&theme=${CHEVALERIE.id}&question=${BAYARD.id}`,
+    );
+    expect(detailsQuestion()).toBe(BAYARD.text);
+  });
+
+  it("closes the list and keeps the query, refocusing reopens the same results", async () => {
+    await renderDashboard();
+    await search("chevalerie");
+    const mousedown = new MouseEvent("mousedown", { bubbles: true, cancelable: true });
+    option("Chevalerie").dispatchEvent(mousedown);
+    expect(mousedown.defaultPrevented).toBe(true);
+    await click(option("Chevalerie"));
+    expect(container.querySelector('[role="listbox"]')).toBeNull();
+    expect(combobox().value).toBe("chevalerie");
+    await act(async () => combobox().focus());
+    expect(options().map((node) => node.textContent)).toEqual(["ChevalerieHistoireUnpublished"]);
+  });
+
+  it("asks before leaving a dirty form, and a refusal moves nothing", async () => {
+    const confirm = vi.fn(() => false);
+    vi.stubGlobal("confirm", confirm);
+    await renderDashboard();
+    await click(button("New Category"));
+    await type(container.querySelector('main input[aria-label="Name"]') as HTMLInputElement, "Art");
+    await search("chevalerie");
+    await click(option("Chevalerie"));
+    expect(confirm).toHaveBeenCalledOnce();
+    expect(window.location.search).toBe("");
+    expect(detailsName()).toBe("Art");
+    expect(container.querySelector('[role="listbox"]')).not.toBeNull();
+
+    confirm.mockReturnValue(true);
+    await click(option("Chevalerie"));
+    expect(window.location.search).toBe(`?category=${HISTOIRE.id}&theme=${CHEVALERIE.id}`);
+    expect(detailsName()).toBe("Chevalerie");
+  });
+
+  it("pushes a history entry, so Back returns to the previous selection", async () => {
+    await renderDashboard();
+    await search("histoire");
+    await click(option("Histoire"));
+    await search("bayard");
+    await click(option("Quel"));
+    await act(async () => window.history.back());
+    await settle();
+    expect(window.location.search).toBe(`?category=${HISTOIRE.id}`);
+    expect(detailsName()).toBe("Histoire");
+  });
+
+  it("scrolls the selected rows into view once their columns render", async () => {
+    const scrollIntoView = vi.spyOn(Element.prototype, "scrollIntoView");
+    await renderDashboard();
+    await search("bayard");
+    await click(option("Quel"));
+    const scrolled = scrollIntoView.mock.contexts.map((row) => (row as Element).textContent);
+    expect(scrolled).toEqual([
+      expect.stringContaining("Histoire"),
+      expect.stringContaining("Chevalerie"),
+      expect.stringContaining(BAYARD.text),
+    ]);
+  });
+
+  it("scrolls nothing on a deep link", async () => {
+    const scrollIntoView = vi.spyOn(Element.prototype, "scrollIntoView");
+    window.history.replaceState(
+      null,
+      "",
+      `/?category=${HISTOIRE.id}&theme=${CHEVALERIE.id}&question=${BAYARD.id}`,
+    );
+    await renderDashboard();
+    expect(detailsQuestion()).toBe(BAYARD.text);
+    expect(scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it("scrolls nothing when history brings a searched row back", async () => {
+    const scrollIntoView = vi.spyOn(Element.prototype, "scrollIntoView");
+    await renderDashboard();
+    await search("bayard");
+    await click(option("Quel"));
+    scrollIntoView.mockClear();
+    await act(async () => window.history.back());
+    await settle();
+    await act(async () => window.history.forward());
+    await settle();
+    expect(detailsQuestion()).toBe(BAYARD.text);
+    expect(scrollIntoView).not.toHaveBeenCalled();
   });
 });

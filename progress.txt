@@ -38,3 +38,14 @@
 - Docs: ui-conventions "The header's center slot holds the Catalog search."
 - Files: apps/admin/src/{app/page.tsx,components/app-header.tsx,features/curation/api.ts,features/curation/components/{curation-dashboard,catalog-search,catalog-search.test}.tsx}, apps/admin/docs/ui-conventions.md
 - Next: item 5 — Option gets onSelect + id; dashboard passes goTo-like onSelect (needs Theme→categoryId, Question→theme→categoryId); keep query, close list; scroll-into-view flag only for search selections.
+
+## Item 5 — selecting a result selects it in the columns and in Details — DONE
+- CatalogSearch takes onSelect(selection) => boolean; builds the Selection itself (Category → selectCategory; Theme → its categoryId; Question → its Theme's categoryId via themeOf). true → input.blur() (onBlur closes, query stays, refocus reopens); false (confirm refused) → nothing, list stays open.
+- Option is now <button role="option" tabIndex=-1> with onMouseDown preventDefault (icon-field prior art): biome useKeyWithClickEvents refused onClick on the div; a button carries native keys and tabIndex -1 keeps focus in the combobox.
+- Dashboard: goTo returns boolean; selectSearchResult = goTo + setSearchedSelection(next). navigate() resets searchedSelection to null (every other move forgets it), popstate handler (renamed followHistory) too → Back/Forward remounting a searched row never scrolls.
+- Row gets scrollsIntoView; effect scrollIntoView({ block: "nearest" }) when it turns true → a Question row scrolls once its Theme's Questions render (mounts with true). All three selected rows of a search selection scroll (columns follow), not only the deepest.
+- Known gap: picking the same result twice in a row without another move doesn't re-scroll (flag stays true).
+- Spec: next/navigation mock now reads window.location.search through useSyncExternalStore on popstate (pushState renders come from the same handler's setState). beforeEach replaceState "/". happy-dom has no window.confirm → vi.stubGlobal("confirm"). Option lookup by includes: the Category badge glyph precedes its name in textContent.
+- Sandbox gotcha: `cp` of a file on the worktree mount produced all-NUL bytes (backup + restore wiped curation-dashboard.tsx; restored from git + re-applied). Don't cp-backup files here; use git.
+- Files: apps/admin/src/features/curation/components/{catalog-search,catalog-search.test,curation-dashboard,row}.tsx
+- Next: item 6 keyboard — active option index across groups (flatten results order), aria-activedescendant on the combobox, aria-selected on the active option, Enter → same select(); Escape twice; ⌘K/Ctrl+K and / global listener.

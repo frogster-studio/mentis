@@ -1,14 +1,28 @@
-import type { PropsWithChildren, ReactNode } from "react";
+import { type PropsWithChildren, type ReactNode, useEffect, useRef } from "react";
 
 interface RowProps extends PropsWithChildren {
   isSelected: boolean;
   onSelect: () => void;
+  scrollsIntoView?: boolean;
   trailing?: ReactNode;
 }
 
-export const Row = ({ isSelected, onSelect, trailing, children }: RowProps) => {
+export const Row = ({
+  isSelected,
+  onSelect,
+  scrollsIntoView = false,
+  trailing,
+  children,
+}: RowProps) => {
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollsIntoView) rowRef.current?.scrollIntoView({ block: "nearest" });
+  }, [scrollsIntoView]);
+
   return (
     <div
+      ref={rowRef}
       className={`flex w-full items-center border-zinc-100 border-b text-sm transition-colors last:border-b-0 ${
         isSelected ? "bg-sky-50 text-sky-700" : "hover:bg-zinc-50"
       }`}

@@ -42,6 +42,7 @@ export const CurationDashboard = () => {
   const [authoring, setAuthoring] = useState<Authoring>(null);
   const [isFormDirty, setIsFormDirty] = useState(false);
   const [floorBlock, setFloorBlock] = useState<string | null>(null);
+  const [searchedSelection, setSearchedSelection] = useState<Selection | null>(null);
   const categories = useCategories();
   const themes = useThemes();
   const catalogQuestions = useCatalogQuestions();
@@ -58,18 +59,29 @@ export const CurationDashboard = () => {
 
   // Shallow routing: the URL is the selection's home, so refresh and deep links land on the same rows.
   const navigate = (next: Selection) => {
+    setSearchedSelection(null);
     window.history.pushState(null, "", `${window.location.pathname}${selectionQuery(next)}`);
   };
 
   const mayLeaveForm = (): boolean =>
     !isFormDirty || window.confirm("This form has unsaved changes. Leave anyway?");
 
-  const goTo = (next: Selection) => {
+  const goTo = (next: Selection): boolean => {
     if (!mayLeaveForm()) {
-      return;
+      return false;
     }
     setAuthoring(null);
     navigate(next);
+    return true;
+  };
+
+  // Only a search lands on rows the Editor may not see, so only its selection scrolls them into view.
+  const selectSearchResult = (next: Selection): boolean => {
+    if (!goTo(next)) {
+      return false;
+    }
+    setSearchedSelection(next);
+    return true;
   };
 
   const startCreatingQuestion = () => {
@@ -149,16 +161,17 @@ export const CurationDashboard = () => {
 
   // Back walks the selection history, so an authoring pane opened over the old one must close with it.
   useEffect(() => {
-    const closeAuthoring = (event: PopStateEvent) => {
+    const followHistory = (event: PopStateEvent) => {
       if (isFormDirty && !window.confirm("This form has unsaved changes. Leave anyway?")) {
         event.stopImmediatePropagation();
         window.history.pushState(null, "", `${window.location.pathname}${linkedQuery}`);
         return;
       }
       setAuthoring(null);
+      setSearchedSelection(null);
     };
-    window.addEventListener("popstate", closeAuthoring, true);
-    return () => window.removeEventListener("popstate", closeAuthoring, true);
+    window.addEventListener("popstate", followHistory, true);
+    return () => window.removeEventListener("popstate", followHistory, true);
   }, [isFormDirty, linkedQuery]);
 
   // The browser's own leave prompt: shallow routing never sees a tab closing or a typed URL.
@@ -210,6 +223,7 @@ export const CurationDashboard = () => {
             categories={categories.data}
             themes={themes.data}
             questions={catalogQuestions.data}
+            onSelect={selectSearchResult}
           />
         }
       />
@@ -236,6 +250,7 @@ export const CurationDashboard = () => {
                   key={category.id}
                   isSelected={category.id === selection.categoryId}
                   onSelect={() => goTo(selectCategory(category.id))}
+                  scrollsIntoView={category.id === searchedSelection?.categoryId}
                 >
                   <CategoryBadge
                     color={category.color}
@@ -264,6 +279,7 @@ export const CurationDashboard = () => {
                   key={theme.id}
                   isSelected={theme.id === selection.themeId}
                   onSelect={() => goTo(selectTheme(selection, theme.id))}
+                  scrollsIntoView={theme.id === searchedSelection?.themeId}
                 >
                   <span className="flex-1 truncate">{theme.name}</span>
                   <span className="shrink-0 text-xs text-zinc-500 tabular-nums">
@@ -286,6 +302,7 @@ export const CurationDashboard = () => {
                   key={question.id}
                   isSelected={question.id === selection.questionId}
                   onSelect={() => goTo(selectQuestion(selection, question.id))}
+                  scrollsIntoView={question.id === searchedSelection?.questionId}
                   trailing={
                     <StagingSwitch
                       isOn={question.readyToBePublished}

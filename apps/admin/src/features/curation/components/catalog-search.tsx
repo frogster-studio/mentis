@@ -1,6 +1,7 @@
-import { type PropsWithChildren, type ReactNode, useId, useMemo, useState } from "react";
+import { type PropsWithChildren, type ReactNode, useId, useMemo, useRef, useState } from "react";
 
 import { type Highlight, searchCatalog } from "../search-catalog";
+import { type Selection, selectCategory } from "../selection";
 import { publishedLabel } from "../staging-labels";
 import type { Category, Question, Theme } from "../types";
 import { Badge } from "./badge";
@@ -11,6 +12,7 @@ interface CatalogSearchProps {
   categories: Category[] | undefined;
   themes: Theme[] | undefined;
   questions: Question[] | undefined;
+  onSelect: (selection: Selection) => boolean;
 }
 
 const HINT = "px-4 py-2 text-sm text-zinc-400";
@@ -42,22 +44,27 @@ const ResultGroupOf = ({ label, children }: PropsWithChildren<{ label: string }>
   );
 };
 
-const Option = ({ children }: PropsWithChildren) => {
+const Option = ({ onSelect, children }: PropsWithChildren<{ onSelect: () => void }>) => {
   return (
-    <div
+    <button
+      type="button"
       role="option"
       aria-selected={false}
       tabIndex={-1}
-      className="flex items-center gap-3 px-4 py-2 text-sm text-zinc-900 hover:bg-zinc-50"
+      // Picking keeps the caret in the bar, so the blur that would close the list never fires.
+      onMouseDown={(event) => event.preventDefault()}
+      onClick={onSelect}
+      className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-zinc-900 hover:bg-zinc-50"
     >
       {children}
-    </div>
+    </button>
   );
 };
 
-export const CatalogSearch = ({ categories, themes, questions }: CatalogSearchProps) => {
+export const CatalogSearch = ({ categories, themes, questions, onSelect }: CatalogSearchProps) => {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const listboxId = useId();
   const search = useMemo(
     () =>
@@ -77,11 +84,17 @@ export const CatalogSearch = ({ categories, themes, questions }: CatalogSearchPr
 
   const categoryName = (categoryId: string) =>
     categories?.find(({ id }) => id === categoryId)?.name;
-  const themeName = (themeId: string) => themes?.find(({ id }) => id === themeId)?.name;
+  const themeOf = (themeId: string) => themes?.find(({ id }) => id === themeId);
+
+  // A refused selection leaves the list open on the results the Editor was choosing from.
+  const select = (selection: Selection) => {
+    if (onSelect(selection)) inputRef.current?.blur();
+  };
 
   return (
     <div className="relative w-96">
       <input
+        ref={inputRef}
         type="text"
         role="combobox"
         value={query}
@@ -105,7 +118,7 @@ export const CatalogSearch = ({ categories, themes, questions }: CatalogSearchPr
               {search.categories.total > 0 ? (
                 <ResultGroupOf label={`Categories · ${search.categories.total}`}>
                   {search.categories.results.map(({ item, nameHighlights }) => (
-                    <Option key={item.id}>
+                    <Option key={item.id} onSelect={() => select(selectCategory(item.id))}>
                       <CategoryBadge
                         color={item.color}
                         icon={item.icon}
@@ -121,7 +134,12 @@ export const CatalogSearch = ({ categories, themes, questions }: CatalogSearchPr
               {search.themes.total > 0 ? (
                 <ResultGroupOf label={`Themes · ${search.themes.total}`}>
                   {search.themes.results.map(({ item, nameHighlights }) => (
-                    <Option key={item.id}>
+                    <Option
+                      key={item.id}
+                      onSelect={() =>
+                        select({ categoryId: item.categoryId, themeId: item.id, questionId: null })
+                      }
+                    >
                       <span className="flex-1 truncate">
                         <Highlighted text={item.name} highlights={nameHighlights} />
                       </span>
@@ -142,7 +160,16 @@ export const CatalogSearch = ({ categories, themes, questions }: CatalogSearchPr
                 <ResultGroupOf label={`Questions · ${search.questions.total}`}>
                   {search.questions.results.map(
                     ({ item, textHighlights, answerHighlights, foundWrongChoices }) => (
-                      <Option key={item.id}>
+                      <Option
+                        key={item.id}
+                        onSelect={() =>
+                          select({
+                            categoryId: themeOf(item.themeId)?.categoryId ?? null,
+                            themeId: item.themeId,
+                            questionId: item.id,
+                          })
+                        }
+                      >
                         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                           <span className="truncate">
                             <Highlighted text={item.text} highlights={textHighlights} />
@@ -160,7 +187,7 @@ export const CatalogSearch = ({ categories, themes, questions }: CatalogSearchPr
                           </span>
                         </span>
                         <span className="shrink-0 text-xs text-zinc-500">
-                          {themeName(item.themeId)}
+                          {themeOf(item.themeId)?.name}
                         </span>
                       </Option>
                     ),
