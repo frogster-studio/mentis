@@ -100,7 +100,7 @@ Vocabulary: [apps/admin/CONTEXT.md](apps/admin/CONTEXT.md) (Editor, Catalog, Cat
       "Every find carries its word's span in the original text, accents kept, and whether it is whole",
       "vitest pure spec"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "admin",

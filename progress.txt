@@ -5,3 +5,11 @@
 - Tests: contract spec parses {} + rejects { themeId: "x" }; e2e adds "/admin/questions" to LIST_ROUTES (401/403/200) + a cross-Theme newest-first read; "" dropped from the 400 cases.
 - Files: packages/contracts/src/admin/question{,.spec}.ts, apps/api/src/curation/repositories/curation.repository.ts, apps/api/src/curation/_tests/admin-curation.e2e-spec.ts
 - Next: admin client still always sends themeId; the corpus query lands with the Search bar item.
+
+## Item 2 — Search word finds a Catalog word by start or equality without final s, accent-blind — DONE
+- Module apps/admin/src/features/curation/search-words.ts: readQueryWords(query) → deduped folded words ([] for "?"/blanks); findQueryWords(queryWords, text) → one WordFind[] per query word ({ start, end, whole }, span in the original text).
+- Fold per original character (NFD, strip \p{M}, lowercase, œ→oe, æ→ae), so spans map back to the original string with no offset table; a lone combining mark (text typed pre-decomposed) extends its word's span.
+- whole = equal once a final s is dropped from each (a start covering the whole word is the same case); find = whole || item word startsWith query word.
+- Per-query-word lists (not a boolean) so searchCatalog can AND query words across a Question's fields and count whole finds; deduped query words keep "che che" from double-counting.
+- Files: apps/admin/src/features/curation/search-words{,.test}.ts
+- Next: searchCatalog (item 3) composes findQueryWords per field; highlight spans = the finds of the shown field.
