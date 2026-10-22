@@ -391,3 +391,90 @@ describe("selecting a result", () => {
     expect(scrollIntoView).not.toHaveBeenCalled();
   });
 });
+
+describe("the keyboard", () => {
+  async function press(node: Element, key: string, modifiers: KeyboardEventInit = {}) {
+    const event = new KeyboardEvent("keydown", {
+      key,
+      bubbles: true,
+      cancelable: true,
+      ...modifiers,
+    });
+    await act(async () => {
+      node.dispatchEvent(event);
+    });
+    return event;
+  }
+
+  const activeOption = () => {
+    const activeId = combobox().getAttribute("aria-activedescendant");
+    const selected = container.querySelector('[role="option"][aria-selected="true"]');
+    expect(selected?.id).toBe(activeId);
+    return selected?.textContent;
+  };
+
+  it("focuses the bar on Ctrl+K, or ⌘K on a Mac", async () => {
+    await renderDashboard();
+    expect((await press(document.body, "k", { ctrlKey: true })).defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(combobox());
+
+    combobox().blur();
+    vi.spyOn(navigator, "userAgent", "get").mockReturnValue("Mozilla/5.0 (Macintosh)");
+    await press(document.body, "k", { ctrlKey: true });
+    expect(document.activeElement).not.toBe(combobox());
+    await press(document.body, "k", { metaKey: true });
+    expect(document.activeElement).toBe(combobox());
+  });
+
+  it("focuses the bar on / outside a text field, where / stays a character", async () => {
+    await renderDashboard();
+    expect((await press(document.body, "/")).defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(combobox());
+
+    await click(button("New Category"));
+    const name = container.querySelector('main input[aria-label="Name"]') as HTMLInputElement;
+    await act(async () => name.focus());
+    expect((await press(name, "/")).defaultPrevented).toBe(false);
+    expect(document.activeElement).toBe(name);
+  });
+
+  it("moves the active option across groups with ↑/↓ and on hover", async () => {
+    await renderDashboard();
+    await search("ch");
+    expect(activeOption()).toContain("Chevalerie");
+    await press(combobox(), "ArrowDown");
+    expect(activeOption()).toContain(BAYARD.text);
+    await press(combobox(), "ArrowDown");
+    expect(activeOption()).toContain("Chevalerie");
+    await press(combobox(), "ArrowUp");
+    expect(activeOption()).toContain(BAYARD.text);
+    await act(async () => {
+      option("Chevalerie").dispatchEvent(new MouseEvent("mousemove", { bubbles: true }));
+    });
+    expect(activeOption()).toContain("Chevalerie");
+  });
+
+  it("selects the active option on Enter, like a click", async () => {
+    await renderDashboard();
+    await search("ch");
+    await press(combobox(), "ArrowDown");
+    await press(combobox(), "Enter");
+    await settle();
+    expect(window.location.search).toBe(
+      `?category=${HISTOIRE.id}&theme=${CHEVALERIE.id}&question=${BAYARD.id}`,
+    );
+    expect(detailsQuestion()).toBe(BAYARD.text);
+    expect(container.querySelector('[role="listbox"]')).toBeNull();
+    expect(combobox().value).toBe("ch");
+  });
+
+  it("closes the list on Escape, and empties the bar on a second", async () => {
+    await renderDashboard();
+    await search("chevalerie");
+    await press(combobox(), "Escape");
+    expect(container.querySelector('[role="listbox"]')).toBeNull();
+    expect(combobox().value).toBe("chevalerie");
+    await press(combobox(), "Escape");
+    expect(combobox().value).toBe("");
+  });
+});

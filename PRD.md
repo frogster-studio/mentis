@@ -152,7 +152,7 @@ Vocabulary: [apps/admin/CONTEXT.md](apps/admin/CONTEXT.md) (Editor, Catalog, Cat
       "Escape closes the list; a second Escape empties the bar",
       "happy-dom component spec"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```

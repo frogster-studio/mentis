@@ -1,4 +1,13 @@
-import { type PropsWithChildren, type ReactNode, useId, useMemo, useRef, useState } from "react";
+import {
+  type KeyboardEvent,
+  type PropsWithChildren,
+  type ReactNode,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { type Highlight, searchCatalog } from "../search-catalog";
 import { type Selection, selectCategory } from "../selection";
@@ -44,26 +53,47 @@ const ResultGroupOf = ({ label, children }: PropsWithChildren<{ label: string }>
   );
 };
 
-const Option = ({ onSelect, children }: PropsWithChildren<{ onSelect: () => void }>) => {
+interface OptionProps extends PropsWithChildren {
+  id: string;
+  isActive: boolean;
+  onActivate: () => void;
+  onSelect: () => void;
+}
+
+const Option = ({ id, isActive, onActivate, onSelect, children }: OptionProps) => {
   return (
     <button
       type="button"
       role="option"
-      aria-selected={false}
+      id={id}
+      aria-selected={isActive}
       tabIndex={-1}
       // Picking keeps the caret in the bar, so the blur that would close the list never fires.
       onMouseDown={(event) => event.preventDefault()}
+      onMouseMove={onActivate}
       onClick={onSelect}
-      className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-zinc-900 hover:bg-zinc-50"
+      className={`flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-zinc-900 ${isActive ? "bg-zinc-50" : ""}`}
     >
       {children}
     </button>
   );
 };
 
+const isTextField = (target: EventTarget | null) =>
+  target instanceof HTMLElement &&
+  (target.isContentEditable || target.matches("input, textarea, select"));
+
+const isSearchShortcut = (event: globalThis.KeyboardEvent) => {
+  const isChord =
+    event.key.toLowerCase() === "k" &&
+    (navigator.userAgent.includes("Mac") ? event.metaKey : event.ctrlKey);
+  return isChord || (event.key === "/" && !isTextField(event.target));
+};
+
 export const CatalogSearch = ({ categories, themes, questions, onSelect }: CatalogSearchProps) => {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listboxId = useId();
   const search = useMemo(
@@ -86,9 +116,72 @@ export const CatalogSearch = ({ categories, themes, questions, onSelect }: Catal
     categories?.find(({ id }) => id === categoryId)?.name;
   const themeOf = (themeId: string) => themes?.find(({ id }) => id === themeId);
 
+  const choices: Selection[] =
+    search === null
+      ? []
+      : [
+          ...search.categories.results.map(({ item }) => selectCategory(item.id)),
+          ...search.themes.results.map(({ item }) => ({
+            categoryId: item.categoryId,
+            themeId: item.id,
+            questionId: null,
+          })),
+          ...search.questions.results.map(({ item }) => ({
+            categoryId: themeOf(item.themeId)?.categoryId ?? null,
+            themeId: item.themeId,
+            questionId: item.id,
+          })),
+        ];
+  const themesOffset = search?.categories.results.length ?? 0;
+  const questionsOffset = themesOffset + (search?.themes.results.length ?? 0);
+  const activeChoice = isListOpen ? choices[activeIndex] : undefined;
+  const optionId = (index: number) => `${listboxId}-option-${index}`;
+
+  useEffect(() => {
+    const focusOnShortcut = (event: globalThis.KeyboardEvent) => {
+      if (isSearchShortcut(event)) {
+        event.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", focusOnShortcut);
+    return () => window.removeEventListener("keydown", focusOnShortcut);
+  }, []);
+
   // A refused selection leaves the list open on the results the Editor was choosing from.
   const select = (selection: Selection) => {
     if (onSelect(selection)) inputRef.current?.blur();
+  };
+
+  const optionAt = (index: number) => ({
+    id: optionId(index),
+    isActive: index === activeIndex,
+    onActivate: () => setActiveIndex(index),
+    onSelect: () => select(choices[index]),
+  });
+
+  const moveActive = (step: number) => {
+    const next = (activeIndex + step + choices.length) % choices.length;
+    setActiveIndex(next);
+    document.getElementById(optionId(next))?.scrollIntoView({ block: "nearest" });
+  };
+
+  const driveByKeyboard = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Escape") {
+      if (isListOpen) setIsOpen(false);
+      else setQuery("");
+      return;
+    }
+    if (activeChoice === undefined) {
+      return;
+    }
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      moveActive(event.key === "ArrowDown" ? 1 : -1);
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      select(activeChoice);
+    }
   };
 
   return (
@@ -101,7 +194,9 @@ export const CatalogSearch = ({ categories, themes, questions, onSelect }: Catal
         onChange={(event) => {
           setQuery(event.target.value);
           setIsOpen(true);
+          setActiveIndex(0);
         }}
+        onKeyDown={driveByKeyboard}
         onFocus={() => setIsOpen(true)}
         onBlur={() => setIsOpen(false)}
         placeholder="Search the Catalog"
@@ -109,6 +204,7 @@ export const CatalogSearch = ({ categories, themes, questions, onSelect }: Catal
         aria-autocomplete="list"
         aria-expanded={isListOpen && hasRows}
         aria-controls={isListOpen && hasRows ? listboxId : undefined}
+        aria-activedescendant={activeChoice ? optionId(activeIndex) : undefined}
         className={CONTROL}
       />
       {isListOpen ? (
@@ -117,8 +213,8 @@ export const CatalogSearch = ({ categories, themes, questions, onSelect }: Catal
             <div role="listbox" id={listboxId} aria-label="Catalog search results">
               {search.categories.total > 0 ? (
                 <ResultGroupOf label={`Categories · ${search.categories.total}`}>
-                  {search.categories.results.map(({ item, nameHighlights }) => (
-                    <Option key={item.id} onSelect={() => select(selectCategory(item.id))}>
+                  {search.categories.results.map(({ item, nameHighlights }, index) => (
+                    <Option key={item.id} {...optionAt(index)}>
                       <CategoryBadge
                         color={item.color}
                         icon={item.icon}
@@ -133,13 +229,8 @@ export const CatalogSearch = ({ categories, themes, questions, onSelect }: Catal
               ) : null}
               {search.themes.total > 0 ? (
                 <ResultGroupOf label={`Themes · ${search.themes.total}`}>
-                  {search.themes.results.map(({ item, nameHighlights }) => (
-                    <Option
-                      key={item.id}
-                      onSelect={() =>
-                        select({ categoryId: item.categoryId, themeId: item.id, questionId: null })
-                      }
-                    >
+                  {search.themes.results.map(({ item, nameHighlights }, index) => (
+                    <Option key={item.id} {...optionAt(themesOffset + index)}>
                       <span className="flex-1 truncate">
                         <Highlighted text={item.name} highlights={nameHighlights} />
                       </span>
@@ -159,17 +250,8 @@ export const CatalogSearch = ({ categories, themes, questions, onSelect }: Catal
               {!isCorpusPending && search.questions.total > 0 ? (
                 <ResultGroupOf label={`Questions · ${search.questions.total}`}>
                   {search.questions.results.map(
-                    ({ item, textHighlights, answerHighlights, foundWrongChoices }) => (
-                      <Option
-                        key={item.id}
-                        onSelect={() =>
-                          select({
-                            categoryId: themeOf(item.themeId)?.categoryId ?? null,
-                            themeId: item.themeId,
-                            questionId: item.id,
-                          })
-                        }
-                      >
+                    ({ item, textHighlights, answerHighlights, foundWrongChoices }, index) => (
+                      <Option key={item.id} {...optionAt(questionsOffset + index)}>
                         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                           <span className="truncate">
                             <Highlighted text={item.text} highlights={textHighlights} />

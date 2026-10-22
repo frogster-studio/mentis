@@ -49,3 +49,13 @@
 - Sandbox gotcha: `cp` of a file on the worktree mount produced all-NUL bytes (backup + restore wiped curation-dashboard.tsx; restored from git + re-applied). Don't cp-backup files here; use git.
 - Files: apps/admin/src/features/curation/components/{catalog-search,catalog-search.test,curation-dashboard,row}.tsx
 - Next: item 6 keyboard — active option index across groups (flatten results order), aria-activedescendant on the combobox, aria-selected on the active option, Enter → same select(); Escape twice; ⌘K/Ctrl+K and / global listener.
+
+## Item 6 — the keyboard drives the Search — DONE
+- CatalogSearch only: choices = Selection[] flattened in render order (Categories, Themes, Questions); rows index it via themesOffset/questionsOffset + optionAt(index) → the per-row Selection building moved out of the JSX, click and Enter share select(choices[i]).
+- activeIndex state, reset to 0 on every query change → first result active by default, so Enter right after typing picks the top-ranked one (command-palette convention; PRD silent). ↑/↓ wrap. aria-activedescendant on the combobox, aria-selected = active, bg-zinc-50 = active (replaces hover:bg-zinc-50).
+- Hover = onMouseMove, not onMouseEnter: keyboard scrollIntoView({ block: "nearest" }) of the active option slides rows under a still pointer, mouseenter would steal the active option back.
+- Escape: list open → close (query kept); closed → empty the bar. Typing reopens.
+- Shortcuts: window keydown listener in CatalogSearch; Mac = navigator.userAgent includes "Mac" → metaKey, else ctrlKey; "/" ignored when target is input/textarea/select/contentEditable. Both preventDefault (browser Ctrl+K search, "/" would otherwise be typed into the freshly focused bar).
+- Spec: KeyboardEvent dispatch in act; Mac via vi.spyOn(navigator, "userAgent", "get").
+- Files: apps/admin/src/features/curation/components/catalog-search{,.test}.tsx
+- All PRD items pass. Human: browser review on the real Catalog, API deploy before admin.
