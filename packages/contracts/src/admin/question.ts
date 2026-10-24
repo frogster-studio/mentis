@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const adminQuestionListQuerySchema = z.object({ themeId: z.guid() });
+export const adminQuestionListQuerySchema = z.object({ themeId: z.guid().optional() });
 export type AdminQuestionListQuery = z.infer<typeof adminQuestionListQuerySchema>;
 
 export const adminQuestionIdSchema = z.guid();

@@ -4,7 +4,9 @@ import type { AdminThemeResponse } from "@mentis/contracts/admin";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
+import { AppHeader } from "@/components/app-header";
 import {
+  useCatalogQuestions,
   useCategories,
   useStageQuestion,
   useThemeImageConfig,
@@ -26,6 +28,7 @@ import { isCategoryLastPublishedTheme, questionFloorBlocker } from "../staging";
 import { publishedLabel, readyLabel, visibleLabel } from "../staging-labels";
 import type { Authoring, Category, Question } from "../types";
 import { Badge } from "./badge";
+import { CatalogSearch } from "./catalog-search";
 import { CategoryBadge } from "./category-badge";
 import { Column } from "./column";
 import { DetailPane } from "./detail-pane";
@@ -39,8 +42,10 @@ export const CurationDashboard = () => {
   const [authoring, setAuthoring] = useState<Authoring>(null);
   const [isFormDirty, setIsFormDirty] = useState(false);
   const [floorBlock, setFloorBlock] = useState<string | null>(null);
+  const [searchedSelection, setSearchedSelection] = useState<Selection | null>(null);
   const categories = useCategories();
   const themes = useThemes();
+  const catalogQuestions = useCatalogQuestions();
   useThemeImageConfig();
   const stageQuestion = useStageQuestion();
 
@@ -54,18 +59,29 @@ export const CurationDashboard = () => {
 
   // Shallow routing: the URL is the selection's home, so refresh and deep links land on the same rows.
   const navigate = (next: Selection) => {
+    setSearchedSelection(null);
     window.history.pushState(null, "", `${window.location.pathname}${selectionQuery(next)}`);
   };
 
   const mayLeaveForm = (): boolean =>
     !isFormDirty || window.confirm("This form has unsaved changes. Leave anyway?");
 
-  const goTo = (next: Selection) => {
+  const goTo = (next: Selection): boolean => {
     if (!mayLeaveForm()) {
-      return;
+      return false;
     }
     setAuthoring(null);
     navigate(next);
+    return true;
+  };
+
+  // Only a search lands on rows the Editor may not see, so only its selection scrolls them into view.
+  const selectSearchResult = (next: Selection): boolean => {
+    if (!goTo(next)) {
+      return false;
+    }
+    setSearchedSelection(next);
+    return true;
   };
 
   const startCreatingQuestion = () => {
@@ -145,16 +161,17 @@ export const CurationDashboard = () => {
 
   // Back walks the selection history, so an authoring pane opened over the old one must close with it.
   useEffect(() => {
-    const closeAuthoring = (event: PopStateEvent) => {
+    const followHistory = (event: PopStateEvent) => {
       if (isFormDirty && !window.confirm("This form has unsaved changes. Leave anyway?")) {
         event.stopImmediatePropagation();
         window.history.pushState(null, "", `${window.location.pathname}${linkedQuery}`);
         return;
       }
       setAuthoring(null);
+      setSearchedSelection(null);
     };
-    window.addEventListener("popstate", closeAuthoring, true);
-    return () => window.removeEventListener("popstate", closeAuthoring, true);
+    window.addEventListener("popstate", followHistory, true);
+    return () => window.removeEventListener("popstate", followHistory, true);
   }, [isFormDirty, linkedQuery]);
 
   // The browser's own leave prompt: shallow routing never sees a tab closing or a typed URL.
@@ -191,122 +208,144 @@ export const CurationDashboard = () => {
   const selectedTheme = themes.data?.find(({ id }) => id === selection.themeId);
   const selectedQuestion = questions.data?.find(({ id }) => id === selection.questionId);
 
-  const error = categories.error ?? themes.error ?? questions.error ?? stageQuestion.error;
+  const error =
+    categories.error ??
+    themes.error ??
+    catalogQuestions.error ??
+    questions.error ??
+    stageQuestion.error;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      {error ? (
-        <p
-          role="alert"
-          className="shrink-0 border-red-200 border-b bg-red-50 px-6 py-2 text-red-700 text-sm"
-        >
-          {error.message}
-        </p>
-      ) : null}
-      <div className="min-h-0 flex-1 overflow-x-auto">
-        <ResizableColumns listNames={["Categories", "Themes", "Questions"]}>
-          <Column
-            title="Categories"
-            isLoading={categories.isPending || themes.isPending}
-            isEmpty={(categories.data ?? []).length === 0}
-            emptyLabel="No Category yet."
-            create={{ label: "New Category", onSelect: startCreatingCategory }}
-          >
-            {(categories.data ?? []).map((category) => (
-              <Row
-                key={category.id}
-                isSelected={category.id === selection.categoryId}
-                onSelect={() => goTo(selectCategory(category.id))}
-              >
-                <CategoryBadge
-                  color={category.color}
-                  icon={category.icon}
-                  className="size-6 text-sm"
-                />
-                <span className="flex-1 truncate">{category.name}</span>
-                <Badge isOn={visibleCategories.has(category.id)}>
-                  {visibleLabel(visibleCategories.has(category.id))}
-                </Badge>
-              </Row>
-            ))}
-          </Column>
-
-          <Column
-            title="Themes"
-            isLoading={themes.isPending}
-            isEmpty={themesOfCategory.length === 0}
-            emptyLabel={selection.categoryId ? "No Theme in this Category." : "Select a Category."}
-            create={{ label: "New Theme", onSelect: startCreatingTheme }}
-          >
-            {themesOfCategory.map((theme) => (
-              <Row
-                key={theme.id}
-                isSelected={theme.id === selection.themeId}
-                onSelect={() => goTo(selectTheme(selection, theme.id))}
-              >
-                <span className="flex-1 truncate">{theme.name}</span>
-                <span className="shrink-0 text-xs text-zinc-500 tabular-nums">
-                  {theme.readyQuestionCount}/{theme.questionCount}
-                </span>
-                <Badge isOn={theme.published}>{publishedLabel(theme.published)}</Badge>
-              </Row>
-            ))}
-          </Column>
-
-          <Column
-            title="Questions"
-            isLoading={questions.isPending && selection.themeId !== null}
-            isEmpty={(questions.data ?? []).length === 0}
-            emptyLabel={selection.themeId ? "No Question in this Theme." : "Select a Theme."}
-            create={{ label: "New Question", onSelect: startCreatingQuestion }}
-          >
-            {(questions.data ?? []).map((question) => (
-              <Row
-                key={question.id}
-                isSelected={question.id === selection.questionId}
-                onSelect={() => goTo(selectQuestion(selection, question.id))}
-                trailing={
-                  <StagingSwitch
-                    isOn={question.readyToBePublished}
-                    label={readyLabel(question.readyToBePublished)}
-                    onFlip={() => flipReady(question)}
-                  />
-                }
-              >
-                <span className="flex-1 truncate">{question.text}</span>
-              </Row>
-            ))}
-          </Column>
-
-          <DetailPane
-            category={selectedCategory}
-            theme={selectedTheme}
-            question={selectedQuestion}
-            categories={categories.data ?? []}
-            themes={themes.data ?? []}
-            isCategoryVisible={
-              selectedCategory ? visibleCategories.has(selectedCategory.id) : false
-            }
-            isCategoryLastPublishedTheme={
-              selectedTheme !== undefined &&
-              isCategoryLastPublishedTheme(themes.data ?? [], selectedTheme)
-            }
-            categoryThemeCount={themes.data === undefined ? null : themesOfCategory.length}
-            authoring={authoring}
-            onDirtyChange={setIsFormDirty}
-            onCategorySaved={onCategorySaved}
-            onCategoryDeleted={onCategoryDeleted}
-            onThemeSaved={onThemeSaved}
-            onThemeDeleted={onThemeDeleted}
-            onQuestionSaved={onQuestionSaved}
-            onQuestionDeleted={onQuestionDeleted}
+    <>
+      <AppHeader
+        center={
+          <CatalogSearch
+            categories={categories.data}
+            themes={themes.data}
+            questions={catalogQuestions.data}
+            onSelect={selectSearchResult}
           />
-        </ResizableColumns>
-      </div>
+        }
+      />
+      <main className="flex min-h-0 w-full flex-1 flex-col">
+        {error ? (
+          <p
+            role="alert"
+            className="shrink-0 border-red-200 border-b bg-red-50 px-6 py-2 text-red-700 text-sm"
+          >
+            {error.message}
+          </p>
+        ) : null}
+        <div className="min-h-0 flex-1 overflow-x-auto">
+          <ResizableColumns listNames={["Categories", "Themes", "Questions"]}>
+            <Column
+              title="Categories"
+              isLoading={categories.isPending || themes.isPending}
+              isEmpty={(categories.data ?? []).length === 0}
+              emptyLabel="No Category yet."
+              create={{ label: "New Category", onSelect: startCreatingCategory }}
+            >
+              {(categories.data ?? []).map((category) => (
+                <Row
+                  key={category.id}
+                  isSelected={category.id === selection.categoryId}
+                  onSelect={() => goTo(selectCategory(category.id))}
+                  scrollsIntoView={category.id === searchedSelection?.categoryId}
+                >
+                  <CategoryBadge
+                    color={category.color}
+                    icon={category.icon}
+                    className="size-6 text-sm"
+                  />
+                  <span className="flex-1 truncate">{category.name}</span>
+                  <Badge isOn={visibleCategories.has(category.id)}>
+                    {visibleLabel(visibleCategories.has(category.id))}
+                  </Badge>
+                </Row>
+              ))}
+            </Column>
 
-      {floorBlock ? (
-        <FloorBlockDialog message={floorBlock} onDismiss={() => setFloorBlock(null)} />
-      ) : null}
-    </div>
+            <Column
+              title="Themes"
+              isLoading={themes.isPending}
+              isEmpty={themesOfCategory.length === 0}
+              emptyLabel={
+                selection.categoryId ? "No Theme in this Category." : "Select a Category."
+              }
+              create={{ label: "New Theme", onSelect: startCreatingTheme }}
+            >
+              {themesOfCategory.map((theme) => (
+                <Row
+                  key={theme.id}
+                  isSelected={theme.id === selection.themeId}
+                  onSelect={() => goTo(selectTheme(selection, theme.id))}
+                  scrollsIntoView={theme.id === searchedSelection?.themeId}
+                >
+                  <span className="flex-1 truncate">{theme.name}</span>
+                  <span className="shrink-0 text-xs text-zinc-500 tabular-nums">
+                    {theme.readyQuestionCount}/{theme.questionCount}
+                  </span>
+                  <Badge isOn={theme.published}>{publishedLabel(theme.published)}</Badge>
+                </Row>
+              ))}
+            </Column>
+
+            <Column
+              title="Questions"
+              isLoading={questions.isPending && selection.themeId !== null}
+              isEmpty={(questions.data ?? []).length === 0}
+              emptyLabel={selection.themeId ? "No Question in this Theme." : "Select a Theme."}
+              create={{ label: "New Question", onSelect: startCreatingQuestion }}
+            >
+              {(questions.data ?? []).map((question) => (
+                <Row
+                  key={question.id}
+                  isSelected={question.id === selection.questionId}
+                  onSelect={() => goTo(selectQuestion(selection, question.id))}
+                  scrollsIntoView={question.id === searchedSelection?.questionId}
+                  trailing={
+                    <StagingSwitch
+                      isOn={question.readyToBePublished}
+                      label={readyLabel(question.readyToBePublished)}
+                      onFlip={() => flipReady(question)}
+                    />
+                  }
+                >
+                  <span className="flex-1 truncate">{question.text}</span>
+                </Row>
+              ))}
+            </Column>
+
+            <DetailPane
+              category={selectedCategory}
+              theme={selectedTheme}
+              question={selectedQuestion}
+              categories={categories.data ?? []}
+              themes={themes.data ?? []}
+              isCategoryVisible={
+                selectedCategory ? visibleCategories.has(selectedCategory.id) : false
+              }
+              isCategoryLastPublishedTheme={
+                selectedTheme !== undefined &&
+                isCategoryLastPublishedTheme(themes.data ?? [], selectedTheme)
+              }
+              categoryThemeCount={themes.data === undefined ? null : themesOfCategory.length}
+              authoring={authoring}
+              onDirtyChange={setIsFormDirty}
+              onCategorySaved={onCategorySaved}
+              onCategoryDeleted={onCategoryDeleted}
+              onThemeSaved={onThemeSaved}
+              onThemeDeleted={onThemeDeleted}
+              onQuestionSaved={onQuestionSaved}
+              onQuestionDeleted={onQuestionDeleted}
+            />
+          </ResizableColumns>
+        </div>
+
+        {floorBlock ? (
+          <FloorBlockDialog message={floorBlock} onDismiss={() => setFloorBlock(null)} />
+        ) : null}
+      </main>
+    </>
   );
 };
