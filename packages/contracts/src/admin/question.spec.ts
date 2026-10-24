@@ -27,9 +27,16 @@ describe("adminQuestionListQuerySchema", () => {
     });
   });
 
-  it.each([{}, { themeId: "" }, { themeId: "les-simpson" }])("rejects %o", (query) => {
-    expect(adminQuestionListQuerySchema.safeParse(query).success).toBe(false);
+  it("takes no Theme when every Question is listed", () => {
+    expect(adminQuestionListQuerySchema.parse({})).toEqual({});
   });
+
+  it.each([{ themeId: "" }, { themeId: "x" }, { themeId: "les-simpson" }])(
+    "rejects %o",
+    (query) => {
+      expect(adminQuestionListQuerySchema.safeParse(query).success).toBe(false);
+    },
+  );
 });
 
 describe("adminQuestionListResponseSchema", () => {

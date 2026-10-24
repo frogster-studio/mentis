@@ -216,7 +216,9 @@ const fakeCurationRepository = {
     return wasDeleted;
   },
   async listQuestions(themeId) {
-    return newestFirst(liveQuestions.filter((row) => row.themeId === themeId));
+    return newestFirst(
+      liveQuestions.filter((row) => themeId === undefined || row.themeId === themeId),
+    );
   },
   async createQuestion(authored) {
     const created = Object.assign(new QuestionEntity(), authored, {
@@ -337,6 +339,7 @@ const LIST_ROUTES = [
   "/admin/categories",
   "/admin/themes",
   `/admin/questions?themeId=${SIMPSON}`,
+  "/admin/questions",
 ];
 
 describe("admin curation routes e2e", () => {
@@ -504,7 +507,17 @@ describe("admin curation routes e2e", () => {
     expect(body[2]).toMatchObject({ id: CAPITALE, explanation: STORED_EXPLANATION });
   });
 
-  it.each(["", "?themeId=", "?themeId=les-simpson"])(
+  it("GET /admin/questions without a Theme serves every Question across Themes, newest first", async () => {
+    const body = await (await asEditor("/admin/questions")).json();
+    expect(body.map((row: { id: string }) => row.id)).toEqual([
+      BROUILLON_QUESTION,
+      DRAPEAU,
+      MONNAIE,
+      CAPITALE,
+    ]);
+  });
+
+  it.each(["?themeId=", "?themeId=les-simpson"])(
     "GET /admin/questions%s → 400 VALIDATION_FAILED",
     async (query) => {
       const response = await asEditor(`/admin/questions${query}`);

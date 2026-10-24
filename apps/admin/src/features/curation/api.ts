@@ -38,6 +38,14 @@ export function useThemes() {
   });
 }
 
+// The Search's corpus sits under the columns' key prefix, so a Question save refetches it with them.
+export function useCatalogQuestions() {
+  return useQuery({
+    queryKey: curationKeys.allQuestions,
+    queryFn: () => getFromApi("/questions", adminQuestionListResponseSchema),
+  });
+}
+
 // Fetched on the Theme's first selection and kept, so walking back up a column never re-hits the wire.
 export function useThemeQuestions(themeId: string | null) {
   return useQuery({
