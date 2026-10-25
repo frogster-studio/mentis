@@ -47,3 +47,13 @@
 - world.tsx: no ScreenLoading/ScreenError left. COMPETITION_ERROR still used by app/competition.tsx.
 - Files: app/(tabs)/world.tsx, features/competition/components/{competition-card,competition-card-background,yesterday-competition-card}.tsx, components/ui/new-button.tsx.
 - Next: item 6 toast — needs isDayFrozen, isTranscriptFrozen?, preview.isFrozen, standing frozen in one place (world.tsx computes all now).
+
+## Item 6 — one toast for reads failing with nothing on screen (done)
+- features/world/use-load-failure-toast.ts: `useLoadFailureToast(frozenReads: boolean[])`, effect every render compares each flag to the previous render's; a flag turning true while the tab is focused (expo-router useIsFocused) → showToast(COMPETITION_LOAD_ERROR, cloud-off-outline, bottom-center, fixed id).
+- Why fixed sonner id: Day/Standing/pages finish their retries at slightly different renders; a same-id toast updates in place (restarts its timer, autoWiggleOnUpdate default never) instead of queueing 3 behind visibleToasts=1. Per-flag transition (not "any frozen") so a tap retry that fails again toasts even while another card stays frozen.
+- Unfocused failure: no toast; refocus re-reads it (tab focus refetch), a renewed failure toasts.
+- showToast takes an optional id (only this caller).
+- world.tsx: flags Day, transcript, Standing (new isStandingFrozen, also used by the preview tap), preview. Failed re-read under data: flags false → nothing.
+- useSeasonFreshness tab-focus refetch now also covers competitionKeys.transcripts (stale only when no data: staleTime Infinity), so a frozen transcript re-reads on tab focus like the others; foreground was already covered by refetchOnWindowFocus.
+- Files: features/world/{use-load-failure-toast.ts,use-season-freshness.ts}, features/competition/constants.ts, components/ui/toast.tsx, app/(tabs)/world.tsx.
+- Next: item 7 header avatar (Squircle, Google photo, skeleton until decode) or item 8 WebP (landscape.png unused since item 5 — human to confirm deletion).

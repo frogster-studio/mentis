@@ -22,7 +22,8 @@ export function useSeasonFreshness(owner: string | undefined) {
       rereadOutdated();
       const ownerKeys =
         owner === undefined ? [] : [competitionKeys.standing(owner), competitionKeys.day(owner)];
-      for (const queryKey of [worldKeys.leaderboard, ...ownerKeys]) {
+      // A transcript never goes stale once read, so this re-reads only one that has none.
+      for (const queryKey of [worldKeys.leaderboard, competitionKeys.transcripts, ...ownerKeys]) {
         void queryClient.refetchQueries(
           { queryKey, stale: true, type: "active" },
           { cancelRefetch: false },

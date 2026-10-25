@@ -159,7 +159,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Player, Account, P
       "The next foreground or tab focus re-reads the frozen reads",
       "Copy in the competition constants; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

@@ -28,6 +28,7 @@ import { usePremiumGate } from "@/features/premium/use-premium-gate";
 import { LeaderboardPreviewCard } from "@/features/world/components/leaderboard-preview-card";
 import { previewPage } from "@/features/world/leaderboard-preview";
 import { useLeaderboardPreview } from "@/features/world/use-leaderboard-preview";
+import { useLoadFailureToast } from "@/features/world/use-load-failure-toast";
 import { useSeasonFreshness } from "@/features/world/use-season-freshness";
 import { COLORS, GUTTER, SPACE } from "@/theme/tokens";
 
@@ -50,7 +51,9 @@ export default function Page() {
   const isDayUnknown = isSignedIn && day.data === undefined;
   const isDayFrozen = isDayUnknown && day.isError;
   const isTranscriptFrozen = transcript.data === undefined && transcript.isError;
+  const isStandingFrozen = standing.data === undefined && standing.isError;
   useSeasonFreshness(owner);
+  useLoadFailureToast([isDayFrozen, isTranscriptFrozen, isStandingFrozen, preview.isFrozen]);
   const { height } = useWindowDimensions();
   const onScroll = useTabScroll();
 
@@ -75,7 +78,7 @@ export default function Page() {
           }
           preview.refetch();
           // The preview fell back to page 1 without it, so a retry also re-asks the Player's page.
-          if (standing.data === undefined && standing.isError) void standing.refetch();
+          if (isStandingFrozen) void standing.refetch();
         }}
       />
       <View style={styles.cards}>
