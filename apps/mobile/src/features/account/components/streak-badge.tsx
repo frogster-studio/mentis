@@ -5,7 +5,7 @@ import { streakAccessibilityLabel } from "@/features/account/streak";
 import { TEXT } from "@/theme/text";
 import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
 
-const FLAME_IMAGE = require("../../../../assets/images/competition/flame.png");
+const FLAME_IMAGE = require("../../../../assets/images/competition/flame.webp");
 
 interface StreakBadgeProps {
   streak: number;

@@ -21,7 +21,7 @@ import { TEXT } from "@/theme/text";
 import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
 import { PLACEHOLDER_PILL_IMAGE } from "@/utils/assets";
 
-const QUESTION_MARK_COMPETITION_IMAGE = require("../../../../assets/images/competition/question-mark.png");
+const QUESTION_MARK_COMPETITION_IMAGE = require("../../../../assets/images/competition/question-mark.webp");
 const CATEGORY_BADGE_SIZE = 36;
 
 export interface CompetitionCardProps {

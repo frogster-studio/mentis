@@ -180,7 +180,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Player, Account, P
       "Every use points at the WebP: Streak badge, stat tile, card background, Rattrapage card, daily card",
       "No PNG left under assets/images/competition/; bun run check green"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```

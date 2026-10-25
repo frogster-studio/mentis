@@ -17,7 +17,7 @@ import { PremiumCrownStamp } from "@/features/premium/components/premium-crown-s
 import { TEXT } from "@/theme/text";
 import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
 
-const PLAY_AGAIN_IMAGE = require("../../../../assets/images/competition/play-again-landscape.png");
+const PLAY_AGAIN_IMAGE = require("../../../../assets/images/competition/play-again-landscape.webp");
 const REFRESH_MS = 60000;
 
 export interface YesterdayCompetitionCardProps {

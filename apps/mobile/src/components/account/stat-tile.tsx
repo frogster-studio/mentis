@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { TEXT } from "@/theme/text";
 import { COLORS, SPACE } from "@/theme/tokens";
 
-const FLAME_IMAGE = require("../../../assets/images/competition/flame.png");
+const FLAME_IMAGE = require("../../../assets/images/competition/flame.webp");
 
 export interface StatTileProps {
   title: string;
