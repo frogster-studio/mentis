@@ -9,27 +9,19 @@ import {
 import { skipToken, useQuery } from "@tanstack/react-query";
 import { accountKeys } from "@/features/account/api";
 import { prefetchThemeImages } from "@/features/quiz/theme-image-cache";
-import { worldKeys } from "@/features/world/api";
+import { worldKeys } from "@/features/world/keys";
 import { api } from "@/lib/api";
 import { queryClient, usableOnly } from "@/lib/query-client";
 import { isPermanentRefusal, queuedFinalize } from "./finalize-outbox";
 import { useFinalizeOutboxStore } from "./finalize-outbox-store";
 import { isCurrentDay, isCurrentSeason } from "./freshness";
+import { competitionKeys } from "./keys";
 import {
   fetchCompetitionDay,
   fetchStanding,
   finalizeAttemptRequest,
   resumeOrIssueAttempt,
 } from "./requests";
-
-export const competitionKeys = {
-  attempts: (playerId: string) => ["competition", "attempt", playerId] as const,
-  attempt: (playerId: string, kind: AppCompetitionAttemptKind) =>
-    [...competitionKeys.attempts(playerId), kind] as const,
-  day: (playerId: string) => ["competition", "day", playerId] as const,
-  standing: (playerId: string) => ["competition", "standing", playerId] as const,
-  transcript: (attemptId: string) => ["competition", "transcript", attemptId] as const,
-};
 
 export function useAttempt(
   playerId: string | undefined,

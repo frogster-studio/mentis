@@ -1,9 +1,12 @@
+import type { AppCompetitionDayResponse } from "@mentis/contracts/app";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { focusManager, type Query, QueryClient } from "@tanstack/react-query";
 import { AppState, Platform } from "react-native";
+import { competitionKeys } from "@/features/competition/keys";
 // The pure core, not @/lib/api: that would drag its module-scope env check into every consumer.
 import { isApiError } from "@/lib/api/client";
+import { shouldPersistQuery } from "@/lib/query-persistence";
 
 const RETRIES = 3;
 
@@ -33,20 +36,24 @@ export const queryClient = new QueryClient({
   defaultOptions: { queries: { retry, staleTime: STALE_TIME_MS } },
 });
 
-// The one key root the offline persister dehydrates; everything else stays in memory.
-export const ACCOUNT_QUERY_ROOT = "account";
-
-// Cached to AsyncStorage so a signed-in offline launch still renders the last-known shelf.
+// Cached to AsyncStorage so a launch, offline included, renders the last-known reads at once.
 export const persistOptions = {
   persister: createAsyncStoragePersister({ storage: AsyncStorage }),
   maxAge: Number.POSITIVE_INFINITY,
   // Entries under another buster are dropped at hydration; bump it when the payload shape changes.
   buster: "api-v2",
   dehydrateOptions: {
-    shouldDehydrateQuery: (query: Query) =>
-      query.state.status === "success" && query.queryKey[0] === ACCOUNT_QUERY_ROOT,
+    shouldDehydrateQuery: (query: Query) => shouldPersistQuery(query, cachedDays, new Date()),
   },
+  // A restored read has no observer until its screen mounts, and must outlive a session that never does.
+  hydrateOptions: { defaultOptions: { queries: { gcTime: Number.POSITIVE_INFINITY } } },
 };
+
+function cachedDays(): AppCompetitionDayResponse[] {
+  return queryClient
+    .getQueriesData<AppCompetitionDayResponse>({ queryKey: competitionKeys.days })
+    .flatMap(([, day]) => (day === undefined ? [] : [day]));
+}
 
 // Native has no browser focus event, so AppState drives the refetch-on-focus foreground pull.
 if (Platform.OS !== "web") {

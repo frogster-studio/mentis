@@ -108,7 +108,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Player, Account, P
       "apps/mobile AGENTS.md data-access paragraph names what the persister keeps and the Paris date / Season rule",
       "vitest pure spec over the predicate; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

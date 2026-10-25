@@ -1,10 +1,10 @@
 import type { QueryKey } from "@tanstack/react-query";
 import { useFocusEffect } from "expo-router";
 import { useCallback } from "react";
-import { competitionKeys } from "@/features/competition/api";
 import { msUntilParisMidnight } from "@/features/competition/catchup-deadline";
 import { isCurrentDay, isCurrentSeason } from "@/features/competition/freshness";
-import { worldKeys } from "@/features/world/api";
+import { competitionKeys } from "@/features/competition/keys";
+import { worldKeys } from "@/features/world/keys";
 import { queryClient } from "@/lib/query-client";
 
 // A focus re-reads only what has gone stale or out of date, so a tab switch costs nothing on its own.

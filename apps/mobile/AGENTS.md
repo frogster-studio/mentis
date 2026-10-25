@@ -79,12 +79,14 @@ Every quiz and account read or write goes through `apps/api` via the seam in `sr
 - Request/response schemas come from `@mentis/contracts` (source-first: Metro resolves it through the package's `react-native` export condition). Every response is parsed through its contract schema at the seam, so drift dies there. No direct `zod` dependency, no HTTP library — React Native's global `fetch`.
 - The `/app/me` prefix is the token boundary, mirroring the API's guard boundary: public reads never send an `Authorization` header. A `401` on a guarded call signs the Player out globally.
 - Reads are trusted for `STALE_TIME_MS` (5 min, the client default); a feature's `api.ts` declares its exceptions (`LONG_STALE_TIME_MS` for the catalog and the pseudo, `Infinity` for what issuance fixed, `0` for the store price). Focus and foreground re-read only what is stale; the Player action that moves server state invalidates its keys, never a focus. Tabs mount on their first focus, so a tab's reads wait for its first visit.
+- The persister (`lib/query-persistence.ts`) keeps every account read, the Competition Day, the Standing, the current Season's Leaderboard pages and the transcripts of the cached Day's Attempts — nothing else, Attempt issuance included. A restored read is never garbage-collected, so it outlives a session that skips its screen.
+- A Day counts only on its own Europe/Paris date, a Standing or a Leaderboard page only in its own Season: `usableOnly` hides anything else at render, persisted or in memory, and makes it stale; `useSeasonFreshness` re-reads it on focus and at the Paris midnight.
 
 Database migrations live in `apps/api/src/_database/migrations/` (shared with the back-office; hosted project, eu-central-1) — never add a local supabase folder here.
 
 ## Conventions
 
-- Files kebab-case. Component `post-card.tsx` → `export const PostCard = () => {}` (+ `interface PostCardProps` only if it has props beyond `children`, which comes off `PropsWithChildren` — every prop mandatory: a value no caller varies is a module constant, not an optional prop). Hook `use-x.ts` → `useX`. Store `store.ts` → `useQuizStore`. Queries `api.ts` → `useXxx`, `quizKeys`. Constants `constants.ts` → SCREAMING_SNAKE_CASE. Tests co-located `*.test.ts`.
+- Files kebab-case. Component `post-card.tsx` → `export const PostCard = () => {}` (+ `interface PostCardProps` only if it has props beyond `children`, which comes off `PropsWithChildren` — every prop mandatory: a value no caller varies is a module constant, not an optional prop). Hook `use-x.ts` → `useX`. Store `store.ts` → `useQuizStore`. Queries `api.ts` → `useXxx`, `quizKeys` — the keys move to `keys.ts` once a pure module reads them (the persist predicate). Constants `constants.ts` → SCREAMING_SNAKE_CASE. Tests co-located `*.test.ts`.
 
   ```tsx
   // ✅ interface PlayProgressBarProps { position: number; total: number }

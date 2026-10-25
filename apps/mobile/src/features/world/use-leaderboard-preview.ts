@@ -1,7 +1,8 @@
 import type { AppCompetitionLeaderboardPageResponse } from "@mentis/contracts/app";
 import { useQuery } from "@tanstack/react-query";
 import { isCurrentSeason } from "@/features/competition/freshness";
-import { useLeaderboardPage, worldKeys } from "@/features/world/api";
+import { useLeaderboardPage } from "@/features/world/api";
+import { worldKeys } from "@/features/world/keys";
 import { leaderboardPreview, previewNeighborPage } from "@/features/world/leaderboard-preview";
 import { FIRST_PAGE } from "@/features/world/pager";
 import { fetchLeaderboardPage } from "@/features/world/requests";

@@ -8,3 +8,13 @@
 - Known edge: server/client clock skew at midnight → Day fetched after client midnight still dated yesterday stays hidden (loading) until next focus/foreground re-read; no loop (staleTime 0 only acts on events).
 - Files: features/competition/{freshness.ts,freshness.test.ts,api.ts}, features/world/{api.ts,use-leaderboard-preview.ts,use-season-freshness.ts}, lib/query-client.ts, app/(tabs)/world.tsx, app/leaderboard.tsx, app/profile/(tabs)/index.tsx.
 - Next: item 2 persist predicate — persisted reads go through the same select guard, so the predicate need not filter by date for render correctness, but PRD wants other Seasons' pages dropped. AGENTS.md data-access paragraph not touched yet (item 2 owns it). YesterdayCompetitionCard onExpire still refetches the Day at midnight too (dedup'd by cancelRefetch false) — item 5 may drop it.
+
+## Item 2 — persister keeps the Compétition tab's reads (done)
+- Pure `shouldPersistQuery(query, cachedDays, now)` in lib/query-persistence.ts (+ spec): success only; account root, Day, Standing kept; Leaderboard page only if isCurrentSeason; transcript only if its data.id is an Attempt of a cached Day (any Player's Day query); everything else (issuance, catalog) dropped. ACCOUNT_QUERY_ROOT moved here from query-client.
+- Why keys.ts: competitionKeys/worldKeys moved to features/{competition,world}/keys.ts so the pure predicate + vitest read them without api.ts dragging lib/api env check + expo-image. Added prefix keys competitionKeys.days/standings/transcripts; matched with tanstack partialMatchKey. AGENTS.md naming line says keys move to keys.ts once a pure module reads them.
+- cachedDays is a lazy fn: only transcripts pay the cache scan.
+- GC: persistOptions.hydrateOptions.defaultOptions.queries.gcTime = Infinity → every restored query outlives a session never visiting the tab (observer's later 5 min gcTime can't lower it: updateGcTime takes max). Queries first fetched this session keep 5 min gc once unobserved (e.g. Leaderboard screen pages after pop) — accepted, tab screens stay mounted.
+- Day persisted whatever its date (select guard hides it). Buster unchanged (account payloads unchanged; new entries just absent in old caches).
+- AGENTS.md data-access: persister line + Paris day/Season rule line.
+- Files: lib/{query-persistence.ts,query-persistence.test.ts,query-client.ts}, features/competition/{keys.ts,api.ts,finalize-sync.ts}, features/world/{keys.ts,api.ts,use-leaderboard-preview.ts,use-season-freshness.ts}, features/account/api.ts, apps/mobile/AGENTS.md.
+- Next: item 3 Skeleton primitive (core abstraction for items 4-7).
