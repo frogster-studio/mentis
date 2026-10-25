@@ -42,3 +42,14 @@
 - files: apps/mobile/src/features/quick-home-question/{store,api,constants}.ts, apps/mobile/src/components/quick-home-question/quick-home-question-card.tsx, apps/mobile/src/app/(tabs)/index.tsx
 - NOT verified here (sandbox, no simulator): « first home visit sends exactly one GET, relaunch same day none » — human to confirm on iOS dev client.
 - next: item 6 (choice button) or 7 (card). Card reads `useQuickHomeQuestionDaySet()`; taps call `useQuickHomeQuestionStore.getState().answer(choice)`; per item 8 the displayed X lags `results.length` until the tile leaves.
+
+## Item 6 — choice button (done)
+- `components/quick-home-question/quick-home-question-choice-button.tsx`: props `label`, `revealsCorrect`, `revealsMistake`, `disabled`, `onPress` (plain booleans the caller computes). Rest white face + `COLORS.stroke` border, `TEXT.body` label `numberOfLines=2`, fixed height `body.lineHeight*2 + SPACE.md*2` (SquareButton's two-line recipe, no import of it). Press = Pressable `PRESSED` dim, no sink.
+- animation: reanimated 4 CSS transitions (`css.create`, precedent marquee) on `backgroundColor`/`borderColor` of `Animated.createAnimatedComponent(FastSquircleView)` + `color` of `Animated.Text`, `transitionDuration: QUICK_HOME_QUESTION_REVEAL_MS`; cross = MaterialCommunityIcons `close` in `danger`, `entering={FadeIn.duration(REVEAL)}`. Border width 2 at rest too so the danger border never shifts layout.
+- why CSS transitions over RN Animated: declarative state→style, colours animate natively without interpolation plumbing.
+- `day-set.ts`: `isCorrectChoice(tile, choice)` extracted; `answerTopTile` and the card both judge through it (one strict-equality home).
+- constants: `QUICK_HOME_QUESTION_REVEAL_MS = 250`, `QUICK_HOME_QUESTION_HOLD_MS = 700`.
+- card tracer (knip needs the button used): tag + the shown tile's two buttons. Local `tap = { tileIndex, choice }`; tap → `setTap` + store `answer` at once; shown tile = `tap.tileIndex ?? results.length`, so the tapped tile stays during reveal+hold, then `setTap(null)` → next tile (no exit anim yet). Counter shows `shownIndex` → X advances when the tile leaves. Choice row keyed by question id so a shared label never animates back to rest.
+- NOT verified here (no simulator): end-state screenshots, FastSquircleView honouring animated bg/border on device — human to check on iOS dev client.
+- files: apps/mobile/src/components/quick-home-question/{quick-home-question-choice-button,quick-home-question-card}.tsx, apps/mobile/src/features/quick-home-question/{constants,day-set}.ts
+- next: item 7 (card: tile anatomy, stack, dots, Skeleton) builds on this card; item 8 swaps the tap timeout for reveal→hold→exit→rise and the end message (EXIT 350, END 2000, FADE 200 constants then).

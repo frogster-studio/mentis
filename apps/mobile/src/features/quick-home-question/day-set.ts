@@ -40,6 +40,10 @@ export function topTile(daySet: QuickHomeQuestionDaySet): QuickHomeQuestionTile 
   return daySet.tiles[daySet.results.length] ?? null;
 }
 
+export function isCorrectChoice(tile: QuickHomeQuestionTile, choice: string): boolean {
+  return choice === tile.question.answer;
+}
+
 export function answerTopTile(
   daySet: QuickHomeQuestionDaySet,
   choice: string,
@@ -48,7 +52,7 @@ export function answerTopTile(
   if (tile === null) {
     return daySet;
   }
-  return { ...daySet, results: [...daySet.results, choice === tile.question.answer] };
+  return { ...daySet, results: [...daySet.results, isCorrectChoice(tile, choice)] };
 }
 
 export function daySetEndMessage(daySet: QuickHomeQuestionDaySet): string | null {
