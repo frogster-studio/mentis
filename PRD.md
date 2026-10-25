@@ -96,7 +96,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Player, Account, P
       "With the tab on screen, Paris midnight re-reads the Day, and the Standing and pages on a Season change",
       "vitest pure spec (prior art: streak.test.ts, season-calendar.test.ts)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

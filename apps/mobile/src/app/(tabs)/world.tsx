@@ -76,10 +76,10 @@ export default function Page() {
           onPress={() => router.push("/leaderboard")}
         />
       )}
-      {isSignedIn && day.isPending ? (
-        <ScreenLoading />
-      ) : isSignedIn && day.isError ? (
+      {isSignedIn && day.isError ? (
         <ScreenError message={COMPETITION_ERROR} onRetry={() => void day.refetch()} />
+      ) : isSignedIn && day.data === undefined ? (
+        <ScreenLoading />
       ) : (
         <View style={styles.cards}>
           <CompetitionCard

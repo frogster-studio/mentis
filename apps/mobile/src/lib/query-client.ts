@@ -20,6 +20,15 @@ function retry(failureCount: number, error: unknown): boolean {
   return failureCount < RETRIES;
 }
 
+// Out-of-date data reads as none and is stale at once, so any mount or foreground re-reads it.
+export function usableOnly<T>(isUsable: (data: T, now: Date) => boolean) {
+  return {
+    select: (data: T) => (isUsable(data, new Date()) ? data : undefined),
+    staleTime: (query: Query<T>) =>
+      query.state.data !== undefined && isUsable(query.state.data, new Date()) ? STALE_TIME_MS : 0,
+  };
+}
+
 export const queryClient = new QueryClient({
   defaultOptions: { queries: { retry, staleTime: STALE_TIME_MS } },
 });

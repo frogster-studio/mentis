@@ -1,6 +1,8 @@
 import {
   type AppCompetitionAttemptKind,
   type AppCompetitionAttemptResponse,
+  type AppCompetitionDayResponse,
+  type AppCompetitionStandingResponse,
   type AppCompetitionTranscriptResponse,
   appCompetitionTranscriptResponseSchema,
 } from "@mentis/contracts/app";
@@ -9,9 +11,10 @@ import { accountKeys } from "@/features/account/api";
 import { prefetchThemeImages } from "@/features/quiz/theme-image-cache";
 import { worldKeys } from "@/features/world/api";
 import { api } from "@/lib/api";
-import { queryClient } from "@/lib/query-client";
+import { queryClient, usableOnly } from "@/lib/query-client";
 import { isPermanentRefusal, queuedFinalize } from "./finalize-outbox";
 import { useFinalizeOutboxStore } from "./finalize-outbox-store";
+import { isCurrentDay, isCurrentSeason } from "./freshness";
 import {
   fetchCompetitionDay,
   fetchStanding,
@@ -53,12 +56,13 @@ export function useAttempt(
   });
 }
 
-// A finalize invalidates it; the Paris midnight lands with the next stale focus or foreground.
+// A finalize invalidates it; past the Paris midnight it reads as no Day until the new one lands.
 export function useCompetitionDay(playerId: string | undefined) {
   return useQuery({
     queryKey: competitionKeys.day(playerId ?? ""),
     queryFn: () => fetchCompetitionDay(api),
     enabled: playerId !== undefined,
+    ...usableOnly<AppCompetitionDayResponse>(isCurrentDay),
   });
 }
 
@@ -68,6 +72,7 @@ export function useStanding(playerId: string | undefined) {
     queryKey: competitionKeys.standing(playerId ?? ""),
     queryFn: () => fetchStanding(api),
     enabled: playerId !== undefined,
+    ...usableOnly<AppCompetitionStandingResponse>(isCurrentSeason),
   });
 }
 
