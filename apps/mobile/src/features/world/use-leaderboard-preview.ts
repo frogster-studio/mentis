@@ -30,19 +30,17 @@ export function useLeaderboardPreview(page: number | null, myPseudo: string | nu
     neighborPage !== null && page !== null && neighborPage < page
       ? [...adjacent, ...current]
       : [...current, ...adjacent];
+  const awaited = [leaderboard, ...(neighborPage === null ? [] : [neighbor])].filter(
+    (read) => read.data === undefined,
+  );
+  const failed = awaited.filter((read) => read.isError);
 
   return {
-    entries: leaderboardPreview(entries, myPseudo),
-    isPending: isAwaited(leaderboard) || (neighborPage !== null && isAwaited(neighbor)),
-    isError: leaderboard.isError || (neighborPage !== null && neighbor.isError),
+    // Data out of its Season reads as none, so a settled read without data still leaves no preview.
+    entries: awaited.length === 0 ? leaderboardPreview(entries, myPseudo) : null,
+    isFrozen: failed.length > 0,
     refetch: () => {
-      void leaderboard.refetch();
-      if (neighborPage !== null) void neighbor.refetch();
+      for (const read of failed) void read.refetch();
     },
   };
-}
-
-// Data out of its Season reads as none, so a settled read without data still awaits its re-read.
-function isAwaited(read: { data: unknown; isError: boolean }): boolean {
-  return read.data === undefined && !read.isError;
 }

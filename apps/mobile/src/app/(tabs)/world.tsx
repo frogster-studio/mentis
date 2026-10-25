@@ -29,7 +29,6 @@ import {
 import { useCompetitionStreak } from "@/features/competition/use-competition-streak";
 import { usePremiumGate } from "@/features/premium/use-premium-gate";
 import { LeaderboardPreviewCard } from "@/features/world/components/leaderboard-preview-card";
-import { LEADERBOARD_ERROR } from "@/features/world/constants";
 import { previewPage } from "@/features/world/leaderboard-preview";
 import { useLeaderboardPreview } from "@/features/world/use-leaderboard-preview";
 import { useSeasonFreshness } from "@/features/world/use-season-freshness";
@@ -65,17 +64,20 @@ export default function Page() {
         { paddingTop: headerHeight + SPACE.lg, paddingBottom: height / 3 },
       ]}
     >
-      {preview.isPending ? (
-        <ScreenLoading />
-      ) : preview.isError ? (
-        <ScreenError message={LEADERBOARD_ERROR} onRetry={preview.refetch} />
-      ) : (
-        <LeaderboardPreviewCard
-          entries={preview.entries}
-          myPseudo={myPseudo}
-          onPress={() => router.push("/leaderboard")}
-        />
-      )}
+      <LeaderboardPreviewCard
+        entries={preview.entries}
+        myPseudo={myPseudo}
+        isFrozen={preview.isFrozen}
+        onPress={() => {
+          if (!preview.isFrozen) {
+            router.push("/leaderboard");
+            return;
+          }
+          preview.refetch();
+          // The preview fell back to page 1 without it, so a retry also re-asks the Player's page.
+          if (standing.data === undefined && standing.isError) void standing.refetch();
+        }}
+      />
       {isSignedIn && day.isError ? (
         <ScreenError message={COMPETITION_ERROR} onRetry={() => void day.refetch()} />
       ) : isSignedIn && day.data === undefined ? (

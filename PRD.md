@@ -133,7 +133,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Player, Account, P
       "Signed out: page 1 preview, no pill; no ScreenLoading or ScreenError left in the section",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

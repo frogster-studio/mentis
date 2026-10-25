@@ -27,3 +27,12 @@
 - AGENTS.md: animation rule admits the Skeleton pulse; feedback-states rule names Skeleton, frozen, the one toast, tap re-reads, ScreenLoading/ScreenError only for screens #77 hasn't migrated.
 - Files: components/ui/{skeleton.tsx,use-reduce-motion.ts}, components/player-greeting.tsx, apps/mobile/AGENTS.md.
 - Next: item 4 leaderboard preview (bordeau → isOnDark true). Toast (item 6) not built yet, rule already names it.
+
+## Item 4 — leaderboard preview + header pill: last-known data at once, skeletons without it (done)
+- Pill already done in item 3. useLeaderboardPreview now returns `entries: Entries | null` (null while the page or its needed neighbor has no usable data), `isFrozen` (one of those failed), `refetch` (re-reads only the failed ones — never a skipToken read). isPending/isError gone; a failed re-read under data keeps the entries.
+- Neighbor missing/failed with the page loaded → whole preview skeleton, not a partial list (placement could be wrong).
+- LeaderboardPreviewCard: null entries → 3 rows of Skeleton (rank 32 × captionStrong lh, pseudo flex 1 × body lh, points 52 × captionStrong lh, RADIUS.sm, isOnDark), same row padding/stagger → no layout shift; medal kept.
+- world.tsx: no ScreenLoading/ScreenError in the preview section. Tap: frozen → preview.refetch + standing.refetch when the Standing has failed with no data (preview fell back to page 1); else open /leaderboard (also while pulsing).
+- LEADERBOARD_ERROR still used by app/leaderboard.tsx (#77).
+- Files: features/world/{use-leaderboard-preview.ts,components/leaderboard-preview-card.tsx}, app/(tabs)/world.tsx.
+- Next: item 5 daily card (world.tsx day branch still ScreenLoading/ScreenError). Toast item 6 will need preview.isFrozen + the Day/Standing failure in one place.
