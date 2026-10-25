@@ -124,7 +124,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Quick Home Questio
       "The input Question is never mutated",
       "Specs in `shuffle.spec.ts`; `bun run check` green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

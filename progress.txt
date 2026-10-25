@@ -17,3 +17,10 @@
 - human step pending: live smoke `GET /app/questions?n=3` on hosted DB → 3 distinct Themes with Category (SQL only proven vs mock).
 - sandbox note: one run hit a spurious "Cannot find module zod/v4/core/versions.js" (file exists); rerun green.
 - next: item 3 (answer-matching two-choice pick beside `squareChoices`).
+
+## Item 3 — two-choice pick beside `squareChoices` (done)
+- answer-matching: `quickHomeQuestionChoices(question, rng): [string, string]` in shuffle.ts, takes `ShuffleableQuestion`. 1st rng call picks the wrong choice (`floor(rng*len)`), 2nd is the coin flip (`< 0.5` → Canonical Answer left). Tuple return so callers get exactly two without asserting.
+- why not reuse `squareChoices`: PRD rules it out (Canonical Answer right 3 in 4).
+- spec: `scriptedRng(...values)` helper in shuffle.spec.ts; each wrong choice reachable (0/0.4/0.99), both orders (0.49/0.5), no mutation, 20 seeds always Canonical + one wrong.
+- files: packages/answer-matching/src/shuffle{,.spec}.ts
+- next: item 4 (mobile pure day logic) — set building stores each Question's pair via `quickHomeQuestionChoices`, rng injected.
