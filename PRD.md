@@ -1,164 +1,191 @@
-# PRD — Catalog search in the curation dashboard
+# PRD — The Compétition tab loads without a spinner
 
-Vocabulary: [apps/admin/CONTEXT.md](apps/admin/CONTEXT.md) (Editor, Catalog, Category, Theme, Question, Ready To Be Published, Published), [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Canonical Answer, Alias, Misspelling, Square). Rules: [AGENTS.md](AGENTS.md), [apps/admin/AGENTS.md](apps/admin/AGENTS.md), [apps/admin/docs/ui-conventions.md](apps/admin/docs/ui-conventions.md), [apps/api/AGENTS.md](apps/api/AGENTS.md), [docs/agents/conventions.md](docs/agents/conventions.md), [ADR 0003](docs/adr/0003-database-admits-only-the-api.md), [ADR 0005](docs/adr/0005-the-api-reaches-its-data-through-typeorm.md), [ADR 0008](docs/adr/0008-curation-rules-live-in-the-admin-client.md).
+Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Player, Account, Pseudo, Attempt, Replay, Catch-up, Competition Day, Season, Leaderboard, Standing, Streak, Theme, Category). Rules: [AGENTS.md](AGENTS.md), [apps/mobile/AGENTS.md](apps/mobile/AGENTS.md), [docs/agents/conventions.md](docs/agents/conventions.md).
 
 ## Decisions
 
-### Corpus and API
+### Scope
 
-- The search runs in the admin client: Categories and Themes are already loaded, the Questions corpus is fetched once at dashboard mount. No API search route, no DB index or extension, no debounce.
-- Scale ceiling: 1,000 Questions, 200 Themes, 50 Categories.
-- `adminQuestionListQuerySchema.themeId` becomes optional. Absent, `GET /admin/questions` lists every Question, `createdAt` desc then `id` desc like the per-Theme read; present, unchanged.
-- The corpus query sits under the `["curation","questions"]` key prefix, so the existing `refetchCatalogColumns` refetches it after a Question create, edit or delete. A Ready flip refetches nothing: no searched text changes. `staleTime: Infinity` already rules out refocus refetches.
+- Only the Compétition tab and the shared header (avatar, points pill) change. Every other screen keeps `ScreenLoading` / `ScreenError` until [#77](https://github.com/frogster-studio/mentis/issues/77) migrates it.
+- The tab's reads still wait for its first visit: no prefetch at launch.
 
-### Matching
+### Last-known data
 
-- One fold for the query and the searched text: lowercase, accents removed (NFD), `œ→oe`, `æ→ae`. Every character that is not `a-z` or `0-9` after folding splits words: `l'Everest` → `l`, `everest`; `Saint-Exupéry` → `saint`, `exupery`.
-- A query holding no word (`?`, blanks) searches nothing.
-- A query word finds an item word when it starts it, or when both are equal once a final `s` is dropped from each: `che` finds Chevalier, `hommes` finds homme, `quels` finds Quel, `detrui` finds détruisent; `détruire` does not find détruisent, `bus` does not find bureau.
-- A whole-word find is the second case, or a start that covers the entire item word.
-- Every query word must find a word in the item (AND), each matched independently.
-- The fold is the admin's own; answer-matching's `normalize` is not reused (it strips leading articles and is not exported).
+- The persister keeps, beside the account reads it already keeps: the Competition Day, the Standing, the Leaderboard pages of the current Season, and the transcripts of the cached Day's Attempts. Nothing else from the competition persists: Attempt issuance stays in memory, other Seasons' pages and older transcripts are dropped.
+- Persisted reads survive a session that never visits the tab: the query client must not garbage-collect them after the default 5 minutes.
+- Usable data renders on the first frame and is re-read silently under the existing stale rules. A background re-read never shows a skeleton.
+- A Day counts only on its own Europe/Paris date; a Standing or a Leaderboard page only in its own Season (Europe/Paris month). Anything else is treated as no data and re-read. The check runs at render, on persisted and in-memory data alike.
+- At Paris midnight with the tab on screen, the Day is re-read (and the Standing and pages on a Season change); the daily card shows its skeleton shell meanwhile.
+- Stale values on screen for the instant of a re-read (yesterday's rank or points) are accepted.
 
-### Searched fields
+### Skeleton
 
-- Category: its name. Theme: its name. Question: the union of its text, Canonical Answer and three wrong choices, so query words may land in different fields (`chevalier bayard`).
-- The union never crosses entities: `histoire napoleon` finds no Theme Napoléon in Category Histoire.
-- Never searched: Aliases, Misspellings, Explanation, a Theme's Category name, a Question's Theme name.
-- Staging is ignored: unready Questions and unpublished Themes are found.
+- One shared `Skeleton` primitive: a Squircle block sized as the content it stands for, so the expected state resolves without a layout shift.
+- Opacity pulse of about 1 s per phase; every skeleton on screen runs on one shared clock and breathes in unison.
+- Tint is the surface's ink with a hex alpha: `COLORS.ink` on light surfaces, `COLORS.face` on dark ones (bordeau). No new hex.
+- Static under the OS reduce-motion setting, and when frozen.
+- Content replaces a skeleton instantly: no fade, no delay, no minimum duration.
+- Bundled images never get a skeleton; only reads and downloaded images do.
 
-### Ranking
+### Leaderboard preview and points pill
 
-- Three groups in fixed order, Categories → Themes → Questions, each labelled with its uncapped total (`Questions · 42`).
-- Within a group: more query words found whole first; then, for Questions, the best field holding a find, Canonical Answer before text before wrong choices; then the shorter name or text; then alphabetical.
-- Caps: 3 Categories, 5 Themes, 8 Questions.
+- No usable data: three rows, each fully skeleton (rank, pseudo, points), the Player's pseudo not shown, the medal shown.
+- Resolved: today's placement logic is unchanged — the Player in the middle, on top when n° 1, at the bottom when last, absent (top 3) when unranked this Season.
+- The header points pill: from usable Standing at once; a skeleton under the pseudo without it; nothing when signed out.
+- Signed out: the page 1 preview as today, persisted like any page.
 
-### The Search bar
+### Daily card
 
-- It sits in the header's center slot; the dashboard owns it, since it holds the selection and the unsaved-changes guard, and the header only lends the slot.
-- Results drop down over the columns without shifting them. Placeholder: `Search the Catalog`.
-- Results start at the first letter or digit, no minimum length. No word: the list stays closed. No find: `No results.`. Corpus pending: Categories and Themes answer, the Questions group shows `Loading…`.
-- Rows: a Category shows its badge (color + icon) and name; a Theme its name, its Category's name and the Published badge; a Question its truncated text, its Canonical Answer, every wrong choice holding a find, and its Theme's name.
-- Found words are highlighted whole, in their original spelling, `text-sky-700 font-medium`; fields that are not searched are never highlighted.
-- ARIA `combobox` / `listbox` / `option`.
+- A usable Day renders its state at once: « À jouer », « Faite » with Replay, « Faite » without Replay.
+- Signed in with no usable Day: the orange daily frame and the real Streak badge; the title, teaser, « ? » tile and CTA label are skeletons at the « À jouer » sizes; the CTA face stays, its label a skeleton bar, not pressable. A resolve to « Faite » switches the card to green: accepted.
+- « Faite » without a usable transcript (played on another device, first launch): the score shows at once; the theme-image layer and the category badge are skeletons, never the generic landscape swapped for the Theme's image.
+- Signed out: « À jouer » at once, as today.
+- The state is never guessed: no CTA is shown that a resolve could replace.
 
-### Selecting a result
+### Rattrapage card
 
-- Category → `{ categoryId }`; Theme → `{ categoryId: its Category, themeId }`; Question → `{ categoryId, themeId, questionId }`. The columns follow; Details shows the selected item.
-- The same unsaved-changes confirm as a row click. Cancelled: nothing moves, the list stays open. Accepted or clean: authoring closes, a history entry is pushed, Back returns to the previous selection.
-- The list closes and the query stays; refocusing reopens the same results.
-- The selected row scrolls into view in its column once rendered (a Question after its Theme's Questions load), only after a search selection, never on a deep link or Back.
+- Rendered only once a usable Day says `catchup`. No placeholder, skeleton or spinner before; its content (local countdown, bundled image) is unchanged.
 
-### Keyboard
+### Load failures
 
-- ⌘K on Mac, Ctrl+K elsewhere, and `/` outside a text field focus the bar.
-- ↑/↓ move the active option across groups, hover moves it too; Enter selects it exactly like a click.
-- Escape closes the list; a second Escape empties the bar.
+- A read with no usable data pulses through the client's retries, then its skeletons freeze.
+- One toast per failure, however many reads failed together: « Impossible de charger la compétition. Touche une carte pour réessayer. », icon `cloud-off-outline`, bottom-center. The toast keeps no action button.
+- Retry: the next foreground or tab focus re-reads (existing behaviour), and a tap on a frozen card re-reads that card's reads — the frozen preview re-reads instead of opening the Leaderboard.
+- A failed re-read under usable data shows nothing: no toast, no freeze.
 
-### Docs
+### Header avatar
 
-- The admin UI conventions gain one line: the header's center slot holds the Catalog search. No ADR, no glossary term.
+- A bordered Squircle replaces the circle, on both tabs.
+- Signed in with an `avatar_url` in the session (Google): a skeleton in the avatar's shape until the photo decodes, then the photo; later launches read it from the disk cache. The URL needs no request.
+- No `avatar_url` (Apple, signed out) or a failed download: the initial; no pseudo either: the neutral dot, as today.
+- The Profile screen's portrait is unchanged.
+
+### Bundled images
+
+- The tab's four PNGs — flame, landscape, play-again-landscape, question-mark — move to the originals and ship as the WebP `bun run images` generates; every use points at the WebP (Streak badge, stat tile, card background, Rattrapage card, daily card).
+
+### Rules
+
+- `apps/mobile/AGENTS.md`: the feedback-states rule names the `Skeleton`, the frozen state and the one toast, keeping `ScreenLoading` / `ScreenError` only for screens #77 has not migrated; the animation rule admits the Skeleton pulse beside the press mechanic; the data-access paragraph names what the persister keeps and the Paris day / Season rule. Compact lines, mechanics stay here.
+- No glossary term, no ADR.
 
 ### Test seams
 
-- Contract: the admin question contract spec.
-- API: the curation e2e spec through the Nest testing module with `fakeCurationRepository` (prior art: `admin-curation.e2e-spec.ts`, which already reads `/admin/questions?themeId=`).
-- Pure functions: vitest specs beside them, the examples above verbatim (prior art: `selection.test.ts`).
-- UI: happy-dom component specs driving the combobox by role, the API client mocked (prior art: `category-form.test.tsx`).
+- Pure freshness guards with an injected `now`: the Day ↔ Paris date check across 23:59:59 → 00:00:00 Paris and both DST switches, the Season check across a month boundary (prior art: `streak.test.ts`, `season-calendar.test.ts`, `catchup-deadline.test.ts`).
+- The persist predicate as a pure function over query keys and data (prior art: `chunked-storage.test.ts` for `lib/`).
+- No component rendering tests (house rule): UI items end with `bun run check` green and their screen states listed as steps, reviewed on device by the human.
 
 ### Out of scope
 
-- Stemming (`détruire` finding détruisent), `x` and irregular plurals, stopwords, typo tolerance, matches inside a word.
-- An API search route, any DB index or extension.
-- Searching Aliases, Misspellings or Explanations; highlighting only the typed prefix.
-- Shortcuts beyond those listed; scroll-into-view outside a search selection.
+- « Réalisée par », the two bars under « C'est sérieux là ! », the « Compète du jour » title, the history icon on the Rattrapage CTA.
+- Every other screen's loading ([#77](https://github.com/frogster-studio/mentis/issues/77)), the Profile portrait, prefetching the tab.
+- A toast action button, pull-to-refresh.
+- Any API, contract or schema change.
 
 ## Items
 
 ```json
 [
   {
-    "category": "api",
-    "description": "GET /admin/questions lists every Question, newest first, when themeId is absent",
+    "category": "mobile",
+    "description": "A cached Competition Day counts only on its own Paris date, a cached Standing or Leaderboard page only in its own Season",
     "steps": [
-      "Contract spec: the list query parses {} and { themeId: <guid> }, rejects { themeId: \"x\" }",
-      "No themeId: 200 with every Question across Themes; the repository read orders createdAt desc then id desc like the per-Theme read",
-      "With themeId: unchanged, that Theme's Questions only",
-      "Unauthenticated: 401; non-Editor: 403",
-      "e2e through the Nest testing module with fakeCurationRepository"
+      "Pure guard, injected now: a Day dated today in Europe/Paris is usable, yesterday's is not, across 23:59:59 → 00:00:00 Paris and both DST switches",
+      "Pure guard: a Standing or Leaderboard page whose season is the current Europe/Paris month is usable, last month's is not, across the month boundary at Paris midnight",
+      "The tab's Day, Standing and Leaderboard preview reads treat unusable data as no data and re-read it, persisted or in memory",
+      "With the tab on screen, Paris midnight re-reads the Day, and the Standing and pages on a Season change",
+      "vitest pure spec (prior art: streak.test.ts, season-calendar.test.ts)"
     ],
-    "passes": true
+    "passes": false
   },
   {
-    "category": "admin",
-    "description": "A Search word finds a Catalog word by its start or by equality without the final s, accent-blind",
+    "category": "mobile",
+    "description": "The persister keeps the Compétition tab's reads across launches",
     "steps": [
-      "\"che\", \"francais\", \"quel\" and \"chevalier francais\" find « Quel chevalier français était surnommé « sans peur et sans reproche » ? »",
-      "\"homme fr\" and \"francais detrui\" find « Quels sont les Hommes Francais qui détruisent… »; \"francais détruire\" does not",
-      "\"hommes\" finds homme, \"quels\" finds Quel, \"coeur\" finds cœur, \"everest\" finds l'Everest, \"exu\" finds Saint-Exupéry; \"bus\" does not find bureau, \"saintex\" does not find Saint-Exupéry",
-      "\"?\" and blanks yield no query word",
-      "Every find carries its word's span in the original text, accents kept, and whether it is whole",
-      "vitest pure spec"
+      "Pure persist predicate: keeps successful account queries (unchanged), the Day, the Standing, current-Season Leaderboard pages and the transcripts of the cached Day's Attempts",
+      "It drops Attempt issuance, other Seasons' pages and any transcript whose Attempt is not in the cached Day",
+      "Persisted queries are not garbage-collected while the app runs without visiting the tab",
+      "apps/mobile AGENTS.md data-access paragraph names what the persister keeps and the Paris date / Season rule",
+      "vitest pure spec over the predicate; bun run check green"
     ],
-    "passes": true
+    "passes": false
   },
   {
-    "category": "admin",
-    "description": "searchCatalog answers the ranked, capped Categories, Themes and Questions groups with their uncapped totals",
+    "category": "mobile",
+    "description": "A shared Skeleton primitive, and the rules that replace ScreenLoading where the layout is known",
     "steps": [
-      "\"chevalier bayard\" finds a Question whose text holds chevalier and whose Canonical Answer is Bayard; \"histoire napoleon\" finds no Theme Napoléon in Category Histoire",
-      "A word present only in an Alias, a Misspelling or an Explanation finds nothing",
-      "Order: more whole-word finds first; for Questions, Canonical Answer before text before wrong choices; then shorter; then alphabetical",
-      "Caps 3 Categories, 5 Themes, 8 Questions, each group carrying its uncapped total",
-      "Unready Questions and unpublished Themes are found",
-      "A Question result lists the wrong choices holding a find, every shown field with its highlight spans",
-      "vitest pure spec"
+      "Skeleton is a Squircle block pulsing opacity about 1 s per phase, every instance on one shared clock",
+      "Its tint is COLORS.ink with a hex alpha on light surfaces, COLORS.face with a hex alpha on dark ones; no new hex",
+      "Static under the OS reduce-motion setting, and when frozen",
+      "apps/mobile AGENTS.md: the feedback-states rule names Skeleton, the frozen state and the one toast, ScreenLoading/ScreenError kept only for screens #77 has not migrated; the animation rule admits the Skeleton pulse",
+      "bun run check green"
     ],
-    "passes": true
+    "passes": false
   },
   {
-    "category": "admin",
-    "description": "The header's center slot holds the Search bar, which lists the grouped results as the Editor types",
+    "category": "mobile",
+    "description": "The leaderboard preview and the header points pill render last-known data at once, skeletons without it",
     "steps": [
-      "The dashboard fetches the Questions corpus once at mount (GET /admin/questions, no themeId) under the [\"curation\",\"questions\"] prefix; a Question save refetches it, a Ready flip does not",
-      "\"?\" or blanks: no list; no find: \"No results.\"; corpus pending: Categories and Themes listed, the Questions group shows \"Loading…\"",
-      "Rows: Category badge + name; Theme name + Category name + Published badge; Question truncated text + Canonical Answer + found wrong choices + Theme name; group labels carry totals",
-      "Found words render whole in text-sky-700 font-medium; non-searched fields carry none",
-      "Placeholder \"Search the Catalog\"; ARIA combobox, listbox, option",
-      "The admin UI conventions carry the header center-slot line",
-      "happy-dom component spec driving the combobox by role, API client mocked"
+      "Usable Standing and pages: preview and pill on the first frame, no skeleton, re-read silently",
+      "No usable data: three fully skeleton rows (rank, pseudo, points), no pseudo shown, the medal shown; the pill is a skeleton under the pseudo",
+      "Resolved: placement unchanged — middle, top when n° 1, bottom when last, top 3 without the Player when unranked",
+      "Failed with no usable data: skeletons frozen; a tap on the frozen preview re-reads instead of opening the Leaderboard",
+      "Signed out: page 1 preview, no pill; no ScreenLoading or ScreenError left in the section",
+      "bun run check green"
     ],
-    "passes": true
+    "passes": false
   },
   {
-    "category": "admin",
-    "description": "Selecting a result selects it in the columns and in Details",
+    "category": "mobile",
+    "description": "The daily card renders its known state at once or its orange skeleton shell, and the Rattrapage card appears once the Day says so",
     "steps": [
-      "Category → { categoryId }; Theme → { its categoryId, themeId }; Question → { categoryId, themeId, questionId }; Details shows the selected item",
-      "Dirty form: the unsaved-changes confirm runs; cancelled, nothing moves and the list stays open",
-      "Accepted or clean: authoring closes, a history entry is pushed, Back returns to the previous selection",
-      "The list closes, the query stays, refocus reopens the same results",
-      "The selected row scrolls into view once its column renders; a deep link or Back scrolls nothing",
-      "happy-dom component spec"
+      "Usable Day: « À jouer », « Faite » with Replay or « Faite » without Replay on the first frame",
+      "Signed in, no usable Day: orange daily frame, real Streak badge; title, teaser, « ? » tile and CTA label skeletons at the « À jouer » sizes; the CTA face stays, not pressable",
+      "« Faite » without a usable transcript: the score at once; the theme-image layer and the category badge are skeletons, never the generic landscape",
+      "Failed with no usable data: frozen; a tap on the card re-reads its Day and transcript",
+      "Paris midnight with the tab open: back to the skeleton shell until the new Day lands",
+      "Rattrapage rendered only once a usable Day says catchup, nothing in its place before; signed out: « À jouer » at once",
+      "No ScreenLoading or ScreenError left on the tab; bun run check green"
     ],
-    "passes": true
+    "passes": false
   },
   {
-    "category": "admin",
-    "description": "The keyboard drives the Search",
+    "category": "mobile",
+    "description": "A read that fails with nothing on screen raises one toast, however many cards failed",
     "steps": [
-      "⌘K (Ctrl+K off Mac) and / outside a text field focus the bar; / typed inside a text field stays a character",
-      "↑/↓ move the active option across groups, hover moves it too; Enter selects it exactly like a click",
-      "Escape closes the list; a second Escape empties the bar",
-      "happy-dom component spec"
+      "After the client's retries, a read with no usable data freezes its skeletons and shows « Impossible de charger la compétition. Touche une carte pour réessayer. » with cloud-off-outline, bottom-center",
+      "Day, Standing and Leaderboard failing together raise one toast, not three",
+      "A failed re-read under usable data: no toast, no freeze",
+      "The next foreground or tab focus re-reads the frozen reads",
+      "Copy in the competition constants; bun run check green"
     ],
-    "passes": true
+    "passes": false
+  },
+  {
+    "category": "mobile",
+    "description": "The header avatar is a bordered Squircle showing the Google photo, a skeleton until it first decodes",
+    "steps": [
+      "A bordered Squircle replaces the circle on both tabs",
+      "Session with avatar_url: skeleton in the avatar's shape until the photo decodes, then the photo, read from the disk cache on later launches",
+      "No avatar_url (Apple, signed out) or a failed download: the initial; no pseudo either: the neutral dot",
+      "The Profile screen's portrait is unchanged; bun run check green"
+    ],
+    "passes": false
+  },
+  {
+    "category": "mobile",
+    "description": "The tab's four bundled PNGs ship as WebP",
+    "steps": [
+      "flame, landscape, play-again-landscape and question-mark live under assets/originals/competition/ and bun run images generates their WebP",
+      "Every use points at the WebP: Streak badge, stat tile, card background, Rattrapage card, daily card",
+      "No PNG left under assets/images/competition/; bun run check green"
+    ],
+    "passes": false
   }
 ]
 ```
 
 ## Human steps
 
-- Before the loop: commit or stash the in-progress resizable-columns work, or the first item's commit sweeps it in.
-- After the last item: review the bar in a browser on the real Catalog (ranking feel, highlight), then merge. The API deploy must land before the admin's corpus call works: a list without `themeId` is a 400 on the old API.
-- No migration, no dashboard SQL.
+- Before the loop: nothing — no migration, no dashboard SQL, no API deploy.
+- After the last item, on iOS and Android: a cached cold launch (no skeleton), a reinstall (skeletons), an airplane-mode cold launch (frozen skeletons, one toast, a tap re-reads), Paris midnight with the tab open, reduce motion on, an Apple Account (initial) and a Google Account (photo). Then merge.
