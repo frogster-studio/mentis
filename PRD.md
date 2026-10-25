@@ -170,7 +170,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Player, Account, P
       "No avatar_url (Apple, signed out) or a failed download: the initial; no pseudo either: the neutral dot",
       "The Profile screen's portrait is unchanged; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

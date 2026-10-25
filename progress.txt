@@ -57,3 +57,12 @@
 - useSeasonFreshness tab-focus refetch now also covers competitionKeys.transcripts (stale only when no data: staleTime Infinity), so a frozen transcript re-reads on tab focus like the others; foreground was already covered by refetchOnWindowFocus.
 - Files: features/world/{use-load-failure-toast.ts,use-season-freshness.ts}, features/competition/constants.ts, components/ui/toast.tsx, app/(tabs)/world.tsx.
 - Next: item 7 header avatar (Squircle, Google photo, skeleton until decode) or item 8 WebP (landscape.png unused since item 5 — human to confirm deletion).
+
+## Item 7 — header avatar: bordered Squircle, Google photo, skeleton until decode (done)
+- ProfileAvatar (components/profile-avatar.tsx, only caller PlayerHeader = both tabs) takes `photoUrl: string | null` + `initial`. Box = FastSquircleView RADIUS.base, 1 px inkMuted border, overflow hidden (clips the photo; prior art profile-header portrait, MainHeader bar).
+- Photo: expo-image absoluteFill, cachePolicy disk (explicit, the default), no transition → instant swap; Skeleton absoluteFill (RADIUS.base, light, never frozen) on top until onLoad. onError → initial. Both tracked as `decodedUrl` / `failedUrl` state keyed by URL, so a new URL starts over without an effect. Neutral face only on the initial/dot state, so the skeleton reads on the card like the others.
+- PlayerHeader reads the session user (was only its id) → avatarUrlOf(user). Signed out / Apple: undefined → initial or dot as before.
+- Profile portrait untouched (ProfilePortrait / ProfileHeader).
+- Cached later launch: maybe one frame of skeleton before disk onLoad — accepted.
+- Files: components/{profile-avatar.tsx,player-header.tsx}.
+- Next: item 8 WebP (landscape.png unused since item 5 — human to confirm deletion vs conversion).
