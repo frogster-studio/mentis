@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, type SelectQueryBuilder } from "typeorm";
+import { type ObjectLiteral, Repository, type SelectQueryBuilder } from "typeorm";
 import { QuestionEntity } from "../../_database/entities/question.entity";
 import { ThemeEntity } from "../../_database/entities/theme.entity";
 import type { ThemeVisuals } from "../types/theme-visuals";
@@ -102,13 +102,14 @@ export class CatalogRepository {
   }
 
   async drawRandomQuestions(themeId: string | null, count: number): Promise<DrawnQuestion[]> {
-    const builder = this.servedQuestionBuilder()
+    const servable = this.servedQuestionBuilder()
       .where("theme.published = true")
       .andWhere("question.readyToBePublished = true");
-    if (themeId !== null) {
-      builder.andWhere("question.themeId = :themeId", { themeId });
-    }
-    const rows = await builder.orderBy("random()").limit(count).getRawMany<DrawnQuestionRow>();
+    const drawn: SelectQueryBuilder<ObjectLiteral> =
+      themeId === null
+        ? this.oneRandomQuestionPerTheme(servable)
+        : servable.andWhere("question.themeId = :themeId", { themeId });
+    const rows = await drawn.orderBy("random()").limit(count).getRawMany<DrawnQuestionRow>();
     return rows.map(toDrawnQuestion);
   }
 
@@ -138,6 +139,21 @@ export class CatalogRepository {
       .addSelect("question.misspellings", "misspellings")
       .addSelect("question.wrongChoices", "wrongChoices");
     return selectCategoryColumns(builder);
+  }
+
+  // A theme-less draw spans as many Themes as it can, so no Theme fills the set alone.
+  private oneRandomQuestionPerTheme(
+    servable: SelectQueryBuilder<QuestionEntity>,
+  ): SelectQueryBuilder<ObjectLiteral> {
+    const onePerTheme = servable
+      .distinctOn(["question.themeId"])
+      .orderBy("question.themeId")
+      .addOrderBy("random()");
+    return this.questions.manager
+      .createQueryBuilder()
+      .select("drawn.*")
+      .from(`(${onePerTheme.getQuery()})`, "drawn")
+      .setParameters(onePerTheme.getParameters());
   }
 }
 

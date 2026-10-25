@@ -113,7 +113,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Quick Home Questio
       "e2e: `GET /app/questions?n=3` answers 200 with the repository's rows parsed through the contract",
       "`bun run check` green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "answer-matching",
