@@ -5,8 +5,6 @@ import { useMainHeaderHeight } from "@/components/main-header";
 import { MAIN_SUB_HEADER_VISIBLE_HEIGHT } from "@/components/main-sub-header";
 import { useTabScroll } from "@/components/tab-scroll";
 import { iconNameOrFallback } from "@/components/ui/icon-name";
-import { ScreenError } from "@/components/ui/screen-error";
-import { ScreenLoading } from "@/components/ui/screen-loading";
 import { showToast } from "@/components/ui/toast";
 import { useProfile } from "@/features/account/api";
 import { useAuthStore } from "@/features/account/auth-store";
@@ -19,7 +17,6 @@ import {
   COMPETITION_DAILY_TEASER,
   COMPETITION_DAILY_TITLE,
   COMPETITION_DONE_TITLE,
-  COMPETITION_ERROR,
   COMPETITION_SEE_RESULTS_LABEL,
   COMPETITION_SIGN_IN_REQUIRED,
   COMPETITION_SIGN_IN_TOAST_DELAY_MS,
@@ -50,6 +47,9 @@ export default function Page() {
   const best = day.data ? bestAttempt(day.data.attempts) : undefined;
   const offersReplay = best !== undefined && day.data?.replay === true;
   const transcript = useTranscript(owner, best?.id, best !== undefined);
+  const isDayUnknown = isSignedIn && day.data === undefined;
+  const isDayFrozen = isDayUnknown && day.isError;
+  const isTranscriptFrozen = transcript.data === undefined && transcript.isError;
   useSeasonFreshness(owner);
   const { height } = useWindowDimensions();
   const onScroll = useTabScroll();
@@ -78,66 +78,68 @@ export default function Page() {
           if (standing.data === undefined && standing.isError) void standing.refetch();
         }}
       />
-      {isSignedIn && day.isError ? (
-        <ScreenError message={COMPETITION_ERROR} onRetry={() => void day.refetch()} />
-      ) : isSignedIn && day.data === undefined ? (
-        <ScreenLoading />
-      ) : (
-        <View style={styles.cards}>
-          <CompetitionCard
-            title={best ? COMPETITION_DONE_TITLE : COMPETITION_DAILY_TITLE}
-            teaser={best ? null : COMPETITION_DAILY_TEASER}
-            score={best?.score ?? null}
-            colors={best ? ["#83D3AF"] : [COLORS.primaryGlow, COLORS.primary]}
-            streak={competitionStreak}
-            showPremium={offersReplay}
-            themeImage={transcript.data ? { uri: transcript.data.imageUrl } : undefined}
-            categoryIcon={
-              transcript.data ? iconNameOrFallback(transcript.data.category.icon) : undefined
+      <View style={styles.cards}>
+        <CompetitionCard
+          title={best ? COMPETITION_DONE_TITLE : COMPETITION_DAILY_TITLE}
+          teaser={best ? null : COMPETITION_DAILY_TEASER}
+          score={best?.score ?? null}
+          colors={best ? ["#83D3AF"] : [COLORS.primaryGlow, COLORS.primary]}
+          streak={competitionStreak}
+          showPremium={offersReplay}
+          actionLabel={
+            best
+              ? offersReplay
+                ? COMPETITION_TRY_AGAIN_LABEL
+                : COMPETITION_SEE_RESULTS_LABEL
+              : COMPETITION_START_LABEL
+          }
+          isStateKnown={!isDayUnknown}
+          theme={
+            transcript.data
+              ? {
+                  image: { uri: transcript.data.imageUrl },
+                  categoryIcon: iconNameOrFallback(transcript.data.category.icon),
+                }
+              : null
+          }
+          isFrozen={isDayFrozen || isTranscriptFrozen}
+          onPress={() => {
+            if (!isSignedIn) {
+              openSignIn();
+              // The sheet lands first, then the toast explains why it opened.
+              setTimeout(
+                () => showToast(COMPETITION_SIGN_IN_REQUIRED, "account-lock-outline", "top-center"),
+                COMPETITION_SIGN_IN_TOAST_DELAY_MS,
+              );
+              return;
             }
-            actionLabel={
-              best
-                ? offersReplay
-                  ? COMPETITION_TRY_AGAIN_LABEL
-                  : COMPETITION_SEE_RESULTS_LABEL
-                : COMPETITION_START_LABEL
+            if (offersReplay) {
+              gatePremium(() =>
+                router.push({ pathname: "/competition", params: { kind: "replay" } }),
+              );
+              return;
             }
-            onPress={() => {
-              if (!isSignedIn) {
-                openSignIn();
-                // The sheet lands first, then the toast explains why it opened.
-                setTimeout(
-                  () =>
-                    showToast(COMPETITION_SIGN_IN_REQUIRED, "account-lock-outline", "top-center"),
-                  COMPETITION_SIGN_IN_TOAST_DELAY_MS,
-                );
-                return;
-              }
-              if (offersReplay) {
-                gatePremium(() =>
-                  router.push({ pathname: "/competition", params: { kind: "replay" } }),
-                );
-                return;
-              }
-              router.push({
-                pathname: "/competition",
-                params: { kind: best?.kind ?? "initial" },
-              });
-            }}
-          />
+            router.push({
+              pathname: "/competition",
+              params: { kind: best?.kind ?? "initial" },
+            });
+          }}
+          onRetry={() => {
+            if (isDayFrozen) void day.refetch();
+            if (isTranscriptFrozen) void transcript.refetch();
+          }}
+        />
 
-          {day.data?.catchup ? (
-            <YesterdayCompetitionCard
-              onPress={() =>
-                gatePremium(() =>
-                  router.push({ pathname: "/competition", params: { kind: "catchup" } }),
-                )
-              }
-              onExpire={day.refetch}
-            />
-          ) : null}
-        </View>
-      )}
+        {day.data?.catchup ? (
+          <YesterdayCompetitionCard
+            onPress={() =>
+              gatePremium(() =>
+                router.push({ pathname: "/competition", params: { kind: "catchup" } }),
+              )
+            }
+          />
+        ) : null}
+      </View>
     </ScrollView>
   );
 }

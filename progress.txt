@@ -36,3 +36,14 @@
 - LEADERBOARD_ERROR still used by app/leaderboard.tsx (#77).
 - Files: features/world/{use-leaderboard-preview.ts,components/leaderboard-preview-card.tsx}, app/(tabs)/world.tsx.
 - Next: item 5 daily card (world.tsx day branch still ScreenLoading/ScreenError). Toast item 6 will need preview.isFrozen + the Day/Standing failure in one place.
+
+## Item 5 — daily card: known state at once or orange skeleton shell; Rattrapage once the Day says so (done)
+- CompetitionCard: new `isStateKnown` (false = signed in, no usable Day), `theme: {image, categoryIcon} | null` (replaces optional themeImage/categoryIcon), `isFrozen`, `onRetry`. Card onPress = onRetry only while frozen.
+- Shell: world.tsx passes the « À jouer » copy as usual (best undefined), the card renders it as local `TextSkeleton` = invisible Text + absoluteFill Skeleton → exact « À jouer » sizes, no layout shift (sectionTitle/caption have no lineHeight, so fixed bars would guess). Hidden from a11y (state never guessed). « ? » tile = same layout View, COLORS.clear border/bg, ghost image box, Skeleton fill (all-corner radius, the real tile has square bottom: accepted). Pills kept (bundled).
+- NewButton: `label` accepts a ReactElement (mirrors icon), `onPress: null` = inert with the face unchanged (`disabled` would grey it). CTA in shell: label skeleton, onPress null; a tap falls through to the Card (disabled Pressable doesn't take the responder) → re-reads when frozen.
+- Faite without transcript: score at once; background theme layer + category badge skeletons (badge isOnDark, over scrim tile). Generic landscape no longer drawn anywhere → landscape.png now unused; item 8 should delete it rather than convert (human to confirm). No skeleton while the theme image decodes (13 % opacity layer, disk-cached) — not in the steps.
+- Frozen: Day `data undefined && isError` (signed in), transcript same; retry re-reads only the failed ones. Refetch with no data resets status to pending (v5) → pulses again.
+- Midnight: item 1's useSeasonFreshness already re-reads + select hides the Day → shell. YesterdayCompetitionCard onExpire + its midnight timeout dropped (duplicate).
+- world.tsx: no ScreenLoading/ScreenError left. COMPETITION_ERROR still used by app/competition.tsx.
+- Files: app/(tabs)/world.tsx, features/competition/components/{competition-card,competition-card-background,yesterday-competition-card}.tsx, components/ui/new-button.tsx.
+- Next: item 6 toast — needs isDayFrozen, isTranscriptFrozen?, preview.isFrozen, standing frozen in one place (world.tsx computes all now).

@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import FastSquircleView from "react-native-fast-squircle";
 import { NewButton } from "@/components/ui/new-button";
-import { catchupTimeLeft, msUntilParisMidnight } from "@/features/competition/catchup-deadline";
+import { catchupTimeLeft } from "@/features/competition/catchup-deadline";
 import {
   CATCHUP_HOURS_UNIT,
   CATCHUP_MINUTES_UNIT,
@@ -22,22 +22,16 @@ const REFRESH_MS = 60000;
 
 export interface YesterdayCompetitionCardProps {
   onPress: () => void;
-  onExpire: () => void;
 }
 
-export const YesterdayCompetitionCard = ({ onPress, onExpire }: YesterdayCompetitionCardProps) => {
+export const YesterdayCompetitionCard = ({ onPress }: YesterdayCompetitionCardProps) => {
   const [now, setNow] = useState(() => new Date());
   useFocusEffect(
     useCallback(() => {
-      const current = new Date();
-      setNow(current);
+      setNow(new Date());
       const tick = setInterval(() => setNow(new Date()), REFRESH_MS);
-      const expiry = setTimeout(onExpire, msUntilParisMidnight(current));
-      return () => {
-        clearInterval(tick);
-        clearTimeout(expiry);
-      };
-    }, [onExpire]),
+      return () => clearInterval(tick);
+    }, []),
   );
   const { hours, minutes } = catchupTimeLeft(now);
   const timeLeft =

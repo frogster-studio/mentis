@@ -147,7 +147,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Player, Account, P
       "Rattrapage rendered only once a usable Day says catchup, nothing in its place before; signed out: « À jouer » at once",
       "No ScreenLoading or ScreenError left on the tab; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

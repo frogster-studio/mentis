@@ -22,14 +22,15 @@ const PALETTES = {
 } as const;
 
 export interface NewButtonProps {
-  onPress: () => void;
+  // Null holds the face as is, unpressable, where `disabled` would grey it.
+  onPress: (() => void) | null;
   layout: "block" | "hug";
   shape: "rounded" | "full";
   tone: "default" | "primary" | "inverse" | "gradient-primary";
   disabled: boolean;
   pending: boolean;
   icon: CommunityIconName | ReactElement | null;
-  label: string | null;
+  label: string | ReactElement | null;
   accessibilityLabel: string | null;
 }
 
@@ -51,12 +52,12 @@ export const NewButton = ({
 
   return (
     <Pressable
-      onPress={onPress}
+      onPress={onPress ?? undefined}
       onPressIn={pressIn}
       onPressOut={pressOut}
-      disabled={isInert}
+      disabled={isInert || onPress === null}
       accessibilityRole="button"
-      accessibilityLabel={label ?? accessibilityLabel ?? undefined}
+      accessibilityLabel={(typeof label === "string" ? label : accessibilityLabel) ?? undefined}
       style={[styles[layout], { height: CONTROL_SQUARE_SIZE + PRESS_DEPTH }]}
     >
       <Squircle
@@ -95,9 +96,11 @@ export const NewButton = ({
                   color={palette.content}
                 />
               )}
-              {label ? (
+              {label === null ? null : isValidElement(label) ? (
+                label
+              ) : (
                 <Text style={[styles.label, { color: palette.content }]}>{label}</Text>
-              ) : null}
+              )}
             </>
           )}
         </FastSquircleView>
