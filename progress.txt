@@ -1,61 +1,75 @@
-## Item 1 — GET /admin/questions lists every Question when themeId absent — DONE
-- Contract: adminQuestionListQuerySchema.themeId → z.guid().optional(); `{ themeId: "" }` still 400s (guid fails), `?themeId=` too.
-- Repository: listQuestions(themeId: string | undefined), explicit `where: themeId === undefined ? {} : { themeId }` rather than leaning on TypeORM silently skipping undefined where keys. Same order createdAt desc, id desc.
-- Service/controller untouched: they already pass query.themeId through.
-- Tests: contract spec parses {} + rejects { themeId: "x" }; e2e adds "/admin/questions" to LIST_ROUTES (401/403/200) + a cross-Theme newest-first read; "" dropped from the 400 cases.
-- Files: packages/contracts/src/admin/question{,.spec}.ts, apps/api/src/curation/repositories/curation.repository.ts, apps/api/src/curation/_tests/admin-curation.e2e-spec.ts
-- Next: admin client still always sends themeId; the corpus query lands with the Search bar item.
+## Item 1 — cached Day counts only on its Paris date, Standing/Leaderboard page only in its Season (done)
+- Pure guards `isCurrentDay` / `isCurrentSeason` in features/competition/freshness.ts (Season = parisDay(now) yyyy-mm, reuses account/streak parisDay). Spec freshness.test.ts: 23:59:59→00:00 Paris, both 2026 DST switches, month + year boundary.
+- `usableOnly<T>(guard)` in lib/query-client.ts: spread into useQuery options. `select` hides out-of-date data (evaluated every render: new fn each render) → data undefined while status may be success; `staleTime` fn → 0 when out of date, so mount/foreground (live staleness checks) re-read it. Explicit type arg needed (`usableOnly<AppCompetitionDayResponse>(isCurrentDay)`), inference picks the guard's narrow param otherwise.
+- Applied to useCompetitionDay, useStanding (all consumers: header pill, profile rank, leaderboard screen, competition screen), useLeaderboardPage, the preview's neighbor query.
+- Consumers now treat "no usable data" as `data === undefined && !isError`, not isPending: world.tsx day branch, leaderboard.tsx, useLeaderboardPreview.isPending (isAwaited), profile rank `data?.rank`.
+- useSeasonFreshness (world tab + leaderboard screen): on focus, invalidates (refetchType active, cancelRefetch false) any cached Day/Standing/page its guard rejects, then the existing stale refetch; while focused, a timer at msUntilParisMidnight re-runs the outdated pass only (Day always outdated at midnight; Standing/pages only on the 1st), rescheduling itself.
+- Why invalidate by date: query.isStale() reads observers' cached result, computed before midnight, so `stale: true` filters miss a midnight. getQueriesData<T> keeps it typed (predicate on Query<unknown> can't be).
+- Known edge: server/client clock skew at midnight → Day fetched after client midnight still dated yesterday stays hidden (loading) until next focus/foreground re-read; no loop (staleTime 0 only acts on events).
+- Files: features/competition/{freshness.ts,freshness.test.ts,api.ts}, features/world/{api.ts,use-leaderboard-preview.ts,use-season-freshness.ts}, lib/query-client.ts, app/(tabs)/world.tsx, app/leaderboard.tsx, app/profile/(tabs)/index.tsx.
+- Next: item 2 persist predicate — persisted reads go through the same select guard, so the predicate need not filter by date for render correctness, but PRD wants other Seasons' pages dropped. AGENTS.md data-access paragraph not touched yet (item 2 owns it). YesterdayCompetitionCard onExpire still refetches the Day at midnight too (dedup'd by cancelRefetch false) — item 5 may drop it.
 
-## Item 2 — Search word finds a Catalog word by start or equality without final s, accent-blind — DONE
-- Module apps/admin/src/features/curation/search-words.ts: readQueryWords(query) → deduped folded words ([] for "?"/blanks); findQueryWords(queryWords, text) → one WordFind[] per query word ({ start, end, whole }, span in the original text).
-- Fold per original character (NFD, strip \p{M}, lowercase, œ→oe, æ→ae), so spans map back to the original string with no offset table; a lone combining mark (text typed pre-decomposed) extends its word's span.
-- whole = equal once a final s is dropped from each (a start covering the whole word is the same case); find = whole || item word startsWith query word.
-- Per-query-word lists (not a boolean) so searchCatalog can AND query words across a Question's fields and count whole finds; deduped query words keep "che che" from double-counting.
-- Files: apps/admin/src/features/curation/search-words{,.test}.ts
-- Next: searchCatalog (item 3) composes findQueryWords per field; highlight spans = the finds of the shown field.
+## Item 2 — persister keeps the Compétition tab's reads (done)
+- Pure `shouldPersistQuery(query, cachedDays, now)` in lib/query-persistence.ts (+ spec): success only; account root, Day, Standing kept; Leaderboard page only if isCurrentSeason; transcript only if its data.id is an Attempt of a cached Day (any Player's Day query); everything else (issuance, catalog) dropped. ACCOUNT_QUERY_ROOT moved here from query-client.
+- Why keys.ts: competitionKeys/worldKeys moved to features/{competition,world}/keys.ts so the pure predicate + vitest read them without api.ts dragging lib/api env check + expo-image. Added prefix keys competitionKeys.days/standings/transcripts; matched with tanstack partialMatchKey. AGENTS.md naming line says keys move to keys.ts once a pure module reads them.
+- cachedDays is a lazy fn: only transcripts pay the cache scan.
+- GC: persistOptions.hydrateOptions.defaultOptions.queries.gcTime = Infinity → every restored query outlives a session never visiting the tab (observer's later 5 min gcTime can't lower it: updateGcTime takes max). Queries first fetched this session keep 5 min gc once unobserved (e.g. Leaderboard screen pages after pop) — accepted, tab screens stay mounted.
+- Day persisted whatever its date (select guard hides it). Buster unchanged (account payloads unchanged; new entries just absent in old caches).
+- AGENTS.md data-access: persister line + Paris day/Season rule line.
+- Files: lib/{query-persistence.ts,query-persistence.test.ts,query-client.ts}, features/competition/{keys.ts,api.ts,finalize-sync.ts}, features/world/{keys.ts,api.ts,use-leaderboard-preview.ts,use-season-freshness.ts}, features/account/api.ts, apps/mobile/AGENTS.md.
+- Next: item 3 Skeleton primitive (core abstraction for items 4-7).
 
-## Item 3 — searchCatalog answers ranked, capped Categories/Themes/Questions groups with uncapped totals — DONE
-- Module apps/admin/src/features/curation/search-catalog.ts: searchCatalog(query, { categories, themes, questions }) → CatalogSearch | null (null = no query word → list stays closed).
-- Groups { total, results }; NameResult<Item> = { item, nameHighlights } for Category + Theme (one generic searchNames); QuestionResult = { item, textHighlights, answerHighlights, foundWrongChoices: { wrongChoice, highlights }[] }.
-- Question = union of answer/text/3 wrong choices: each query word needs a find in any field (findQueryWords per field, then AND per query word index). Aliases/misspellings/explanation never read.
-- Rank: whole query words desc → fieldRank (QUESTION_FIELD_RANK answer 0 / text 1 / wrongChoice 2; names 0) → label length → localeCompare "fr". SEARCH_CAPS { 3, 5, 8 } exported for the spec.
-- Highlights deduped by start ("che chevalier" highlights chevalier once), sorted.
-- No const enum: admin tsconfig has isolatedModules.
-- Questions take a plain array; pending corpus → UI passes [] and shows "Loading…" itself in the next item.
-- Theme row's Category name / Question row's Theme name are not in the result: the UI looks them up (not searched, never highlighted).
-- Files: apps/admin/src/features/curation/search-catalog{,.test}.ts
-- Next: Search bar item; fetch corpus with listQuestions() without themeId under ["curation","questions"] prefix.
+## Item 3 — shared Skeleton primitive + feedback rules (done)
+- components/ui/skeleton.tsx: Animated.View (caller's sizing style + opacity) over an absoluteFill Squircle. Props radius, isOnDark, isFrozen, style (all mandatory). Tint `${COLORS.ink}1A` light / `${COLORS.face}33` dark. Pulse 1 → 0.4 opacity, 1000 ms per phase, withRepeat reverse.
+- Shared clock: module-level makeMutable driven by one withRepeat; refcount of pulsing instances starts it on the first, cancels + resets on the last → unison, nothing runs with no skeleton on screen. Frozen / reduce-motion instances don't join, render opacity 1.
+- Reduce motion: new components/ui/use-reduce-motion.ts (AccessibilityInfo + listener, live). Reanimated's useReducedMotion reads once at JS init, so not used. use-question-transition keeps its own ref (it must not rerender) — not migrated.
+- Tracer consumer (knip flags an unused file otherwise): header points pill in player-greeting.tsx — signed in without usable Standing → skeleton 56 × (captionStrong lineHeight + 2·SPACE.xxs), RADIUS.sm, frozen on standing.isError; signed out nothing. So item 4's pill step is done; item 4 still owes the preview.
+- AGENTS.md: animation rule admits the Skeleton pulse; feedback-states rule names Skeleton, frozen, the one toast, tap re-reads, ScreenLoading/ScreenError only for screens #77 hasn't migrated.
+- Files: components/ui/{skeleton.tsx,use-reduce-motion.ts}, components/player-greeting.tsx, apps/mobile/AGENTS.md.
+- Next: item 4 leaderboard preview (bordeau → isOnDark true). Toast (item 6) not built yet, rule already names it.
 
-## Item 4 — header center slot holds the Search bar, grouped results as the Editor types — DONE
-- api.ts useCatalogQuestions(): GET /questions no query, key = curationKeys.allQuestions (["curation","questions"]) → refetchCatalogColumns reaches it on Question save/delete; flip's onSettled invalidates ["curation","questions",themeId] only (prefix match never hits the shorter key) → no refetch.
-- Slot: AppHeader takes `center?: ReactNode`; the dashboard now renders AppHeader + <main> itself (fragment). page.tsx: <Suspense fallback={<AppHeader />}> so the prerendered shell (useSearchParams bails to CSR up to Suspense) still shows the header.
-- components/catalog-search.tsx: props categories/themes/questions all `| undefined` (stable refs for useMemo; questions undefined = corpus pending → Questions group "Loading…", searched with []). Open = focused && query has a word; blur closes (item 5 needs onMouseDown preventDefault on options, like icon-field).
-- No find (and corpus loaded) → "No results." outside the listbox, aria-expanded false. Empty groups hidden. Corpus error joins the dashboard's alert banner.
-- ARIA: input role=combobox aria-autocomplete=list aria-expanded aria-controls; div role=listbox; groups = <fieldset><legend> (biome useSemanticElements refuses role=group; no biome-ignore anywhere in the repo); options = div role=option tabIndex=-1 aria-selected=false (biome useFocusableInteractive; li+option refused too).
-- Highlight = <mark class="bg-transparent font-medium text-sky-700">, only on name/text/answer/found wrong choices; Category name on Theme row, Theme name on Question row plain.
-- Panel absolute under the input, w-[40rem] centered, max-h-[70vh] scroll, shadow-lg like color-field popover. Input w-96, CONTROL styles.
-- Spec renders the whole dashboard (next/navigation mocked, getFromApi by path) + a hook harness for save-refetch/flip-no-refetch. Needs the 10ms setTimeout settle after render (React Query notifies on a timer; prior art theme-image.test) or it flakes.
-- Docs: ui-conventions "The header's center slot holds the Catalog search."
-- Files: apps/admin/src/{app/page.tsx,components/app-header.tsx,features/curation/api.ts,features/curation/components/{curation-dashboard,catalog-search,catalog-search.test}.tsx}, apps/admin/docs/ui-conventions.md
-- Next: item 5 — Option gets onSelect + id; dashboard passes goTo-like onSelect (needs Theme→categoryId, Question→theme→categoryId); keep query, close list; scroll-into-view flag only for search selections.
+## Item 4 — leaderboard preview + header pill: last-known data at once, skeletons without it (done)
+- Pill already done in item 3. useLeaderboardPreview now returns `entries: Entries | null` (null while the page or its needed neighbor has no usable data), `isFrozen` (one of those failed), `refetch` (re-reads only the failed ones — never a skipToken read). isPending/isError gone; a failed re-read under data keeps the entries.
+- Neighbor missing/failed with the page loaded → whole preview skeleton, not a partial list (placement could be wrong).
+- LeaderboardPreviewCard: null entries → 3 rows of Skeleton (rank 32 × captionStrong lh, pseudo flex 1 × body lh, points 52 × captionStrong lh, RADIUS.sm, isOnDark), same row padding/stagger → no layout shift; medal kept.
+- world.tsx: no ScreenLoading/ScreenError in the preview section. Tap: frozen → preview.refetch + standing.refetch when the Standing has failed with no data (preview fell back to page 1); else open /leaderboard (also while pulsing).
+- LEADERBOARD_ERROR still used by app/leaderboard.tsx (#77).
+- Files: features/world/{use-leaderboard-preview.ts,components/leaderboard-preview-card.tsx}, app/(tabs)/world.tsx.
+- Next: item 5 daily card (world.tsx day branch still ScreenLoading/ScreenError). Toast item 6 will need preview.isFrozen + the Day/Standing failure in one place.
 
-## Item 5 — selecting a result selects it in the columns and in Details — DONE
-- CatalogSearch takes onSelect(selection) => boolean; builds the Selection itself (Category → selectCategory; Theme → its categoryId; Question → its Theme's categoryId via themeOf). true → input.blur() (onBlur closes, query stays, refocus reopens); false (confirm refused) → nothing, list stays open.
-- Option is now <button role="option" tabIndex=-1> with onMouseDown preventDefault (icon-field prior art): biome useKeyWithClickEvents refused onClick on the div; a button carries native keys and tabIndex -1 keeps focus in the combobox.
-- Dashboard: goTo returns boolean; selectSearchResult = goTo + setSearchedSelection(next). navigate() resets searchedSelection to null (every other move forgets it), popstate handler (renamed followHistory) too → Back/Forward remounting a searched row never scrolls.
-- Row gets scrollsIntoView; effect scrollIntoView({ block: "nearest" }) when it turns true → a Question row scrolls once its Theme's Questions render (mounts with true). All three selected rows of a search selection scroll (columns follow), not only the deepest.
-- Known gap: picking the same result twice in a row without another move doesn't re-scroll (flag stays true).
-- Spec: next/navigation mock now reads window.location.search through useSyncExternalStore on popstate (pushState renders come from the same handler's setState). beforeEach replaceState "/". happy-dom has no window.confirm → vi.stubGlobal("confirm"). Option lookup by includes: the Category badge glyph precedes its name in textContent.
-- Sandbox gotcha: `cp` of a file on the worktree mount produced all-NUL bytes (backup + restore wiped curation-dashboard.tsx; restored from git + re-applied). Don't cp-backup files here; use git.
-- Files: apps/admin/src/features/curation/components/{catalog-search,catalog-search.test,curation-dashboard,row}.tsx
-- Next: item 6 keyboard — active option index across groups (flatten results order), aria-activedescendant on the combobox, aria-selected on the active option, Enter → same select(); Escape twice; ⌘K/Ctrl+K and / global listener.
+## Item 5 — daily card: known state at once or orange skeleton shell; Rattrapage once the Day says so (done)
+- CompetitionCard: new `isStateKnown` (false = signed in, no usable Day), `theme: {image, categoryIcon} | null` (replaces optional themeImage/categoryIcon), `isFrozen`, `onRetry`. Card onPress = onRetry only while frozen.
+- Shell: world.tsx passes the « À jouer » copy as usual (best undefined), the card renders it as local `TextSkeleton` = invisible Text + absoluteFill Skeleton → exact « À jouer » sizes, no layout shift (sectionTitle/caption have no lineHeight, so fixed bars would guess). Hidden from a11y (state never guessed). « ? » tile = same layout View, COLORS.clear border/bg, ghost image box, Skeleton fill (all-corner radius, the real tile has square bottom: accepted). Pills kept (bundled).
+- NewButton: `label` accepts a ReactElement (mirrors icon), `onPress: null` = inert with the face unchanged (`disabled` would grey it). CTA in shell: label skeleton, onPress null; a tap falls through to the Card (disabled Pressable doesn't take the responder) → re-reads when frozen.
+- Faite without transcript: score at once; background theme layer + category badge skeletons (badge isOnDark, over scrim tile). Generic landscape no longer drawn anywhere → landscape.png now unused; item 8 should delete it rather than convert (human to confirm). No skeleton while the theme image decodes (13 % opacity layer, disk-cached) — not in the steps.
+- Frozen: Day `data undefined && isError` (signed in), transcript same; retry re-reads only the failed ones. Refetch with no data resets status to pending (v5) → pulses again.
+- Midnight: item 1's useSeasonFreshness already re-reads + select hides the Day → shell. YesterdayCompetitionCard onExpire + its midnight timeout dropped (duplicate).
+- world.tsx: no ScreenLoading/ScreenError left. COMPETITION_ERROR still used by app/competition.tsx.
+- Files: app/(tabs)/world.tsx, features/competition/components/{competition-card,competition-card-background,yesterday-competition-card}.tsx, components/ui/new-button.tsx.
+- Next: item 6 toast — needs isDayFrozen, isTranscriptFrozen?, preview.isFrozen, standing frozen in one place (world.tsx computes all now).
 
-## Item 6 — the keyboard drives the Search — DONE
-- CatalogSearch only: choices = Selection[] flattened in render order (Categories, Themes, Questions); rows index it via themesOffset/questionsOffset + optionAt(index) → the per-row Selection building moved out of the JSX, click and Enter share select(choices[i]).
-- activeIndex state, reset to 0 on every query change → first result active by default, so Enter right after typing picks the top-ranked one (command-palette convention; PRD silent). ↑/↓ wrap. aria-activedescendant on the combobox, aria-selected = active, bg-zinc-50 = active (replaces hover:bg-zinc-50).
-- Hover = onMouseMove, not onMouseEnter: keyboard scrollIntoView({ block: "nearest" }) of the active option slides rows under a still pointer, mouseenter would steal the active option back.
-- Escape: list open → close (query kept); closed → empty the bar. Typing reopens.
-- Shortcuts: window keydown listener in CatalogSearch; Mac = navigator.userAgent includes "Mac" → metaKey, else ctrlKey; "/" ignored when target is input/textarea/select/contentEditable. Both preventDefault (browser Ctrl+K search, "/" would otherwise be typed into the freshly focused bar).
-- Spec: KeyboardEvent dispatch in act; Mac via vi.spyOn(navigator, "userAgent", "get").
-- Files: apps/admin/src/features/curation/components/catalog-search{,.test}.tsx
-- All PRD items pass. Human: browser review on the real Catalog, API deploy before admin.
+## Item 6 — one toast for reads failing with nothing on screen (done)
+- features/world/use-load-failure-toast.ts: `useLoadFailureToast(frozenReads: boolean[])`, effect every render compares each flag to the previous render's; a flag turning true while the tab is focused (expo-router useIsFocused) → showToast(COMPETITION_LOAD_ERROR, cloud-off-outline, bottom-center, fixed id).
+- Why fixed sonner id: Day/Standing/pages finish their retries at slightly different renders; a same-id toast updates in place (restarts its timer, autoWiggleOnUpdate default never) instead of queueing 3 behind visibleToasts=1. Per-flag transition (not "any frozen") so a tap retry that fails again toasts even while another card stays frozen.
+- Unfocused failure: no toast; refocus re-reads it (tab focus refetch), a renewed failure toasts.
+- showToast takes an optional id (only this caller).
+- world.tsx: flags Day, transcript, Standing (new isStandingFrozen, also used by the preview tap), preview. Failed re-read under data: flags false → nothing.
+- useSeasonFreshness tab-focus refetch now also covers competitionKeys.transcripts (stale only when no data: staleTime Infinity), so a frozen transcript re-reads on tab focus like the others; foreground was already covered by refetchOnWindowFocus.
+- Files: features/world/{use-load-failure-toast.ts,use-season-freshness.ts}, features/competition/constants.ts, components/ui/toast.tsx, app/(tabs)/world.tsx.
+- Next: item 7 header avatar (Squircle, Google photo, skeleton until decode) or item 8 WebP (landscape.png unused since item 5 — human to confirm deletion).
+
+## Item 7 — header avatar: bordered Squircle, Google photo, skeleton until decode (done)
+- ProfileAvatar (components/profile-avatar.tsx, only caller PlayerHeader = both tabs) takes `photoUrl: string | null` + `initial`. Box = FastSquircleView RADIUS.base, 1 px inkMuted border, overflow hidden (clips the photo; prior art profile-header portrait, MainHeader bar).
+- Photo: expo-image absoluteFill, cachePolicy disk (explicit, the default), no transition → instant swap; Skeleton absoluteFill (RADIUS.base, light, never frozen) on top until onLoad. onError → initial. Both tracked as `decodedUrl` / `failedUrl` state keyed by URL, so a new URL starts over without an effect. Neutral face only on the initial/dot state, so the skeleton reads on the card like the others.
+- PlayerHeader reads the session user (was only its id) → avatarUrlOf(user). Signed out / Apple: undefined → initial or dot as before.
+- Profile portrait untouched (ProfilePortrait / ProfileHeader).
+- Cached later launch: maybe one frame of skeleton before disk onLoad — accepted.
+- Files: components/{profile-avatar.tsx,player-header.tsx}.
+- Next: item 8 WebP (landscape.png unused since item 5 — human to confirm deletion vs conversion).
+
+## Item 8 — the tab's bundled PNGs ship as WebP (done)
+- flame, play-again-landscape, question-mark git mv'd to assets/originals/competition/, WebP generated by the unchanged scripts/optimize-images.ts (49K→14K, 336K→42K, 18K→5K); requires repointed: stat-tile, streak-badge (flame), yesterday-competition-card (Rattrapage), competition-card (« ? » tile).
+- landscape.png deleted, not converted: unreferenced since item 5 (daily card no longer draws the generic landscape), so a WebP would be dead weight. Card background has no bundled image left. Restore from git if the human wants it back.
+- Sandbox: node_modules sharp is darwin-only → ran the repo script from /tmp/img-run (scratch `bun add sharp@0.35.4`, same libvips 1.3.3, assets symlinked). Re-running it on existing originals left every committed WebP byte-identical → output matches the host's.
+- Files: apps/mobile/assets/{images,originals}/competition/*, src/components/account/stat-tile.tsx, src/features/account/components/streak-badge.tsx, src/features/competition/components/{competition-card,yesterday-competition-card}.tsx.
+- All PRD items pass. Human steps (device pass) remain.
