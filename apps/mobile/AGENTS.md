@@ -38,14 +38,11 @@
   // ❌ require("…/assets/images/onboarding/gem.png")  // a 1200 px PNG drawn at 120 dp
   ```
 - Icons come from `@expo/vector-icons`: MaterialIcons for controls (`IconName`), MaterialCommunityIcons where only its outline set has the glyph (`CommunityIconName`). A component taking an icon takes its glyph name, never an icon component. The only bespoke glyph is the hand-drawn `react-native-svg` component (`LogoMark`) — an svg drawing becomes a component, never an imported file.
-- **`NewButton`** is the control of the current visual direction — white squircle face, ink border, ink sink edge; `layout` (`block` | `hug`) and `shape` (`rounded` | `full`) are its only shape controls, and it takes a label, an icon, or both. **`Button`** / **`QuietButton`** are the pages that direction has not reached yet; glyph-only and text-only taps stay a bare `Pressable` dimmed with `PRESSED` — never a fourth button look. Only the sinking controls animate, through the one shared press mechanic; a state swap elsewhere (selected, dimmed) lands as static styles, never an Animated fade.
+- **`NewButton`** is the control of the current visual direction — white squircle face, ink border, ink sink edge; `layout` (`block` | `hug`) and `shape` (`rounded` | `full`) are its only shape controls, and it takes a label, an icon, or both. **`Button`** / **`QuietButton`** are the pages that direction has not reached yet; glyph-only and text-only taps stay a bare `Pressable` dimmed with `PRESSED`.
 
   ```tsx
   // ✅ <NewButton label={PRACTICE_CTA_LABEL} icon="play-circle-outline" />
   // ✅ <NewButton layout="hug" shape="full" icon="menu" accessibilityLabel={ACCOUNT_TITLE} />
-  // ❌ a Pressable given its own face styles — that's a fourth look; use QuietButton
-  // ✅ style={[styles.row, isSelected && { backgroundColor: color }, dimmed && { opacity: 0.6 }]}
-  // ❌ Animated.timing on a row face's opacity when the selection changes
   ```
 - Answer judging and the Carré shuffle come from `@mentis/answer-matching` (source-first like contracts), never re-implemented here — the API judges competition with the same code.
 - **`APP_VARIANT` (`development` by default, `production`) is the only environment switch.** `app.config.ts` reads `.env.${APP_VARIANT}` itself and republishes it through `extra`, so the native identity and the credentials cannot drift; the app reads them off `Constants.expoConfig.extra`, never `process.env`, and `NODE_ENV` decides nothing. On EAS Build no `.env` file exists: the values come from the EAS-hosted `preview` and `production` environments that `eas.json` names per profile, so a new `EXPO_PUBLIC_*` key goes there too or the build fails at config time.

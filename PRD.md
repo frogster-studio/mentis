@@ -1,77 +1,93 @@
-# PRD — Catalog search in the curation dashboard
+# PRD — Quick Home Questions on the home
 
-Vocabulary: [apps/admin/CONTEXT.md](apps/admin/CONTEXT.md) (Editor, Catalog, Category, Theme, Question, Ready To Be Published, Published), [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Canonical Answer, Alias, Misspelling, Square). Rules: [AGENTS.md](AGENTS.md), [apps/admin/AGENTS.md](apps/admin/AGENTS.md), [apps/admin/docs/ui-conventions.md](apps/admin/docs/ui-conventions.md), [apps/api/AGENTS.md](apps/api/AGENTS.md), [docs/agents/conventions.md](docs/agents/conventions.md), [ADR 0003](docs/adr/0003-database-admits-only-the-api.md), [ADR 0005](docs/adr/0005-the-api-reaches-its-data-through-typeorm.md), [ADR 0008](docs/adr/0008-curation-rules-live-in-the-admin-client.md).
+Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Quick Home Question, Question, Theme, Category, Canonical Answer, Square, Player, Streak). Rules: [AGENTS.md](AGENTS.md), [apps/mobile/AGENTS.md](apps/mobile/AGENTS.md), [apps/api/AGENTS.md](apps/api/AGENTS.md), [docs/agents/conventions.md](docs/agents/conventions.md), [ADR 0003](docs/adr/0003-database-admits-only-the-api.md), [ADR 0005](docs/adr/0005-the-api-reaches-its-data-through-typeorm.md).
 
 ## Decisions
 
-### Corpus and API
+### Scope
 
-- The search runs in the admin client: Categories and Themes are already loaded, the Questions corpus is fetched once at dashboard mount. No API search route, no DB index or extension, no debounce.
-- Scale ceiling: 1,000 Questions, 200 Themes, 50 Categories.
-- `adminQuestionListQuerySchema.themeId` becomes optional. Absent, `GET /admin/questions` lists every Question, `createdAt` desc then `id` desc like the per-Theme read; present, unchanged.
-- The corpus query sits under the `["curation","questions"]` key prefix, so the existing `refetchCatalogColumns` refetches it after a Question create, edit or delete. A Ready flip refetches nothing: no searched text changes. `staleTime: Infinity` already rules out refocus refetches.
+- The feature is the Quick Home Question; French UI label « Questions du jour ».
+- Every Player, anonymous included: the read is public, no `/app/me` call.
+- Nothing is recorded: no points, no stats, no Practice Streak, no History, no Theme Average, nothing pushed to the API.
 
-### Matching
+### API
 
-- One fold for the query and the searched text: lowercase, accents removed (NFD), `œ→oe`, `æ→ae`. Every character that is not `a-z` or `0-9` after folding splits words: `l'Everest` → `l`, `everest`; `Saint-Exupéry` → `saint`, `exupery`.
-- A query holding no word (`?`, blanks) searches nothing.
-- A query word finds an item word when it starts it, or when both are equal once a final `s` is dropped from each: `che` finds Chevalier, `hommes` finds homme, `quels` finds Quel, `detrui` finds détruisent; `détruire` does not find détruisent, `bus` does not find bureau.
-- A whole-word find is the second case, or a start that covers the entire item word.
-- Every query word must find a word in the item (AND), each matched independently.
-- The fold is the admin's own; answer-matching's `normalize` is not reused (it strips leading articles and is not exported).
+- No new route: the phone reads `GET /app/questions?n=3`, `theme` omitted. No "init home" route exists and none is created.
+- No new contract type: the existing `appQuestionSchema` gains `category`, the same shape as a Theme's `category` in the Theme list (`id`, `name`, `color`, `secondaryColor`, `icon`). Every served Question carries it, Quiz Session draws included; the competition Question schemas are untouched.
+- Without `theme`, the draw serves at most one Question per Theme, Themes and Questions both random; Categories may repeat. An `n` above the count of Published Themes holding a Ready Question returns fewer rows.
+- With `theme`, the draw is unchanged. Served Questions stay Ready Questions of Published Themes.
+- No schema change: the Category comes from a join, so no migration and no dashboard SQL.
 
-### Searched fields
+### Choices and judging
 
-- Category: its name. Theme: its name. Question: the union of its text, Canonical Answer and three wrong choices, so query words may land in different fields (`chevalier bayard`).
-- The union never crosses entities: `histoire napoleon` finds no Theme Napoléon in Category Histoire.
-- Never searched: Aliases, Misspellings, Explanation, a Theme's Category name, a Question's Theme name.
-- Staging is ignored: unready Questions and unpublished Themes are found.
+- The two choices are the Canonical Answer and one of the three wrong choices drawn uniformly, in uniform random left/right order.
+- The pick is a pure function in `@mentis/answer-matching` beside `squareChoices`, rng injected. Reusing `squareChoices` and keeping the first wrong choice is ruled out: it puts the Canonical Answer on the right 3 times in 4.
+- The pair is drawn once, when the day's set lands, and stored with it: reopening the app never reshuffles.
+- Judging is strict equality with the Canonical Answer; no Answer Matching.
+- One tap is the final answer: no confirmation, no Countdown.
 
-### Ranking
+### The day's set
 
-- Three groups in fixed order, Categories → Themes → Questions, each labelled with its uncapped total (`Questions · 42`).
-- Within a group: more query words found whole first; then, for Questions, the best field holding a find, Canonical Answer before text before wrong choices; then the shorter name or text; then alphabetical.
-- Caps: 3 Categories, 5 Themes, 8 Questions.
+- Per device, per Europe/Paris day (`parisDay`, the Streak's clock); two devices of one Account get different sets.
+- The set lives in a persisted zustand store on AsyncStorage, the onboarding store's pattern: the day, the `Question[]` as served, each Question's pair, each answered Question's result.
+- No request before the store hydrates; a request only when the store holds no set for today.
+- An answer is recorded at tap: an app killed mid-animation resumes on the next tile.
+- The day is re-read on home focus and on app foreground; a past day's set is dropped, even half-answered, and a new one drawn.
+- Every Question of today's set answered: no card and no request until the next Paris day.
+- N Questions received: N tiles, N dots, « X sur N »; 0 received: no card.
+- Fetch failure: the skeleton holds through the query's retries, then the card is gone, with no error text and no `ScreenError`. The next home focus or foreground retries.
 
-### The Search bar
+### The card
 
-- It sits in the header's center slot; the dashboard owns it, since it holds the selection and the unsaved-changes guard, and the header only lends the slot.
-- Results drop down over the columns without shifting them. Placeholder: `Search the Catalog`.
-- Results start at the first letter or digit, no minimum length. No word: the list stays closed. No find: `No results.`. Corpus pending: Categories and Themes answer, the Questions group shows `Loading…`.
-- Rows: a Category shows its badge (color + icon) and name; a Theme its name, its Category's name and the Published badge; a Question its truncated text, its Canonical Answer, every wrong choice holding a find, and its Theme's name.
-- Found words are highlighted whole, in their original spelling, `text-sky-700 font-medium`; fields that are not searched are never highlighted.
-- ARIA `combobox` / `listbox` / `option`.
+- It sits on the home, above the Practice card.
+- Its tag reads « Questions du jour : X sur N », X the answered Questions. X advances when the answered tile leaves: « 1 sur 3 » while Question 2 is on top.
+- The card is a stack of tiles. The top tile is the current Question; each tile beneath is the next Question in its own Category colour, offset downward like a deck's edge; the depth is the remaining count minus one.
+- A tile: the Category badge (its icon) and the Theme name above the Question text, two choice buttons side by side, N dots marking the top Question's position.
+- A tile wears its Category's colour as is: every Category colour is light enough for ink text.
+- No swipe and no manual navigation: the next Question shows only once the one above is answered.
 
-### Selecting a result
+### The choice button
 
-- Category → `{ categoryId }`; Theme → `{ categoryId: its Category, themeId }`; Question → `{ categoryId, themeId, questionId }`. The columns follow; Details shows the selected item.
-- The same unsaved-changes confirm as a row click. Cancelled: nothing moves, the list stays open. Accepted or clean: authoring closes, a history entry is pushed, Back returns to the previous selection.
-- The list closes and the query stays; refocusing reopens the same results.
-- The selected row scrolls into view in its column once rendered (a Question after its Theme's Questions load), only after a search selection, never on a deep link or Back.
+- A new button used by the Quick Home Question card alone; `SquareButton` is not touched.
+- Rest: white face, label on two lines at most then an ellipsis, a fixed two-line height so both buttons always match.
+- Press feedback: the `PRESSED` dim, no sink.
+- Correct tap: only the correct button animates, to a `success` fill with its label in `COLORS.face`, no icon.
+- Wrong tap: both animate together. The tapped one turns to a white face, a `danger` border and a cross before its label; the correct one to the `success` fill with its label in `COLORS.face`.
+- Both buttons are disabled from the tap until the tile has left, so nothing cuts an animation short.
 
-### Keyboard
+### Sequence and timing
 
-- ⌘K on Mac, Ctrl+K elsewhere, and `/` outside a text field focus the bar.
-- ↑/↓ move the active option across groups, hover moves it too; Enter selects it exactly like a click.
-- Escape closes the list; a second Escape empties the bar.
+- Named constants: reveal 250 ms, hold 700 ms, tile exit 350 ms, end message 2 000 ms, skeleton-to-card fade 200 ms.
+- Tile exit: the tile slides right off the screen while fading out, then the stack rises one step.
+- After the last tile, the end message replaces the card as plain text on the paper for 2 s, then the slot collapses smoothly and the Practice card rises.
+- End message: 1 correct → « 1 question juste sur 3, bien joué ! », 2 → « 2 questions justes sur 3, bien joué ! », all correct → « 3 questions justes sur 3, bravo ! »; with fewer than 3 received, « sur » takes N.
+- 0 correct: no message (never a « dommage »); the slot collapses right after the last tile.
 
-### Docs
+### Loading
 
-- The admin UI conventions gain one line: the header's center slot holds the Catalog search. No ADR, no glossary term.
+- While the set is not there, a skeleton card keeps the final structure: neutral `COLORS.card`, the tag without its counter, then badge, Theme name, two text lines, two buttons and the dots as skeletons, with the stack already drawn beneath.
+- `Skeleton` is a new shared primitive in `components/ui`: an opacity pulse.
+- The real card replaces the skeleton with the 200 ms fade.
+
+### Rules and placement
+
+- The mobile rules « never a fourth button look » and « only the sinking controls animate » are deleted from `apps/mobile/AGENTS.md`; animating this card breaks no rule.
+- `features/quick-home-question/` holds `api.ts`, `constants.ts` (every string and timing), the store and the pure logic with its tests; `components/quick-home-question/` holds the card, the tile and the button.
 
 ### Test seams
 
-- Contract: the admin question contract spec.
-- API: the curation e2e spec through the Nest testing module with `fakeCurationRepository` (prior art: `admin-curation.e2e-spec.ts`, which already reads `/admin/questions?themeId=`).
-- Pure functions: vitest specs beside them, the examples above verbatim (prior art: `selection.test.ts`).
-- UI: happy-dom component specs driving the combobox by role, the API client mocked (prior art: `category-form.test.tsx`).
+- api: the e2e suite through the Nest testing module with a fake repository (`catalog/_tests/app-content.e2e-spec.ts`) for the served shape; a repository spec over a mocked query builder for the one-per-Theme draw (prior art `competition/_tests/competition.repository.spec.ts`).
+- contracts: `app/question.spec.ts`.
+- answer-matching: `shuffle.spec.ts`, under scripted rng sequences.
+- mobile: vitest on pure logic only (rollover, resume, counter, end message, set building), rng and time injected; no component rendering tests. Screen states checked on the iOS simulator dev client; animations reviewed by the human.
 
 ### Out of scope
 
-- Stemming (`détruire` finding détruisent), `x` and irregular plurals, stopwords, typo tolerance, matches inside a word.
-- An API search route, any DB index or extension.
-- Searching Aliases, Misspellings or Explanations; highlighting only the typed prefix.
-- Shortcuts beyond those listed; scroll-into-view outside a search selection.
+- Points, scoring, stats, Streak, History, Leaderboard, any server-side record of an answer.
+- One set shared by every Player; syncing the set across devices.
+- Avoiding repeats across days, or with Questions later met in a Quiz Session or an Attempt.
+- Swipe navigation, a Countdown, a consolation message.
+- Category variety beyond what the one-per-Theme draw gives.
 
 ## Items
 
@@ -79,86 +95,107 @@ Vocabulary: [apps/admin/CONTEXT.md](apps/admin/CONTEXT.md) (Editor, Catalog, Cat
 [
   {
     "category": "api",
-    "description": "GET /admin/questions lists every Question, newest first, when themeId is absent",
+    "description": "Every served Question carries its Theme's Category",
     "steps": [
-      "Contract spec: the list query parses {} and { themeId: <guid> }, rejects { themeId: \"x\" }",
-      "No themeId: 200 with every Question across Themes; the repository read orders createdAt desc then id desc like the per-Theme read",
-      "With themeId: unchanged, that Theme's Questions only",
-      "Unauthenticated: 401; non-Editor: 403",
-      "e2e through the Nest testing module with fakeCurationRepository"
+      "`appQuestionSchema` requires `category` in the Theme list's category shape; `app/question.spec.ts` parses a Question with it and rejects one without",
+      "e2e through the Nest testing module with a fake repository (`app-content.e2e-spec.ts`): rows of `GET /app/questions` and `GET /app/questions?theme=` each carry their Theme's `category`",
+      "Competition specs stay green with their Question schemas unchanged",
+      "`bun run check` green"
     ],
-    "passes": true
+    "passes": false
   },
   {
-    "category": "admin",
-    "description": "A Search word finds a Catalog word by its start or by equality without the final s, accent-blind",
+    "category": "api",
+    "description": "A draw without `theme` serves at most one Question per Theme",
     "steps": [
-      "\"che\", \"francais\", \"quel\" and \"chevalier francais\" find « Quel chevalier français était surnommé « sans peur et sans reproche » ? »",
-      "\"homme fr\" and \"francais detrui\" find « Quels sont les Hommes Francais qui détruisent… »; \"francais détruire\" does not",
-      "\"hommes\" finds homme, \"quels\" finds Quel, \"coeur\" finds cœur, \"everest\" finds l'Everest, \"exu\" finds Saint-Exupéry; \"bus\" does not find bureau, \"saintex\" does not find Saint-Exupéry",
-      "\"?\" and blanks yield no query word",
-      "Every find carries its word's span in the original text, accents kept, and whether it is whole",
-      "vitest pure spec"
+      "Repository spec over a mocked query builder (prior art `competition/_tests/competition.repository.spec.ts`): the theme-less draw keeps one random Ready Question per Published Theme, then orders at random and limits to n",
+      "With `theme`, the draw's query is unchanged",
+      "e2e: `GET /app/questions?n=3` answers 200 with the repository's rows parsed through the contract",
+      "`bun run check` green"
     ],
-    "passes": true
+    "passes": false
   },
   {
-    "category": "admin",
-    "description": "searchCatalog answers the ranked, capped Categories, Themes and Questions groups with their uncapped totals",
+    "category": "answer-matching",
+    "description": "A pure two-choice pick beside `squareChoices`: the Canonical Answer and one wrong choice, both drawn and ordered at random under an injected rng",
     "steps": [
-      "\"chevalier bayard\" finds a Question whose text holds chevalier and whose Canonical Answer is Bayard; \"histoire napoleon\" finds no Theme Napoléon in Category Histoire",
-      "A word present only in an Alias, a Misspelling or an Explanation finds nothing",
-      "Order: more whole-word finds first; for Questions, Canonical Answer before text before wrong choices; then shorter; then alphabetical",
-      "Caps 3 Categories, 5 Themes, 8 Questions, each group carrying its uncapped total",
-      "Unready Questions and unpublished Themes are found",
-      "A Question result lists the wrong choices holding a find, every shown field with its highlight spans",
-      "vitest pure spec"
+      "Returns exactly two strings: the Canonical Answer and one of the three wrong choices",
+      "Under scripted rng sequences, each of the three wrong choices and both orders are reachable",
+      "The input Question is never mutated",
+      "Specs in `shuffle.spec.ts`; `bun run check` green"
     ],
-    "passes": true
+    "passes": false
   },
   {
-    "category": "admin",
-    "description": "The header's center slot holds the Search bar, which lists the grouped results as the Editor types",
+    "category": "mobile",
+    "description": "Pure Quick Home Question day logic: draw or resume per Europe/Paris day, top tile, « X sur N » counter, end message (none at 0)",
     "steps": [
-      "The dashboard fetches the Questions corpus once at mount (GET /admin/questions, no themeId) under the [\"curation\",\"questions\"] prefix; a Question save refetches it, a Ready flip does not",
-      "\"?\" or blanks: no list; no find: \"No results.\"; corpus pending: Categories and Themes listed, the Questions group shows \"Loading…\"",
-      "Rows: Category badge + name; Theme name + Category name + Published badge; Question truncated text + Canonical Answer + found wrong choices + Theme name; group labels carry totals",
-      "Found words render whole in text-sky-700 font-medium; non-searched fields carry none",
-      "Placeholder \"Search the Catalog\"; ARIA combobox, listbox, option",
-      "The admin UI conventions carry the header center-slot line",
-      "happy-dom component spec driving the combobox by role, API client mocked"
+      "No stored set, or a set from a past Paris day even half-answered: a draw is due",
+      "Today's set fully answered: no draw and no card",
+      "Today's set half-answered: the top tile is the first unanswered Question and the counter reads the answered count over N",
+      "N received from 0 to 3 gives N tiles; 0 means no card",
+      "Building a set from served Questions stores each Question's pair from the answer-matching pick",
+      "End message: 1 → « 1 question juste sur 3, bien joué ! », 2 → « 2 questions justes sur 3, bien joué ! », all correct → « 3 questions justes sur 3, bravo ! », 0 → none; « sur » takes N",
+      "vitest in `features/quick-home-question/` with time and rng injected; `bun run check` green"
     ],
-    "passes": true
+    "passes": false
   },
   {
-    "category": "admin",
-    "description": "Selecting a result selects it in the columns and in Details",
+    "category": "mobile",
+    "description": "The persisted day set and its fetch: one `GET /app/questions?n=3` per Europe/Paris day, sent after hydration only, none once the day is answered",
     "steps": [
-      "Category → { categoryId }; Theme → { its categoryId, themeId }; Question → { categoryId, themeId, questionId }; Details shows the selected item",
-      "Dirty form: the unsaved-changes confirm runs; cancelled, nothing moves and the list stays open",
-      "Accepted or clean: authoring closes, a history entry is pushed, Back returns to the previous selection",
-      "The list closes, the query stays, refocus reopens the same results",
-      "The selected row scrolls into view once its column renders; a deep link or Back scrolls nothing",
-      "happy-dom component spec"
+      "`api.ts` reads `GET /app/questions?n=3` with no `theme` and no Authorization header, parsed through `appQuestionDrawResponseSchema`",
+      "The store persists to AsyncStorage like the onboarding store and exposes a hydration flag; no request leaves before hydration",
+      "On the iOS simulator dev client: the first home visit of a Paris day sends exactly one `GET /app/questions?n=3`; a relaunch the same day sends none",
+      "A tap records its result at once; the day is re-read on home focus and on app foreground",
+      "`bun run check` green"
     ],
-    "passes": true
+    "passes": false
   },
   {
-    "category": "admin",
-    "description": "The keyboard drives the Search",
+    "category": "mobile",
+    "description": "The Quick Home Question choice button: rest, correct and wrong-tap reveals animated over 250 ms, `PRESSED` dim, fixed two-line height",
     "steps": [
-      "⌘K (Ctrl+K off Mac) and / outside a text field focus the bar; / typed inside a text field stays a character",
-      "↑/↓ move the active option across groups, hover moves it too; Enter selects it exactly like a click",
-      "Escape closes the list; a second Escape empties the bar",
-      "happy-dom component spec"
+      "Rest: white face, label on two lines at most then an ellipsis, both buttons at the fixed two-line height",
+      "Press: the `PRESSED` dim, no sink",
+      "Correct tap: the correct button alone ends on a `success` fill with a `COLORS.face` label, no icon",
+      "Wrong tap: both animate together; the tapped one ends on a white face, `danger` border and a cross before its label, the correct one on the `success` fill with a `COLORS.face` label",
+      "Disabled from the tap until the tile has left; `SquareButton` untouched",
+      "End states screenshotted on the iOS simulator dev client; `bun run check` green"
     ],
-    "passes": true
+    "passes": false
+  },
+  {
+    "category": "mobile",
+    "description": "The Quick Home Question card above the Practice card: tag, tile stack in Category colours, badge and Theme name, dots, `Skeleton` while loading, gone on failure",
+    "steps": [
+      "Home shows the card above the Practice card, its tag reading « Questions du jour : 0 sur 3 »",
+      "Top tile in its Category's colour: Category badge and Theme name above the text, two choice buttons, N dots with the top Question's dot active",
+      "Tiles beneath wear their own Question's Category colour, offset like a deck's edge, depth equal to the remaining count minus one",
+      "No swipe gesture moves between Questions",
+      "Loading: a skeleton card in the final structure on `COLORS.card`, tag without counter, the `components/ui` `Skeleton` pulsing; a 200 ms fade to the real card",
+      "Failure after the query's retries: no card and no error text; day fully answered: no card",
+      "States screenshotted on the iOS simulator dev client; `bun run check` green"
+    ],
+    "passes": false
+  },
+  {
+    "category": "mobile",
+    "description": "The answer sequence: reveal, hold, tile exits right while fading, stack rises, end message for 2 s, slot collapses",
+    "steps": [
+      "Tap → reveal 250 ms → hold 700 ms → the tile slides right off the screen while fading over 350 ms → the stack rises one step and the counter advances",
+      "After the last tile: the end message replaces the card on the paper for 2 000 ms, then the slot collapses and the Practice card rises; 0 correct: the collapse follows the last tile directly",
+      "Every timing is a named constant in `features/quick-home-question/constants.ts`",
+      "A relaunch mid-sequence resumes on the next tile",
+      "End states screenshotted on the iOS simulator dev client; `bun run check` green"
+    ],
+    "passes": false
   }
 ]
 ```
 
 ## Human steps
 
-- Before the loop: commit or stash the in-progress resizable-columns work, or the first item's commit sweeps it in.
-- After the last item: review the bar in a browser on the real Catalog (ranking feel, highlight), then merge. The API deploy must land before the admin's corpus call works: a list without `themeId` is a 400 on the old API.
-- No migration, no dashboard SQL.
+- Before the loop: the `apps/mobile/CONTEXT.md` (Quick Home Question) and `apps/mobile/AGENTS.md` (two rules deleted) edits ride on the loop's branch, so they land in its PR.
+- After item 2: on the dev API against the hosted database, `GET /app/questions?n=3` answers 3 distinct Themes, each with its Category — the SQL is only proven against a mocked query builder.
+- After item 8: a device review of the animations on iOS and Android (reveal, tile exit, collapse, skeleton pulse) — the Browser pane cannot run them.
