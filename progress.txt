@@ -1,61 +1,66 @@
-## Item 1 — GET /admin/questions lists every Question when themeId absent — DONE
-- Contract: adminQuestionListQuerySchema.themeId → z.guid().optional(); `{ themeId: "" }` still 400s (guid fails), `?themeId=` too.
-- Repository: listQuestions(themeId: string | undefined), explicit `where: themeId === undefined ? {} : { themeId }` rather than leaning on TypeORM silently skipping undefined where keys. Same order createdAt desc, id desc.
-- Service/controller untouched: they already pass query.themeId through.
-- Tests: contract spec parses {} + rejects { themeId: "x" }; e2e adds "/admin/questions" to LIST_ROUTES (401/403/200) + a cross-Theme newest-first read; "" dropped from the 400 cases.
-- Files: packages/contracts/src/admin/question{,.spec}.ts, apps/api/src/curation/repositories/curation.repository.ts, apps/api/src/curation/_tests/admin-curation.e2e-spec.ts
-- Next: admin client still always sends themeId; the corpus query lands with the Search bar item.
+## Item 1 — every served Question carries its Theme's Category (done)
+- contracts: `appQuestionSchema.category` = `appCategorySchema` (reused from theme.ts, no new shape); spec parses with / rejects without.
+- api repo: `servedQuestionBuilder` inner-joins `theme.category`; draw + `questionsByIds` both map raw rows → nested `category`. Factored `selectCategoryColumns` + `categoryFromColumns` (+ `CategoryColumns` type), now shared with `themesWithQuestionCounts` instead of a 2nd copy. `DrawnQuestion.category: ThemeVisuals["category"]`.
+- competition: schemas untouched; zod strips `category` from Attempt questions. Its e2e fixtures gained `CATEGORY` (moved above first module-level use — TDZ).
+- mobile: `Question` type now requires category → `ONBOARDING_QUESTION` got a local Géographie category (unused visually, onboarding passes `#FFF`), session-reducer test fixture too.
+- e2e: new case asserts each row's category on `GET /app/questions`; `?theme=` case asserts it too.
+- files: packages/contracts/src/app/question{,.spec}.ts, apps/api/src/catalog/repositories/catalog.repository.ts, apps/api/src/catalog/_tests/app-content.e2e-spec.ts, apps/api/src/competition/_tests/app-competition.e2e-spec.ts, apps/mobile/src/features/onboarding/constants.ts, apps/mobile/src/features/quiz/session-reducer.test.ts
+- next: item 2 (one-per-Theme draw) touches `drawRandomQuestions` theme-less branch only; mock query builder spec per competition.repository.spec.ts.
 
-## Item 2 — Search word finds a Catalog word by start or equality without final s, accent-blind — DONE
-- Module apps/admin/src/features/curation/search-words.ts: readQueryWords(query) → deduped folded words ([] for "?"/blanks); findQueryWords(queryWords, text) → one WordFind[] per query word ({ start, end, whole }, span in the original text).
-- Fold per original character (NFD, strip \p{M}, lowercase, œ→oe, æ→ae), so spans map back to the original string with no offset table; a lone combining mark (text typed pre-decomposed) extends its word's span.
-- whole = equal once a final s is dropped from each (a start covering the whole word is the same case); find = whole || item word startsWith query word.
-- Per-query-word lists (not a boolean) so searchCatalog can AND query words across a Question's fields and count whole finds; deduped query words keep "che che" from double-counting.
-- Files: apps/admin/src/features/curation/search-words{,.test}.ts
-- Next: searchCatalog (item 3) composes findQueryWords per field; highlight spans = the finds of the shown field.
+## Item 2 — theme-less draw serves at most one Question per Theme (done)
+- repo: `drawRandomQuestions` builds the servable query (published Theme, Ready Question) once; theme-less → private `oneRandomQuestionPerTheme`: inner `DISTINCT ON (question.themeId) ORDER BY themeId, random()`, wrapped as subquery `drawn` via `manager.createQueryBuilder().select("drawn.*").from("(sql)", "drawn").setParameters(...)`; outer `ORDER BY random() LIMIT n`. With theme: query byte-identical to before (verified by rendering SQL against a metadata-only DataSource, throwaway spec, deleted).
+- why DISTINCT ON over window fn / lateral: one subquery, TypeORM has `distinctOn` natively, raw column aliases pass straight through `drawn.*` so `toDrawnQuestion` is untouched.
+- spec: new `catalog/_tests/catalog.repository.spec.ts`, chainable builder mock (CHAINED method list → mockReturnThis); asserts theme-less shape, theme shape unchanged (no distinctOn, no manager builder), category nesting both branches.
+- e2e: fake repo now keeps first Question per Theme when theme-less (mirrors seam contract) → default draw tests now 2 rows (q1, q3); new `?n=3` case asserts 200 + exact served rows + lossless contract parse.
+- mobile quiz always sends `theme`, so no client affected; competition uses `drawFromTheme` (theme always).
+- files: apps/api/src/catalog/repositories/catalog.repository.ts, apps/api/src/catalog/_tests/{catalog.repository.spec.ts,app-content.e2e-spec.ts}
+- human step pending: live smoke `GET /app/questions?n=3` on hosted DB → 3 distinct Themes with Category (SQL only proven vs mock).
+- sandbox note: one run hit a spurious "Cannot find module zod/v4/core/versions.js" (file exists); rerun green.
+- next: item 3 (answer-matching two-choice pick beside `squareChoices`).
 
-## Item 3 — searchCatalog answers ranked, capped Categories/Themes/Questions groups with uncapped totals — DONE
-- Module apps/admin/src/features/curation/search-catalog.ts: searchCatalog(query, { categories, themes, questions }) → CatalogSearch | null (null = no query word → list stays closed).
-- Groups { total, results }; NameResult<Item> = { item, nameHighlights } for Category + Theme (one generic searchNames); QuestionResult = { item, textHighlights, answerHighlights, foundWrongChoices: { wrongChoice, highlights }[] }.
-- Question = union of answer/text/3 wrong choices: each query word needs a find in any field (findQueryWords per field, then AND per query word index). Aliases/misspellings/explanation never read.
-- Rank: whole query words desc → fieldRank (QUESTION_FIELD_RANK answer 0 / text 1 / wrongChoice 2; names 0) → label length → localeCompare "fr". SEARCH_CAPS { 3, 5, 8 } exported for the spec.
-- Highlights deduped by start ("che chevalier" highlights chevalier once), sorted.
-- No const enum: admin tsconfig has isolatedModules.
-- Questions take a plain array; pending corpus → UI passes [] and shows "Loading…" itself in the next item.
-- Theme row's Category name / Question row's Theme name are not in the result: the UI looks them up (not searched, never highlighted).
-- Files: apps/admin/src/features/curation/search-catalog{,.test}.ts
-- Next: Search bar item; fetch corpus with listQuestions() without themeId under ["curation","questions"] prefix.
+## Item 3 — two-choice pick beside `squareChoices` (done)
+- answer-matching: `quickHomeQuestionChoices(question, rng): [string, string]` in shuffle.ts, takes `ShuffleableQuestion`. 1st rng call picks the wrong choice (`floor(rng*len)`), 2nd is the coin flip (`< 0.5` → Canonical Answer left). Tuple return so callers get exactly two without asserting.
+- why not reuse `squareChoices`: PRD rules it out (Canonical Answer right 3 in 4).
+- spec: `scriptedRng(...values)` helper in shuffle.spec.ts; each wrong choice reachable (0/0.4/0.99), both orders (0.49/0.5), no mutation, 20 seeds always Canonical + one wrong.
+- files: packages/answer-matching/src/shuffle{,.spec}.ts
+- next: item 4 (mobile pure day logic) — set building stores each Question's pair via `quickHomeQuestionChoices`, rng injected.
 
-## Item 4 — header center slot holds the Search bar, grouped results as the Editor types — DONE
-- api.ts useCatalogQuestions(): GET /questions no query, key = curationKeys.allQuestions (["curation","questions"]) → refetchCatalogColumns reaches it on Question save/delete; flip's onSettled invalidates ["curation","questions",themeId] only (prefix match never hits the shorter key) → no refetch.
-- Slot: AppHeader takes `center?: ReactNode`; the dashboard now renders AppHeader + <main> itself (fragment). page.tsx: <Suspense fallback={<AppHeader />}> so the prerendered shell (useSearchParams bails to CSR up to Suspense) still shows the header.
-- components/catalog-search.tsx: props categories/themes/questions all `| undefined` (stable refs for useMemo; questions undefined = corpus pending → Questions group "Loading…", searched with []). Open = focused && query has a word; blur closes (item 5 needs onMouseDown preventDefault on options, like icon-field).
-- No find (and corpus loaded) → "No results." outside the listbox, aria-expanded false. Empty groups hidden. Corpus error joins the dashboard's alert banner.
-- ARIA: input role=combobox aria-autocomplete=list aria-expanded aria-controls; div role=listbox; groups = <fieldset><legend> (biome useSemanticElements refuses role=group; no biome-ignore anywhere in the repo); options = div role=option tabIndex=-1 aria-selected=false (biome useFocusableInteractive; li+option refused too).
-- Highlight = <mark class="bg-transparent font-medium text-sky-700">, only on name/text/answer/found wrong choices; Category name on Theme row, Theme name on Question row plain.
-- Panel absolute under the input, w-[40rem] centered, max-h-[70vh] scroll, shadow-lg like color-field popover. Input w-96, CONTROL styles.
-- Spec renders the whole dashboard (next/navigation mocked, getFromApi by path) + a hook harness for save-refetch/flip-no-refetch. Needs the 10ms setTimeout settle after render (React Query notifies on a timer; prior art theme-image.test) or it flakes.
-- Docs: ui-conventions "The header's center slot holds the Catalog search."
-- Files: apps/admin/src/{app/page.tsx,components/app-header.tsx,features/curation/api.ts,features/curation/components/{curation-dashboard,catalog-search,catalog-search.test}.tsx}, apps/admin/docs/ui-conventions.md
-- Next: item 5 — Option gets onSelect + id; dashboard passes goTo-like onSelect (needs Theme→categoryId, Question→theme→categoryId); keep query, close list; scroll-into-view flag only for search selections.
+## Item 4 — pure Quick Home Question day logic (done)
+- `features/quick-home-question/day-set.ts`: `QuickHomeQuestionDaySet = { day, tiles: { question, choices }[], results: boolean[] }`. Results are positional (tiles answered in order, no navigation) → answered count = `results.length`, top tile = `tiles[results.length]`.
+- fns: `buildDaySet(questions, now, rng)` (day = `parisDay(now)`, pair via `quickHomeQuestionChoices`), `isDrawDue(set|null, now)` (only when no set or day ≠ today — an empty or done set for today blocks re-requests, per PRD), `topTile`, `answerTopTile(set, choice)` (strict `===` Canonical Answer, no-op when done, immutable), `daySetEndMessage`.
+- `constants.ts`: `QUICK_HOME_QUESTION_TAG` (skeleton tag), `quickHomeQuestionCounterTag(answered, total)`, `quickHomeQuestionEndMessage(correct, total)` (null at 0; « bravo » when all right, incl. N<3) — copy functions in constants like account's `deleteAccountMessage`.
+- why counter takes (answered, total) not the set: item 8 shows X lagging the store until the answered tile leaves, so the card passes its displayed count.
+- files: apps/mobile/src/features/quick-home-question/{constants,day-set,day-set.test}.ts
+- next: item 5 (store + `api.ts`): persist `QuickHomeQuestionDaySet | null` + `hasHydrated` like onboarding store; drop the set when `isDrawDue`; fetch only after hydration and when due; `answer(choice)` → `answerTopTile`.
 
-## Item 5 — selecting a result selects it in the columns and in Details — DONE
-- CatalogSearch takes onSelect(selection) => boolean; builds the Selection itself (Category → selectCategory; Theme → its categoryId; Question → its Theme's categoryId via themeOf). true → input.blur() (onBlur closes, query stays, refocus reopens); false (confirm refused) → nothing, list stays open.
-- Option is now <button role="option" tabIndex=-1> with onMouseDown preventDefault (icon-field prior art): biome useKeyWithClickEvents refused onClick on the div; a button carries native keys and tabIndex -1 keeps focus in the combobox.
-- Dashboard: goTo returns boolean; selectSearchResult = goTo + setSearchedSelection(next). navigate() resets searchedSelection to null (every other move forgets it), popstate handler (renamed followHistory) too → Back/Forward remounting a searched row never scrolls.
-- Row gets scrollsIntoView; effect scrollIntoView({ block: "nearest" }) when it turns true → a Question row scrolls once its Theme's Questions render (mounts with true). All three selected rows of a search selection scroll (columns follow), not only the deepest.
-- Known gap: picking the same result twice in a row without another move doesn't re-scroll (flag stays true).
-- Spec: next/navigation mock now reads window.location.search through useSyncExternalStore on popstate (pushState renders come from the same handler's setState). beforeEach replaceState "/". happy-dom has no window.confirm → vi.stubGlobal("confirm"). Option lookup by includes: the Category badge glyph precedes its name in textContent.
-- Sandbox gotcha: `cp` of a file on the worktree mount produced all-NUL bytes (backup + restore wiped curation-dashboard.tsx; restored from git + re-applied). Don't cp-backup files here; use git.
-- Files: apps/admin/src/features/curation/components/{catalog-search,catalog-search.test,curation-dashboard,row}.tsx
-- Next: item 6 keyboard — active option index across groups (flatten results order), aria-activedescendant on the combobox, aria-selected on the active option, Enter → same select(); Escape twice; ⌘K/Ctrl+K and / global listener.
+## Item 5 — persisted day set + its fetch (done)
+- store.ts: `useQuickHomeQuestionStore` persisted on AsyncStorage (`mentis-quick-home-question`), partialize `daySet` only; `hasHydrated` set in onRehydrateStorage like onboarding (failed read → hydrated anyway, a reshuffle beats no card). Actions `land(daySet)`, `answer(choice)` → `answerTopTile` (recorded at tap). No prerender shim: stats-store already persists on AsyncStorage on home without one.
+- api.ts: `fetchQuickHomeQuestions` → `GET /app/questions` query `{ n: "3" }` (`QUICK_HOME_QUESTION_COUNT` in constants), no theme, public path → no Authorization (seam guards `/app/me` only), parsed via `appQuestionDrawResponseSchema`. queryFn `drawDaySet(now)` builds via `buildDaySet(…, Math.random)` and `land`s it in the store (precedent: `pushFinalize` acks its store in a queryFn).
+- `useQuickHomeQuestionDaySet()` → `{ daySet, isPending }`: key `["quick-home-question","day-set", parisDay(now)]`; `enabled: hasHydrated && daySet === null` (daySet = stored set only if today's, so a past day's set is ignored even half-answered, then overwritten by the new land); after land the query disables itself → no staleTime needed, no re-request same day, none once answered. `isPending = !hasHydrated || (no set && query pending)` — item 7's skeleton; status error → daySet null, isPending false → no card.
+- `now` re-read on home focus (useFocusEffect) + AppState active; the same `reread` retries a failed draw via `refetchQueries` on TODAY's key (`type: "active"`, `cancelRefetch: false` → no duplicate with the mount fetch). `refetchOnWindowFocus: false` so focusManager never re-asks a past day's errored key after midnight.
+- tracer UI: `components/quick-home-question/quick-home-question-card.tsx` renders the « Questions du jour : X sur N » tag only (null while pending / no set / done), above `<PracticeCard />` on home. Item 7 replaces its body (skeleton, tiles, dots); no gap styling yet.
+- files: apps/mobile/src/features/quick-home-question/{store,api,constants}.ts, apps/mobile/src/components/quick-home-question/quick-home-question-card.tsx, apps/mobile/src/app/(tabs)/index.tsx
+- NOT verified here (sandbox, no simulator): « first home visit sends exactly one GET, relaunch same day none » — human to confirm on iOS dev client.
+- next: item 6 (choice button) or 7 (card). Card reads `useQuickHomeQuestionDaySet()`; taps call `useQuickHomeQuestionStore.getState().answer(choice)`; per item 8 the displayed X lags `results.length` until the tile leaves.
 
-## Item 6 — the keyboard drives the Search — DONE
-- CatalogSearch only: choices = Selection[] flattened in render order (Categories, Themes, Questions); rows index it via themesOffset/questionsOffset + optionAt(index) → the per-row Selection building moved out of the JSX, click and Enter share select(choices[i]).
-- activeIndex state, reset to 0 on every query change → first result active by default, so Enter right after typing picks the top-ranked one (command-palette convention; PRD silent). ↑/↓ wrap. aria-activedescendant on the combobox, aria-selected = active, bg-zinc-50 = active (replaces hover:bg-zinc-50).
-- Hover = onMouseMove, not onMouseEnter: keyboard scrollIntoView({ block: "nearest" }) of the active option slides rows under a still pointer, mouseenter would steal the active option back.
-- Escape: list open → close (query kept); closed → empty the bar. Typing reopens.
-- Shortcuts: window keydown listener in CatalogSearch; Mac = navigator.userAgent includes "Mac" → metaKey, else ctrlKey; "/" ignored when target is input/textarea/select/contentEditable. Both preventDefault (browser Ctrl+K search, "/" would otherwise be typed into the freshly focused bar).
-- Spec: KeyboardEvent dispatch in act; Mac via vi.spyOn(navigator, "userAgent", "get").
-- Files: apps/admin/src/features/curation/components/catalog-search{,.test}.tsx
-- All PRD items pass. Human: browser review on the real Catalog, API deploy before admin.
+## Item 6 — choice button (done)
+- `components/quick-home-question/quick-home-question-choice-button.tsx`: props `label`, `revealsCorrect`, `revealsMistake`, `disabled`, `onPress` (plain booleans the caller computes). Rest white face + `COLORS.stroke` border, `TEXT.body` label `numberOfLines=2`, fixed height `body.lineHeight*2 + SPACE.md*2` (SquareButton's two-line recipe, no import of it). Press = Pressable `PRESSED` dim, no sink.
+- animation: reanimated 4 CSS transitions (`css.create`, precedent marquee) on `backgroundColor`/`borderColor` of `Animated.createAnimatedComponent(FastSquircleView)` + `color` of `Animated.Text`, `transitionDuration: QUICK_HOME_QUESTION_REVEAL_MS`; cross = MaterialCommunityIcons `close` in `danger`, `entering={FadeIn.duration(REVEAL)}`. Border width 2 at rest too so the danger border never shifts layout.
+- why CSS transitions over RN Animated: declarative state→style, colours animate natively without interpolation plumbing.
+- `day-set.ts`: `isCorrectChoice(tile, choice)` extracted; `answerTopTile` and the card both judge through it (one strict-equality home).
+- constants: `QUICK_HOME_QUESTION_REVEAL_MS = 250`, `QUICK_HOME_QUESTION_HOLD_MS = 700`.
+- card tracer (knip needs the button used): tag + the shown tile's two buttons. Local `tap = { tileIndex, choice }`; tap → `setTap` + store `answer` at once; shown tile = `tap.tileIndex ?? results.length`, so the tapped tile stays during reveal+hold, then `setTap(null)` → next tile (no exit anim yet). Counter shows `shownIndex` → X advances when the tile leaves. Choice row keyed by question id so a shared label never animates back to rest.
+- NOT verified here (no simulator): end-state screenshots, FastSquircleView honouring animated bg/border on device — human to check on iOS dev client.
+- files: apps/mobile/src/components/quick-home-question/{quick-home-question-choice-button,quick-home-question-card}.tsx, apps/mobile/src/features/quick-home-question/{constants,day-set}.ts
+- next: item 7 (card: tile anatomy, stack, dots, Skeleton) builds on this card; item 8 swaps the tap timeout for reveal→hold→exit→rise and the end message (EXIT 350, END 2000, FADE 200 constants then).
+
+## Item 7 — the card: tag, tile stack, badge + Theme name, dots, Skeleton (done)
+- `components/ui/skeleton.tsx`: `Skeleton({ style })`, an animated FastSquircleView on `COLORS.trough` pulsing opacity 1→0.4 via reanimated css keyframes (alternate, infinite, 800 ms). Caller sizes and rounds it through `style` (button rows need `flex: 1`, so no width/height props).
+- `quick-home-question-stack.tsx`: owns the top tile's surface (`topColor`, padding lg) + absolute deck edges beneath (`edgeColors`, nearest first; each level drops `SPACE.xs`, insets `SPACE.sm` per side; wrapper `marginBottom` = depth × drop). Every tile/edge has a 1 px `COLORS.stroke` border — judgement call: two tiles of one Category (or the all-`card` skeleton) would otherwise merge into one shape.
+- `quick-home-question-tile.tsx`: badge (`CategoryBadge isSelected` → white face, as ThemeCard does on a coloured row, else it vanishes into the tile colour), `themeName` `TEXT.label`, text `TEXT.cardTitle`, choice buttons, `QuickHomeQuestionDots`. Type imported `as Tile` (name clash with the component).
+- `quick-home-question-dots.tsx`: N dots, active ink, idle ink + `33` alpha.
+- `quick-home-question-tile-skeleton.tsx`: same anatomy in Skeletons; line bars = glyph height centred in the TEXT line box (`lineBar`) so heights match the real tile. Exported for it: `CATEGORY_BADGE_SIZE/RADIUS` (category-badge.tsx), `QUICK_HOME_QUESTION_CHOICE_HEIGHT` (button), `QUICK_HOME_QUESTION_DOT_SIZE`.
+- card: `isPending` → tag without counter + stack on `COLORS.card` with COUNT−1 card-coloured edges; `daySet` null (failure / 0 received) or no shown tile (done) → null; else `Animated.View entering={FadeIn(QUICK_HOME_QUESTION_FADE_MS)}` (200, new constant) around tag + stack, edges = colours of tiles after the shown one. Root `marginHorizontal/Top: GUTTER` to line up with PracticeCard's margin.
+- NOT verified here (no simulator): screenshots of loading / card / failure states, FastSquircleView honouring the animated opacity — human on iOS dev client.
+- files: apps/mobile/src/components/ui/skeleton.tsx, apps/mobile/src/components/category-badge.tsx, apps/mobile/src/components/quick-home-question/{quick-home-question-card,quick-home-question-stack,quick-home-question-tile,quick-home-question-tile-skeleton,quick-home-question-dots,quick-home-question-choice-button}.tsx, apps/mobile/src/features/quick-home-question/constants.ts
+- next: item 8 — the tap timeout in the card becomes reveal→hold→exit (tile slides right + fades, EXIT 350) → stack rises (edges keyed by depth now; key by question id if they should animate into place) → end message 2 000 ms → slot collapse. FadeIn on the card root runs once per mount only.

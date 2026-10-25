@@ -1,3 +1,4 @@
+import { appQuestionDrawResponseSchema } from "@mentis/contracts/app";
 import { errorResponseSchema } from "@mentis/contracts/shared";
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
@@ -48,7 +49,12 @@ const storedThemes = [
   },
 ];
 
-const question = (id: string, themeId: string, themeName: string): DrawnQuestion => ({
+const question = (
+  id: string,
+  themeId: string,
+  themeName: string,
+  category: DrawnQuestion["category"],
+): DrawnQuestion => ({
   id,
   themeId,
   themeName,
@@ -57,17 +63,18 @@ const question = (id: string, themeId: string, themeName: string): DrawnQuestion
   aliases: [],
   misspellings: [],
   wrongChoices: ["1", "2", "3"],
+  category,
 });
 
 const ready = (row: DrawnQuestion) => ({ ...row, readyToBePublished: true });
 const unready = (row: DrawnQuestion) => ({ ...row, readyToBePublished: false });
 
 const storedQuestions = [
-  ready(question("q1", "les-simpson", "Les Simpson")),
-  ready(question("q2", "les-simpson", "Les Simpson")),
-  ready(question("q3", "marie-antoinette", "Marie-Antoinette")),
-  unready(question("q4", "les-simpson", "Les Simpson")),
-  ready(question("q5", "brouillon", "Brouillon")),
+  ready(question("q1", "les-simpson", "Les Simpson", television)),
+  ready(question("q2", "les-simpson", "Les Simpson", television)),
+  ready(question("q3", "marie-antoinette", "Marie-Antoinette", histoire)),
+  unready(question("q4", "les-simpson", "Les Simpson", television)),
+  ready(question("q5", "brouillon", "Brouillon", histoire)),
 ];
 
 const themeIsPublished = (themeId: string) =>
@@ -96,11 +103,16 @@ const fakeCatalogRepository = {
   },
   async drawRandomQuestions(themeId, count) {
     draws.push({ themeId, count });
-    return storedQuestions
-      .filter((row) => row.readyToBePublished && themeIsPublished(row.themeId))
-      .filter((row) => themeId === null || row.themeId === themeId)
-      .slice(0, count)
-      .map(asServed);
+    const servable = storedQuestions.filter(
+      (row) => row.readyToBePublished && themeIsPublished(row.themeId),
+    );
+    const drawn =
+      themeId === null
+        ? servable.filter(
+            (row, index) => servable.findIndex((other) => other.themeId === row.themeId) === index,
+          )
+        : servable.filter((row) => row.themeId === themeId);
+    return drawn.slice(0, count).map(asServed);
   },
   async questionsByIds(ids) {
     return storedQuestions.filter((row) => ids.includes(row.id)).map(asServed);
@@ -157,16 +169,35 @@ describe("app content routes e2e", () => {
     ]);
   });
 
-  it("GET /app/questions draws 10 Ready Questions across every Published Theme by default", async () => {
+  it("GET /app/questions draws 10 Ready Questions, one per Published Theme, by default", async () => {
     const response = await fetch(`${baseUrl}/app/questions`);
     expect(response.status).toBe(200);
     expect(draws).toEqual([{ themeId: null, count: 10 }]);
     const body = await response.json();
-    expect(body).toHaveLength(3);
+    expect(body).toHaveLength(2);
     expect(body[0]).toMatchObject({ id: "q1", themeId: "les-simpson", themeName: "Les Simpson" });
-    expect(new Set(body.map((row: { themeId: string }) => row.themeId))).toEqual(
-      new Set(["les-simpson", "marie-antoinette"]),
-    );
+    expect(body.map((row: { themeId: string }) => row.themeId)).toEqual([
+      "les-simpson",
+      "marie-antoinette",
+    ]);
+  });
+
+  it("GET /app/questions serves every Question with its Theme's Category", async () => {
+    const response = await fetch(`${baseUrl}/app/questions`);
+    const body = await response.json();
+    expect(body.map((row: { id: string; category: unknown }) => [row.id, row.category])).toEqual([
+      ["q1", television],
+      ["q3", histoire],
+    ]);
+  });
+
+  it("GET /app/questions?n=3 serves the repository's rows as the contract shapes them", async () => {
+    const response = await fetch(`${baseUrl}/app/questions?n=3`);
+    expect(response.status).toBe(200);
+    expect(draws).toEqual([{ themeId: null, count: 3 }]);
+    const body = await response.json();
+    expect(body).toEqual([storedQuestions[0], storedQuestions[2]].map(asServed));
+    expect(appQuestionDrawResponseSchema.parse(body)).toEqual(body);
   });
 
   it("GET /app/questions?theme= draws from that Theme only", async () => {
@@ -175,6 +206,10 @@ describe("app content routes e2e", () => {
     expect(draws).toEqual([{ themeId: "les-simpson", count: 2 }]);
     const body = await response.json();
     expect(body.map((row: { id: string }) => row.id)).toEqual(["q1", "q2"]);
+    expect(body.map((row: { category: unknown }) => row.category)).toEqual([
+      television,
+      television,
+    ]);
   });
 
   it("GET /app/questions with an unknown theme → 404 THEME_NOT_FOUND, before drawing", async () => {

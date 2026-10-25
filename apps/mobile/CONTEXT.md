@@ -76,6 +76,10 @@ _Avoid_: tag, group, family
 The 10 Themes offered on the picker screen after « Commencer », sampled uniformly at random (no re-roll) among eligible Themes — those with at least 10 linked Questions. If fewer than 10 Themes are eligible, all of them are offered. No Draw happens on the results page: « Rejouer, même thème » starts a new Quiz Session on the same Theme.
 _Avoid_: random themes, selection
 
+**Quick Home Question**:
+One of the day's three Questions on the home, each from a different Theme, answered by picking between its Canonical Answer and one of its wrong choices. Drawn per device for the Europe/Paris day; answering scores nothing and is recorded nowhere — no stats, no Streak, no History. French UI label: « Questions du jour ».
+_Avoid_: daily quiz, quick question, challenge
+
 **Theme Average**:
 The average of the scores the Player holds in one Theme, out of 50 — Finished Quiz Sessions and judged Attempts alike, shown rounded to the nearest integer. French UI label: « moy. ».
 _Avoid_: score (alone), stats, best score

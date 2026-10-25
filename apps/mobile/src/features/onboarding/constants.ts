@@ -41,6 +41,13 @@ export const ONBOARDING_QUESTION: Question = {
     "nevado ollos salado",
   ],
   wrongChoices: ["Le Vésuve", "L'Eyjafjöll", "Piton de la Fournaise"],
+  category: {
+    id: "onboarding",
+    name: "Géographie",
+    color: "#2e7d32",
+    secondaryColor: "#e8f5e9",
+    icon: "public",
+  },
 };
 
 export const ONBOARDING_HINT_CASH = "Soit tu rentres directement la réponse";

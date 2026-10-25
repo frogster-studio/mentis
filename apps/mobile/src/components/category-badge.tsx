@@ -5,6 +5,9 @@ import { iconNameOrFallback } from "@/components/ui/icon-name";
 import { COLORS, CONTROL_ICON_SIZE } from "@/theme/tokens";
 import type { Category } from "@/types/quiz";
 
+export const CATEGORY_BADGE_SIZE = 42;
+export const CATEGORY_BADGE_RADIUS = 14;
+
 export interface CategoryBadgeProps {
   category: Category;
   isSelected: boolean;
@@ -13,7 +16,7 @@ export interface CategoryBadgeProps {
 export const CategoryBadge = ({ category, isSelected }: CategoryBadgeProps) => {
   return (
     <SquircleView
-      borderRadius={14}
+      borderRadius={CATEGORY_BADGE_RADIUS}
       style={[styles.badge, { backgroundColor: isSelected ? COLORS.face : category.color }]}
     >
       <MaterialIcons
@@ -27,8 +30,8 @@ export const CategoryBadge = ({ category, isSelected }: CategoryBadgeProps) => {
 
 const styles = StyleSheet.create({
   badge: {
-    width: 42,
-    height: 42,
+    width: CATEGORY_BADGE_SIZE,
+    height: CATEGORY_BADGE_SIZE,
     alignItems: "center",
     justifyContent: "center",
   },

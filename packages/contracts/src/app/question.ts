@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { appCategorySchema } from "./theme";
 
 export const appQuestionDrawQuerySchema = z.object({
   theme: z.string().min(1).optional(),
@@ -15,6 +16,7 @@ const appQuestionSchema = z.object({
   aliases: z.array(z.string()),
   misspellings: z.array(z.string()),
   wrongChoices: z.array(z.string()),
+  category: appCategorySchema,
 });
 
 export const appQuestionDrawResponseSchema = z.array(appQuestionSchema);
