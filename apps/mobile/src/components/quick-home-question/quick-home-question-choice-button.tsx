@@ -9,7 +9,8 @@ import { COLORS, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
 const AnimatedFastSquircleView = Animated.createAnimatedComponent(FastSquircleView);
 
 const LABEL_MAX_LINES = 2;
-const TWO_LINE_BUTTON_HEIGHT = TEXT.body.lineHeight * LABEL_MAX_LINES + SPACE.md * 2;
+export const QUICK_HOME_QUESTION_CHOICE_HEIGHT =
+  TEXT.body.lineHeight * LABEL_MAX_LINES + SPACE.md * 2;
 const MISTAKE_ICON_SIZE = 16;
 
 export interface QuickHomeQuestionChoiceButtonProps {
@@ -63,7 +64,7 @@ const styles = css.create({
   root: { flex: 1 },
   pressed: PRESSED,
   face: {
-    height: TWO_LINE_BUTTON_HEIGHT,
+    height: QUICK_HOME_QUESTION_CHOICE_HEIGHT,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",

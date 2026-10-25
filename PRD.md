@@ -177,7 +177,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Quick Home Questio
       "Failure after the query's retries: no card and no error text; day fully answered: no card",
       "States screenshotted on the iOS simulator dev client; `bun run check` green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
