@@ -2,6 +2,7 @@ import { Redirect } from "expo-router";
 import { ScrollView } from "react-native-gesture-handler";
 import { useMainHeaderHeight } from "@/components/main-header";
 import { MAIN_SUB_HEADER_VISIBLE_HEIGHT } from "@/components/main-sub-header";
+import { QuickHomeQuestionCard } from "@/components/quick-home-question/quick-home-question-card";
 import { useTabScroll } from "@/components/tab-scroll";
 import { useOnboardingStore } from "@/features/onboarding/store";
 import { PracticeCard } from "@/features/quiz/components/practice-card";
@@ -23,6 +24,7 @@ export default function Page() {
       scrollEventThrottle={16}
       contentContainerStyle={{ paddingTop: headerHeight + SPACE.lg }}
     >
+      <QuickHomeQuestionCard />
       <PracticeCard />
     </ScrollView>
   );

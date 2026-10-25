@@ -150,7 +150,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Quick Home Questio
       "A tap records its result at once; the day is re-read on home focus and on app foreground",
       "`bun run check` green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

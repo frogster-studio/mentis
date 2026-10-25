@@ -1,4 +1,5 @@
 export const QUICK_HOME_QUESTION_TAG = "Questions du jour";
+export const QUICK_HOME_QUESTION_COUNT = 3;
 
 export function quickHomeQuestionCounterTag(answeredCount: number, total: number): string {
   return `${QUICK_HOME_QUESTION_TAG} : ${answeredCount} sur ${total}`;
