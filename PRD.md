@@ -102,7 +102,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Quick Home Questio
       "Competition specs stay green with their Question schemas unchanged",
       "`bun run check` green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "api",

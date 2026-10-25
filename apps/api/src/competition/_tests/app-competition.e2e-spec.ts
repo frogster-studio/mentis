@@ -46,6 +46,14 @@ const PLAYER_A = "11111111-1111-4111-8111-111111111111";
 const PLAYER_B = "22222222-2222-4222-8222-222222222222";
 const attemptId = (index: number) => `30000000-0000-4000-8000-${String(index).padStart(12, "0")}`;
 
+const CATEGORY = {
+  id: "nature",
+  name: "Nature",
+  color: "#2e7d32",
+  secondaryColor: "#e8f5e9",
+  icon: "park",
+};
+
 const themeQuestions = (themeId: string, themeName: string, count: number): DrawnQuestion[] =>
   Array.from({ length: count }, (_, index) => ({
     id: `${themeId}-q${index}`,
@@ -56,6 +64,7 @@ const themeQuestions = (themeId: string, themeName: string, count: number): Draw
     aliases: [`alias-${themeId}-${index}`],
     misspellings: [`faute-${themeId}-${index}`],
     wrongChoices: [`faux-a-${index}`, `faux-b-${index}`, `faux-c-${index}`],
+    category: CATEGORY,
   }));
 
 const QUESTIONS: DrawnQuestion[] = [
@@ -83,6 +92,7 @@ const judgedQuestion = (
   aliases,
   misspellings,
   wrongChoices: [`faux-a-${index}`, `faux-b-${index}`, `faux-c-${index}`],
+  category: CATEGORY,
 });
 
 // Real content shapes — the verdicts below are the practice rules, proven on the material they run on.
@@ -100,14 +110,6 @@ const JUDGED_QUESTIONS: DrawnQuestion[] = [
 ];
 const JUDGED_IDS = JUDGED_QUESTIONS.map((question) => question.id);
 const JUDGED_ATTEMPT = attemptId(20);
-
-const CATEGORY = {
-  id: "nature",
-  name: "Nature",
-  color: "#2e7d32",
-  secondaryColor: "#e8f5e9",
-  icon: "park",
-};
 
 const themeRow = (name: string) => ({
   id: name.toLowerCase(),

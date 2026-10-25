@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { appQuestionDrawQuerySchema } from "./question";
+import { appQuestionDrawQuerySchema, appQuestionDrawResponseSchema } from "./question";
 
 describe("appQuestionDrawQuerySchema", () => {
   it("draws 10 across every Theme when nothing is asked for", () => {
@@ -21,5 +21,34 @@ describe("appQuestionDrawQuerySchema", () => {
 
   it("rejects an empty theme", () => {
     expect(appQuestionDrawQuerySchema.safeParse({ theme: "" }).success).toBe(false);
+  });
+});
+
+describe("appQuestionDrawResponseSchema", () => {
+  const question = {
+    id: "q1",
+    themeId: "les-simpson",
+    themeName: "Les Simpson",
+    text: "Quel est le prénom du fils de Homer ?",
+    answer: "Bart",
+    aliases: [],
+    misspellings: [],
+    wrongChoices: ["Lisa", "Maggie", "Milhouse"],
+    category: {
+      id: "television",
+      name: "Télévision",
+      color: "#8e24aa",
+      secondaryColor: "#f3e5f5",
+      icon: "tv",
+    },
+  };
+
+  it("carries the Question's Category", () => {
+    expect(appQuestionDrawResponseSchema.parse([question])).toEqual([question]);
+  });
+
+  it("rejects a Question without its Category", () => {
+    const { category: _, ...withoutCategory } = question;
+    expect(appQuestionDrawResponseSchema.safeParse([withoutCategory]).success).toBe(false);
   });
 });

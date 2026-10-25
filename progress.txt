@@ -1,0 +1,8 @@
+## Item 1 — every served Question carries its Theme's Category (done)
+- contracts: `appQuestionSchema.category` = `appCategorySchema` (reused from theme.ts, no new shape); spec parses with / rejects without.
+- api repo: `servedQuestionBuilder` inner-joins `theme.category`; draw + `questionsByIds` both map raw rows → nested `category`. Factored `selectCategoryColumns` + `categoryFromColumns` (+ `CategoryColumns` type), now shared with `themesWithQuestionCounts` instead of a 2nd copy. `DrawnQuestion.category: ThemeVisuals["category"]`.
+- competition: schemas untouched; zod strips `category` from Attempt questions. Its e2e fixtures gained `CATEGORY` (moved above first module-level use — TDZ).
+- mobile: `Question` type now requires category → `ONBOARDING_QUESTION` got a local Géographie category (unused visually, onboarding passes `#FFF`), session-reducer test fixture too.
+- e2e: new case asserts each row's category on `GET /app/questions`; `?theme=` case asserts it too.
+- files: packages/contracts/src/app/question{,.spec}.ts, apps/api/src/catalog/repositories/catalog.repository.ts, apps/api/src/catalog/_tests/app-content.e2e-spec.ts, apps/api/src/competition/_tests/app-competition.e2e-spec.ts, apps/mobile/src/features/onboarding/constants.ts, apps/mobile/src/features/quiz/session-reducer.test.ts
+- next: item 2 (one-per-Theme draw) touches `drawRandomQuestions` theme-less branch only; mock query builder spec per competition.repository.spec.ts.
