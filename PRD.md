@@ -120,7 +120,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Player, Account, P
       "apps/mobile AGENTS.md: the feedback-states rule names Skeleton, the frozen state and the one toast, ScreenLoading/ScreenError kept only for screens #77 has not migrated; the animation rule admits the Skeleton pulse",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

@@ -18,3 +18,12 @@
 - AGENTS.md data-access: persister line + Paris day/Season rule line.
 - Files: lib/{query-persistence.ts,query-persistence.test.ts,query-client.ts}, features/competition/{keys.ts,api.ts,finalize-sync.ts}, features/world/{keys.ts,api.ts,use-leaderboard-preview.ts,use-season-freshness.ts}, features/account/api.ts, apps/mobile/AGENTS.md.
 - Next: item 3 Skeleton primitive (core abstraction for items 4-7).
+
+## Item 3 — shared Skeleton primitive + feedback rules (done)
+- components/ui/skeleton.tsx: Animated.View (caller's sizing style + opacity) over an absoluteFill Squircle. Props radius, isOnDark, isFrozen, style (all mandatory). Tint `${COLORS.ink}1A` light / `${COLORS.face}33` dark. Pulse 1 → 0.4 opacity, 1000 ms per phase, withRepeat reverse.
+- Shared clock: module-level makeMutable driven by one withRepeat; refcount of pulsing instances starts it on the first, cancels + resets on the last → unison, nothing runs with no skeleton on screen. Frozen / reduce-motion instances don't join, render opacity 1.
+- Reduce motion: new components/ui/use-reduce-motion.ts (AccessibilityInfo + listener, live). Reanimated's useReducedMotion reads once at JS init, so not used. use-question-transition keeps its own ref (it must not rerender) — not migrated.
+- Tracer consumer (knip flags an unused file otherwise): header points pill in player-greeting.tsx — signed in without usable Standing → skeleton 56 × (captionStrong lineHeight + 2·SPACE.xxs), RADIUS.sm, frozen on standing.isError; signed out nothing. So item 4's pill step is done; item 4 still owes the preview.
+- AGENTS.md: animation rule admits the Skeleton pulse; feedback-states rule names Skeleton, frozen, the one toast, tap re-reads, ScreenLoading/ScreenError only for screens #77 hasn't migrated.
+- Files: components/ui/{skeleton.tsx,use-reduce-motion.ts}, components/player-greeting.tsx, apps/mobile/AGENTS.md.
+- Next: item 4 leaderboard preview (bordeau → isOnDark true). Toast (item 6) not built yet, rule already names it.
