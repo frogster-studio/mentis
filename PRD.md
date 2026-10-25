@@ -138,7 +138,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Quick Home Questio
       "End message: 1 → « 1 question juste sur 3, bien joué ! », 2 → « 2 questions justes sur 3, bien joué ! », all correct → « 3 questions justes sur 3, bravo ! », 0 → none; « sur » takes N",
       "vitest in `features/quick-home-question/` with time and rng injected; `bun run check` green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

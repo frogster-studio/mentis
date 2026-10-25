@@ -1,0 +1,17 @@
+export const QUICK_HOME_QUESTION_TAG = "Questions du jour";
+
+export function quickHomeQuestionCounterTag(answeredCount: number, total: number): string {
+  return `${QUICK_HOME_QUESTION_TAG} : ${answeredCount} sur ${total}`;
+}
+
+// A set with nothing right ends in silence, never a consolation.
+export function quickHomeQuestionEndMessage(correctCount: number, total: number): string | null {
+  if (correctCount === 0) {
+    return null;
+  }
+  const score =
+    correctCount === 1
+      ? `1 question juste sur ${total}`
+      : `${correctCount} questions justes sur ${total}`;
+  return correctCount === total ? `${score}, bravo !` : `${score}, bien joué !`;
+}

@@ -24,3 +24,11 @@
 - spec: `scriptedRng(...values)` helper in shuffle.spec.ts; each wrong choice reachable (0/0.4/0.99), both orders (0.49/0.5), no mutation, 20 seeds always Canonical + one wrong.
 - files: packages/answer-matching/src/shuffle{,.spec}.ts
 - next: item 4 (mobile pure day logic) — set building stores each Question's pair via `quickHomeQuestionChoices`, rng injected.
+
+## Item 4 — pure Quick Home Question day logic (done)
+- `features/quick-home-question/day-set.ts`: `QuickHomeQuestionDaySet = { day, tiles: { question, choices }[], results: boolean[] }`. Results are positional (tiles answered in order, no navigation) → answered count = `results.length`, top tile = `tiles[results.length]`.
+- fns: `buildDaySet(questions, now, rng)` (day = `parisDay(now)`, pair via `quickHomeQuestionChoices`), `isDrawDue(set|null, now)` (only when no set or day ≠ today — an empty or done set for today blocks re-requests, per PRD), `topTile`, `answerTopTile(set, choice)` (strict `===` Canonical Answer, no-op when done, immutable), `daySetEndMessage`.
+- `constants.ts`: `QUICK_HOME_QUESTION_TAG` (skeleton tag), `quickHomeQuestionCounterTag(answered, total)`, `quickHomeQuestionEndMessage(correct, total)` (null at 0; « bravo » when all right, incl. N<3) — copy functions in constants like account's `deleteAccountMessage`.
+- why counter takes (answered, total) not the set: item 8 shows X lagging the store until the answered tile leaves, so the card passes its displayed count.
+- files: apps/mobile/src/features/quick-home-question/{constants,day-set,day-set.test}.ts
+- next: item 5 (store + `api.ts`): persist `QuickHomeQuestionDaySet | null` + `hasHydrated` like onboarding store; drop the set when `isDrawDue`; fetch only after hydration and when due; `answer(choice)` → `answerTopTile`.
