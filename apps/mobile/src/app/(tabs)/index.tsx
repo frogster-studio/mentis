@@ -1,7 +1,9 @@
 import { Redirect } from "expo-router";
 import { ScrollView } from "react-native-gesture-handler";
+import { useBottomTabBarHeight } from "@/components/bottom-tab-bar";
 import { useMainHeaderHeight } from "@/components/main-header";
 import { MAIN_SUB_HEADER_VISIBLE_HEIGHT } from "@/components/main-sub-header";
+import { DevResetQuickHomeQuestions } from "@/components/quick-home-question/dev-reset-quick-home-questions";
 import { QuickHomeQuestionCard } from "@/components/quick-home-question/quick-home-question-card";
 import { useTabScroll } from "@/components/tab-scroll";
 import { useOnboardingStore } from "@/features/onboarding/store";
@@ -11,6 +13,7 @@ import { SPACE } from "@/theme/tokens";
 export default function Page() {
   const hasOnboarded = useOnboardingStore((state) => state.hasOnboarded);
   const headerHeight = useMainHeaderHeight() + MAIN_SUB_HEADER_VISIBLE_HEIGHT;
+  const tabBarHeight = useBottomTabBarHeight();
   const onScroll = useTabScroll();
 
   if (!hasOnboarded) {
@@ -22,10 +25,11 @@ export default function Page() {
       showsVerticalScrollIndicator={false}
       onScroll={onScroll}
       scrollEventThrottle={16}
-      contentContainerStyle={{ paddingTop: headerHeight + SPACE.lg }}
+      contentContainerStyle={{ paddingTop: headerHeight + SPACE.lg, paddingBottom: tabBarHeight }}
     >
       <QuickHomeQuestionCard />
       <PracticeCard />
+      <DevResetQuickHomeQuestions />
     </ScrollView>
   );
 }

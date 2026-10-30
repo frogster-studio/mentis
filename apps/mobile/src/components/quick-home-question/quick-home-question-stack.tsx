@@ -1,7 +1,9 @@
 import type { PropsWithChildren } from "react";
 import { StyleSheet, View } from "react-native";
 import FastSquircleView from "react-native-fast-squircle";
+import { QuickHomeQuestionSheet } from "@/components/quick-home-question/quick-home-question-sheet";
 import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
+import { gradient } from "@/utils/gradient";
 
 const EDGE_DROP = SPACE.xs;
 const EDGE_INSET = SPACE.sm;
@@ -32,14 +34,13 @@ export const QuickHomeQuestionStack = ({
               bottom: -depth * EDGE_DROP,
               left: depth * EDGE_INSET,
               right: depth * EDGE_INSET,
-              backgroundColor: color,
+              // backgroundColor: color,
+              ...gradient(`radial-gradient(farthest-corner at 50% 150%, ${color}, ${color})`),
             },
           ]}
         />
       ))}
-      <FastSquircleView style={[styles.tile, styles.top, { backgroundColor: topColor }]}>
-        {children}
-      </FastSquircleView>
+      <QuickHomeQuestionSheet color={topColor}>{children}</QuickHomeQuestionSheet>
     </View>
   );
 };
@@ -48,5 +49,4 @@ const styles = StyleSheet.create({
   // The stroke keeps two tiles of one colour apart.
   tile: { borderRadius: RADIUS.base, borderWidth: 1, borderColor: COLORS.stroke },
   edge: { position: "absolute" },
-  top: { padding: SPACE.lg },
 });

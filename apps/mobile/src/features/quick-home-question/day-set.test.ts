@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import type { Category, Question } from "@/types/quiz";
-import { quickHomeQuestionCounterTag } from "./constants";
 import {
   answerTopTile,
   buildDaySet,
@@ -127,16 +126,6 @@ describe("answerTopTile", () => {
     const stored = daySet([]);
     answerTopTile(stored, "Réponse a");
     expect(stored.results).toStrictEqual([]);
-  });
-});
-
-describe("quickHomeQuestionCounterTag", () => {
-  it("reads the answered count over the Questions received", () => {
-    const resumed = daySet([true]);
-    expect(quickHomeQuestionCounterTag(resumed.results.length, resumed.tiles.length)).toBe(
-      "Questions du jour : 1 sur 3",
-    );
-    expect(quickHomeQuestionCounterTag(0, 2)).toBe("Questions du jour : 0 sur 2");
   });
 });
 

@@ -9,8 +9,7 @@ import { COLORS, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
 const AnimatedFastSquircleView = Animated.createAnimatedComponent(FastSquircleView);
 
 const LABEL_MAX_LINES = 2;
-export const QUICK_HOME_QUESTION_CHOICE_HEIGHT =
-  TEXT.body.lineHeight * LABEL_MAX_LINES + SPACE.md * 2;
+export const QUICK_HOME_QUESTION_CHOICE_HEIGHT = 56;
 const MISTAKE_ICON_SIZE = 16;
 
 export interface QuickHomeQuestionChoiceButtonProps {
@@ -70,7 +69,7 @@ const styles = css.create({
     justifyContent: "center",
     gap: SPACE.xxs,
     paddingHorizontal: SPACE.sm,
-    borderRadius: RADIUS.base,
+    borderRadius: RADIUS.sm,
     borderWidth: 2,
     borderColor: COLORS.stroke,
     backgroundColor: COLORS.face,
@@ -80,7 +79,7 @@ const styles = css.create({
   correctFace: { backgroundColor: COLORS.success, borderColor: COLORS.success },
   mistakeFace: { borderColor: COLORS.danger },
   label: {
-    ...TEXT.body,
+    ...TEXT.quickHomeQuestionChoice,
     flexShrink: 1,
     color: COLORS.ink,
     textAlign: "center",

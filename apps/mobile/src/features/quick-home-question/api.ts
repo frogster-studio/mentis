@@ -12,6 +12,7 @@ import { buildDaySet, isDrawDue, type QuickHomeQuestionDaySet } from "./day-set"
 import { useQuickHomeQuestionStore } from "./store";
 
 const quickHomeQuestionKeys = {
+  root: ["quick-home-question"] as const,
   daySet: (day: string) => ["quick-home-question", "day-set", day] as const,
 };
 
@@ -49,6 +50,11 @@ function useNowRereadOnFocusAndForeground(): Date {
     return () => subscription.remove();
   }, [reread]);
   return now;
+}
+
+export function resetQuickHomeQuestionDaySet() {
+  queryClient.removeQueries({ queryKey: quickHomeQuestionKeys.root });
+  useQuickHomeQuestionStore.setState({ daySet: null });
 }
 
 export function useQuickHomeQuestionDaySet() {

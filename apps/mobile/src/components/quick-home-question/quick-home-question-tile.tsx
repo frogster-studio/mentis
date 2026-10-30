@@ -1,13 +1,15 @@
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { SquircleView } from "expo-squircle-view";
 import { StyleSheet, Text, View } from "react-native";
-import { CategoryBadge } from "@/components/category-badge";
 import { QuickHomeQuestionChoiceButton } from "@/components/quick-home-question/quick-home-question-choice-button";
 import { QuickHomeQuestionDots } from "@/components/quick-home-question/quick-home-question-dots";
+import { iconNameOrFallback } from "@/components/ui/icon-name";
 import {
   isCorrectChoice,
   type QuickHomeQuestionTile as Tile,
 } from "@/features/quick-home-question/day-set";
 import { TEXT } from "@/theme/text";
-import { COLORS, SPACE } from "@/theme/tokens";
+import { COLORS, CONTROL_ICON_SIZE, RADIUS, SPACE } from "@/theme/tokens";
 
 export interface QuickHomeQuestionTileProps {
   tile: Tile;
@@ -25,12 +27,18 @@ export const QuickHomeQuestionTile = ({
   onChoose,
 }: QuickHomeQuestionTileProps) => {
   const { question } = tile;
+  const { category } = question;
 
   return (
     <View style={styles.root}>
       <View style={styles.header}>
-        {/* The white badge face, or the icon would sink into the tile's own Category colour. */}
-        <CategoryBadge category={question.category} isSelected />
+        <SquircleView
+          borderRadius={RADIUS.sm}
+          style={[styles.badge, { backgroundColor: category.color }]}
+        >
+          <MaterialIcons name={iconNameOrFallback(category.icon)} size={16} color={COLORS.ink} />
+        </SquircleView>
+
         <Text style={styles.themeName} numberOfLines={1}>
           {question.themeName}
         </Text>
@@ -56,7 +64,13 @@ export const QuickHomeQuestionTile = ({
 const styles = StyleSheet.create({
   root: { gap: SPACE.md },
   header: { flexDirection: "row", alignItems: "center", gap: SPACE.sm },
-  themeName: { ...TEXT.label, flex: 1, color: COLORS.ink },
-  text: { ...TEXT.cardTitle, color: COLORS.ink },
+  themeName: { ...TEXT.quickHomeQuestionThemeName, flex: 1, color: COLORS.ink },
+  text: { ...TEXT.quickHomeQuestionText, color: COLORS.ink },
   choices: { flexDirection: "row", gap: SPACE.sm },
+  badge: {
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });

@@ -58,7 +58,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Quick Home Questio
 ### Sequence and timing
 
 - Named constants: reveal 250 ms, hold 700 ms, tile exit 350 ms, end message 2 000 ms, skeleton-to-card fade 200 ms.
-- Tile exit: the tile slides right off the screen while fading out, then the stack rises one step.
+- Tile exit: the top sheet peels off the pile to the left, tilting while it fades out, over the next Question already risen one step beneath it.
 - After the last tile, the end message replaces the card as plain text on the paper for 2 s, then the slot collapses smoothly and the Practice card rises.
 - End message: 1 correct → « 1 question juste sur 3, bien joué ! », 2 → « 2 questions justes sur 3, bien joué ! », all correct → « 3 questions justes sur 3, bravo ! »; with fewer than 3 received, « sur » takes N.
 - 0 correct: no message (never a « dommage »); the slot collapses right after the last tile.
@@ -181,9 +181,9 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Quick Home Questio
   },
   {
     "category": "mobile",
-    "description": "The answer sequence: reveal, hold, tile exits right while fading, stack rises, end message for 2 s, slot collapses",
+    "description": "The answer sequence: reveal, hold, top sheet peels off left while fading, stack rises, end message for 2 s, slot collapses",
     "steps": [
-      "Tap → reveal 250 ms → hold 700 ms → the tile slides right off the screen while fading over 350 ms → the stack rises one step and the counter advances",
+      "Tap → reveal 250 ms → hold 700 ms → the top sheet peels off the pile to the left, tilting and fading over 350 ms, over the next Question already risen one step beneath it, and the counter advances",
       "After the last tile: the end message replaces the card on the paper for 2 000 ms, then the slot collapses and the Practice card rises; 0 correct: the collapse follows the last tile directly",
       "Every timing is a named constant in `features/quick-home-question/constants.ts`",
       "A relaunch mid-sequence resumes on the next tile",

@@ -1,12 +1,8 @@
-export const QUICK_HOME_QUESTION_TAG = "Questions du jour";
 export const QUICK_HOME_QUESTION_COUNT = 3;
 export const QUICK_HOME_QUESTION_REVEAL_MS = 250;
 export const QUICK_HOME_QUESTION_HOLD_MS = 700;
+export const QUICK_HOME_QUESTION_EXIT_MS = 350;
 export const QUICK_HOME_QUESTION_FADE_MS = 200;
-
-export function quickHomeQuestionCounterTag(answeredCount: number, total: number): string {
-  return `${QUICK_HOME_QUESTION_TAG} : ${answeredCount} sur ${total}`;
-}
 
 // A set with nothing right ends in silence, never a consolation.
 export function quickHomeQuestionEndMessage(correctCount: number, total: number): string | null {
