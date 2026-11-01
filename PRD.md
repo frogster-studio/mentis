@@ -204,7 +204,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Player, 
       "The pile wears the pure pile colours as plain `backgroundColor`, with no `gradient()` call and no stroke border",
       "Every string is in `features/anecdote/constants.ts`; `bun run check` green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

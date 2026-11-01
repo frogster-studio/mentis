@@ -2,8 +2,7 @@ import type { PropsWithChildren } from "react";
 import { StyleSheet, View } from "react-native";
 import FastSquircleView from "react-native-fast-squircle";
 import { AnecdoteSheet } from "@/components/anecdote/anecdote-sheet";
-import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
-import { gradient } from "@/utils/gradient";
+import { RADIUS, SPACE } from "@/theme/tokens";
 
 const EDGE_DROP = SPACE.xs;
 const EDGE_INSET = SPACE.sm;
@@ -23,14 +22,13 @@ export const AnecdoteStack = ({ children, colors }: PropsWithChildren<AnecdoteSt
         <FastSquircleView
           key={depth}
           style={[
-            styles.sheet,
             styles.edge,
             {
               top: depth * EDGE_DROP,
               bottom: -depth * EDGE_DROP,
               left: depth * EDGE_INSET,
               right: depth * EDGE_INSET,
-              ...gradient(`radial-gradient(farthest-corner at 50% 150%, ${color}, ${color})`),
+              backgroundColor: color,
             },
           ]}
         />
@@ -41,7 +39,5 @@ export const AnecdoteStack = ({ children, colors }: PropsWithChildren<AnecdoteSt
 };
 
 const styles = StyleSheet.create({
-  // The stroke keeps two sheets of one colour apart.
-  sheet: { borderRadius: RADIUS.base, borderWidth: 1, borderColor: COLORS.stroke },
-  edge: { position: "absolute" },
+  edge: { position: "absolute", borderRadius: RADIUS.base },
 });

@@ -22,7 +22,7 @@ export const AnecdoteDots = ({ position, total }: AnecdoteDotsProps) => {
 };
 
 const styles = StyleSheet.create({
-  row: { flexDirection: "row", justifyContent: "center", gap: SPACE.xs },
+  row: { flexDirection: "row", gap: SPACE.xs },
   dot: {
     width: DOT_SIZE,
     height: DOT_SIZE,

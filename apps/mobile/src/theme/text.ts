@@ -5,6 +5,7 @@ const FACES = {
   onboarding: "EpundaSlab-Medium",
   emphasis: "InterTight-SemiBold",
   regular: "InterTight-Regular",
+  italic: "InterTight-Italic",
 } as const;
 
 export const TEXT = {
@@ -41,4 +42,8 @@ export const TEXT = {
   statTextLine: { fontFamily: FACES.regular, fontSize: 16, letterSpacing: 0 },
   statRowValue: { fontFamily: FACES.emphasis, fontSize: 16 },
   statCategoryStrong: { fontFamily: FACES.emphasis, fontSize: 13 },
+  anecdote: { fontFamily: FACES.regular, fontSize: 14, lineHeight: 20 },
+  anecdoteBold: { fontFamily: FACES.emphasis, fontSize: 14, lineHeight: 20 },
+  anecdoteItalic: { fontFamily: FACES.italic, fontSize: 14, lineHeight: 20 },
+  anecdoteLabel: { fontFamily: FACES.italic, fontSize: 10 },
 } as const satisfies Record<string, TextStyle>;
