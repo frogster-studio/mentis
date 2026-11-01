@@ -1,10 +1,10 @@
 import { Redirect } from "expo-router";
 import { ScrollView } from "react-native-gesture-handler";
+import { AnecdoteCard } from "@/components/anecdote/anecdote-card";
+import { DevResetAnecdotes } from "@/components/anecdote/dev-reset-anecdotes";
 import { useBottomTabBarHeight } from "@/components/bottom-tab-bar";
 import { useMainHeaderHeight } from "@/components/main-header";
 import { MAIN_SUB_HEADER_VISIBLE_HEIGHT } from "@/components/main-sub-header";
-import { DevResetQuickHomeQuestions } from "@/components/quick-home-question/dev-reset-quick-home-questions";
-import { QuickHomeQuestionCard } from "@/components/quick-home-question/quick-home-question-card";
 import { useTabScroll } from "@/components/tab-scroll";
 import { useOnboardingStore } from "@/features/onboarding/store";
 import { PracticeCard } from "@/features/quiz/components/practice-card";
@@ -27,9 +27,9 @@ export default function Page() {
       scrollEventThrottle={16}
       contentContainerStyle={{ paddingTop: headerHeight + SPACE.lg, paddingBottom: tabBarHeight }}
     >
-      <QuickHomeQuestionCard />
+      <AnecdoteCard />
       <PracticeCard />
-      <DevResetQuickHomeQuestions />
+      <DevResetAnecdotes />
     </ScrollView>
   );
 }

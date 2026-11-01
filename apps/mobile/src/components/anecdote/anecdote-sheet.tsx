@@ -4,14 +4,11 @@ import FastSquircleView from "react-native-fast-squircle";
 import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
 import { gradient } from "@/utils/gradient";
 
-export interface QuickHomeQuestionSheetProps {
+export interface AnecdoteSheetProps {
   color: string;
 }
 
-export const QuickHomeQuestionSheet = ({
-  children,
-  color,
-}: PropsWithChildren<QuickHomeQuestionSheetProps>) => {
+export const AnecdoteSheet = ({ children, color }: PropsWithChildren<AnecdoteSheetProps>) => {
   return (
     <FastSquircleView
       style={[

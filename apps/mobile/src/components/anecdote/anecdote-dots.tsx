@@ -1,15 +1,15 @@
 import { StyleSheet, View } from "react-native";
 import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
 
-export const QUICK_HOME_QUESTION_DOT_SIZE = 6;
+const DOT_SIZE = 6;
 const IDLE_DOT_ALPHA = "33";
 
-export interface QuickHomeQuestionDotsProps {
+export interface AnecdoteDotsProps {
   position: number;
   total: number;
 }
 
-export const QuickHomeQuestionDots = ({ position, total }: QuickHomeQuestionDotsProps) => {
+export const AnecdoteDots = ({ position, total }: AnecdoteDotsProps) => {
   const dotPositions = Array.from({ length: total }, (_, index) => index);
 
   return (
@@ -24,8 +24,8 @@ export const QuickHomeQuestionDots = ({ position, total }: QuickHomeQuestionDots
 const styles = StyleSheet.create({
   row: { flexDirection: "row", justifyContent: "center", gap: SPACE.xs },
   dot: {
-    width: QUICK_HOME_QUESTION_DOT_SIZE,
-    height: QUICK_HOME_QUESTION_DOT_SIZE,
+    width: DOT_SIZE,
+    height: DOT_SIZE,
     borderRadius: RADIUS.round,
     backgroundColor: COLORS.ink,
   },

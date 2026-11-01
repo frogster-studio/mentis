@@ -190,7 +190,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Player, 
       "`apps/mobile/AGENTS.md` carries « never a fourth button look » and its example again; « only the sinking controls animate » stays deleted",
       "`bun run check` green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

@@ -1,18 +1,18 @@
 import { Pressable, StyleSheet, Text } from "react-native";
-import { resetQuickHomeQuestionDaySet } from "@/features/quick-home-question/api";
+import { resetAnecdoteDaySet } from "@/features/anecdote/api";
 import { TEXT } from "@/theme/text";
 import { COLORS, PRESSED, SPACE } from "@/theme/tokens";
 
-const RESET_LABEL = "reset quick home questions";
+const RESET_LABEL = "reset anecdotes";
 
-export const DevResetQuickHomeQuestions = () => {
+export const DevResetAnecdotes = () => {
   if (!__DEV__) {
     return null;
   }
 
   return (
     <Pressable
-      onPress={resetQuickHomeQuestionDaySet}
+      onPress={resetAnecdoteDaySet}
       hitSlop={SPACE.sm}
       style={({ pressed }) => [styles.root, pressed && PRESSED]}
     >
