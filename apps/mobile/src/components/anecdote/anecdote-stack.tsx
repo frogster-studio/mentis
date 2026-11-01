@@ -2,10 +2,14 @@ import type { PropsWithChildren } from "react";
 import { StyleSheet, View } from "react-native";
 import FastSquircleView from "react-native-fast-squircle";
 import { AnecdoteSheet } from "@/components/anecdote/anecdote-sheet";
+import { ANECDOTE_COUNT } from "@/features/anecdote/constants";
 import { RADIUS, SPACE } from "@/theme/tokens";
 
 const EDGE_DROP = SPACE.xs;
 const EDGE_INSET = SPACE.sm;
+
+// The slot keeps the full pile's depth, so the Practice card stays put as the pile thins.
+export const ANECDOTE_PILE_DEPTH = (ANECDOTE_COUNT - 1) * EDGE_DROP;
 
 export interface AnecdoteStackProps {
   // Top first: the top sheet's colour, then the edges beneath it, nearest first.
@@ -17,7 +21,7 @@ export const AnecdoteStack = ({ children, colors }: PropsWithChildren<AnecdoteSt
   const deepestFirst = edgeColors.map((color, index) => ({ color, depth: index + 1 })).reverse();
 
   return (
-    <View style={{ marginBottom: edgeColors.length * EDGE_DROP }}>
+    <View>
       {deepestFirst.map(({ color, depth }) => (
         <FastSquircleView
           key={depth}

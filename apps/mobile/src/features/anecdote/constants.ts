@@ -1,4 +1,6 @@
 export const ANECDOTE_COUNT = 3;
+export const ANECDOTE_EXIT_MS = 350;
+export const ANECDOTE_COLLAPSE_MS = 250;
 
 export const DISMISS_ANECDOTE_LABEL = "Passer l'anecdote";
 

@@ -217,7 +217,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Player, 
       "A relaunch mid-peel resumes on the next Anecdote; a relaunch on a fully dismissed day shows no card and no collapse",
       "Timings are named constants in `features/anecdote/constants.ts`; `bun run check` green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
