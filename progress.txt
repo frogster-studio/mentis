@@ -1,0 +1,5 @@
+## Item 1 — api: `anecdotes` entity
+Done: `AnecdoteEntity`, shape of theme.entity.ts: uuid id, text varchar(140), updated_at, created_at.
+Decisions: no entity registry to touch, datasource glob + knip entry pick up `*.entity.ts`. One comment: markers count in the 140. No schema-constraints spec: PRD test seams don't list one.
+Files: apps/api/src/_database/entities/anecdote.entity.ts, PRD.md, progress.txt.
+Notes: no migration written. Human step pending: migration:generate + migration:run, ADR 0003 lock on dashboard, insert rows. `bun run check` carries one biome warning (unused imports, quick-home-question-tile.tsx), pre-existing, file leaves with the mobile replacement item.

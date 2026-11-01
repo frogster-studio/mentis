@@ -123,7 +123,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Player, 
       "No file under `_database/migrations/` is added or changed",
       "`bun run check` green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "contracts",
