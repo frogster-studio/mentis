@@ -24,7 +24,7 @@ export const TEXT = {
     lineHeight: 50,
     letterSpacing: -2,
   },
-  label: { fontFamily: FACES.emphasis, fontSize: 14 },
+  label: { fontFamily: FACES.emphasis, fontSize: 14, lineHeight: 20 },
   cardTitleSmall: { fontFamily: FACES.heading, fontSize: 14, lineHeight: 18 },
   cardTitle: { fontFamily: FACES.heading, fontSize: 18, lineHeight: 24 },
   sheetTitle: { fontFamily: FACES.onboarding, fontSize: 26, letterSpacing: -1 },
