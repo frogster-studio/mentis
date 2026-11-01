@@ -161,7 +161,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Player, 
       "Line breaks stay in their segment",
       "vitest in `features/anecdote/`; `bun run check` green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
