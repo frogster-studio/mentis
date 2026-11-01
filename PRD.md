@@ -1,93 +1,114 @@
-# PRD — Quick Home Questions on the home
+# PRD — Anecdotes on the home
 
-Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Quick Home Question, Question, Theme, Category, Canonical Answer, Square, Player, Streak). Rules: [AGENTS.md](AGENTS.md), [apps/mobile/AGENTS.md](apps/mobile/AGENTS.md), [apps/api/AGENTS.md](apps/api/AGENTS.md), [docs/agents/conventions.md](docs/agents/conventions.md), [ADR 0003](docs/adr/0003-database-admits-only-the-api.md), [ADR 0005](docs/adr/0005-the-api-reaches-its-data-through-typeorm.md).
+Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Player, Question, Theme, Category, Streak, History). Rules: [AGENTS.md](AGENTS.md), [apps/mobile/AGENTS.md](apps/mobile/AGENTS.md), [apps/api/AGENTS.md](apps/api/AGENTS.md), [docs/agents/conventions.md](docs/agents/conventions.md), [ADR 0003](docs/adr/0003-database-admits-only-the-api.md), [ADR 0005](docs/adr/0005-the-api-reaches-its-data-through-typeorm.md).
 
 ## Decisions
 
 ### Scope
 
-- The feature is the Quick Home Question; French UI label « Questions du jour ».
-- Every Player, anonymous included: the read is public, no `/app/me` call.
-- Nothing is recorded: no points, no stats, no Practice Streak, no History, no Theme Average, nothing pushed to the API.
+- The Anecdote replaces the Quick Home Question on the home; French UI label « Anecdotes du jour ». The Player is no longer asked anything.
+- « Quick Home Question » leaves the code wherever it stands: folders, components, store key, query keys, constants, styles.
+- Three Anecdotes a day, for every Player, anonymous included: the read is public, no `/app/me` call.
+- An Anecdote belongs to no Question, Theme or Category.
+- Nothing is recorded: no points, no stats, no Streak, no History, nothing pushed to the API when an Anecdote is read or dismissed.
+
+### The table
+
+- A dedicated `anecdotes` table: `AnecdoteEntity`, the shape of `theme.entity.ts`, with a uuid `id`, `text` as a `varchar` of length 140, `created_at` and `updated_at`.
+- 140 is the hard cap: an over-long insert fails at the database. The `**` and `__` markers count in the 140.
+- No staging flag: every row is servable.
+- Rows are inserted by SQL on the dashboard; no back-office screen.
 
 ### API
 
-- No new route: the phone reads `GET /app/questions?n=3`, `theme` omitted. No "init home" route exists and none is created.
-- No new contract type: the existing `appQuestionSchema` gains `category`, the same shape as a Theme's `category` in the Theme list (`id`, `name`, `color`, `secondaryColor`, `icon`). Every served Question carries it, Quiz Session draws included; the competition Question schemas are untouched.
-- Without `theme`, the draw serves at most one Question per Theme, Themes and Questions both random; Categories may repeat. An `n` above the count of Published Themes holding a Ready Question returns fewer rows.
-- With `theme`, the draw is unchanged. Served Questions stay Ready Questions of Published Themes.
-- No schema change: the Category comes from a join, so no migration and no dashboard SQL.
-
-### Choices and judging
-
-- The two choices are the Canonical Answer and one of the three wrong choices drawn uniformly, in uniform random left/right order.
-- The pick is a pure function in `@mentis/answer-matching` beside `squareChoices`, rng injected. Reusing `squareChoices` and keeping the first wrong choice is ruled out: it puts the Canonical Answer on the right 3 times in 4.
-- The pair is drawn once, when the day's set lands, and stored with it: reopening the app never reshuffles.
-- Judging is strict equality with the Canonical Answer; no Answer Matching.
-- One tap is the final answer: no confirmation, no Countdown.
+- `GET /app/anecdotes?n=` lives in the `catalog` feature, with its own controller, service and repository in the layer folders; no new feature folder.
+- Public: no auth guard, `DrawThrottlerGuard` like `GET /app/questions`, because it is also a random draw.
+- `n` is an integer from 1 to 50, 3 by default; anything else answers 400.
+- It answers `[{ id, text }]`: `n` distinct rows at random, fewer when the table holds fewer, `[]` when it is empty.
+- The schemas live in `@mentis/contracts/app`.
+- The phone sends `n=3` explicitly, from the constant the skeleton also uses.
 
 ### The day's set
 
 - Per device, per Europe/Paris day (`parisDay`, the Streak's clock); two devices of one Account get different sets.
-- The set lives in a persisted zustand store on AsyncStorage, the onboarding store's pattern: the day, the `Question[]` as served, each Question's pair, each answered Question's result.
+- The set lives in a persisted zustand store on AsyncStorage, the onboarding store's pattern: the day, the Anecdotes as served, how many are dismissed.
 - No request before the store hydrates; a request only when the store holds no set for today.
-- An answer is recorded at tap: an app killed mid-animation resumes on the next tile.
-- The day is re-read on home focus and on app foreground; a past day's set is dropped, even half-answered, and a new one drawn.
-- Every Question of today's set answered: no card and no request until the next Paris day.
-- N Questions received: N tiles, N dots, « X sur N »; 0 received: no card.
+- A dismissal is recorded at tap: an app killed mid-animation resumes on the next Anecdote.
+- The day is re-read on home focus and on app foreground; a past day's set is dropped, even partly dismissed, and a new one drawn.
+- Every Anecdote of today's set dismissed: no card and no request until the next Paris day.
+- N Anecdotes received: N cards, N dots. 0 received: no card, and that empty set holds until the next Paris day.
 - Fetch failure: the skeleton holds through the query's retries, then the card is gone, with no error text and no `ScreenError`. The next home focus or foreground retries.
+
+### Text format
+
+- The stored text carries two markers only: `**…**` for bold and `__…__` for italic. The formatting happens on the phone, in a pure function.
+- Spans do not nest: inside one span, the other marker shows literally.
+- An orphan marker shows literally.
+- Line breaks in the text are kept.
+
+### Faces and text styles
+
+- Inter Tight Italic joins the faces, for `__…__` and the footer label. No SemiBold Italic: spans do not nest.
+- The mobile rule « Three faces, never more » is rewritten to name the faces in use: Epunda Slab Regular, Epunda Slab Medium, Inter Tight SemiBold, Inter Tight Regular, Inter Tight Italic.
+- Four new `TEXT` styles: `anecdote` (Regular 14/20), `anecdoteBold` (SemiBold 14/20), `anecdoteItalic` (Italic 14/20), `anecdoteLabel` (Italic 10).
 
 ### The card
 
 - It sits on the home, above the Practice card.
-- Its tag reads « Questions du jour : X sur N », X the answered Questions. X advances when the answered tile leaves: « 1 sur 3 » while Question 2 is on top.
-- The card is a stack of tiles. The top tile is the current Question; each tile beneath is the next Question in its own Category colour, offset downward like a deck's edge; the depth is the remaining count minus one.
-- A tile: the Category badge (its icon) and the Theme name above the Question text, two choice buttons side by side, N dots marking the top Question's position.
-- A tile wears its Category's colour as is: every Category colour is light enough for ink text.
-- No swipe and no manual navigation: the next Question shows only once the one above is answered.
+- Top to bottom: the text on the left with the cross at the top right; a 1 px `COLORS.stroke` separator; a footer with « ANECDOTES DU JOUR » on the left and the dots on the right.
+- The text is `COLORS.ink`. The label, in capitals, and the cross are `COLORS.inkMuted`.
+- There is no badge above the card and no « X sur N » counter.
+- The text zone has a minimum height of 4 lines, so every card has the same height: a shorter text leaves blank space above the separator.
+- The text is never cut: on a screen narrower than 360 pt or with an enlarged system text size, the card grows.
+- The cross is the MaterialIcons `close` glyph in a bare `Pressable` dimmed with `PRESSED`, accessibility label « Passer l'anecdote ».
+- The dots keep their look: N dots, the top Anecdote's active in ink, the others in ink with the `33` alpha.
+- No swipe. Tapping the card body or the dots does nothing.
 
-### The choice button
+### The pile
 
-- A new button used by the Quick Home Question card alone; `SquareButton` is not touched.
-- Rest: white face, label on two lines at most then an ellipsis, a fixed two-line height so both buttons always match.
-- Press feedback: the `PRESSED` dim, no sink.
-- Correct tap: only the correct button animates, to a `success` fill with its label in `COLORS.face`, no icon.
-- Wrong tap: both animate together. The tapped one turns to a white face, a `danger` border and a cross before its label; the correct one to the `success` fill with its label in `COLORS.face`.
-- Both buttons are disabled from the tap until the tile has left, so nothing cuts an animation short.
+- Colours belong to the position, not to the Anecdote: the top card is `COLORS.face` (#FFFFFF), the one beneath `COLORS.trough` (#E6D3C3), the deepest a new role `COLORS.troughDeep` (#D7BBA1).
+- The depth is the remaining count minus one: 3 remaining show all three colours, 2 show the top two, 1 shows the top card alone.
+- Solid `backgroundColor`, no `gradient()` and no stroke border: position colours never merge two neighbours.
 
 ### Sequence and timing
 
-- Named constants: reveal 250 ms, hold 700 ms, tile exit 350 ms, end message 2 000 ms, skeleton-to-card fade 200 ms.
-- Tile exit: the top sheet peels off the pile to the left, tilting while it fades out, over the next Question already risen one step beneath it.
-- After the last tile, the end message replaces the card as plain text on the paper for 2 s, then the slot collapses smoothly and the Practice card rises.
-- End message: 1 correct → « 1 question juste sur 3, bien joué ! », 2 → « 2 questions justes sur 3, bien joué ! », all correct → « 3 questions justes sur 3, bravo ! »; with fewer than 3 received, « sur » takes N.
-- 0 correct: no message (never a « dommage »); the slot collapses right after the last tile.
+- Named constants: card exit 350 ms, slot collapse 250 ms, skeleton-to-card fade 200 ms.
+- Cross tap: the top card peels off the pile to the left, tilting while it fades out, with no reveal and no hold before it. The animation is the existing peel; only the content and the colour change.
+- The footer belongs to the card and leaves with it. The next card, already in place beneath in `COLORS.face`, carries the label at the same spot; only the dots differ.
+- The cross is inert until the exit has ended: two quick taps remove one card.
+- The Practice card does not move on a cross tap, every card having the same height.
+- After the last cross: the card peels off, then the slot collapses and the Practice card rises. No end message.
 
 ### Loading
 
-- While the set is not there, a skeleton card keeps the final structure: neutral `COLORS.card`, the tag without its counter, then badge, Theme name, two text lines, two buttons and the dots as skeletons, with the stack already drawn beneath.
-- `Skeleton` is a new shared primitive in `components/ui`: an opacity pulse.
+- While the set is not there, a skeleton keeps the final structure on the pile's position colours: three `Skeleton` bars in the 4-line text zone, no cross, the footer drawn for real (separator, label, 3 dots with the first active).
 - The real card replaces the skeleton with the 200 ms fade.
 
-### Rules and placement
+### What goes away, what stays
 
-- The mobile rules « never a fourth button look » and « only the sinking controls animate » are deleted from `apps/mobile/AGENTS.md`; animating this card breaks no rule.
-- `features/quick-home-question/` holds `api.ts`, `constants.ts` (every string and timing), the store and the pure logic with its tests; `components/quick-home-question/` holds the card, the tile and the button.
+- Everything only the Quick Home Question used goes, so the branch's final diff against `main` carries none of it: `category` on a served Question, the theme-less one-per-Theme draw, `quickHomeQuestionChoices`, the choice button, the tile, the tile skeleton, the Question-based day set, the end message.
+- `GET /app/questions` behaves as it does on `main`.
+- `Skeleton`, the stack, the sheet, the peeling sheet, the dots, the store pattern and the focus and foreground re-read stay, renamed where they carry the old name.
+- The dev-only reset link stays, renamed for the Anecdote.
+- `TEXT.label` gets its `lineHeight: 20` back; `theme/text.ts` differs from `main` by the Anecdote styles alone.
+- In `apps/mobile/AGENTS.md`, « never a fourth button look » and its example come back; « only the sinking controls animate » stays deleted, because the peel and the collapse animate.
 
 ### Test seams
 
-- api: the e2e suite through the Nest testing module with a fake repository (`catalog/_tests/app-content.e2e-spec.ts`) for the served shape; a repository spec over a mocked query builder for the one-per-Theme draw (prior art `competition/_tests/competition.repository.spec.ts`).
-- contracts: `app/question.spec.ts`.
-- answer-matching: `shuffle.spec.ts`, under scripted rng sequences.
-- mobile: vitest on pure logic only (rollover, resume, counter, end message, set building), rng and time injected; no component rendering tests. Screen states checked on the iOS simulator dev client; animations reviewed by the human.
+- api: the e2e suite through the Nest testing module with a fake repository, in a new `catalog/_tests/app-anecdotes.e2e-spec.ts` (prior art `app-content.e2e-spec.ts`); a repository spec over a mocked query builder, in a new `catalog/_tests/anecdote.repository.spec.ts` (prior art `competition/_tests/competition.repository.spec.ts`).
+- contracts: a new `app/anecdote.spec.ts` (prior art `app/question.spec.ts`).
+- mobile: vitest on pure logic only (text segments, rollover, resume, top Anecdote, dismissal, pile colours), time injected; no component rendering tests.
+- Screen states and animations are reviewed by the human on devices, never by the loop.
 
 ### Out of scope
 
-- Points, scoring, stats, Streak, History, Leaderboard, any server-side record of an answer.
+- A back-office screen for Anecdotes, and any staging state.
 - One set shared by every Player; syncing the set across devices.
-- Avoiding repeats across days, or with Questions later met in a Quiz Session or an Attempt.
-- Swipe navigation, a Countdown, a consolation message.
-- Category variety beyond what the one-per-Theme draw gives.
+- Avoiding repeats across days.
+- Swipe navigation, tappable dots, a counter, an end message.
+- Bold italic and any marker beyond `**` and `__`.
+- Truncating a text with an ellipsis.
+- Any server-side record of a dismissal.
 
 ## Items
 
@@ -95,99 +116,131 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Quick Home Questio
 [
   {
     "category": "api",
-    "description": "Every served Question carries its Theme's Category",
+    "description": "The `anecdotes` table as an entity: uuid `id`, `text` capped at 140 characters, timestamps",
     "steps": [
-      "`appQuestionSchema` requires `category` in the Theme list's category shape; `app/question.spec.ts` parses a Question with it and rejects one without",
-      "e2e through the Nest testing module with a fake repository (`app-content.e2e-spec.ts`): rows of `GET /app/questions` and `GET /app/questions?theme=` each carry their Theme's `category`",
-      "Competition specs stay green with their Question schemas unchanged",
+      "`_database/entities/anecdote.entity.ts` copies the shape of `theme.entity.ts`: `@Entity(\"anecdotes\")`, extends `BaseEntity`, generated uuid key",
+      "`text` is a `varchar` of length 140; `created_at` and `updated_at` are `timestamptz` date columns",
+      "No file under `_database/migrations/` is added or changed",
       "`bun run check` green"
     ],
-    "passes": true
+    "passes": false
+  },
+  {
+    "category": "contracts",
+    "description": "The schemas of `GET /app/anecdotes`: `n` from 1 to 50, 3 by default, answering `[{ id, text }]`",
+    "steps": [
+      "`appAnecdoteDrawQuerySchema`: no `n` parses to 3; `\"1\"` and `\"50\"` coerce to numbers; `\"0\"`, `\"51\"` and `\"2.5\"` are rejected",
+      "`appAnecdoteDrawResponseSchema` parses `[{ id, text }]`, strips any other column, rejects a row without `text`",
+      "Both are exported from `@mentis/contracts/app`",
+      "Specs in `app/anecdote.spec.ts`; `bun run check` green"
+    ],
+    "passes": false
   },
   {
     "category": "api",
-    "description": "A draw without `theme` serves at most one Question per Theme",
+    "description": "`GET /app/anecdotes` draws n distinct Anecdotes at random, public, on the Draw tier",
     "steps": [
-      "Repository spec over a mocked query builder (prior art `competition/_tests/competition.repository.spec.ts`): the theme-less draw keeps one random Ready Question per Published Theme, then orders at random and limits to n",
-      "With `theme`, the draw's query is unchanged",
-      "e2e: `GET /app/questions?n=3` answers 200 with the repository's rows parsed through the contract",
+      "e2e through the Nest testing module with a fake repository (`catalog/_tests/app-anecdotes.e2e-spec.ts`): no Authorization and no `n` answers 200, the repository is asked for 3, and `createdAt` is absent from the body",
+      "`?n=50` answers 200; `?n=0` and `?n=51` answer 400 in the `ErrorResponse` envelope",
+      "An empty table answers 200 `[]`; fewer rows than `n` answers those rows",
+      "Past the Draw tier's 30 requests a minute from one IP, the route answers 429",
+      "Repository spec over a mocked query builder (`catalog/_tests/anecdote.repository.spec.ts`, prior art `competition/_tests/competition.repository.spec.ts`): the draw orders by `random()` and limits to n",
+      "The `catalog/` line of `apps/api/AGENTS.md` names `/app/anecdotes`",
       "`bun run check` green"
     ],
-    "passes": true
-  },
-  {
-    "category": "answer-matching",
-    "description": "A pure two-choice pick beside `squareChoices`: the Canonical Answer and one wrong choice, both drawn and ordered at random under an injected rng",
-    "steps": [
-      "Returns exactly two strings: the Canonical Answer and one of the three wrong choices",
-      "Under scripted rng sequences, each of the three wrong choices and both orders are reachable",
-      "The input Question is never mutated",
-      "Specs in `shuffle.spec.ts`; `bun run check` green"
-    ],
-    "passes": true
+    "passes": false
   },
   {
     "category": "mobile",
-    "description": "Pure Quick Home Question day logic: draw or resume per Europe/Paris day, top tile, « X sur N » counter, end message (none at 0)",
+    "description": "Pure Anecdote text formatting: `**…**` and `__…__` split into regular, bold and italic segments",
     "steps": [
-      "No stored set, or a set from a past Paris day even half-answered: a draw is due",
-      "Today's set fully answered: no draw and no card",
-      "Today's set half-answered: the top tile is the first unanswered Question and the counter reads the answered count over N",
-      "N received from 0 to 3 gives N tiles; 0 means no card",
-      "Building a set from served Questions stores each Question's pair from the answer-matching pick",
-      "End message: 1 → « 1 question juste sur 3, bien joué ! », 2 → « 2 questions justes sur 3, bien joué ! », all correct → « 3 questions justes sur 3, bravo ! », 0 → none; « sur » takes N",
-      "vitest in `features/quick-home-question/` with time and rng injected; `bun run check` green"
+      "A text with both markers gives regular, bold and italic segments in order, markers removed",
+      "A text with no marker gives one regular segment",
+      "An orphan `**` or `__` shows literally",
+      "Inside `**…**` a `__` shows literally, and the reverse",
+      "Line breaks stay in their segment",
+      "vitest in `features/anecdote/`; `bun run check` green"
     ],
-    "passes": true
+    "passes": false
   },
   {
     "category": "mobile",
-    "description": "The persisted day set and its fetch: one `GET /app/questions?n=3` per Europe/Paris day, sent after hydration only, none once the day is answered",
+    "description": "Pure Anecdote day logic: draw due per Europe/Paris day, top Anecdote, dismissal, pile colours, with the `COLORS.troughDeep` role",
     "steps": [
-      "`api.ts` reads `GET /app/questions?n=3` with no `theme` and no Authorization header, parsed through `appQuestionDrawResponseSchema`",
-      "The store persists to AsyncStorage like the onboarding store and exposes a hydration flag; no request leaves before hydration",
-      "On the iOS simulator dev client: the first home visit of a Paris day sends exactly one `GET /app/questions?n=3`; a relaunch the same day sends none",
-      "A tap records its result at once; the day is re-read on home focus and on app foreground",
+      "No stored set, or a set from a past Paris day even partly dismissed: a draw is due",
+      "Today's set, even empty or fully dismissed: no draw is due",
+      "A partly dismissed set: the top Anecdote is the first not dismissed and its position is the dismissed count",
+      "Dismissing moves to the next Anecdote without mutating the set, and does nothing once all are dismissed",
+      "`COLORS.troughDeep` is `#D7BBA1`; pile colours are `face`, `trough`, `troughDeep` for 3 remaining, `face`, `trough` for 2, `face` for 1",
+      "vitest in `features/anecdote/` with time injected; `bun run check` green"
+    ],
+    "passes": false
+  },
+  {
+    "category": "mobile",
+    "description": "The Anecdote replaces the Quick Home Question on the home: persisted day set, one `GET /app/anecdotes?n=3` per Paris day, a minimal card, every Quick Home Question mobile file gone",
+    "steps": [
+      "`features/anecdote/api.ts` reads `GET /app/anecdotes` with `n=3` and no Authorization header, parsed through `appAnecdoteDrawResponseSchema`",
+      "The store persists on AsyncStorage as `mentis-anecdote` and exposes a hydration flag; no request leaves before hydration, and none while today's set is stored",
+      "The day is re-read on home focus and on app foreground, and a failed draw is retried there",
+      "Home shows the card above the Practice card: the top Anecdote's text and a cross; a tap records the dismissal at once and shows the next Anecdote, with no animation yet",
+      "The dev-only reset link drops today's set under its Anecdote name",
+      "`features/quick-home-question/` and `components/quick-home-question/` no longer exist, and no `apps/mobile/src` file names a Quick Home Question",
+      "`git diff main...HEAD` is empty for `apps/mobile/src/components/category-badge.tsx`; `theme/text.ts` has no Quick Home Question style and `TEXT.label` has its `lineHeight: 20` back",
+      "`apps/mobile/AGENTS.md` carries « never a fourth button look » and its example again; « only the sinking controls animate » stays deleted",
       "`bun run check` green"
     ],
-    "passes": true
+    "passes": false
   },
   {
     "category": "mobile",
-    "description": "The Quick Home Question choice button: rest, correct and wrong-tap reveals animated over 250 ms, `PRESSED` dim, fixed two-line height",
+    "description": "The Anecdote card's anatomy: formatted text and cross, separator, footer, and a solid pile in position colours",
     "steps": [
-      "Rest: white face, label on two lines at most then an ellipsis, both buttons at the fixed two-line height",
-      "Press: the `PRESSED` dim, no sink",
-      "Correct tap: the correct button alone ends on a `success` fill with a `COLORS.face` label, no icon",
-      "Wrong tap: both animate together; the tapped one ends on a white face, `danger` border and a cross before its label, the correct one on the `success` fill with a `COLORS.face` label",
-      "Disabled from the tap until the tile has left; `SquareButton` untouched",
-      "End states screenshotted on the iOS simulator dev client; `bun run check` green"
+      "`InterTight-Italic.ttf` loads in `app/_layout.tsx`; `TEXT` gains `anecdote` (Regular 14/20), `anecdoteBold` (SemiBold 14/20), `anecdoteItalic` (Italic 14/20) and `anecdoteLabel` (Italic 10)",
+      "The fonts rule of `apps/mobile/AGENTS.md` names the five faces in use instead of « Three faces, never more »",
+      "The text renders through the pure segments in those styles, `COLORS.ink`, with a minimum height of 4 × `TEXT.anecdote.lineHeight` and no `numberOfLines`",
+      "The cross is MaterialIcons `close` in a bare `Pressable` with `PRESSED`, `COLORS.inkMuted`, accessibility label « Passer l'anecdote »",
+      "A 1 px `COLORS.stroke` separator; beneath it « ANECDOTES DU JOUR » in `TEXT.anecdoteLabel` and `COLORS.inkMuted` on the left, N dots on the right with the top Anecdote's active",
+      "The pile wears the pure pile colours as plain `backgroundColor`, with no `gradient()` call and no stroke border",
+      "Every string is in `features/anecdote/constants.ts`; `bun run check` green"
     ],
-    "passes": true
+    "passes": false
   },
   {
     "category": "mobile",
-    "description": "The Quick Home Question card above the Practice card: tag, tile stack in Category colours, badge and Theme name, dots, `Skeleton` while loading, gone on failure",
+    "description": "The cross's sequence: the top card peels off left over the next one already in place, the cross inert meanwhile, the slot collapsing after the last card",
     "steps": [
-      "Home shows the card above the Practice card, its tag reading « Questions du jour : 0 sur 3 »",
-      "Top tile in its Category's colour: Category badge and Theme name above the text, two choice buttons, N dots with the top Question's dot active",
-      "Tiles beneath wear their own Question's Category colour, offset like a deck's edge, depth equal to the remaining count minus one",
-      "No swipe gesture moves between Questions",
-      "Loading: a skeleton card in the final structure on `COLORS.card`, tag without counter, the `components/ui` `Skeleton` pulsing; a 200 ms fade to the real card",
-      "Failure after the query's retries: no card and no error text; day fully answered: no card",
-      "States screenshotted on the iOS simulator dev client; `bun run check` green"
+      "Tap: the dismissal is recorded at once, then the existing peel runs (left, tilting, fading, 350 ms) with no reveal and no hold, the footer leaving with the card",
+      "The next Anecdote is already in place beneath, in `COLORS.face`",
+      "The cross is inert until the peel has ended: two quick taps dismiss one Anecdote",
+      "After the last cross: the peel ends, then the slot collapses over 250 ms and the Practice card rises, with no end message",
+      "A relaunch mid-peel resumes on the next Anecdote; a relaunch on a fully dismissed day shows no card and no collapse",
+      "Timings are named constants in `features/anecdote/constants.ts`; `bun run check` green"
     ],
-    "passes": true
+    "passes": false
   },
   {
     "category": "mobile",
-    "description": "The answer sequence: reveal, hold, top sheet peels off left while fading, stack rises, end message for 2 s, slot collapses",
+    "description": "The Anecdote card's loading state: a skeleton in the final structure, then a 200 ms fade",
     "steps": [
-      "Tap → reveal 250 ms → hold 700 ms → the top sheet peels off the pile to the left, tilting and fading over 350 ms, over the next Question already risen one step beneath it, and the counter advances",
-      "After the last tile: the end message replaces the card on the paper for 2 000 ms, then the slot collapses and the Practice card rises; 0 correct: the collapse follows the last tile directly",
-      "Every timing is a named constant in `features/quick-home-question/constants.ts`",
-      "A relaunch mid-sequence resumes on the next tile",
-      "End states screenshotted on the iOS simulator dev client; `bun run check` green"
+      "While the set is pending: the pile in its 3 position colours, three `Skeleton` bars in the 4-line text zone, no cross",
+      "The footer is drawn for real: separator, label, 3 dots with the first active",
+      "The real card replaces the skeleton with the 200 ms fade",
+      "Failure after the query's retries: no card and no error text; 0 received: no card; a fully dismissed day: no card",
+      "`bun run check` green"
+    ],
+    "passes": false
+  },
+  {
+    "category": "cleanup",
+    "description": "What only the Quick Home Question needed leaves the API, the contracts and answer-matching: `category` on a served Question, the one-per-Theme draw, `quickHomeQuestionChoices`",
+    "steps": [
+      "`git diff main...HEAD` is empty for `apps/api/src/catalog/repositories/catalog.repository.ts`, `apps/api/src/catalog/_tests/app-content.e2e-spec.ts` and `apps/api/src/competition/_tests/app-competition.e2e-spec.ts`",
+      "`git diff main...HEAD` is empty for `packages/contracts/src/app/question.ts`, `packages/contracts/src/app/question.spec.ts`, `packages/answer-matching/src/shuffle.ts` and `packages/answer-matching/src/shuffle.spec.ts`",
+      "`git diff main...HEAD` is empty for `apps/mobile/src/features/onboarding/constants.ts` and `apps/mobile/src/features/quiz/session-reducer.test.ts`",
+      "`apps/api/src/catalog/_tests/catalog.repository.spec.ts` no longer exists",
+      "No tracked file outside `PRD.md` and `progress.txt` names a Quick Home Question",
+      "`bun run check` green"
     ],
     "passes": false
   }
@@ -196,6 +249,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Quick Home Questio
 
 ## Human steps
 
-- Before the loop: the `apps/mobile/CONTEXT.md` (Quick Home Question) and `apps/mobile/AGENTS.md` (two rules deleted) edits ride on the loop's branch, so they land in its PR.
-- After item 2: on the dev API against the hosted database, `GET /app/questions?n=3` answers 3 distinct Themes, each with its Category — the SQL is only proven against a mocked query builder.
-- After item 8: a device review of the animations on iOS and Android (reveal, tile exit, collapse, skeleton pulse) — the Browser pane cannot run them.
+- After item 1: run `bun run migration:generate` then `bun run migration:run`, then apply the [ADR 0003](docs/adr/0003-database-admits-only-the-api.md) lock to the new table on the Supabase dashboard.
+- After item 1: insert the Anecdotes by SQL, before the app's first launch against them: an empty draw holds until the next Paris day, unless the dev link resets it.
+- After item 3: on the dev API against the hosted database, `GET /app/anecdotes` answers 3 distinct rows and `?n=51` answers 400 — the SQL is only proven against a mocked query builder.
+- After item 9: a device review on iOS and Android, on a 360 pt screen too: the card, the 4-line height, the formatted text, the peel, the collapse, the skeleton — the loop cannot run them.
