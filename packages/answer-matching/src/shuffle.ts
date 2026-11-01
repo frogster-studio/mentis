@@ -12,11 +12,3 @@ export function squareChoices(question: ShuffleableQuestion, rng: () => number):
   }
   return choices;
 }
-
-export function quickHomeQuestionChoices(
-  question: ShuffleableQuestion,
-  rng: () => number,
-): [string, string] {
-  const wrongChoice = question.wrongChoices[Math.floor(rng() * question.wrongChoices.length)];
-  return rng() < 0.5 ? [question.answer, wrongChoice] : [wrongChoice, question.answer];
-}

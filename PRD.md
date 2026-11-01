@@ -242,7 +242,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Player, 
       "No tracked file outside `PRD.md` and `progress.txt` names a Quick Home Question",
       "`bun run check` green"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```

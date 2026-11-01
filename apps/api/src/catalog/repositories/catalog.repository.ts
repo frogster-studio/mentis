@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { type ObjectLiteral, Repository, type SelectQueryBuilder } from "typeorm";
+import { Repository, type SelectQueryBuilder } from "typeorm";
 import { QuestionEntity } from "../../_database/entities/question.entity";
 import { ThemeEntity } from "../../_database/entities/theme.entity";
 import type { ThemeVisuals } from "../types/theme-visuals";
@@ -22,18 +22,7 @@ export type DrawnQuestion = {
   aliases: string[];
   misspellings: string[];
   wrongChoices: string[];
-  category: ThemeVisuals["category"];
 };
-
-type CategoryColumns = {
-  categoryId: string;
-  categoryName: string;
-  categoryColor: string;
-  categorySecondaryColor: string;
-  categoryIcon: string;
-};
-
-type DrawnQuestionRow = Omit<DrawnQuestion, "category"> & CategoryColumns;
 
 @Injectable()
 export class CatalogRepository {
@@ -43,7 +32,7 @@ export class CatalogRepository {
   ) {}
 
   async themesWithQuestionCounts(): Promise<StoredThemeWithQuestionCount[]> {
-    const builder = this.themes
+    const rows = await this.themes
       .createQueryBuilder("theme")
       .innerJoin("theme.category", "category")
       .leftJoin(
@@ -53,8 +42,12 @@ export class CatalogRepository {
       )
       .select("theme.id", "id")
       .addSelect("theme.name", "name")
-      .addSelect("theme.image", "image");
-    const rows = await selectCategoryColumns(builder)
+      .addSelect("theme.image", "image")
+      .addSelect("category.id", "categoryId")
+      .addSelect("category.name", "categoryName")
+      .addSelect("category.color", "categoryColor")
+      .addSelect("category.secondaryColor", "categorySecondaryColor")
+      .addSelect("category.icon", "categoryIcon")
       .addSelect("count(question.id)", "questionCount")
       .where("theme.published = true")
       .groupBy("theme.id")
@@ -66,15 +59,29 @@ export class CatalogRepository {
       .addGroupBy("category.secondaryColor")
       .addGroupBy("category.icon")
       .orderBy("theme.name")
-      .getRawMany<
-        { id: string; name: string; image: string; questionCount: string } & CategoryColumns
-      >();
+      .getRawMany<{
+        id: string;
+        name: string;
+        image: string;
+        categoryId: string;
+        categoryName: string;
+        categoryColor: string;
+        categorySecondaryColor: string;
+        categoryIcon: string;
+        questionCount: string;
+      }>();
     return rows.map((row) => ({
       id: row.id,
       name: row.name,
       image: row.image,
       questionCount: Number(row.questionCount),
-      category: categoryFromColumns(row),
+      category: {
+        id: row.categoryId,
+        name: row.categoryName,
+        color: row.categoryColor,
+        secondaryColor: row.categorySecondaryColor,
+        icon: row.categoryIcon,
+      },
     }));
   }
 
@@ -101,35 +108,31 @@ export class CatalogRepository {
     };
   }
 
-  async drawRandomQuestions(themeId: string | null, count: number): Promise<DrawnQuestion[]> {
-    const servable = this.servedQuestionBuilder()
+  drawRandomQuestions(themeId: string | null, count: number): Promise<DrawnQuestion[]> {
+    const builder = this.servedQuestionBuilder()
       .where("theme.published = true")
       .andWhere("question.readyToBePublished = true");
-    const drawn: SelectQueryBuilder<ObjectLiteral> =
-      themeId === null
-        ? this.oneRandomQuestionPerTheme(servable)
-        : servable.andWhere("question.themeId = :themeId", { themeId });
-    const rows = await drawn.orderBy("random()").limit(count).getRawMany<DrawnQuestionRow>();
-    return rows.map(toDrawnQuestion);
+    if (themeId !== null) {
+      builder.andWhere("question.themeId = :themeId", { themeId });
+    }
+    return builder.orderBy("random()").limit(count).getRawMany<DrawnQuestion>();
   }
 
   // An Attempt is fixed at issuance, so un-staging its content must never break one in flight.
-  async questionsByIds(ids: string[]): Promise<DrawnQuestion[]> {
+  questionsByIds(ids: string[]): Promise<DrawnQuestion[]> {
     if (ids.length === 0) {
-      return [];
+      return Promise.resolve([]);
     }
-    const rows = await this.servedQuestionBuilder()
+    return this.servedQuestionBuilder()
       .where("question.id in (:...ids)", { ids })
-      .getRawMany<DrawnQuestionRow>();
-    return rows.map(toDrawnQuestion);
+      .getRawMany<DrawnQuestion>();
   }
 
   // The join is what makes every drawn row carry its own Theme name, whatever the draw spanned.
   private servedQuestionBuilder(): SelectQueryBuilder<QuestionEntity> {
-    const builder = this.questions
+    return this.questions
       .createQueryBuilder("question")
       .innerJoin(ThemeEntity, "theme", "theme.id = question.themeId")
-      .innerJoin("theme.category", "category")
       .select("question.id", "id")
       .addSelect("question.themeId", "themeId")
       .addSelect("theme.name", "themeName")
@@ -138,57 +141,5 @@ export class CatalogRepository {
       .addSelect("question.aliases", "aliases")
       .addSelect("question.misspellings", "misspellings")
       .addSelect("question.wrongChoices", "wrongChoices");
-    return selectCategoryColumns(builder);
-  }
-
-  // A theme-less draw spans as many Themes as it can, so no Theme fills the set alone.
-  private oneRandomQuestionPerTheme(
-    servable: SelectQueryBuilder<QuestionEntity>,
-  ): SelectQueryBuilder<ObjectLiteral> {
-    const onePerTheme = servable
-      .distinctOn(["question.themeId"])
-      .orderBy("question.themeId")
-      .addOrderBy("random()");
-    return this.questions.manager
-      .createQueryBuilder()
-      .select("drawn.*")
-      .from(`(${onePerTheme.getQuery()})`, "drawn")
-      .setParameters(onePerTheme.getParameters());
   }
 }
-
-const selectCategoryColumns = <Entity extends object>(
-  builder: SelectQueryBuilder<Entity>,
-): SelectQueryBuilder<Entity> =>
-  builder
-    .addSelect("category.id", "categoryId")
-    .addSelect("category.name", "categoryName")
-    .addSelect("category.color", "categoryColor")
-    .addSelect("category.secondaryColor", "categorySecondaryColor")
-    .addSelect("category.icon", "categoryIcon");
-
-const categoryFromColumns = (row: CategoryColumns): ThemeVisuals["category"] => ({
-  id: row.categoryId,
-  name: row.categoryName,
-  color: row.categoryColor,
-  secondaryColor: row.categorySecondaryColor,
-  icon: row.categoryIcon,
-});
-
-const toDrawnQuestion = ({
-  categoryId,
-  categoryName,
-  categoryColor,
-  categorySecondaryColor,
-  categoryIcon,
-  ...question
-}: DrawnQuestionRow): DrawnQuestion => ({
-  ...question,
-  category: categoryFromColumns({
-    categoryId,
-    categoryName,
-    categoryColor,
-    categorySecondaryColor,
-    categoryIcon,
-  }),
-});

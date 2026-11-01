@@ -23,13 +23,6 @@ function question(id: string, answer: string): Question {
     aliases: [],
     misspellings: [],
     wrongChoices: ["faux un", "faux deux", "faux trois"],
-    category: {
-      id: "histoire",
-      name: "Histoire",
-      color: "#8d6e63",
-      secondaryColor: "#efebe9",
-      icon: "history-edu",
-    },
   };
 }
 
