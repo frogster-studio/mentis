@@ -134,7 +134,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Player, 
       "Both are exported from `@mentis/contracts/app`",
       "Specs in `app/anecdote.spec.ts`; `bun run check` green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "api",

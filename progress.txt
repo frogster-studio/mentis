@@ -3,3 +3,9 @@ Done: `AnecdoteEntity`, shape of theme.entity.ts: uuid id, text varchar(140), up
 Decisions: no entity registry to touch, datasource glob + knip entry pick up `*.entity.ts`. One comment: markers count in the 140. No schema-constraints spec: PRD test seams don't list one.
 Files: apps/api/src/_database/entities/anecdote.entity.ts, PRD.md, progress.txt.
 Notes: no migration written. Human step pending: migration:generate + migration:run, ADR 0003 lock on dashboard, insert rows. `bun run check` carries one biome warning (unused imports, quick-home-question-tile.tsx), pre-existing, file leaves with the mobile replacement item.
+
+## Item 2 — contracts: `GET /app/anecdotes` schemas
+Done: `appAnecdoteDrawQuerySchema` (n coerced int 1-50, default 3), `appAnecdoteDrawResponseSchema` (array of `{ id, text }`, zod strips extra keys), types `AppAnecdoteDrawQuery`/`AppAnecdoteDrawResponse`, exported from `@mentis/contracts/app`.
+Decisions: shape mirrors app/question.ts. Row schema unexported, like `appQuestionSchema`. No text max-length in the contract: the 140 cap is the database's.
+Files: packages/contracts/src/app/anecdote.ts, anecdote.spec.ts, index.ts, PRD.md, progress.txt.
+Notes: sandbox ran typecheck, non-api tests, biome (same pre-existing tile warning). Knip not run here; contract exports come through the package entry, not flagged. Next: item 3, api route.
