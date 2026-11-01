@@ -148,7 +148,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Player, 
       "The `catalog/` line of `apps/api/AGENTS.md` names `/app/anecdotes`",
       "`bun run check` green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

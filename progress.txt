@@ -9,3 +9,9 @@ Done: `appAnecdoteDrawQuerySchema` (n coerced int 1-50, default 3), `appAnecdote
 Decisions: shape mirrors app/question.ts. Row schema unexported, like `appQuestionSchema`. No text max-length in the contract: the 140 cap is the database's.
 Files: packages/contracts/src/app/anecdote.ts, anecdote.spec.ts, index.ts, PRD.md, progress.txt.
 Notes: sandbox ran typecheck, non-api tests, biome (same pre-existing tile warning). Knip not run here; contract exports come through the package entry, not flagged. Next: item 3, api route.
+
+## Item 3 — api: `GET /app/anecdotes`
+Done: `AnecdotesController` (`app/anecdotes`, `DrawThrottlerGuard`, zod query pipe), `AnecdoteService.drawAnecdotes` (parses the repository's entities through `appAnecdoteDrawResponseSchema`, which strips timestamps), `AnecdoteRepository.drawRandomAnecdotes` (`orderBy("random()").limit(n).getMany()`), wired into `CatalogModule` beside the Question/Theme layers.
+Decisions: separate repository/service so catalog.repository.ts stays free to return to main (cleanup item). No mapper: lone schema.parse. Repository returns whole entities. 429 test gets its own app instance (fresh in-memory throttler bucket), loops `DRAW_TIER.limit` 200s then one 429 RATE_LIMITED. Real TypeORM SQL checked once in a scratch spec: `SELECT ... FROM "anecdotes" "anecdote" ORDER BY random() ASC LIMIT 3`.
+Files: apps/api/src/catalog/{controllers/anecdotes.controller.ts, services/anecdote.service.ts, repositories/anecdote.repository.ts, modules/catalog.module.ts, _tests/app-anecdotes.e2e-spec.ts, _tests/anecdote.repository.spec.ts}, apps/api/AGENTS.md, PRD.md, progress.txt.
+Notes: sandbox ran typecheck, all tests (api via no-swc config, 493 green), biome (pre-existing tile warning only). Knip not run. Human step pending: live smoke of `/app/anecdotes` against hosted DB. Next: item 4 (text segments) or 5 (day logic), pure mobile.
