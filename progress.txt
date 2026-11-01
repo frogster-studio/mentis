@@ -21,3 +21,9 @@ Done: `anecdoteTextSegments(text)` → `{ text, emphasis: "regular" | "bold" | "
 Decisions: emphasis as a local string union, like mobile's `status`/`layout` unions; the contracts-enum rule is for shared vocabularies, this one is mobile render-only. File `features/anecdote/text-segments.ts`; the card item maps emphasis to `TEXT.anecdote`/`anecdoteBold`/`anecdoteItalic`.
 Files: apps/mobile/src/features/anecdote/{text-segments.ts, text-segments.test.ts}, PRD.md, progress.txt.
 Notes: sandbox ran typecheck, non-api tests, biome (pre-existing tile warning only). Knip not run; export used only by its test until the card item (vitest plugin makes tests entries). Next: item 5 (day logic + `COLORS.troughDeep`).
+
+## Item 5 — mobile: Anecdote day logic
+Done: `features/anecdote/day-set.ts`: `AnecdoteDaySet` `{ day, anecdotes, dismissedCount }`, `buildDaySet(anecdotes, now)`, `isDrawDue(daySet | null, now)` (parisDay mismatch), `topAnecdote` (`anecdotes[dismissedCount] ?? null`), `dismissTopAnecdote` (new object, same ref once none left), `pileColors(remainingCount)` slices `[face, trough, troughDeep]`. `COLORS.troughDeep` `#D7BBA1` added after `trough`.
+Decisions: `Anecdote = AppAnecdoteDrawResponse[number]` (contract row unexported, index alias like admin's Theme). Count not a boolean list: nothing about a dismissal but its order matters; count doubles as the dots' active index. `pileColors` takes a count, not a set, so the skeleton can ask for 3 without one. No rng: anecdotes stored as served.
+Files: apps/mobile/src/features/anecdote/{day-set.ts, day-set.test.ts}, apps/mobile/src/theme/tokens.ts, PRD.md, progress.txt.
+Notes: sandbox ran typecheck, non-api tests, biome (pre-existing tile warning only). Knip not run; day-set exports test-only until item 6 (store + card). Old `features/quick-home-question/day-set.ts` untouched, leaves in item 6. Next: item 6, the home replacement.

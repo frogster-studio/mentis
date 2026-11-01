@@ -174,7 +174,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Player, 
       "`COLORS.troughDeep` is `#D7BBA1`; pile colours are `face`, `trough`, `troughDeep` for 3 remaining, `face`, `trough` for 2, `face` for 1",
       "vitest in `features/anecdote/` with time injected; `bun run check` green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
