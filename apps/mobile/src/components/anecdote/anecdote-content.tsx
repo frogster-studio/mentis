@@ -10,8 +10,10 @@ import { COLORS, PRESSED, SPACE } from "@/theme/tokens";
 
 const DISMISS_ICON_SIZE = 20;
 
-// Every card holds four lines, so the pile keeps one height whatever the text.
 const TEXT_ZONE_MIN_LINES = 4;
+
+// Every card holds four lines, so the pile keeps one height whatever the text.
+export const ANECDOTE_TEXT_ZONE_MIN_HEIGHT = TEXT_ZONE_MIN_LINES * TEXT.anecdote.lineHeight;
 
 const EMPHASIS_TEXT = {
   regular: TEXT.anecdote,
@@ -28,7 +30,7 @@ export interface AnecdoteContentProps {
 
 export const AnecdoteContent = ({ anecdote, position, total, onDismiss }: AnecdoteContentProps) => {
   return (
-    <View style={styles.root}>
+    <>
       <View style={styles.body}>
         <Text style={styles.text}>
           {anecdoteTextSegments(anecdote.text).map((segment, index) => (
@@ -48,17 +50,16 @@ export const AnecdoteContent = ({ anecdote, position, total, onDismiss }: Anecdo
         </Pressable>
       </View>
       <AnecdoteFooter position={position} total={total} />
-    </View>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
-  root: { gap: SPACE.sm },
   body: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: SPACE.sm,
-    minHeight: TEXT_ZONE_MIN_LINES * TEXT.anecdote.lineHeight,
+    minHeight: ANECDOTE_TEXT_ZONE_MIN_HEIGHT,
   },
   text: { ...TEXT.anecdote, flex: 1, color: COLORS.ink },
 });

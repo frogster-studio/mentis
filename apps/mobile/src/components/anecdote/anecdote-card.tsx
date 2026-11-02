@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { View } from "react-native";
+import Animated, { css } from "react-native-reanimated";
 import { AnecdoteCollapsingSlot } from "@/components/anecdote/anecdote-collapsing-slot";
 import { AnecdoteContent } from "@/components/anecdote/anecdote-content";
 import { AnecdotePeelingSheet } from "@/components/anecdote/anecdote-peeling-sheet";
@@ -10,12 +11,15 @@ import {
   ANECDOTE_COLLAPSE_MS,
   ANECDOTE_COUNT,
   ANECDOTE_EXIT_MS,
+  ANECDOTE_FADE_MS,
 } from "@/features/anecdote/constants";
 import { type Anecdote, pileColors, topAnecdote } from "@/features/anecdote/day-set";
 import { useAnecdoteStore } from "@/features/anecdote/store";
 import { GUTTER } from "@/theme/tokens";
 
 const SKELETON_PILE_COLORS = pileColors(ANECDOTE_COUNT);
+
+const FADE_IN = css.keyframes({ from: { opacity: 0 }, to: { opacity: 1 } });
 
 type Peel = { anecdote: Anecdote; position: number; total: number };
 
@@ -70,9 +74,10 @@ export const AnecdoteCard = () => {
     useAnecdoteStore.getState().dismiss();
   };
 
+  // Mounted only once the set is there, so the real card fades in where the skeleton stood.
   return (
-    <View
-      style={[styles.root, peel !== null && styles.inert]}
+    <Animated.View
+      style={[styles.root, styles.fadeIn, peel !== null && styles.inert]}
       onLayout={(event) => {
         slotHeight.current = event.nativeEvent.layout.height;
       }}
@@ -98,11 +103,16 @@ export const AnecdoteCard = () => {
           />
         </AnecdotePeelingSheet>
       )}
-    </View>
+    </Animated.View>
   );
 };
 
-const styles = StyleSheet.create({
+const styles = css.create({
   root: { marginHorizontal: GUTTER, marginTop: GUTTER, paddingBottom: ANECDOTE_PILE_DEPTH },
+  fadeIn: {
+    animationName: FADE_IN,
+    animationDuration: ANECDOTE_FADE_MS,
+    animationTimingFunction: "ease-out",
+  },
   inert: { pointerEvents: "none" },
 });

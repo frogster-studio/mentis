@@ -229,7 +229,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Player, 
       "Failure after the query's retries: no card and no error text; 0 received: no card; a fully dismissed day: no card",
       "`bun run check` green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "cleanup",
