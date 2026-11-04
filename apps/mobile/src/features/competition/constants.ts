@@ -1,4 +1,6 @@
 export const COMPETITION_ERROR = "Impossible de lancer la compétition.";
+export const COMPETITION_LOAD_ERROR =
+  "Impossible de charger la compétition. Touche une carte pour réessayer.";
 export const COMPETITION_JUDGE_ERROR = "Impossible d'envoyer tes réponses.";
 export const COMPETITION_EXPIRED_ERROR = "Cette compétition appartient à un jour passé.";
 export const COMPETITION_PREMIUM_ERROR = "Réservé aux membres Premium.";

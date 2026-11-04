@@ -41,7 +41,7 @@ export default function Page() {
     ? (accountStats.data?.competitionStreak.longest ?? 0)
     : null;
   // A failed Standing read shows « -- », never the rank it last cached.
-  const rank = standing.isSuccess ? standing.data.rank : null;
+  const rank = standing.isSuccess ? (standing.data?.rank ?? null) : null;
 
   // The signed-out world is empty because the stats moved, not because nothing was ever played.
   const showTransferNotice = !isSignedIn && transferred && tallies.length === 0 && !dismissed;

@@ -2,28 +2,59 @@ import type { AppCompetitionLeaderboardPageResponse } from "@mentis/contracts/ap
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import FastSquircleView from "react-native-fast-squircle";
+import { Skeleton } from "@/components/ui/skeleton";
 import { POINTS_UNIT } from "@/features/quiz/constants";
 import { LEADERBOARD_EMPTY } from "@/features/world/constants";
 import { TEXT } from "@/theme/text";
 import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
 import { MEDAL_IMAGE } from "@/utils/assets";
 
+const SKELETON_ROWS = [0, 1, 2];
+// « n° 12 » and « 120 pts »: typical widths, not the widest.
+const RANK_SKELETON_WIDTH = 32;
+const POINTS_SKELETON_WIDTH = 52;
+
 export interface LeaderboardPreviewCardProps {
-  entries: AppCompetitionLeaderboardPageResponse["entries"];
+  entries: AppCompetitionLeaderboardPageResponse["entries"] | null;
   myPseudo: string | null;
+  isFrozen: boolean;
   onPress: () => void;
 }
 
 export const LeaderboardPreviewCard = ({
   entries,
   myPseudo,
+  isFrozen,
   onPress,
 }: LeaderboardPreviewCardProps) => {
   return (
     <Pressable onPress={onPress}>
       <FastSquircleView style={styles.card}>
         <View style={styles.rows}>
-          {entries.length === 0 ? (
+          {entries === null ? (
+            SKELETON_ROWS.map((index) => (
+              <View key={index} style={[styles.row, { paddingLeft: index * 10 }]}>
+                <Skeleton
+                  radius={RADIUS.sm}
+                  isOnDark
+                  isFrozen={isFrozen}
+                  style={styles.rankSkeleton}
+                />
+                <Skeleton
+                  radius={RADIUS.sm}
+                  isOnDark
+                  isFrozen={isFrozen}
+                  style={styles.pseudoSkeleton}
+                />
+                <Skeleton
+                  radius={RADIUS.sm}
+                  isOnDark
+                  isFrozen={isFrozen}
+                  style={styles.pointsSkeleton}
+                />
+              </View>
+            ))
+          ) : entries.length === 0 ? (
             <Text style={styles.empty}>{LEADERBOARD_EMPTY}</Text>
           ) : (
             entries.map((entry, index) => (
@@ -76,6 +107,9 @@ const styles = StyleSheet.create({
   rank: { ...TEXT.captionStrong, color: COLORS.face },
   pseudo: { ...TEXT.body, color: COLORS.face, flex: 1 },
   points: { ...TEXT.captionStrong, color: COLORS.face },
+  rankSkeleton: { width: RANK_SKELETON_WIDTH, height: TEXT.captionStrong.lineHeight },
+  pseudoSkeleton: { flex: 1, height: TEXT.body.lineHeight },
+  pointsSkeleton: { width: POINTS_SKELETON_WIDTH, height: TEXT.captionStrong.lineHeight },
   empty: { ...TEXT.body, color: COLORS.face, paddingVertical: SPACE.xs },
   medal: {
     position: "absolute",

@@ -2,7 +2,8 @@ import { appAccountStatsResponseSchema } from "@mentis/contracts/app";
 import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import { fetchHistoryPage, fetchProfile, setPseudo } from "@/features/account/requests";
 import { api } from "@/lib/api";
-import { ACCOUNT_QUERY_ROOT, LONG_STALE_TIME_MS, queryClient } from "@/lib/query-client";
+import { LONG_STALE_TIME_MS, queryClient } from "@/lib/query-client";
+import { ACCOUNT_QUERY_ROOT } from "@/lib/query-persistence";
 
 // Keyed by Player id so one Player's stats never bleed into another's; the wire ignores the id.
 export const accountKeys = {

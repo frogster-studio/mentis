@@ -57,10 +57,10 @@ export default function Page() {
         <Text style={styles.title}>{LEADERBOARD_TITLE}</Text>
         <View style={styles.spacer} />
       </View>
-      {leaderboard.isPending ? (
-        <ScreenLoading />
-      ) : leaderboard.isError ? (
+      {leaderboard.isError ? (
         <ScreenError message={LEADERBOARD_ERROR} onRetry={() => void leaderboard.refetch()} />
+      ) : leaderboard.data === undefined ? (
+        <ScreenLoading />
       ) : (
         <View style={styles.body}>
           <LeaderboardPager

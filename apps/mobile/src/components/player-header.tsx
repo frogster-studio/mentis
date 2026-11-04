@@ -11,6 +11,7 @@ import { useProfile } from "@/features/account/api";
 import { useAuthStore } from "@/features/account/auth-store";
 import { PseudoSheet } from "@/features/account/components/pseudo-sheet";
 import { PROFILE_TITLE } from "@/features/account/constants";
+import { avatarUrlOf } from "@/features/account/user-metadata";
 import { HOME_TITLE } from "@/features/quiz/constants";
 import { WORLD_TITLE } from "@/features/world/constants";
 import { TEXT } from "@/theme/text";
@@ -24,7 +25,8 @@ interface PlayerHeaderProps {
 
 export const PlayerHeader = ({ isWorld }: PlayerHeaderProps) => {
   const router = useRouter();
-  const playerId = useAuthStore((state) => state.session?.user.id);
+  const user = useAuthStore((state) => state.session?.user);
+  const playerId = user?.id;
   const profile = useProfile(playerId);
   const [pseudoVisible, setPseudoVisible] = useState(false);
 
@@ -41,7 +43,10 @@ export const PlayerHeader = ({ isWorld }: PlayerHeaderProps) => {
           </MainSubHeader>
         }
       >
-        <ProfileAvatar initial={profileInitial(profile.data?.pseudo)} />
+        <ProfileAvatar
+          photoUrl={avatarUrlOf(user) ?? null}
+          initial={profileInitial(profile.data?.pseudo)}
+        />
 
         <PlayerGreeting isWorld={isWorld} onPseudoPress={() => setPseudoVisible(true)} />
 
