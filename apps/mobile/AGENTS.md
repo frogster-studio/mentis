@@ -29,7 +29,7 @@
   // ❌ backgroundColor: categoryWashSolid(category.color)
   ```
 - Spacing and radius come off the token ladders — `SPACE`/`GUTTER`, `RADIUS`. Screens pick ladder steps, no free integers. Depth is only ever the sink edge under a control — never a blur (`boxShadow`, `elevation`, the `shadow*` triple).
-- Text styles **only** from `TEXT` (in `src/theme/`) — no `fontFamily`/`fontSize`/`fontWeight`/`lineHeight` literals in components (dev-only debug text excepted). Three faces, never more: **Epunda Slab Regular** for content headings, **Inter Tight SemiBold** for numerals and UI emphasis, **Inter Tight Regular** for everything else — `fontWeight` is never set, the face file *is* the weight. Font files in `assets/fonts/` under their PostScript names; a missing file fails the build, a runtime load failure falls back to the system font.
+- Text styles **only** from `TEXT` (in `src/theme/`) — no `fontFamily`/`fontSize`/`fontWeight`/`lineHeight` literals in components (dev-only debug text excepted). The faces in use: **Epunda Slab Regular** for content headings, **Epunda Slab Medium** for onboarding, sheet and section titles, **Inter Tight SemiBold** for numerals and UI emphasis, **Inter Tight Italic** for the Anecdote's italic spans and label, **Inter Tight Regular** for everything else — `fontWeight` is never set, the face file *is* the weight. Font files in `assets/fonts/` under their PostScript names; a missing file fails the build, a runtime load failure falls back to the system font.
 - All UI copy in **French** — feature copy in the feature's `constants.ts`, shared-ui copy a module constant beside its primitive.
 - **Raster images ship as the WebP `bun run images` generates, never the PNG.** The original is a Figma PNG export at displayed dp × 3 (type `<px>w` in Figma's scale field, e.g. `360w` for a 120 dp element), saved under `assets/originals/<same path>`; the script refuses anything wider than 1290 px. Flat shapes (logos, pictos) are svg components instead.
 
@@ -38,14 +38,12 @@
   // ❌ require("…/assets/images/onboarding/gem.png")  // a 1200 px PNG drawn at 120 dp
   ```
 - Icons come from `@expo/vector-icons`: MaterialIcons for controls (`IconName`), MaterialCommunityIcons where only its outline set has the glyph (`CommunityIconName`). A component taking an icon takes its glyph name, never an icon component. The only bespoke glyph is the hand-drawn `react-native-svg` component (`LogoMark`) — an svg drawing becomes a component, never an imported file.
-- **`NewButton`** is the control of the current visual direction — white squircle face, ink border, ink sink edge; `layout` (`block` | `hug`) and `shape` (`rounded` | `full`) are its only shape controls, and it takes a label, an icon, or both. **`Button`** / **`QuietButton`** are the pages that direction has not reached yet; glyph-only and text-only taps stay a bare `Pressable` dimmed with `PRESSED` — never a fourth button look. Only the sinking controls animate, through the one shared press mechanic; a state swap elsewhere (selected, dimmed) lands as static styles, never an Animated fade.
+- **`NewButton`** is the control of the current visual direction — white squircle face, ink border, ink sink edge; `layout` (`block` | `hug`) and `shape` (`rounded` | `full`) are its only shape controls, and it takes a label, an icon, or both. **`Button`** / **`QuietButton`** are the pages that direction has not reached yet; glyph-only and text-only taps stay a bare `Pressable` dimmed with `PRESSED` — never a fourth button look.
 
   ```tsx
   // ✅ <NewButton label={PRACTICE_CTA_LABEL} icon="play-circle-outline" />
   // ✅ <NewButton layout="hug" shape="full" icon="menu" accessibilityLabel={ACCOUNT_TITLE} />
   // ❌ a Pressable given its own face styles — that's a fourth look; use QuietButton
-  // ✅ style={[styles.row, isSelected && { backgroundColor: color }, dimmed && { opacity: 0.6 }]}
-  // ❌ Animated.timing on a row face's opacity when the selection changes
   ```
 - Answer judging and the Carré shuffle come from `@mentis/answer-matching` (source-first like contracts), never re-implemented here — the API judges competition with the same code.
 - **`APP_VARIANT` (`development` by default, `production`) is the only environment switch.** `app.config.ts` reads `.env.${APP_VARIANT}` itself and republishes it through `extra`, so the native identity and the credentials cannot drift; the app reads them off `Constants.expoConfig.extra`, never `process.env`, and `NODE_ENV` decides nothing. On EAS Build no `.env` file exists: the values come from the EAS-hosted `preview` and `production` environments that `eas.json` names per profile, so a new `EXPO_PUBLIC_*` key goes there too or the build fails at config time.
