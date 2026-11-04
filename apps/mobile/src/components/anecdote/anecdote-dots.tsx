@@ -1,0 +1,33 @@
+import { StyleSheet, View } from "react-native";
+import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
+
+const DOT_SIZE = 6;
+const IDLE_DOT_ALPHA = "33";
+
+export interface AnecdoteDotsProps {
+  position: number;
+  total: number;
+}
+
+export const AnecdoteDots = ({ position, total }: AnecdoteDotsProps) => {
+  const dotPositions = Array.from({ length: total }, (_, index) => index);
+
+  return (
+    <View style={styles.row}>
+      {dotPositions.map((dotPosition) => (
+        <View key={dotPosition} style={[styles.dot, dotPosition !== position && styles.idleDot]} />
+      ))}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  row: { flexDirection: "row", gap: SPACE.xs },
+  dot: {
+    width: DOT_SIZE,
+    height: DOT_SIZE,
+    borderRadius: RADIUS.round,
+    backgroundColor: COLORS.ink,
+  },
+  idleDot: { backgroundColor: `${COLORS.ink}${IDLE_DOT_ALPHA}` },
+});

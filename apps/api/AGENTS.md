@@ -32,7 +32,7 @@ Deliberately **not** a bounded context, so no `CONTEXT.md`: a gateway publishes 
 
 ```
 src/
-  catalog/        # /app/themes + /app/questions: public Quiz play reads
+  catalog/        # /app/themes + /app/questions + /app/anecdotes: public Quiz play reads
     modules/ controllers/ services/ repositories/ mappers/ _tests/   # the layers of every feature
   competition/    # /app/me/competition: Attempt issuance, resume and the judged finalize; plus the public Leaderboard
   curation/       # /admin/*: the Editor's Catalog reads, staged content included

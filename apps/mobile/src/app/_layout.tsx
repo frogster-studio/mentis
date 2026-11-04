@@ -17,6 +17,7 @@ export default function Layout() {
     "EpundaSlab-Medium": require("../../assets/fonts/EpundaSlab-Medium.ttf"),
     "InterTight-Regular": require("../../assets/fonts/InterTight-Regular.ttf"),
     "InterTight-SemiBold": require("../../assets/fonts/InterTight-SemiBold.ttf"),
+    "InterTight-Italic": require("../../assets/fonts/InterTight-Italic.ttf"),
   });
 
   // A load failure still lifts the splash — the app falls back to the system font.

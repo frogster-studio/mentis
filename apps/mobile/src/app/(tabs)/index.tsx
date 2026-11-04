@@ -1,5 +1,8 @@
 import { Redirect } from "expo-router";
 import { ScrollView } from "react-native-gesture-handler";
+import { AnecdoteCard } from "@/components/anecdote/anecdote-card";
+import { DevResetAnecdotes } from "@/components/anecdote/dev-reset-anecdotes";
+import { useBottomTabBarHeight } from "@/components/bottom-tab-bar";
 import { useMainHeaderHeight } from "@/components/main-header";
 import { MAIN_SUB_HEADER_VISIBLE_HEIGHT } from "@/components/main-sub-header";
 import { useTabScroll } from "@/components/tab-scroll";
@@ -10,6 +13,7 @@ import { SPACE } from "@/theme/tokens";
 export default function Page() {
   const hasOnboarded = useOnboardingStore((state) => state.hasOnboarded);
   const headerHeight = useMainHeaderHeight() + MAIN_SUB_HEADER_VISIBLE_HEIGHT;
+  const tabBarHeight = useBottomTabBarHeight();
   const onScroll = useTabScroll();
 
   if (!hasOnboarded) {
@@ -21,9 +25,11 @@ export default function Page() {
       showsVerticalScrollIndicator={false}
       onScroll={onScroll}
       scrollEventThrottle={16}
-      contentContainerStyle={{ paddingTop: headerHeight + SPACE.lg }}
+      contentContainerStyle={{ paddingTop: headerHeight + SPACE.lg, paddingBottom: tabBarHeight }}
     >
+      <AnecdoteCard />
       <PracticeCard />
+      <DevResetAnecdotes />
     </ScrollView>
   );
 }

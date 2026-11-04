@@ -11,6 +11,7 @@ export const COLORS = {
   primaryPlaceholder: "rgba(160, 101, 62, 0.4)",
   quiet: "#F1DBC6",
   trough: "#E6D3C3",
+  troughDeep: "#D7BBA1",
   neutral: "#C4BDB8",
   catchup: "#60A5FA",
   catchupWash: "#DDE5D7",

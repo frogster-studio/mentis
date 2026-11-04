@@ -1,4 +1,5 @@
 export * from "./account";
+export * from "./anecdote";
 export * from "./competition";
 export * from "./history";
 export * from "./premium";
