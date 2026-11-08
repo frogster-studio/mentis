@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Squircle } from "@/components/ui/squircle";
 import { useProfile } from "@/features/account/api";
 import { useAuthStore } from "@/features/account/auth-store";
@@ -10,6 +11,8 @@ import { COLORS, CONTROL_SQUARE_SIZE, PRESSED, RADIUS, SPACE } from "@/theme/tok
 
 const GREETING = "Salut";
 const GREETING_SUFFIX = "!";
+// « 120 pts » with the badge's padding: a typical Season total, not the widest.
+const POINTS_BADGE_SKELETON_WIDTH = 56;
 
 interface PlayerGreetingProps {
   isWorld: boolean;
@@ -53,7 +56,14 @@ export const PlayerGreeting = ({ isWorld, onPseudoPress }: PlayerGreetingProps) 
             {standing.data.seasonTotal} {POINTS_UNIT}
           </Text>
         </Squircle>
-      ) : null}
+      ) : playerId === undefined ? null : (
+        <Skeleton
+          radius={RADIUS.sm}
+          isOnDark={false}
+          isFrozen={standing.isError}
+          style={styles.pointsBadgeSkeleton}
+        />
+      )}
     </Pressable>
   );
 };
@@ -71,6 +81,10 @@ const styles = StyleSheet.create({
   },
   greeting: { ...TEXT.body, color: COLORS.ink },
   pointsBadge: { alignSelf: "flex-start", paddingHorizontal: SPACE.xs, paddingVertical: SPACE.xxs },
+  pointsBadgeSkeleton: {
+    width: POINTS_BADGE_SKELETON_WIDTH,
+    height: TEXT.captionStrong.lineHeight + SPACE.xxs * 2,
+  },
   points: { ...TEXT.captionStrong, color: COLORS.ink },
   pressed: PRESSED,
 });

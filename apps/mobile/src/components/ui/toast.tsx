@@ -41,8 +41,13 @@ export const ToastHost = () => (
   />
 );
 
-export const showToast = (message: string, icon: CommunityIconName, position: ToastPosition) => {
-  toast.custom(<Toast message={message} icon={icon} />, { position });
+export const showToast = (
+  message: string,
+  icon: CommunityIconName,
+  position: ToastPosition,
+  id?: string,
+) => {
+  toast.custom(<Toast message={message} icon={icon} />, { position, id });
 };
 
 const styles = StyleSheet.create({

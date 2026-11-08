@@ -13,9 +13,14 @@ export const AnecdoteSkeleton = () => {
   return (
     <>
       <View style={styles.textZone}>
-        <Skeleton style={styles.line} />
-        <Skeleton style={styles.line} />
-        <Skeleton style={[styles.line, styles.shortLine]} />
+        <Skeleton radius={RADIUS.sm} isOnDark={false} isFrozen={false} style={styles.line} />
+        <Skeleton radius={RADIUS.sm} isOnDark={false} isFrozen={false} style={styles.line} />
+        <Skeleton
+          radius={RADIUS.sm}
+          isOnDark={false}
+          isFrozen={false}
+          style={[styles.line, styles.shortLine]}
+        />
       </View>
       <AnecdoteFooter position={0} total={ANECDOTE_COUNT} />
     </>
@@ -27,7 +32,6 @@ function lineBar(text: { fontSize: number; lineHeight: number }) {
   return {
     height: text.fontSize,
     marginVertical: (text.lineHeight - text.fontSize) / 2,
-    borderRadius: RADIUS.sm,
   };
 }
 

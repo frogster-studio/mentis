@@ -2,9 +2,10 @@ import { accountKeys } from "@/features/account/api";
 import { useAuthStore } from "@/features/account/auth-store";
 import { queryClient } from "@/lib/query-client";
 import { useDrainOnTriggers } from "@/lib/use-drain-on-triggers";
-import { competitionKeys, pushFinalize } from "./api";
+import { pushFinalize } from "./api";
 import { finalizesForOwner, isPermanentRefusal } from "./finalize-outbox";
 import { useFinalizeOutboxStore } from "./finalize-outbox-store";
+import { competitionKeys } from "./keys";
 
 // Each batch is pushed on its own, so one dead Attempt never blocks the next one's judgement.
 export async function drainFinalizeOutbox(playerId: string): Promise<void> {

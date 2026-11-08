@@ -5,8 +5,6 @@ import { useMainHeaderHeight } from "@/components/main-header";
 import { MAIN_SUB_HEADER_VISIBLE_HEIGHT } from "@/components/main-sub-header";
 import { useTabScroll } from "@/components/tab-scroll";
 import { iconNameOrFallback } from "@/components/ui/icon-name";
-import { ScreenError } from "@/components/ui/screen-error";
-import { ScreenLoading } from "@/components/ui/screen-loading";
 import { showToast } from "@/components/ui/toast";
 import { useProfile } from "@/features/account/api";
 import { useAuthStore } from "@/features/account/auth-store";
@@ -19,7 +17,6 @@ import {
   COMPETITION_DAILY_TEASER,
   COMPETITION_DAILY_TITLE,
   COMPETITION_DONE_TITLE,
-  COMPETITION_ERROR,
   COMPETITION_SEE_RESULTS_LABEL,
   COMPETITION_SIGN_IN_REQUIRED,
   COMPETITION_SIGN_IN_TOAST_DELAY_MS,
@@ -29,9 +26,9 @@ import {
 import { useCompetitionStreak } from "@/features/competition/use-competition-streak";
 import { usePremiumGate } from "@/features/premium/use-premium-gate";
 import { LeaderboardPreviewCard } from "@/features/world/components/leaderboard-preview-card";
-import { LEADERBOARD_ERROR } from "@/features/world/constants";
 import { previewPage } from "@/features/world/leaderboard-preview";
 import { useLeaderboardPreview } from "@/features/world/use-leaderboard-preview";
+import { useLoadFailureToast } from "@/features/world/use-load-failure-toast";
 import { useSeasonFreshness } from "@/features/world/use-season-freshness";
 import { COLORS, GUTTER, SPACE } from "@/theme/tokens";
 
@@ -51,7 +48,12 @@ export default function Page() {
   const best = day.data ? bestAttempt(day.data.attempts) : undefined;
   const offersReplay = best !== undefined && day.data?.replay === true;
   const transcript = useTranscript(owner, best?.id, best !== undefined);
+  const isDayUnknown = isSignedIn && day.data === undefined;
+  const isDayFrozen = isDayUnknown && day.isError;
+  const isTranscriptFrozen = transcript.data === undefined && transcript.isError;
+  const isStandingFrozen = standing.data === undefined && standing.isError;
   useSeasonFreshness(owner);
+  useLoadFailureToast([isDayFrozen, isTranscriptFrozen, isStandingFrozen, preview.isFrozen]);
   const { height } = useWindowDimensions();
   const onScroll = useTabScroll();
 
@@ -65,77 +67,82 @@ export default function Page() {
         { paddingTop: headerHeight + SPACE.lg, paddingBottom: height / 3 },
       ]}
     >
-      {preview.isPending ? (
-        <ScreenLoading />
-      ) : preview.isError ? (
-        <ScreenError message={LEADERBOARD_ERROR} onRetry={preview.refetch} />
-      ) : (
-        <LeaderboardPreviewCard
-          entries={preview.entries}
-          myPseudo={myPseudo}
-          onPress={() => router.push("/leaderboard")}
+      <LeaderboardPreviewCard
+        entries={preview.entries}
+        myPseudo={myPseudo}
+        isFrozen={preview.isFrozen}
+        onPress={() => {
+          if (!preview.isFrozen) {
+            router.push("/leaderboard");
+            return;
+          }
+          preview.refetch();
+          // The preview fell back to page 1 without it, so a retry also re-asks the Player's page.
+          if (isStandingFrozen) void standing.refetch();
+        }}
+      />
+      <View style={styles.cards}>
+        <CompetitionCard
+          title={best ? COMPETITION_DONE_TITLE : COMPETITION_DAILY_TITLE}
+          teaser={best ? null : COMPETITION_DAILY_TEASER}
+          score={best?.score ?? null}
+          colors={best ? ["#83D3AF"] : [COLORS.primaryGlow, COLORS.primary]}
+          streak={competitionStreak}
+          showPremium={offersReplay}
+          actionLabel={
+            best
+              ? offersReplay
+                ? COMPETITION_TRY_AGAIN_LABEL
+                : COMPETITION_SEE_RESULTS_LABEL
+              : COMPETITION_START_LABEL
+          }
+          isStateKnown={!isDayUnknown}
+          theme={
+            transcript.data
+              ? {
+                  image: { uri: transcript.data.imageUrl },
+                  categoryIcon: iconNameOrFallback(transcript.data.category.icon),
+                }
+              : null
+          }
+          isFrozen={isDayFrozen || isTranscriptFrozen}
+          onPress={() => {
+            if (!isSignedIn) {
+              openSignIn();
+              // The sheet lands first, then the toast explains why it opened.
+              setTimeout(
+                () => showToast(COMPETITION_SIGN_IN_REQUIRED, "account-lock-outline", "top-center"),
+                COMPETITION_SIGN_IN_TOAST_DELAY_MS,
+              );
+              return;
+            }
+            if (offersReplay) {
+              gatePremium(() =>
+                router.push({ pathname: "/competition", params: { kind: "replay" } }),
+              );
+              return;
+            }
+            router.push({
+              pathname: "/competition",
+              params: { kind: best?.kind ?? "initial" },
+            });
+          }}
+          onRetry={() => {
+            if (isDayFrozen) void day.refetch();
+            if (isTranscriptFrozen) void transcript.refetch();
+          }}
         />
-      )}
-      {isSignedIn && day.isPending ? (
-        <ScreenLoading />
-      ) : isSignedIn && day.isError ? (
-        <ScreenError message={COMPETITION_ERROR} onRetry={() => void day.refetch()} />
-      ) : (
-        <View style={styles.cards}>
-          <CompetitionCard
-            title={best ? COMPETITION_DONE_TITLE : COMPETITION_DAILY_TITLE}
-            teaser={best ? null : COMPETITION_DAILY_TEASER}
-            score={best?.score ?? null}
-            colors={best ? ["#83D3AF"] : [COLORS.primaryGlow, COLORS.primary]}
-            streak={competitionStreak}
-            showPremium={offersReplay}
-            themeImage={transcript.data ? { uri: transcript.data.imageUrl } : undefined}
-            categoryIcon={
-              transcript.data ? iconNameOrFallback(transcript.data.category.icon) : undefined
-            }
-            actionLabel={
-              best
-                ? offersReplay
-                  ? COMPETITION_TRY_AGAIN_LABEL
-                  : COMPETITION_SEE_RESULTS_LABEL
-                : COMPETITION_START_LABEL
-            }
-            onPress={() => {
-              if (!isSignedIn) {
-                openSignIn();
-                // The sheet lands first, then the toast explains why it opened.
-                setTimeout(
-                  () =>
-                    showToast(COMPETITION_SIGN_IN_REQUIRED, "account-lock-outline", "top-center"),
-                  COMPETITION_SIGN_IN_TOAST_DELAY_MS,
-                );
-                return;
-              }
-              if (offersReplay) {
-                gatePremium(() =>
-                  router.push({ pathname: "/competition", params: { kind: "replay" } }),
-                );
-                return;
-              }
-              router.push({
-                pathname: "/competition",
-                params: { kind: best?.kind ?? "initial" },
-              });
-            }}
-          />
 
-          {day.data?.catchup ? (
-            <YesterdayCompetitionCard
-              onPress={() =>
-                gatePremium(() =>
-                  router.push({ pathname: "/competition", params: { kind: "catchup" } }),
-                )
-              }
-              onExpire={day.refetch}
-            />
-          ) : null}
-        </View>
-      )}
+        {day.data?.catchup ? (
+          <YesterdayCompetitionCard
+            onPress={() =>
+              gatePremium(() =>
+                router.push({ pathname: "/competition", params: { kind: "catchup" } }),
+              )
+            }
+          />
+        ) : null}
+      </View>
     </ScrollView>
   );
 }

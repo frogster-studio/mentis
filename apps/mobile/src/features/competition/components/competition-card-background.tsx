@@ -1,22 +1,24 @@
 import { Image, type ImageSource } from "expo-image";
 import { StyleSheet, View } from "react-native";
+import { Skeleton } from "@/components/ui/skeleton";
 import { THEME_IMAGE_CACHE_POLICY } from "@/features/quiz/theme-image-cache";
 import { RADIUS } from "@/theme/tokens";
 import { gradient } from "@/utils/gradient";
 
-const LANDSCAPE_IMAGE = require("../../../../assets/images/competition/landscape.png");
-const LANDSCAPE_OPACITY = 0.13;
+const THEME_IMAGE_OPACITY = 0.13;
 
 export interface CompetitionCardBackgroundProps {
   colors: string[];
   isFinished: boolean;
-  themeImage?: ImageSource | number;
+  themeImage: ImageSource | null;
+  isFrozen: boolean;
 }
 
 export const CompetitionCardBackground = ({
   colors,
   isFinished,
   themeImage,
+  isFrozen,
 }: CompetitionCardBackgroundProps) => {
   const center = colors[0];
   const edge = colors[1] ?? colors[0];
@@ -32,20 +34,27 @@ export const CompetitionCardBackground = ({
       ]}
       pointerEvents="none"
     >
-      {isFinished ? (
+      {!isFinished ? null : themeImage === null ? (
+        <Skeleton
+          radius={RADIUS.base}
+          isOnDark={false}
+          isFrozen={isFrozen}
+          style={StyleSheet.absoluteFill}
+        />
+      ) : (
         <Image
-          source={themeImage ?? LANDSCAPE_IMAGE}
+          source={themeImage}
           contentFit="cover"
           cachePolicy={THEME_IMAGE_CACHE_POLICY}
-          style={styles.landscape}
+          style={styles.themeImage}
           accessible={false}
         />
-      ) : null}
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   surface: { borderRadius: RADIUS.base, borderCurve: "continuous", overflow: "hidden" },
-  landscape: { position: "absolute", inset: 0, opacity: LANDSCAPE_OPACITY },
+  themeImage: { position: "absolute", inset: 0, opacity: THEME_IMAGE_OPACITY },
 });
