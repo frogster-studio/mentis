@@ -1,191 +1,131 @@
-# PRD — The Compétition tab loads without a spinner
+# PRD — The results page explains each Question
 
-Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Player, Account, Pseudo, Attempt, Replay, Catch-up, Competition Day, Season, Leaderboard, Standing, Streak, Theme, Category). Rules: [AGENTS.md](AGENTS.md), [apps/mobile/AGENTS.md](apps/mobile/AGENTS.md), [docs/agents/conventions.md](docs/agents/conventions.md).
+Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Explanation, Question, Canonical Answer, Quiz Session, Competition Session, Attempt, Anecdote, Onboarding, Player) and [apps/admin/CONTEXT.md](apps/admin/CONTEXT.md) (Explanation, Editor). Rules: [AGENTS.md](AGENTS.md), [apps/mobile/AGENTS.md](apps/mobile/AGENTS.md), [apps/api/AGENTS.md](apps/api/AGENTS.md), [docs/agents/conventions.md](docs/agents/conventions.md), [ADR 0004](docs/adr/0004-competition-answers-are-judged-server-side.md).
 
 ## Decisions
 
 ### Scope
 
-- Only the Compétition tab and the shared header (avatar, points pill) change. Every other screen keeps `ScreenLoading` / `ScreenError` until [#77](https://github.com/frogster-studio/mentis/issues/77) migrates it.
-- The tab's reads still wait for its first visit: no prefetch at launch.
+- The ⋮ already drawn on every result card opens a bottom sheet holding that Question's Explanation.
+- Three screens, and only these: the practice results, the competition results (reopened later in the day included), the Onboarding verdict.
+- The Explanation is never shown during play and never in the History.
 
-### Last-known data
+### Explanation
 
-- The persister keeps, beside the account reads it already keeps: the Competition Day, the Standing, the Leaderboard pages of the current Season, and the transcripts of the cached Day's Attempts. Nothing else from the competition persists: Attempt issuance stays in memory, other Seasons' pages and older transcripts are dropped.
-- Persisted reads survive a session that never visits the tab: the query client must not garbage-collect them after the default 5 minutes.
-- Usable data renders on the first frame and is re-read silently under the existing stale rules. A background re-read never shows a skeleton.
-- A Day counts only on its own Europe/Paris date; a Standing or a Leaderboard page only in its own Season (Europe/Paris month). Anything else is treated as no data and re-read. The check runs at render, on persisted and in-memory data alike.
-- At Paris midnight with the tab on screen, the Day is re-read (and the Standing and pages on a Season change); the daily card shows its skeleton shell meanwhile.
-- Stale values on screen for the instant of a re-read (yesterday's rank or points) are accepted.
+- An Explanation is a string or `null`. Absent is `null`, never `""`: the app handles no other empty case.
+- It may carry `**bold**` and `__italic__` spans, parsed exactly like an Anecdote's text: an orphan marker, or the other marker inside a span, stays literal. No new parsing rule.
+- The `⋮` stays on every card whether or not its Question has an Explanation.
 
-### Skeleton
+### Serving
 
-- One shared `Skeleton` primitive: a Squircle block sized as the content it stands for, so the expected state resolves without a layout shift.
-- Opacity pulse of about 1 s per phase; every skeleton on screen runs on one shared clock and breathes in unison.
-- Tint is the surface's ink with a hex alpha: `COLORS.ink` on light surfaces, `COLORS.face` on dark ones (bordeau). No new hex.
-- Static under the OS reduce-motion setting, and when frozen.
-- Content replaces a skeleton instantly: no fade, no delay, no minimum duration.
-- Bundled images never get a skeleton; only reads and downloaded images do.
+- Practice: the Explanation arrives with the Question draw, beside the Canonical Answer. The tap reads no network: no skeleton, no error state.
+- Competition: the Explanation arrives in each verdict of the transcript and nowhere earlier. The Attempt issuance and the active-Attempt read never carry it: it would reveal the answer.
+- The API reads it live off the Question when it builds a transcript, like the Question text and the Canonical Answer: an Editor's later edit shows on the next transcript read.
+- The phone persists transcripts, so the persister's buster moves from `api-v2` to `api-v3`.
+- No schema change: the column exists.
 
-### Leaderboard preview and points pill
+### Shared emphasis
 
-- No usable data: three rows, each fully skeleton (rank, pseudo, points), the Player's pseudo not shown, the medal shown.
-- Resolved: today's placement logic is unchanged — the Player in the middle, on top when n° 1, at the bottom when last, absent (top 3) when unranked this Season.
-- The header points pill: from usable Standing at once; a skeleton under the pseudo without it; nothing when signed out.
-- Signed out: the page 1 preview as today, persisted like any page.
+- The emphasis parser leaves the Anecdote feature for a shared module, renamed out of the Anecdote vocabulary (`emphasisSegments`); the rendering of its segments becomes one shared component.
+- The Anecdote and the Explanation both render through that parser and that component. The Anecdote's look does not change.
+- Text styles: the existing `TEXT.anecdote` / `anecdoteBold` / `anecdoteItalic` trio, reused as is. No new `TEXT` token.
+- `apps/mobile/AGENTS.md`: the Inter Tight Italic line names the Explanation beside the Anecdote.
 
-### Daily card
+### The sheet
 
-- A usable Day renders its state at once: « À jouer », « Faite » with Replay, « Faite » without Replay.
-- Signed in with no usable Day: the orange daily frame and the real Streak badge; the title, teaser, « ? » tile and CTA label are skeletons at the « À jouer » sizes; the CTA face stays, its label a skeleton bar, not pressable. A resolve to « Faite » switches the card to green: accepted.
-- « Faite » without a usable transcript (played on another device, first launch): the score shows at once; the theme-image layer and the category badge are skeletons, never the generic landscape swapped for the Theme's image.
-- Signed out: « À jouer » at once, as today.
-- The state is never guessed: no CTA is shown that a resolve could replace.
+- The standard `Sheet`: grabber, dismissed by swipe or a tap outside, no button.
+- Top to bottom: the title « Explication »; the Question's text and « Réponse : » + its Canonical Answer, in the exact styles the result card gives them; a hairline in `COLORS.stroke` running to the sheet's edges; the Explanation, left-aligned, in `COLORS.ink`.
+- No Explanation: same sheet, same title, same recall, and in place of the text « Pas encore d'explication pour cette question. On y travaille, promis ! », centered, in `COLORS.inkMuted`.
+- The sheet takes its content's height. An Explanation is at most 400 characters: no inner scroll.
 
-### Rattrapage card
+### Interaction
 
-- Rendered only once a usable Day says `catchup`. No placeholder, skeleton or spinner before; its content (local countdown, bundled image) is unchanged.
+- The `⋮` alone opens the sheet, directly: the card is not pressable, there is no intermediate menu.
+- Its accessibility label: « Voir l'explication ».
+- One sheet per screen: the card only reports its tap, the screen holds the sheet. Never one sheet per card.
 
-### Load failures
+### Onboarding
 
-- A read with no usable data pulses through the client's retries, then its skeletons freeze.
-- One toast per failure, however many reads failed together: « Impossible de charger la compétition. Touche une carte pour réessayer. », icon `cloud-off-outline`, bottom-center. The toast keeps no action button.
-- Retry: the next foreground or tab focus re-reads (existing behaviour), and a tap on a frozen card re-reads that card's reads — the frozen preview re-reads instead of opening the Leaderboard.
-- A failed re-read under usable data shows nothing: no toast, no freeze.
+- The `⋮` stays on the Onboarding verdict's card and opens the same sheet, so the Player learns there that the icon gives more.
+- The Onboarding Question carries a hard-coded Explanation: « Perché à **6 893 m** sur la frontière entre le Chili et l'Argentine, c'est aussi le deuxième sommet des Amériques, derrière l'__Aconcagua__. »
+- Nothing else points at the `⋮`: no hint line, no coach mark.
 
-### Header avatar
+### Copy
 
-- A bordered Squircle replaces the circle, on both tabs.
-- Signed in with an `avatar_url` in the session (Google): a skeleton in the avatar's shape until the photo decodes, then the photo; later launches read it from the disk cache. The URL needs no request.
-- No `avatar_url` (Apple, signed out) or a failed download: the initial; no pseudo either: the neutral dot, as today.
-- The Profile screen's portrait is unchanged.
-
-### Bundled images
-
-- The tab's four PNGs — flame, landscape, play-again-landscape, question-mark — move to the originals and ship as the WebP `bun run images` generates; every use points at the WebP (Streak badge, stat tile, card background, Rattrapage card, daily card).
-
-### Rules
-
-- `apps/mobile/AGENTS.md`: the feedback-states rule names the `Skeleton`, the frozen state and the one toast, keeping `ScreenLoading` / `ScreenError` only for screens #77 has not migrated; the animation rule admits the Skeleton pulse beside the press mechanic; the data-access paragraph names what the persister keeps and the Paris day / Season rule. Compact lines, mechanics stay here.
-- No glossary term, no ADR.
+- French, in the quiz feature's constants: « Explication », « Voir l'explication », « Pas encore d'explication pour cette question. On y travaille, promis ! ». The Onboarding Explanation sits with the Onboarding Question.
 
 ### Test seams
 
-- Pure freshness guards with an injected `now`: the Day ↔ Paris date check across 23:59:59 → 00:00:00 Paris and both DST switches, the Season check across a month boundary (prior art: `streak.test.ts`, `season-calendar.test.ts`, `catchup-deadline.test.ts`).
-- The persist predicate as a pure function over query keys and data (prior art: `chunked-storage.test.ts` for `lib/`).
-- No component rendering tests (house rule): UI items end with `bun run check` green and their screen states listed as steps, reviewed on device by the human.
+- Contracts: the existing specs (`question.spec.ts`, `competition.spec.ts`) assert the drawn Question and the verdict carry `explanation`, string or `null`, and the issued Question does not.
+- API: the existing e2e specs through the Nest testing module with fake repositories (`app-content.e2e-spec.ts`, `app-competition.e2e-spec.ts`) assert the served value, `null` included.
+- Mobile: the parser's vitest spec moves with the parser, its cases unchanged. No component rendering test (house rule).
+- UI items end with `bun run check` green and their screen states listed as steps, reviewed on device by the human.
 
 ### Out of scope
 
-- « Réalisée par », the two bars under « C'est sérieux là ! », the « Compète du jour » title, the history icon on the Rattrapage CTA.
-- Every other screen's loading ([#77](https://github.com/frogster-studio/mentis/issues/77)), the Profile portrait, prefetching the tab.
-- A toast action button, pull-to-refresh.
-- Any API, contract or schema change.
+- The Explanation during play, in the History, or anywhere but the three screens.
+- The back-office: no syntax hint, no preview under the Explanation field.
+- Any new `TEXT` token, any button in the sheet, any hint toward the `⋮`.
+- A migration or any schema change.
 
 ## Items
 
 ```json
 [
   {
-    "category": "mobile",
-    "description": "A cached Competition Day counts only on its own Paris date, a cached Standing or Leaderboard page only in its own Season",
+    "category": "api",
+    "description": "GET /app/questions serves each drawn Question's Explanation",
     "steps": [
-      "Pure guard, injected now: a Day dated today in Europe/Paris is usable, yesterday's is not, across 23:59:59 → 00:00:00 Paris and both DST switches",
-      "Pure guard: a Standing or Leaderboard page whose season is the current Europe/Paris month is usable, last month's is not, across the month boundary at Paris midnight",
-      "The tab's Day, Standing and Leaderboard preview reads treat unusable data as no data and re-read it, persisted or in memory",
-      "With the tab on screen, Paris midnight re-reads the Day, and the Standing and pages on a Season change",
-      "vitest pure spec (prior art: streak.test.ts, season-calendar.test.ts)"
-    ],
-    "passes": true
-  },
-  {
-    "category": "mobile",
-    "description": "The persister keeps the Compétition tab's reads across launches",
-    "steps": [
-      "Pure persist predicate: keeps successful account queries (unchanged), the Day, the Standing, current-Season Leaderboard pages and the transcripts of the cached Day's Attempts",
-      "It drops Attempt issuance, other Seasons' pages and any transcript whose Attempt is not in the cached Day",
-      "Persisted queries are not garbage-collected while the app runs without visiting the tab",
-      "apps/mobile AGENTS.md data-access paragraph names what the persister keeps and the Paris date / Season rule",
-      "vitest pure spec over the predicate; bun run check green"
-    ],
-    "passes": true
-  },
-  {
-    "category": "mobile",
-    "description": "A shared Skeleton primitive, and the rules that replace ScreenLoading where the layout is known",
-    "steps": [
-      "Skeleton is a Squircle block pulsing opacity about 1 s per phase, every instance on one shared clock",
-      "Its tint is COLORS.ink with a hex alpha on light surfaces, COLORS.face with a hex alpha on dark ones; no new hex",
-      "Static under the OS reduce-motion setting, and when frozen",
-      "apps/mobile AGENTS.md: the feedback-states rule names Skeleton, the frozen state and the one toast, ScreenLoading/ScreenError kept only for screens #77 has not migrated; the animation rule admits the Skeleton pulse",
+      "Contract: the drawn Question carries explanation, a string or null; its spec covers both",
+      "A Question stored with an Explanation is drawn with it as stored; one stored without is drawn with explanation: null",
+      "The Onboarding Question carries the hard-coded Explanation « Perché à **6 893 m** sur la frontière entre le Chili et l'Argentine, c'est aussi le deuxième sommet des Amériques, derrière l'__Aconcagua__. »",
+      "e2e through the Nest testing module with a fake repository (app-content.e2e-spec.ts)",
       "bun run check green"
     ],
-    "passes": true
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Each verdict of a competition transcript carries its Question's Explanation, and the issuance never does",
+    "steps": [
+      "Contract: the verdict carries explanation, a string or null; the issued Question schema has no explanation; its spec covers both",
+      "POST /app/me/competition/attempts and GET /app/me/competition/attempts/active: no explanation key on any Question",
+      "POST /app/me/competition/attempts/:attemptId/finalize: each answer carries the Question's current Explanation, null when it has none; a re-sent finalize hands back the same",
+      "The mobile persister's buster is api-v3",
+      "e2e through the Nest testing module with fake repositories (app-competition.e2e-spec.ts); bun run check green"
+    ],
+    "passes": false
   },
   {
     "category": "mobile",
-    "description": "The leaderboard preview and the header points pill render last-known data at once, skeletons without it",
+    "description": "The emphasis parser and its rendering are shared, and the Anecdote renders through them",
     "steps": [
-      "Usable Standing and pages: preview and pill on the first frame, no skeleton, re-read silently",
-      "No usable data: three fully skeleton rows (rank, pseudo, points), no pseudo shown, the medal shown; the pill is a skeleton under the pseudo",
-      "Resolved: placement unchanged — middle, top when n° 1, bottom when last, top 3 without the Player when unranked",
-      "Failed with no usable data: skeletons frozen; a tap on the frozen preview re-reads instead of opening the Leaderboard",
-      "Signed out: page 1 preview, no pill; no ScreenLoading or ScreenError left in the section",
-      "bun run check green"
+      "emphasisSegments lives in a shared module outside the Anecdote feature; no anecdote-named parser or segment type is left",
+      "One shared component renders a text's segments with TEXT.anecdote / anecdoteBold / anecdoteItalic",
+      "The Anecdote card renders through it: **bold**, __italic__, an orphan marker and a nested marker look as before",
+      "apps/mobile AGENTS.md: the Inter Tight Italic line names the Explanation beside the Anecdote",
+      "The parser's vitest spec moved with it, same cases, passing; bun run check green"
     ],
-    "passes": true
+    "passes": false
   },
   {
     "category": "mobile",
-    "description": "The daily card renders its known state at once or its orange skeleton shell, and the Rattrapage card appears once the Day says so",
+    "description": "The ⋮ of each result card opens the « Explication » sheet on the practice results, the competition results and the Onboarding verdict",
     "steps": [
-      "Usable Day: « À jouer », « Faite » with Replay or « Faite » without Replay on the first frame",
-      "Signed in, no usable Day: orange daily frame, real Streak badge; title, teaser, « ? » tile and CTA label skeletons at the « À jouer » sizes; the CTA face stays, not pressable",
-      "« Faite » without a usable transcript: the score at once; the theme-image layer and the category badge are skeletons, never the generic landscape",
-      "Failed with no usable data: frozen; a tap on the card re-reads its Day and transcript",
-      "Paris midnight with the tab open: back to the skeleton shell until the new Day lands",
-      "Rattrapage rendered only once a usable Day says catchup, nothing in its place before; signed out: « À jouer » at once",
-      "No ScreenLoading or ScreenError left on the tab; bun run check green"
+      "A tap on a card's ⋮ opens the standard Sheet titled « Explication »: the Question's text and « Réponse : » + Canonical Answer in the card's styles, a COLORS.stroke hairline to the sheet's edges, then the Explanation left-aligned with its bold and italic spans",
+      "A Question with explanation: null: same sheet and recall, « Pas encore d'explication pour cette question. On y travaille, promis ! » centered in COLORS.inkMuted",
+      "Practice results show the drawn Question's Explanation, competition results the verdict's, the Onboarding verdict the hard-coded one",
+      "Swipe down or a tap outside dismisses; the sheet has no button; opening another card's ⋮ shows that card's Question",
+      "The ⋮ carries the accessibility label « Voir l'explication »; the card itself is not pressable; each screen mounts one sheet, not one per card",
+      "Copy in the quiz constants; no new TEXT token, no new color; bun run check green"
     ],
-    "passes": true
-  },
-  {
-    "category": "mobile",
-    "description": "A read that fails with nothing on screen raises one toast, however many cards failed",
-    "steps": [
-      "After the client's retries, a read with no usable data freezes its skeletons and shows « Impossible de charger la compétition. Touche une carte pour réessayer. » with cloud-off-outline, bottom-center",
-      "Day, Standing and Leaderboard failing together raise one toast, not three",
-      "A failed re-read under usable data: no toast, no freeze",
-      "The next foreground or tab focus re-reads the frozen reads",
-      "Copy in the competition constants; bun run check green"
-    ],
-    "passes": true
-  },
-  {
-    "category": "mobile",
-    "description": "The header avatar is a bordered Squircle showing the Google photo, a skeleton until it first decodes",
-    "steps": [
-      "A bordered Squircle replaces the circle on both tabs",
-      "Session with avatar_url: skeleton in the avatar's shape until the photo decodes, then the photo, read from the disk cache on later launches",
-      "No avatar_url (Apple, signed out) or a failed download: the initial; no pseudo either: the neutral dot",
-      "The Profile screen's portrait is unchanged; bun run check green"
-    ],
-    "passes": true
-  },
-  {
-    "category": "mobile",
-    "description": "The tab's four bundled PNGs ship as WebP",
-    "steps": [
-      "flame, landscape, play-again-landscape and question-mark live under assets/originals/competition/ and bun run images generates their WebP",
-      "Every use points at the WebP: Streak badge, stat tile, card background, Rattrapage card, daily card",
-      "No PNG left under assets/images/competition/; bun run check green"
-    ],
-    "passes": true
+    "passes": false
   }
 ]
 ```
 
 ## Human steps
 
-- Before the loop: nothing — no migration, no dashboard SQL, no API deploy.
-- After the last item, on iOS and Android: a cached cold launch (no skeleton), a reinstall (skeletons), an airplane-mode cold launch (frozen skeletons, one toast, a tap re-reads), Paris midnight with the tab open, reduce motion on, an Apple Account (initial) and a Google Account (photo). Then merge.
+- Before the loop: nothing — no migration, no dashboard SQL.
+- After item 2: deploy the API before testing any mobile build — the phone rejects a draw or a transcript without `explanation`.
+- After the last item, on iOS and Android: the sheet on the practice results, the competition results and the Onboarding verdict, with an Explanation (bold and italic spans) and without one; a 400-character Explanation on a small screen. Then merge.
