@@ -82,7 +82,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Explanation, Quest
       "e2e through the Nest testing module with a fake repository (app-content.e2e-spec.ts)",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "api",

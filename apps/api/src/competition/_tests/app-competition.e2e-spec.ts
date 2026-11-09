@@ -56,6 +56,7 @@ const themeQuestions = (themeId: string, themeName: string, count: number): Draw
     aliases: [`alias-${themeId}-${index}`],
     misspellings: [`faute-${themeId}-${index}`],
     wrongChoices: [`faux-a-${index}`, `faux-b-${index}`, `faux-c-${index}`],
+    explanation: null,
   }));
 
 const QUESTIONS: DrawnQuestion[] = [
@@ -83,6 +84,7 @@ const judgedQuestion = (
   aliases,
   misspellings,
   wrongChoices: [`faux-a-${index}`, `faux-b-${index}`, `faux-c-${index}`],
+  explanation: null,
 });
 
 // Real content shapes — the verdicts below are the practice rules, proven on the material they run on.

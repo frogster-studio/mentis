@@ -22,6 +22,7 @@ export type DrawnQuestion = {
   aliases: string[];
   misspellings: string[];
   wrongChoices: string[];
+  explanation: string | null;
 };
 
 @Injectable()
@@ -140,6 +141,7 @@ export class CatalogRepository {
       .addSelect("question.answer", "answer")
       .addSelect("question.aliases", "aliases")
       .addSelect("question.misspellings", "misspellings")
-      .addSelect("question.wrongChoices", "wrongChoices");
+      .addSelect("question.wrongChoices", "wrongChoices")
+      .addSelect("question.explanation", "explanation");
   }
 }

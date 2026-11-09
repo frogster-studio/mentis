@@ -15,6 +15,7 @@ const appQuestionSchema = z.object({
   aliases: z.array(z.string()),
   misspellings: z.array(z.string()),
   wrongChoices: z.array(z.string()),
+  explanation: z.string().nullable(),
 });
 
 export const appQuestionDrawResponseSchema = z.array(appQuestionSchema);

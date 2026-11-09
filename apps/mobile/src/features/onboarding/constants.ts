@@ -41,6 +41,8 @@ export const ONBOARDING_QUESTION: Question = {
     "nevado ollos salado",
   ],
   wrongChoices: ["Le Vésuve", "L'Eyjafjöll", "Piton de la Fournaise"],
+  explanation:
+    "Perché à **6 893 m** sur la frontière entre le Chili et l'Argentine, c'est aussi le deuxième sommet des Amériques, derrière l'__Aconcagua__.",
 };
 
 export const ONBOARDING_HINT_CASH = "Soit tu rentres directement la réponse";

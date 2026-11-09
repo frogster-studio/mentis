@@ -48,7 +48,12 @@ const storedThemes = [
   },
 ];
 
-const question = (id: string, themeId: string, themeName: string): DrawnQuestion => ({
+const question = (
+  id: string,
+  themeId: string,
+  themeName: string,
+  explanation: string | null = null,
+): DrawnQuestion => ({
   id,
   themeId,
   themeName,
@@ -57,13 +62,14 @@ const question = (id: string, themeId: string, themeName: string): DrawnQuestion
   aliases: [],
   misspellings: [],
   wrongChoices: ["1", "2", "3"],
+  explanation,
 });
 
 const ready = (row: DrawnQuestion) => ({ ...row, readyToBePublished: true });
 const unready = (row: DrawnQuestion) => ({ ...row, readyToBePublished: false });
 
 const storedQuestions = [
-  ready(question("q1", "les-simpson", "Les Simpson")),
+  ready(question("q1", "les-simpson", "Les Simpson", "Springfield n'est dans **aucun** État.")),
   ready(question("q2", "les-simpson", "Les Simpson")),
   ready(question("q3", "marie-antoinette", "Marie-Antoinette")),
   unready(question("q4", "les-simpson", "Les Simpson")),
@@ -175,6 +181,16 @@ describe("app content routes e2e", () => {
     expect(draws).toEqual([{ themeId: "les-simpson", count: 2 }]);
     const body = await response.json();
     expect(body.map((row: { id: string }) => row.id)).toEqual(["q1", "q2"]);
+  });
+
+  it("GET /app/questions serves each Question's Explanation as stored, null when it has none", async () => {
+    const response = await fetch(`${baseUrl}/app/questions?theme=les-simpson&n=2`);
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.map((row: { explanation: string | null }) => row.explanation)).toEqual([
+      "Springfield n'est dans **aucun** État.",
+      null,
+    ]);
   });
 
   it("GET /app/questions with an unknown theme → 404 THEME_NOT_FOUND, before drawing", async () => {

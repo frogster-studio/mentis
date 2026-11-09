@@ -1,0 +1,8 @@
+## Item 1 — GET /app/questions serves explanation (done)
+- Contract appQuestionSchema: explanation z.string().nullable() (required key, so a stale API fails parse at the seam). Spec: string, null, missing key rejected.
+- CatalogRepository.DrawnQuestion + servedQuestionBuilder select question.explanation. questionsByIds shares the builder, so competition's DrawnQuestion now carries it too; issuance stays clean because the issued schema strips it (item 2 asserts that).
+- app-content e2e: question() helper takes explanation (default null); q1 stored with one; new test asserts served value + null.
+- ONBOARDING_QUESTION (mobile onboarding/constants.ts) carries the hard-coded Explanation — it's typed Question, so the contract forced it.
+- Fixtures: competition e2e DrawnQuestion fixtures + mobile session-reducer.test get explanation: null (typecheck).
+- Files: packages/contracts/src/app/question{,.spec}.ts, apps/api/src/catalog/repositories/catalog.repository.ts, apps/api/src/catalog/_tests/app-content.e2e-spec.ts, apps/api/src/competition/_tests/app-competition.e2e-spec.ts, apps/mobile/src/features/onboarding/constants.ts, apps/mobile/src/features/quiz/session-reducer.test.ts
+- Next (item 2): verdict schema in contracts/app/competition.ts gets explanation; finalize transcript builder reads it off questionsByIds rows; buster api-v2 → api-v3 in mobile persister.
