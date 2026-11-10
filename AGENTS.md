@@ -48,3 +48,7 @@ Two contexts mapped in `CONTEXT-MAP.md` — Quiz play (`apps/mobile/CONTEXT.md`)
 Code style and repo hygiene house rules, incl. comment style. See `docs/agents/conventions.md`.
 
 When a task ends and the user revised work you had already done, run `/hugo:capture-conventions`: a correction you had to be given is a rule this repo failed to write down.
+
+### Daily question
+
+The scheduled run that brings one Question a day to Ready on the Editor's approval. See `docs/agents/daily-question.md`.
