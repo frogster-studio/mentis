@@ -35,7 +35,7 @@ src/
   catalog/        # /app/themes + /app/questions + /app/anecdotes: public Quiz play reads
     modules/ controllers/ services/ repositories/ mappers/ _tests/   # the layers of every feature
   competition/    # /app/me/competition: Attempt issuance, resume and the judged finalize; plus the public Leaderboard
-  curation/       # /admin/*: the Editor's Catalog reads, staged content included
+  curation/       # /admin/*: the Editor's Catalog reads, staged content included, and Anecdote authoring
   player/         # /app/me: stats, idempotent pushes, the pseudo, account deletion
   premium/        # /app/me/premium + the RevenueCat webhook: the mirrored entitlement
   _database/      # TypeORM: the module, the datasource options, entities/ — the schema source — and migrations/

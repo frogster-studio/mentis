@@ -1,6 +1,7 @@
 import { ConflictException } from "@nestjs/common";
 import type { Repository } from "typeorm";
 import { beforeEach, expect, it, vi } from "vitest";
+import { AnecdoteEntity } from "../../_database/entities/anecdote.entity";
 import { CategoryEntity } from "../../_database/entities/category.entity";
 import { QuestionEntity } from "../../_database/entities/question.entity";
 import { ThemeEntity } from "../../_database/entities/theme.entity";
@@ -27,6 +28,7 @@ beforeEach(() => {
     { existsBy: async () => true } as unknown as Repository<CategoryEntity>,
     { manager: { transaction } } as unknown as Repository<ThemeEntity>,
     {} as Repository<QuestionEntity>,
+    {} as Repository<AnecdoteEntity>,
   );
 });
 
