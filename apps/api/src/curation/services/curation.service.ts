@@ -1,4 +1,6 @@
 import {
+  type AdminAnecdoteResponse,
+  type AdminAnecdoteWrite,
   type AdminCategoryListResponse,
   type AdminCategoryResponse,
   type AdminCategoryWrite,
@@ -11,6 +13,7 @@ import {
   type AdminThemeResponse,
   type AdminThemeStaging,
   type AdminThemeWrite,
+  adminAnecdoteResponseSchema,
   adminCategoryListResponseSchema,
   adminCategoryResponseSchema,
   adminQuestionListResponseSchema,
@@ -174,6 +177,11 @@ export class CurationService {
     if (!(await this.curationRepository.deleteQuestion(id))) {
       throw new NotFoundException({ message: `Unknown question: ${id}` });
     }
+  }
+
+  async createAnecdote(anecdote: AdminAnecdoteWrite): Promise<AdminAnecdoteResponse> {
+    const created = await this.curationRepository.createAnecdote(anecdote);
+    return adminAnecdoteResponseSchema.parse(created);
   }
 
   private slugOf(name: string, kind: "Category" | "Theme"): string {

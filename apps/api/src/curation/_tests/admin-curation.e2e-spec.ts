@@ -6,6 +6,7 @@ import { createLocalJWKSet, exportJWK, generateKeyPair, type JWTPayload, SignJWT
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { ENV } from "../../_config/env.config";
 import { SUPABASE } from "../../_config/supabase.config";
+import { AnecdoteEntity } from "../../_database/entities/anecdote.entity";
 import { CategoryEntity } from "../../_database/entities/category.entity";
 import { QuestionEntity } from "../../_database/entities/question.entity";
 import { ThemeEntity } from "../../_database/entities/theme.entity";
@@ -33,6 +34,7 @@ const MONNAIE = "9a3e0d3a-0000-4000-8000-000000000003";
 const BROUILLON_QUESTION = "9a3e0d3a-0000-4000-8000-000000000004";
 const AUTHORED = "9a3e0d3a-0000-4000-8000-000000000005";
 const UNKNOWN_QUESTION = "9a3e0d3a-0000-4000-8000-00000000ffff";
+const AUTHORED_ANECDOTE = "7b4e0d3a-0000-4000-8000-000000000001";
 
 type Aged = { id: string; createdAt: Date };
 
@@ -243,6 +245,13 @@ const fakeCurationRepository = {
     liveQuestions = remaining;
     return wasDeleted;
   },
+  async createAnecdote(authored) {
+    return Object.assign(new AnecdoteEntity(), authored, {
+      id: AUTHORED_ANECDOTE,
+      createdAt: new Date("2026-08-24T10:00:00.000Z"),
+      updatedAt: new Date("2026-08-24T10:00:00.000Z"),
+    });
+  },
 } satisfies Pick<
   CurationRepository,
   | "listCategories"
@@ -260,6 +269,7 @@ const fakeCurationRepository = {
   | "createQuestion"
   | "updateQuestion"
   | "deleteQuestion"
+  | "createAnecdote"
 >;
 
 let signedUploads: { bucket: string; path: string }[] = [];
@@ -305,6 +315,10 @@ const AUTHORED_THEME_WRITE = {
   image: "default.webp",
 };
 
+const STORED_ANECDOTE = "Le **Piton de la Fournaise** entre en éruption __presque chaque année__.";
+
+const AUTHORED_ANECDOTE_WRITE = { text: `  ${STORED_ANECDOTE}  ` };
+
 const WRITE_ROUTES = [
   { method: "POST", path: "/admin/questions", body: AUTHORED_QUESTION },
   { method: "PATCH", path: `/admin/questions/${CAPITALE}`, body: AUTHORED_QUESTION },
@@ -332,6 +346,7 @@ const WRITE_ROUTES = [
     body: { expectedImage: `${SIMPSON}.webp` },
   },
   { method: "POST", path: "/admin/themes/image-cleanup", body: { token: "invalid" } },
+  { method: "POST", path: "/admin/anecdotes", body: AUTHORED_ANECDOTE_WRITE },
 ];
 
 const LIST_ROUTES = [
@@ -1029,5 +1044,23 @@ describe("admin curation routes e2e", () => {
     const second = await (await write(WRITE_ROUTES[11], editorToken)).json();
 
     expect(second.path).not.toBe(first.path);
+  });
+
+  it("POST /admin/anecdotes stores the Anecdote trimmed, its emphasis markers intact", async () => {
+    const response = await write(WRITE_ROUTES[14], editorToken);
+
+    expect(response.status).toBe(201);
+    expect(await response.json()).toEqual({ id: AUTHORED_ANECDOTE, text: STORED_ANECDOTE });
+  });
+
+  it.each([
+    ["no text", { text: "   " }],
+    ["141 characters", { text: "a".repeat(141) }],
+    ["no text key at all", {}],
+  ])("POST /admin/anecdotes with %s → 400 VALIDATION_FAILED", async (_case, body) => {
+    const response = await write({ method: "POST", path: "/admin/anecdotes", body }, editorToken);
+
+    expect(response.status).toBe(400);
+    expect(errorResponseSchema.parse(await response.json()).code).toBe("VALIDATION_FAILED");
   });
 });

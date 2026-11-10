@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { type DeepPartial, Repository } from "typeorm";
+import { AnecdoteEntity } from "../../_database/entities/anecdote.entity";
 import { CategoryEntity } from "../../_database/entities/category.entity";
 import { QuestionEntity } from "../../_database/entities/question.entity";
 import { ThemeEntity } from "../../_database/entities/theme.entity";
@@ -18,6 +19,7 @@ export class CurationRepository {
     @InjectRepository(CategoryEntity) private readonly categories: Repository<CategoryEntity>,
     @InjectRepository(ThemeEntity) private readonly themes: Repository<ThemeEntity>,
     @InjectRepository(QuestionEntity) private readonly questions: Repository<QuestionEntity>,
+    @InjectRepository(AnecdoteEntity) private readonly anecdotes: Repository<AnecdoteEntity>,
   ) {}
 
   listCategories(): Promise<CategoryEntity[]> {
@@ -166,5 +168,9 @@ export class CurationRepository {
       where: themeId === undefined ? {} : { themeId },
       order: { createdAt: "DESC", id: "DESC" },
     });
+  }
+
+  createAnecdote(anecdote: DeepPartial<AnecdoteEntity>): Promise<AnecdoteEntity> {
+    return this.anecdotes.save(this.anecdotes.create(anecdote));
   }
 }
