@@ -28,3 +28,10 @@
 - supabase.config.ts comment now names both buckets. AGENTS.md rules (JSON-only, service client) left for item 4.
 - Files: bootstrap.ts, supabase.config.ts, curation.repository.ts, anecdote-image.service.ts (new), admin-anecdotes.controller.ts, curation.module.ts, contracts admin/anecdote.ts, _tests/webp-fixtures.ts (new), read-webp-header.spec.ts, admin-anecdote-image.e2e-spec.ts (new).
 - Next: item 4 (ADR 0010, ADR 0007 rewrite, apps/api/AGENTS.md).
+
+## Item 4 — ADR 0010 + ADR 0007 rewrite + apps/api/AGENTS.md — DONE
+- ADR 0010 docs/adr/0010-anecdote-images-transit-the-api-validated-never-transformed.md: decision (raw PUT, header-read, store as sent, fresh path, save then delete), why (no converting client, 150 KiB fits raw not 64 kb JSON), rejected (signed URL, base64 JSON, sharp), consequences (caller owns encoding, path lives twice, orphans accepted, 502, no removal, reopen condition).
+- ADR 0007 renamed -> 0007-theme-image-bytes-never-transit-the-api.md: old title "Storage bytes never transit the API" became false; body scoped to Theme images, no banner/history. Links updated: apps/api/AGENTS.md, PRD.md, docs/prds/catalog-curation-dashboard.md (title quote). contracts admin/theme.ts comment says "ADR 0007" only, untouched.
+- apps/api/AGENTS.md: JSON-only rule "the Anecdote Image route aside" + raw parser scope/cap; service-client rule names Anecdote Image upload + replaced-object deletion; Structure bootstrap.ts line names the raw parser.
+- Files: docs/adr/0007 (renamed), docs/adr/0010 (new), apps/api/AGENTS.md, docs/prds/catalog-curation-dashboard.md, PRD.md.
+- Next: item 5 (mobile day set imageUrl + expo-image prefetch), then 6 (overlay), 7 (icon).

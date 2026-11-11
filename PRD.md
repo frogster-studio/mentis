@@ -1,6 +1,6 @@
 # PRD — An Anecdote may carry an Anecdote Image
 
-Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Anecdote Image) and [apps/admin/CONTEXT.md](apps/admin/CONTEXT.md) (Editor). Rules: [AGENTS.md](AGENTS.md), [apps/api/AGENTS.md](apps/api/AGENTS.md), [apps/mobile/AGENTS.md](apps/mobile/AGENTS.md), [docs/agents/conventions.md](docs/agents/conventions.md), [ADR 0003](docs/adr/0003-database-admits-only-the-api.md), [ADR 0005](docs/adr/0005-the-api-reaches-its-data-through-typeorm.md), [ADR 0007](docs/adr/0007-storage-bytes-never-transit-the-api.md).
+Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Anecdote Image) and [apps/admin/CONTEXT.md](apps/admin/CONTEXT.md) (Editor). Rules: [AGENTS.md](AGENTS.md), [apps/api/AGENTS.md](apps/api/AGENTS.md), [apps/mobile/AGENTS.md](apps/mobile/AGENTS.md), [docs/agents/conventions.md](docs/agents/conventions.md), [ADR 0003](docs/adr/0003-database-admits-only-the-api.md), [ADR 0005](docs/adr/0005-the-api-reaches-its-data-through-typeorm.md), [ADR 0007](docs/adr/0007-theme-image-bytes-never-transit-the-api.md).
 
 ## Decisions
 
@@ -118,7 +118,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Anecdote
       "apps/api/AGENTS.md: the JSON-only rule and the service-client rule name the Anecdote Image route, in one compact clause each",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
