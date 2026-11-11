@@ -1,6 +1,6 @@
 # Daily question
 
-One run brings one Question from authored to Ready To Be Published and writes the Anecdote that goes with it. The Editor approves every word: the Catalog stays as it is until his « ok ». Talk to him in French.
+One run brings one Question from authored to Ready To Be Published and writes the Anecdote that goes with it. The Editor approves every word: the Catalog stays as it is until his « ok ». Talk to him in French, as briefly as possible: before → after for every change, never the reasons for a choice, and always what you wait for from him.
 
 ## 1. Sign in
 
@@ -28,7 +28,7 @@ Done when every rule of [editorial-style.md](editorial-style.md) is applied and 
 
 ## 4. Propose
 
-Post one message: each field before → after, the Anecdote, the sources, whatever the fact-check overturned, the Theme's Ready count out of 20, and the picture search of section 6 when it applies. End the turn there — the Editor answers in this session.
+Post one message: each changed field before → after — wording, Canonical Answer, Aliases, Misspellings, wrong choices, Explanation — unchanged ones left out; the Anecdote; the Theme's Ready count out of 20; the picture search of section 6 when it applies; last, what he must answer (« ok » or a correction, then a picture or « pas de photo »). End the turn there — the Editor answers in this session.
 
 ## 5. Apply the answer
 
