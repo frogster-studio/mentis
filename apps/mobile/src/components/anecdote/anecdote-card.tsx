@@ -101,6 +101,7 @@ export const AnecdoteCard = () => {
               position={daySet.dismissedCount}
               total={daySet.anecdotes.length}
               onDismiss={dismiss}
+              onOpenImage={setOpenImageUrl}
             />
           </AnecdoteStack>
         )}
@@ -111,6 +112,7 @@ export const AnecdoteCard = () => {
               position={peel.position}
               total={peel.total}
               onDismiss={dismiss}
+              onOpenImage={setOpenImageUrl}
             />
           </AnecdotePeelingSheet>
         )}

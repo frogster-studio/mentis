@@ -55,3 +55,10 @@
 - Card owns `openImageUrl` state and renders the overlay outside the inert peeling view; nothing sets it yet (keeps the overlay reachable for knip). Item 7: icon calls setOpenImageUrl(anecdote.imageUrl) on the top card only.
 - Files: tokens.ts, screen-container.tsx, sheet.tsx, blur-band.tsx, swipable-button.tsx, profile (tabs) index/infos/history.tsx, anecdote constants.ts, image-cache.ts, image-overlay-size(.test).ts (new), anecdote-image-overlay.tsx (new), anecdote-card.tsx, PRD.md.
 - Next: item 7 (photo icon). Animations unreviewed on device: Hugo's step after item 7.
+
+## Item 7 — photo icon on the Anecdote card — DONE
+- anecdote-content.tsx: right column `actions` View (alignSelf stretch + space-between) holds the cross on top, the photo icon at the bottom, so the icon sits on the body's bottom = text zone's bottom (text zone carries the body minHeight). MaterialIcons "photo", ICON_SIZE 20 (DISMISS_ICON_SIZE renamed, both glyphs share it), inkMuted, bare Pressable + PRESSED, hitSlop SPACE.sm like the cross.
+- No imageUrl: icon not rendered. New prop `onOpenImage(imageUrl: string)`; card passes setOpenImageUrl to both copies. The peeling copy stays inert through the root's `pointerEvents: none` during a peel (same as its cross), so no extra flag.
+- OPEN_ANECDOTE_IMAGE_LABEL « Voir l'image » in features/anecdote/constants.ts.
+- Files: anecdote-content.tsx, anecdote-card.tsx, constants.ts, PRD.md.
+- All PRD items pass. Hugo: device review (iOS + Android) per PRD Human steps, then merge.

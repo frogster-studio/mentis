@@ -152,7 +152,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Anecdote
       "The icon opens the overlay; the peeling copy of a dismissed card stays inert",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```
