@@ -92,7 +92,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Anecdote
       "A non-RIFF buffer, a RIFF that is not WEBP, a truncated header and an empty buffer each answer null",
       "No native dependency added; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "api",

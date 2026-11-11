@@ -7,3 +7,11 @@
 - Mobile day-set.test fixtures got imageUrl: null just to typecheck; item 5 owns the "stored Anecdote missing imageUrl" read.
 - Files: anecdote.entity.ts, anecdote.service.ts, curation.service.ts, anecdote-image-url.ts (new), contracts admin/app anecdote(.spec).ts, app-anecdotes.e2e-spec.ts, admin-curation.e2e-spec.ts, mobile day-set.test.ts.
 - Next: Hugo runs migration:generate. Next item suggestion: 2 (WebP header reader, pure), then 3 (route).
+
+## Item 2 — pure WebP header reader — DONE
+- curation/utils/read-webp-header.ts: readWebpHeader(file: Buffer): WebpHeader | null. Checks RIFF + WEBP, then first chunk fourcc: "VP8 " (start code 9d 01 2a, 14-bit dims), "VP8L" (signature 0x2f, 14-bit dims-1), "VP8X" (24-bit canvas dims-1, animated = flags & 0x02). Anything else/too short -> null. No dependency added.
+- Takes Buffer, not Uint8Array: express.raw hands the route a Buffer (item 3), and readUInt*LE keeps it terse.
+- WebpHeader type in new curation/types/webp-header.ts (domain value earns its own type, like catalog/competition types/).
+- Spec builds buffers by hand: 3 formats at 750×1024, animated flag, non-animated flags, null for non-RIFF, RIFF/WAVE, truncated, empty, VP8 missing start code, VP8L missing signature.
+- Note: biome flags the unformatted generated migration 1794429733050 (Hugo's commit 2811de5); left untouched (agents never edit migrations), host `bun run knip` -> format fixes it.
+- Next: item 3 (PUT /admin/anecdotes/:id/image) — validate with readWebpHeader: null -> 400 non-WebP, animated -> 400, !750×1024 -> 400.
