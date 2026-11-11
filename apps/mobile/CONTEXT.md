@@ -80,6 +80,10 @@ _Avoid_: random themes, selection
 A short standalone fact shown on the home, three a day drawn per device for the Europe/Paris day. It belongs to no Question, Theme or Category, and reading or dismissing one is recorded nowhere. French UI label: « Anecdotes du jour ».
 _Avoid_: fun fact, trivia, tip
 
+**Anecdote Image**:
+The optional picture of an Anecdote, at most one, seen full-size on demand from its card and never zoomable.
+_Avoid_: photo, illustration
+
 **Theme Average**:
 The average of the scores the Player holds in one Theme, out of 50 — Finished Quiz Sessions and judged Attempts alike, shown rounded to the nearest integer. French UI label: « moy. ».
 _Avoid_: score (alone), stats, best score
