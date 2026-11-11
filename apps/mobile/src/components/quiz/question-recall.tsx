@@ -1,6 +1,5 @@
 import type { PropsWithChildren } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { RESULTS_CANONICAL_LABEL } from "@/features/quiz/constants";
 import { TEXT } from "@/theme/text";
 import { COLORS, SPACE } from "@/theme/tokens";
 
@@ -20,9 +19,7 @@ export const QuestionRecall = ({
         <Text style={styles.question}>{questionText}</Text>
         {children}
       </View>
-      <Text style={styles.canonical}>
-        {RESULTS_CANONICAL_LABEL} {canonicalAnswer}
-      </Text>
+      <Text style={styles.canonical}>{canonicalAnswer}</Text>
     </View>
   );
 };
