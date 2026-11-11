@@ -10,6 +10,7 @@ Questions brought to Ready by the daily run: **1**
 
 - Reads like the Questions already Ready in its Theme: same register, same typography.
 - Admits one Canonical Answer only.
+- A period that varies from year to year says so: « généralement de juin à octobre ».
 
 ## Wrong choices
 
