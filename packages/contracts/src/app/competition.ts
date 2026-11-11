@@ -74,8 +74,9 @@ const competitionVerdictSchema = z.object({
     .max(COMPETITION_QUESTION_COUNT - 1),
   questionId: z.string(),
   questionText: z.string(),
-  // Revealed here and nowhere earlier: the results screen ends the Attempt that hid it.
+  // Both revealed here and nowhere earlier: the results screen ends the Attempt that hid them.
   canonicalAnswer: z.string(),
+  explanation: z.string().nullable(),
   mode: z.enum(QuizAnswerModeEnum),
   rawInput: z.string().nullable(),
   correct: z.boolean(),

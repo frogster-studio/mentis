@@ -94,7 +94,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Explanation, Quest
       "The mobile persister's buster is api-v3",
       "e2e through the Nest testing module with fake repositories (app-competition.e2e-spec.ts); bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

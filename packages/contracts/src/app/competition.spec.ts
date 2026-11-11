@@ -45,11 +45,16 @@ const attempt = (overrides: Record<string, unknown> = {}) => ({
 });
 
 describe("appCompetitionAttemptResponseSchema", () => {
-  it("strips the answer material — none of it belongs on the wire", () => {
+  it("strips the answer material and the Explanation — none of it belongs on the wire", () => {
     const parsed = appCompetitionAttemptResponseSchema.parse(
       attempt({
         questions: [
-          question(0, { answer: "Paris", aliases: ["Lutèce"], misspellings: ["Pariss"] }),
+          question(0, {
+            answer: "Paris",
+            aliases: ["Lutèce"],
+            misspellings: ["Pariss"],
+            explanation: "La **Ville Lumière**.",
+          }),
           ...Array.from({ length: COMPETITION_QUESTION_COUNT - 1 }, (_, index) =>
             question(index + 1),
           ),
@@ -57,6 +62,7 @@ describe("appCompetitionAttemptResponseSchema", () => {
       }),
     );
     expect(JSON.stringify(parsed)).not.toContain("Lutèce");
+    expect(JSON.stringify(parsed)).not.toContain("Ville Lumière");
     expect(parsed.questions[0]).toEqual({
       id: "q0",
       text: "Question 0 ?",
@@ -129,6 +135,7 @@ const verdict = (index: number, overrides: Record<string, unknown> = {}) => ({
   questionId: `q${index}`,
   questionText: `Question ${index} ?`,
   canonicalAnswer: "Paris",
+  explanation: "La **Ville Lumière**.",
   mode: QuizAnswerModeEnum.CASH,
   rawInput: "paris",
   correct: true,
@@ -202,6 +209,34 @@ describe("appCompetitionTranscriptResponseSchema", () => {
       matchedVia: UserAnswerMatchedViaEnum.CANONICAL,
       points: COMPETITION_POINTS.cash,
     });
+  });
+
+  it("carries each Question's Explanation, a string or null", () => {
+    const parsed = appCompetitionTranscriptResponseSchema.parse(
+      transcript({
+        answers: Array.from({ length: COMPETITION_QUESTION_COUNT }, (_, index) =>
+          index === 0 ? verdict(index) : verdict(index, { explanation: null }),
+        ),
+      }),
+    );
+    expect(parsed.answers[0].explanation).toBe("La **Ville Lumière**.");
+    expect(parsed.answers[1].explanation).toBeNull();
+  });
+
+  it("rejects a verdict without its explanation key", () => {
+    const { explanation: _dropped, ...unexplained } = verdict(0);
+    expect(
+      appCompetitionTranscriptResponseSchema.safeParse(
+        transcript({
+          answers: [
+            unexplained,
+            ...Array.from({ length: COMPETITION_QUESTION_COUNT - 1 }, (_, index) =>
+              verdict(index + 1),
+            ),
+          ],
+        }),
+      ).success,
+    ).toBe(false);
   });
 
   it("carries the same Theme visuals the issuance served", () => {

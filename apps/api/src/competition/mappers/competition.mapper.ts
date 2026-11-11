@@ -70,6 +70,7 @@ export const toAppCompetitionTranscriptResponse = (
         questionId: answer.questionId,
         questionText: question.text,
         canonicalAnswer: question.answer,
+        explanation: question.explanation,
         mode: answer.mode,
         rawInput: answer.rawInput,
         correct: answer.correct,
