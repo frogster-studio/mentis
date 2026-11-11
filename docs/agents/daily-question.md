@@ -28,7 +28,7 @@ Done when every rule of [editorial-style.md](editorial-style.md) is applied and 
 
 ## 4. Propose
 
-Post one message: each field before → after, the Anecdote, the sources, whatever the fact-check overturned, and the Theme's Ready count out of 20. End the turn there — the Editor answers in this session.
+Post one message: each field before → after, the Anecdote, the sources, whatever the fact-check overturned, the Theme's Ready count out of 20, and the picture search of section 6 when it applies. End the turn there — the Editor answers in this session.
 
 ## 5. Apply the answer
 
@@ -44,3 +44,23 @@ His « ok »:
 6. Give the Editor the Theme's new Ready count. From 20 on an unpublished Theme, tell him it can be Published from the dashboard: that switch is his.
 
 Done when the push has landed.
+
+## 6. Picture
+
+Applies only while `apps/api/src/curation/controllers/admin-anecdotes.controller.ts` serves `PUT /admin/anecdotes/:id/image`; otherwise the run ends at 5.
+
+1. In the proposal, when a photo would show the Anecdote's subject itself (the flamboyant in bloom, Snow White's seven dwarfs), give 3 to 4 keywords to paste into Google Images and the prompt below, its first line filled in. When nothing is worth seeing, say so.
+2. The Editor picks the photo, runs the prompt in Gemini himself and attaches the result here — or answers « pas de photo », which ends the run. The « ok » on the text never waits for the picture.
+3. Bring the image to 750 × 1024 px — crop to that ratio, never stretch — as a still WebP.
+4. `PUT /admin/anecdotes/:id/image` on the Anecdote posted in 5, the raw file as body, `Content-Type: image/webp` (`curl --data-binary @image.webp`). A non-2xx answer abandons the picture, never the Question: give the Editor the French message of its `ErrorResponse`.
+
+Done when the answered Anecdote carries an `image` or the Editor declined.
+
+```text
+La photo montre : <le sujet de l'Anecdote>.
+Génère une seule version de cette image avec le rendu d’une photographie éditoriale professionnelle. Utilise la photo fournie comme source pour le sujet, la scène et le point de vue.
+Fidélité à la photo. Préserve les éléments qui rendent l’image reconnaissable. Pour une personne, garde ses traits, son expression, sa posture et ses vêtements. Pour un objet ou un détail naturel, respecte sa forme, ses proportions et ses textures. Pour une scène ou un paysage, conserve la disposition des éléments, la perspective et les repères du lieu.
+Rendu photographique. Recherche une image réaliste et finement détaillée, avec des couleurs riches mais naturelles, une exposition équilibrée et des textures crédibles. Respecte la direction de la lumière, l’heure apparente et l’ambiance de la photo. Ajuste avec mesure les ombres, les hautes lumières, la balance des blancs et la netteté.
+Profondeur de champ. Adapte-la à l’image. En gros plan, garde le sujet net et laisse le fond s’adoucir naturellement. Dans une scène de groupe ou d’action, garde les visages, les gestes et les éléments importants lisibles. Dans un paysage, préserve les détails du premier plan jusqu’aux reliefs lointains, avec la douceur naturelle de la distance.
+Cadrage et format. Livre une image verticale de 750 × 1024 px exactement, bord à bord, sans cadre ni texte ajouté. Recadre en gardant le sujet et les éléments essentiels de la scène. Si le passage au portrait risque de couper un élément important, prolonge discrètement le décor existant dans les zones nécessaires. Garde les proportions de la photo et ajuste les dimensions finales sans étirer l’image.
+```
