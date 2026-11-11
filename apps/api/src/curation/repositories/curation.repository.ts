@@ -173,4 +173,13 @@ export class CurationRepository {
   createAnecdote(anecdote: DeepPartial<AnecdoteEntity>): Promise<AnecdoteEntity> {
     return this.anecdotes.save(this.anecdotes.create(anecdote));
   }
+
+  findAnecdote(id: string): Promise<AnecdoteEntity | null> {
+    return this.anecdotes.findOneBy({ id });
+  }
+
+  async updateAnecdote(anecdote: DeepPartial<AnecdoteEntity>): Promise<AnecdoteEntity | null> {
+    const merged = await this.anecdotes.preload(anecdote);
+    return merged === undefined ? null : this.anecdotes.save(merged);
+  }
 }

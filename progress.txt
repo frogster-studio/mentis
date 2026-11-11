@@ -15,3 +15,16 @@
 - Spec builds buffers by hand: 3 formats at 750×1024, animated flag, non-animated flags, null for non-RIFF, RIFF/WAVE, truncated, empty, VP8 missing start code, VP8L missing signature.
 - Note: biome flags the unformatted generated migration 1794429733050 (Hugo's commit 2811de5); left untouched (agents never edit migrations), host `bun run knip` -> format fixes it.
 - Next: item 3 (PUT /admin/anecdotes/:id/image) — validate with readWebpHeader: null -> 400 non-WebP, animated -> 400, !750×1024 -> 400.
+
+## Item 3 — PUT /admin/anecdotes/:id/image — DONE
+- Parser scope: bootstrap.ts `app.useBodyParser("raw", { type: isAnecdoteImageUpload, limit: ANECDOTE_IMAGE_BODY_LIMIT })`, registered before json. body-parser's `type` predicate (PUT + /admin/anecdotes/<id>/image regex on req.url) scopes it: no `express` import (not an api dep, can't bun install), no hand-written stream reader. Content-Type ignored on that route: the header reader decides, so a mislabelled body still 400s.
+- Route path lives twice (controller decorator + bootstrap regex); the e2e proves they agree.
+- curation/services/anecdote-image.service.ts `replace(id, file: unknown)`: validate header (null -> "L’image doit être un fichier WebP.", animated -> "L’image ne doit pas être animée.", dims -> "L’image doit mesurer 750 × 1024 px.") -> findAnecdote 404 "Anecdote introuvable." -> upload `<id>/<uuid>.webp` contentType image/webp -> updateAnecdote -> remove previous, `.catch` swallowed (orphan accepted). Validation before lookup: no DB read for garbage.
+- Upload failure -> 502 BadGatewayException (code falls back to INTERNAL). Departs from theme-image.service's 400-for-storage-failure precedent: an upstream failure is not the caller's fault.
+- Repo: findAnecdote, updateAnecdote (preload+save, mirrors updateQuestion). Contracts: adminAnecdoteIdSchema = z.guid().
+- WIDTH/HEIGHT consts private to the service; item 6 (mobile ratio) may want them in contracts.
+- WebP buffer builders extracted to curation/_tests/webp-fixtures.ts, shared by read-webp-header.spec + new e2e.
+- e2e admin-anecdote-image.e2e-spec.ts via bootstrap: 401/403/404, 4×400 French, 413 envelope, exactly-153600 ok, success upload shape, upload->save->remove order, failed deletion (error + throw) still 200, failed upload 502, image/webp on POST /admin/anecdotes not read raw, JSON >64kb still 413.
+- supabase.config.ts comment now names both buckets. AGENTS.md rules (JSON-only, service client) left for item 4.
+- Files: bootstrap.ts, supabase.config.ts, curation.repository.ts, anecdote-image.service.ts (new), admin-anecdotes.controller.ts, curation.module.ts, contracts admin/anecdote.ts, _tests/webp-fixtures.ts (new), read-webp-header.spec.ts, admin-anecdote-image.e2e-spec.ts (new).
+- Next: item 4 (ADR 0010, ADR 0007 rewrite, apps/api/AGENTS.md).

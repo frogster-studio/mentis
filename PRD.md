@@ -107,7 +107,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Anecdote
       "A JSON route still refuses a body above 64 kb",
       "e2e through bootstrap.ts with a fake repository and a fake Storage client; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "docs",

@@ -10,6 +10,7 @@ import { AdminCategoriesController } from "../controllers/admin-categories.contr
 import { AdminQuestionsController } from "../controllers/admin-questions.controller";
 import { AdminThemesController } from "../controllers/admin-themes.controller";
 import { CurationRepository } from "../repositories/curation.repository";
+import { AnecdoteImageService } from "../services/anecdote-image.service";
 import { CurationService } from "../services/curation.service";
 import { ThemeImageService } from "../services/theme-image.service";
 
@@ -25,6 +26,6 @@ import { ThemeImageService } from "../services/theme-image.service";
     AdminQuestionsController,
     AdminThemesController,
   ],
-  providers: [CurationRepository, CurationService, ThemeImageService],
+  providers: [AnecdoteImageService, CurationRepository, CurationService, ThemeImageService],
 })
 export class CurationModule {}
