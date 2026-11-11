@@ -7,6 +7,7 @@ import {
   dismissTopAnecdote,
   isDrawDue,
   pileColors,
+  restoreDaySet,
   topAnecdote,
 } from "./day-set";
 
@@ -35,6 +36,28 @@ describe("buildDaySet", () => {
       anecdotes: ANECDOTES,
       dismissedCount: 0,
     });
+  });
+});
+
+describe("restoreDaySet", () => {
+  it("reads an Anecdote stored without imageUrl as having no image", () => {
+    const stored = {
+      day: "2026-04-10",
+      anecdotes: [{ id: "a", text: "Anecdote a" }],
+      dismissedCount: 0,
+    };
+    expect(restoreDaySet(stored).anecdotes).toStrictEqual([
+      { id: "a", text: "Anecdote a", imageUrl: null },
+    ]);
+  });
+
+  it("keeps the imageUrl an Anecdote was stored with, and the set's day and position", () => {
+    const stored = {
+      day: "2026-04-10",
+      anecdotes: [{ id: "a", text: "Anecdote a", imageUrl: "https://cdn.test/a.webp" }],
+      dismissedCount: 1,
+    };
+    expect(restoreDaySet(stored)).toStrictEqual(stored);
   });
 });
 

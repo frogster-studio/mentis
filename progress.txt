@@ -35,3 +35,12 @@
 - apps/api/AGENTS.md: JSON-only rule "the Anecdote Image route aside" + raw parser scope/cap; service-client rule names Anecdote Image upload + replaced-object deletion; Structure bootstrap.ts line names the raw parser.
 - Files: docs/adr/0007 (renamed), docs/adr/0010 (new), apps/api/AGENTS.md, docs/prds/catalog-curation-dashboard.md, PRD.md.
 - Next: item 5 (mobile day set imageUrl + expo-image prefetch), then 6 (overlay), 7 (icon).
+
+## Item 5 — mobile day set imageUrl + top Anecdote image prefetch — DONE
+- Stored set from before imageUrl: store persist `version: 1` + `migrate` -> day-set.ts `restoreDaySet(stored: StoredAnecdoteDaySet)` fills `imageUrl ?? null`. Kept the stored set (dismissed count intact) rather than dropping it: PRD says no icon until next draw, not a redraw. First migrate in the app; zustand only calls it on version mismatch.
+- `?? null` not a blind null: dev builds against an item-1 API already stored imageUrl at version 0.
+- features/anecdote/image-cache.ts: `prefetchAnecdoteImage(url)` via Image.prefetch, cachePolicy "disk", mirrors quiz/theme-image-cache.ts. ANECDOTE_IMAGE_CACHE_POLICY unexported for now (knip); item 6's overlay exports+uses it so it reads the same cache.
+- anecdote-card.tsx: effect keyed on the top Anecdote's imageUrl (covers land, dismiss, relaunch); no prefetch when null.
+- day-set.test: restoreDaySet missing field -> null, present field kept.
+- Files: day-set.ts, day-set.test.ts, store.ts, image-cache.ts (new), anecdote-card.tsx, PRD.md.
+- Next: item 6 (overlay; size fn pure + vitest; 750:1024 ratio consts maybe local to mobile).

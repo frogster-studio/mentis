@@ -128,7 +128,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Anecdote
       "The top Anecdote's imageUrl is prefetched to the disk cache through expo-image when it becomes the top card; none is prefetched without an image",
       "day-set tests cover a stored Anecdote missing imageUrl; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

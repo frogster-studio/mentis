@@ -14,6 +14,7 @@ import {
   ANECDOTE_FADE_MS,
 } from "@/features/anecdote/constants";
 import { type Anecdote, pileColors, topAnecdote } from "@/features/anecdote/day-set";
+import { prefetchAnecdoteImage } from "@/features/anecdote/image-cache";
 import { useAnecdoteStore } from "@/features/anecdote/store";
 import { GUTTER } from "@/theme/tokens";
 
@@ -28,6 +29,13 @@ export const AnecdoteCard = () => {
   const [peel, setPeel] = useState<Peel | null>(null);
   const [collapsingHeight, setCollapsingHeight] = useState<number | null>(null);
   const slotHeight = useRef(0);
+  const topImageUrl = daySet === null ? null : (topAnecdote(daySet)?.imageUrl ?? null);
+
+  useEffect(() => {
+    if (topImageUrl !== null) {
+      prefetchAnecdoteImage(topImageUrl);
+    }
+  }, [topImageUrl]);
 
   useEffect(() => {
     if (peel === null) {
