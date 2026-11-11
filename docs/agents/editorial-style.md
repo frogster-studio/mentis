@@ -10,6 +10,7 @@ Questions brought to Ready by the daily run: **2**
 
 - Reads like the Questions already Ready in its Theme: same register, same typography.
 - Admits one Canonical Answer only.
+- Answerable in Cash mode, typed without the four choices: the wording dictates the form of the answer. Ask for a name (« Quel genre musical… ? » → « Le maloya »), never for a definition (« Qu’est-ce que le maloya ? ») that a Player could phrase ten ways.
 - A period that varies from year to year says so: « généralement de juin à octobre ».
 
 ## Wrong choices
