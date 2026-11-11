@@ -16,6 +16,10 @@ export class AnecdoteEntity extends BaseEntity {
   @Column({ type: "varchar", length: 140 })
   text: string;
 
+  // A path inside the anecdote-images bucket, never a URL — the API composes that.
+  @Column({ type: "varchar", length: 255, nullable: true })
+  image: string | null;
+
   @UpdateDateColumn({ type: "timestamptz", name: "updated_at" })
   updatedAt: Date;
 

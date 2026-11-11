@@ -14,9 +14,9 @@ const LATE_APRIL_10 = new Date("2026-04-10T21:59:00.000Z");
 const EARLY_APRIL_11 = new Date("2026-04-10T22:00:00.000Z");
 
 const ANECDOTES: Anecdote[] = [
-  { id: "a", text: "Anecdote a" },
-  { id: "b", text: "Anecdote b" },
-  { id: "c", text: "Anecdote c" },
+  { id: "a", text: "Anecdote a", imageUrl: null },
+  { id: "b", text: "Anecdote b", imageUrl: null },
+  { id: "c", text: "Anecdote c", imageUrl: null },
 ];
 
 function daySet(dismissedCount: number): AnecdoteDaySet {

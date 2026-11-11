@@ -81,7 +81,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Anecdote
       "App anecdote schema carries imageUrl: z.url().nullable(); GET /app/anecdotes answers null without an image and the composed anecdote-images public URL with one",
       "Contract specs and the existing anecdote e2e specs pass; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "api",

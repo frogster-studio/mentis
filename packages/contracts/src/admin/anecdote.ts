@@ -11,5 +11,6 @@ export type AdminAnecdoteWrite = z.infer<typeof adminAnecdoteWriteSchema>;
 export const adminAnecdoteResponseSchema = z.object({
   id: z.guid(),
   text: z.string(),
+  image: z.string().nullable(),
 });
 export type AdminAnecdoteResponse = z.infer<typeof adminAnecdoteResponseSchema>;

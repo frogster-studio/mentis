@@ -1,0 +1,9 @@
+## Item 1 — Anecdote carries optional image (admin image, app imageUrl) — DONE
+- AnecdoteEntity: nullable image varchar(255), path in anecdote-images bucket. Migration NOT generated (Hugo).
+- Contracts: admin response image: z.string().nullable(); app anecdote imageUrl: z.url().nullable().
+- catalog/utils/anecdote-image-url.ts: ANECDOTE_IMAGES_BUCKET + anecdoteImageUrl, mirrors theme-image-url.ts (item 3 imports the bucket const from here, like curation does for Themes).
+- AnecdoteService injects ENV, maps image -> imageUrl (null stays null).
+- createAnecdote saves { ...anecdote, image: null }: TypeORM save doesn't reload a nullable column without default, so the returned entity would carry undefined and the schema would refuse it.
+- Mobile day-set.test fixtures got imageUrl: null just to typecheck; item 5 owns the "stored Anecdote missing imageUrl" read.
+- Files: anecdote.entity.ts, anecdote.service.ts, curation.service.ts, anecdote-image-url.ts (new), contracts admin/app anecdote(.spec).ts, app-anecdotes.e2e-spec.ts, admin-curation.e2e-spec.ts, mobile day-set.test.ts.
+- Next: Hugo runs migration:generate. Next item suggestion: 2 (WebP header reader, pure), then 3 (route).

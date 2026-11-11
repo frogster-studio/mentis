@@ -8,6 +8,7 @@ export type AppAnecdoteDrawQuery = z.infer<typeof appAnecdoteDrawQuerySchema>;
 const appAnecdoteSchema = z.object({
   id: z.string(),
   text: z.string(),
+  imageUrl: z.url().nullable(),
 });
 
 export const appAnecdoteDrawResponseSchema = z.array(appAnecdoteSchema);
