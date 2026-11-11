@@ -21,6 +21,7 @@ Questions brought to Ready by the daily run: **2**
 ## Aliases and Misspellings
 
 - Every legitimate name and every obvious wrong spelling a Player would type, minus what `packages/answer-matching/src/matching.ts` already accepts through normalization and typo tolerance.
+- Spell it the way it sounds, slips of the ear as well as of the hand: a letter heard as another, a doubled consonant (« maloya » → « mallola », « malolla »). Keep each one the matcher refuses.
 
 ## Explanation
 
