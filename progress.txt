@@ -24,3 +24,12 @@
 - Checks: typecheck, biome, every non-API workspace's tests — green.
 - Files: apps/mobile/src/utils/emphasis-segments{,.test}.ts, apps/mobile/src/components/ui/emphasized-text.tsx, apps/mobile/src/components/anecdote/anecdote-content.tsx, apps/mobile/AGENTS.md
 - Next (item 4): ⋮ on result cards → one Sheet per screen; explanation body = <EmphasizedText>, empty case centered inkMuted.
+
+## Item 4 — ⋮ opens the « Explication » sheet on the three screens (done)
+- components/quiz/question-recall.tsx: QuestionRecall (question text + « Réponse : » canonical) — the card and the sheet share it, so "exact styles the card gives them" holds by construction, not by copied styles. Children sit beside the question text: the card's ⋮.
+- components/quiz/explanation-sheet.tsx: ExplanationSheet({ question: ExplainedQuestion | null, onDismiss }) on the standard Sheet (title prop, no message, dismissible). Null = closed; keeps the last Question in state (conditional setState in render, compiler-safe) so the content doesn't empty mid-dismiss. Hairline bleeds -SPACE.xl (sheet padding). Missing case: TEXT.anecdote in inkMuted, centered (same size as the Explanation; no new token).
+- ResultCard: onExplain prop wired to the ⋮ Pressable (role button, label « Voir l'explication »); card stays non-pressable.
+- Each screen holds one useState<ExplainedQuestion | null> + one sheet: SessionResults and CompetitionResults mount it beside ResultsView (fragment, outside the scroll), EndOnboardingVerdict inside its panel.
+- Copy: EXPLANATION_TITLE / EXPLANATION_OPEN_LABEL / EXPLANATION_MISSING in features/quiz/constants.ts.
+- Checks: typecheck, biome, non-API workspace tests green. API suite not run (untouched).
+- Device review (human): practice results, competition results (incl. reopened), Onboarding verdict; with bold/italic Explanation, with null; a 400-char one on a small screen; swipe and tap-outside dismissal; open a second card after dismissing.

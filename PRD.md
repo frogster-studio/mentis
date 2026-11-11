@@ -119,7 +119,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Explanation, Quest
       "The ⋮ carries the accessibility label « Voir l'explication »; the card itself is not pressable; each screen mounts one sheet, not one per card",
       "Copy in the quiz constants; no new TEXT token, no new color; bun run check green"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```

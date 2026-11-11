@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { type ExplainedQuestion, ExplanationSheet } from "@/components/quiz/explanation-sheet";
 import { NewButton } from "@/components/ui/new-button";
 import { ResultCard } from "@/features/quiz/components/result-card";
 import { ResultsHomeLink } from "@/features/quiz/components/results-home-link";
@@ -21,40 +23,52 @@ export const SessionResults = ({
   onReplay,
   onGoHome,
 }: SessionResultsProps) => {
+  const [explained, setExplained] = useState<ExplainedQuestion | null>(null);
+
   return (
-    <ResultsView
-      score={sessionScore(answers)}
-      themeName={themeName}
-      outcomes={answers.map((answer) => answer.correct)}
-      footer={
-        <>
-          <NewButton
-            layout="block"
-            shape="full"
-            tone="gradient-primary"
-            icon="play-circle-outline"
-            label={RESULTS_REPLAY_LABEL}
-            accessibilityLabel={null}
-            onPress={onReplay}
-            disabled={false}
-            pending={false}
+    <>
+      <ResultsView
+        score={sessionScore(answers)}
+        themeName={themeName}
+        outcomes={answers.map((answer) => answer.correct)}
+        footer={
+          <>
+            <NewButton
+              layout="block"
+              shape="full"
+              tone="gradient-primary"
+              icon="play-circle-outline"
+              label={RESULTS_REPLAY_LABEL}
+              accessibilityLabel={null}
+              onPress={onReplay}
+              disabled={false}
+              pending={false}
+            />
+            <ResultsHomeLink label={RESULTS_HOME_LABEL} onPress={onGoHome} />
+          </>
+        }
+      >
+        {questions.map((question, index) => (
+          <ResultCard
+            key={question.id}
+            position={index + 1}
+            total={questions.length}
+            questionText={question.text}
+            canonicalAnswer={question.answer}
+            answerText={answers[index].input}
+            correct={answers[index].correct}
+            points={answers[index].points}
+            onExplain={() =>
+              setExplained({
+                questionText: question.text,
+                canonicalAnswer: question.answer,
+                explanation: question.explanation,
+              })
+            }
           />
-          <ResultsHomeLink label={RESULTS_HOME_LABEL} onPress={onGoHome} />
-        </>
-      }
-    >
-      {questions.map((question, index) => (
-        <ResultCard
-          key={question.id}
-          position={index + 1}
-          total={questions.length}
-          questionText={question.text}
-          canonicalAnswer={question.answer}
-          answerText={answers[index].input}
-          correct={answers[index].correct}
-          points={answers[index].points}
-        />
-      ))}
-    </ResultsView>
+        ))}
+      </ResultsView>
+      <ExplanationSheet question={explained} onDismiss={() => setExplained(null)} />
+    </>
   );
 };
