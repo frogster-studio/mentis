@@ -141,7 +141,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Anecdote
       "Reduce motion: fades replace the slides; corners are a Squircle at RADIUS.base; colours, spacing and radius from the tokens",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",

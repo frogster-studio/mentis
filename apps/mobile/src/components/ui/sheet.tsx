@@ -2,9 +2,8 @@ import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { type PropsWithChildren, useEffect, useRef } from "react";
 import { Platform, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { MAX_CONTENT_WIDTH } from "@/components/ui/screen-container";
 import { TEXT } from "@/theme/text";
-import { COLORS, RADIUS, SPACE } from "@/theme/tokens";
+import { COLORS, MAX_CONTENT_WIDTH, RADIUS, SPACE } from "@/theme/tokens";
 
 export { TrueSheetProvider as SheetProvider } from "@lodev09/react-native-true-sheet";
 

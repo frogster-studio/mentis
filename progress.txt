@@ -44,3 +44,14 @@
 - day-set.test: restoreDaySet missing field -> null, present field kept.
 - Files: day-set.ts, day-set.test.ts, store.ts, image-cache.ts (new), anecdote-card.tsx, PRD.md.
 - Next: item 6 (overlay; size fn pure + vitest; 750:1024 ratio consts maybe local to mobile).
+
+## Item 6 — Anecdote Image overlay — DONE
+- features/anecdote/image-overlay-size.ts `anecdoteImageOverlaySize(window)`: min(width − 2·GUTTER, MAX_CONTENT_WIDTH) vs (height − 2·GUTTER)·750/1024, height from width. No safe-area insets: app is portrait-locked, height never binds on a phone; the short case is web/tablet. Test: phone, short landscape, wide web.
+- MAX_CONTENT_WIDTH moved screen-container.tsx -> theme/tokens.ts: vitest (node) can't import a module that pulls react-native, and the size fn must use the real cap. 7 importers repointed.
+- components/anecdote/anecdote-image-overlay.tsx: transparent Modal, animationType none. Phase state loading -> shown -> hiding -> leaving, all reanimated CSS keyframes + setTimeout (the anecdote feature's idiom; no runOnJS/worklets, worklets isn't a direct dep). Scrim fades in on mount; image opacity 0 until onLoad, then slide up from (window.height + image.height)/2; scrim tap/Android back: shown -> hiding (slide down) -> leaving (scrim fade) -> onClosed; loading -> leaving directly (slide cancelled, a late onLoad is ignored); onError -> leaving, no toast. Reduce motion swaps the slides for the FADE_IN/FADE_OUT styles. onClosed via useEffectEvent (React 19.2) so an inline parent callback doesn't restart the timer.
+- Image tap does nothing: the image is a sibling of the scrim Pressable (box-none centre layer), never its child.
+- Corners: FastSquircleView + overflow hidden (theme-reveal-card precedent): the Squircle primitive's clip view has no radius, so it wouldn't round the image.
+- Scrim Pressable a11y label « Fermer l'image » (CLOSE_ANECDOTE_IMAGE_LABEL). ANECDOTE_IMAGE_CACHE_POLICY now exported, the overlay reads the prefetched disk cache.
+- Card owns `openImageUrl` state and renders the overlay outside the inert peeling view; nothing sets it yet (keeps the overlay reachable for knip). Item 7: icon calls setOpenImageUrl(anecdote.imageUrl) on the top card only.
+- Files: tokens.ts, screen-container.tsx, sheet.tsx, blur-band.tsx, swipable-button.tsx, profile (tabs) index/infos/history.tsx, anecdote constants.ts, image-cache.ts, image-overlay-size(.test).ts (new), anecdote-image-overlay.tsx (new), anecdote-card.tsx, PRD.md.
+- Next: item 7 (photo icon). Animations unreviewed on device: Hugo's step after item 7.

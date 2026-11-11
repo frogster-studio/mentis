@@ -3,6 +3,7 @@ import { View } from "react-native";
 import Animated, { css } from "react-native-reanimated";
 import { AnecdoteCollapsingSlot } from "@/components/anecdote/anecdote-collapsing-slot";
 import { AnecdoteContent } from "@/components/anecdote/anecdote-content";
+import { AnecdoteImageOverlay } from "@/components/anecdote/anecdote-image-overlay";
 import { AnecdotePeelingSheet } from "@/components/anecdote/anecdote-peeling-sheet";
 import { AnecdoteSkeleton } from "@/components/anecdote/anecdote-skeleton";
 import { ANECDOTE_PILE_DEPTH, AnecdoteStack } from "@/components/anecdote/anecdote-stack";
@@ -28,6 +29,7 @@ export const AnecdoteCard = () => {
   const { daySet, isPending } = useAnecdoteDaySet();
   const [peel, setPeel] = useState<Peel | null>(null);
   const [collapsingHeight, setCollapsingHeight] = useState<number | null>(null);
+  const [openImageUrl, setOpenImageUrl] = useState<string | null>(null);
   const slotHeight = useRef(0);
   const topImageUrl = daySet === null ? null : (topAnecdote(daySet)?.imageUrl ?? null);
 
@@ -84,34 +86,39 @@ export const AnecdoteCard = () => {
 
   // Mounted only once the set is there, so the real card fades in where the skeleton stood.
   return (
-    <Animated.View
-      style={[styles.root, styles.fadeIn, peel !== null && styles.inert]}
-      onLayout={(event) => {
-        slotHeight.current = event.nativeEvent.layout.height;
-      }}
-    >
-      {daySet === null || anecdote === null ? null : (
-        <AnecdoteStack colors={pileColors(daySet.anecdotes.length - daySet.dismissedCount)}>
-          <AnecdoteContent
-            key={anecdote.id}
-            anecdote={anecdote}
-            position={daySet.dismissedCount}
-            total={daySet.anecdotes.length}
-            onDismiss={dismiss}
-          />
-        </AnecdoteStack>
+    <>
+      <Animated.View
+        style={[styles.root, styles.fadeIn, peel !== null && styles.inert]}
+        onLayout={(event) => {
+          slotHeight.current = event.nativeEvent.layout.height;
+        }}
+      >
+        {daySet === null || anecdote === null ? null : (
+          <AnecdoteStack colors={pileColors(daySet.anecdotes.length - daySet.dismissedCount)}>
+            <AnecdoteContent
+              key={anecdote.id}
+              anecdote={anecdote}
+              position={daySet.dismissedCount}
+              total={daySet.anecdotes.length}
+              onDismiss={dismiss}
+            />
+          </AnecdoteStack>
+        )}
+        {peel === null ? null : (
+          <AnecdotePeelingSheet key={peel.anecdote.id} coversNextSheet={anecdote !== null}>
+            <AnecdoteContent
+              anecdote={peel.anecdote}
+              position={peel.position}
+              total={peel.total}
+              onDismiss={dismiss}
+            />
+          </AnecdotePeelingSheet>
+        )}
+      </Animated.View>
+      {openImageUrl === null ? null : (
+        <AnecdoteImageOverlay imageUrl={openImageUrl} onClosed={() => setOpenImageUrl(null)} />
       )}
-      {peel === null ? null : (
-        <AnecdotePeelingSheet key={peel.anecdote.id} coversNextSheet={anecdote !== null}>
-          <AnecdoteContent
-            anecdote={peel.anecdote}
-            position={peel.position}
-            total={peel.total}
-            onDismiss={dismiss}
-          />
-        </AnecdotePeelingSheet>
-      )}
-    </Animated.View>
+    </>
   );
 };
 

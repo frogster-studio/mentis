@@ -3,7 +3,6 @@ import { HistoryRow } from "@/components/account/history-row";
 import { HistorySectionHeader } from "@/components/account/history-section-header";
 import { useBottomTabBarHeight } from "@/components/bottom-tab-bar";
 import { useMainHeaderHeight } from "@/components/main-header";
-import { MAX_CONTENT_WIDTH } from "@/components/ui/screen-container";
 import { ScreenError } from "@/components/ui/screen-error";
 import { ScreenLoading } from "@/components/ui/screen-loading";
 import { useHistory } from "@/features/account/api";
@@ -11,7 +10,7 @@ import { useAuthStore } from "@/features/account/auth-store";
 import { HISTORY_EMPTY, HISTORY_ERROR, HISTORY_SIGNED_OUT } from "@/features/account/constants";
 import { historySections } from "@/features/account/history-sections";
 import { TEXT } from "@/theme/text";
-import { COLORS, GUTTER, SPACE } from "@/theme/tokens";
+import { COLORS, GUTTER, MAX_CONTENT_WIDTH, SPACE } from "@/theme/tokens";
 
 export default function Page() {
   const tabBarHeight = useBottomTabBarHeight();

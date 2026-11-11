@@ -3,7 +3,6 @@ import { StatTilesGrid } from "@/components/account/stat-tiles-grid";
 import { ThemeStatsTable } from "@/components/account/theme-stats-table";
 import { useBottomTabBarHeight } from "@/components/bottom-tab-bar";
 import { useMainHeaderHeight } from "@/components/main-header";
-import { MAX_CONTENT_WIDTH } from "@/components/ui/screen-container";
 import { ScreenError } from "@/components/ui/screen-error";
 import { ScreenLoading } from "@/components/ui/screen-loading";
 import { useAccountStats } from "@/features/account/api";
@@ -20,7 +19,7 @@ import { usePracticeStreakRecord } from "@/features/quiz/use-practice-streak";
 import { useThemeTallies } from "@/features/quiz/use-theme-tallies";
 import { PURCHASES_SUPPORTED } from "@/lib/purchases";
 import { TEXT } from "@/theme/text";
-import { COLORS, GUTTER, SPACE } from "@/theme/tokens";
+import { COLORS, GUTTER, MAX_CONTENT_WIDTH, SPACE } from "@/theme/tokens";
 
 export default function Page() {
   const tabBarHeight = useBottomTabBarHeight();

@@ -6,10 +6,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { PaperBackground } from "@/components/ui/paper-background";
-import { COLORS, SPACE } from "@/theme/tokens";
-
-// Desktop web must not stretch edge-to-edge; on phones the cap never engages.
-export const MAX_CONTENT_WIDTH = 480;
+import { COLORS, MAX_CONTENT_WIDTH, SPACE } from "@/theme/tokens";
 
 // SafeAreaView's own default, written out so no screen inherits an edge set it never chose.
 export const ALL_SCREEN_EDGES = ["top", "right", "bottom", "left"] as const;
