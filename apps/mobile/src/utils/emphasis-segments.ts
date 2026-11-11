@@ -1,4 +1,4 @@
-export type AnecdoteTextSegment = {
+export type EmphasisSegment = {
   text: string;
   emphasis: "regular" | "bold" | "italic";
 };
@@ -6,8 +6,8 @@ export type AnecdoteTextSegment = {
 // A span closes on its own marker only, so the other marker inside it and an orphan stay literal.
 const EMPHASIS_SPAN = /(\*\*|__)([\s\S]+?)\1/g;
 
-export function anecdoteTextSegments(text: string): AnecdoteTextSegment[] {
-  const segments: AnecdoteTextSegment[] = [];
+export function emphasisSegments(text: string): EmphasisSegment[] {
+  const segments: EmphasisSegment[] = [];
   let cursor = 0;
   for (const match of text.matchAll(EMPHASIS_SPAN)) {
     const [span, marker, content] = match;

@@ -15,3 +15,12 @@
 - Checks: typecheck, biome, every workspace's tests, API suite too (no-swc workaround) — green.
 - Files: packages/contracts/src/app/competition{,.spec}.ts, apps/api/src/competition/{types/served-question.ts,mappers/competition.mapper.ts,_tests/app-competition.e2e-spec.ts}, apps/mobile/src/lib/query-client.ts, apps/mobile/src/features/competition/requests.test.ts
 - Next (item 3): move anecdote emphasis parser to a shared module as emphasisSegments + one shared segments component.
+
+## Item 3 — shared emphasis parser + component (done)
+- Parser git-mv'd features/anecdote/text-segments.ts → utils/emphasis-segments.ts: emphasisSegments / EmphasisSegment. Spec moved with it, cases untouched (only names).
+- components/ui/emphasized-text.tsx: EmphasizedText({ text }) — bakes TEXT.anecdote trio + COLORS.ink (both callers want ink), no style prop (no speculative props).
+- AnecdoteContent: the flex:1 the old outer Text carried now sits on a wrapping View (styles.textZone) — same layout, component API stays text-only.
+- apps/mobile/AGENTS.md: Inter Tight Italic line names the Explanation's italic spans beside the Anecdote's.
+- Checks: typecheck, biome, every non-API workspace's tests — green.
+- Files: apps/mobile/src/utils/emphasis-segments{,.test}.ts, apps/mobile/src/components/ui/emphasized-text.tsx, apps/mobile/src/components/anecdote/anecdote-content.tsx, apps/mobile/AGENTS.md
+- Next (item 4): ⋮ on result cards → one Sheet per screen; explanation body = <EmphasizedText>, empty case centered inkMuted.

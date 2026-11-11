@@ -106,7 +106,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Explanation, Quest
       "apps/mobile AGENTS.md: the Inter Tight Italic line names the Explanation beside the Anecdote",
       "The parser's vitest spec moved with it, same cases, passing; bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "mobile",
