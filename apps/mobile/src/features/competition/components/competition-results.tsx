@@ -1,4 +1,6 @@
 import type { AppCompetitionTranscriptResponse } from "@mentis/contracts/app";
+import { useState } from "react";
+import { type ExplainedQuestion, ExplanationSheet } from "@/components/quiz/explanation-sheet";
 import { Button } from "@/components/ui/button";
 import { NewButton } from "@/components/ui/new-button";
 import {
@@ -28,47 +30,59 @@ export const CompetitionResults = ({
   otherAttempt,
   onGoHome,
 }: CompetitionResultsProps) => {
+  const [explained, setExplained] = useState<ExplainedQuestion | null>(null);
+
   return (
-    <ResultsView
-      score={transcript.score}
-      themeName={transcript.themeName}
-      outcomes={transcript.answers.map((answer) => answer.correct)}
-      footer={
-        <>
-          {onReplay ? (
-            <NewButton
-              layout="block"
-              shape="full"
-              tone="gradient-primary"
-              icon="replay"
-              label={COMPETITION_REPLAY_LABEL}
-              accessibilityLabel={null}
-              onPress={onReplay}
-              disabled={false}
-              pending={false}
-            />
-          ) : null}
-          {otherAttempt ? <OtherAttemptLink attempt={otherAttempt} /> : null}
-          {onReplay ? (
-            <ResultsHomeLink label={COMPETITION_RESULTS_HOME_LABEL} onPress={onGoHome} />
-          ) : (
-            <Button label={COMPETITION_RESULTS_HOME_LABEL} onPress={onGoHome} pending={false} />
-          )}
-        </>
-      }
-    >
-      {transcript.answers.map((answer) => (
-        <ResultCard
-          key={answer.position}
-          position={answer.position + 1}
-          total={transcript.answers.length}
-          questionText={answer.questionText}
-          canonicalAnswer={answer.canonicalAnswer}
-          answerText={answer.rawInput ?? ""}
-          correct={answer.correct}
-          points={answer.points}
-        />
-      ))}
-    </ResultsView>
+    <>
+      <ResultsView
+        score={transcript.score}
+        themeName={transcript.themeName}
+        outcomes={transcript.answers.map((answer) => answer.correct)}
+        footer={
+          <>
+            {onReplay ? (
+              <NewButton
+                layout="block"
+                shape="full"
+                tone="gradient-primary"
+                icon="replay"
+                label={COMPETITION_REPLAY_LABEL}
+                accessibilityLabel={null}
+                onPress={onReplay}
+                disabled={false}
+                pending={false}
+              />
+            ) : null}
+            {otherAttempt ? <OtherAttemptLink attempt={otherAttempt} /> : null}
+            {onReplay ? (
+              <ResultsHomeLink label={COMPETITION_RESULTS_HOME_LABEL} onPress={onGoHome} />
+            ) : (
+              <Button label={COMPETITION_RESULTS_HOME_LABEL} onPress={onGoHome} pending={false} />
+            )}
+          </>
+        }
+      >
+        {transcript.answers.map((answer) => (
+          <ResultCard
+            key={answer.position}
+            position={answer.position + 1}
+            total={transcript.answers.length}
+            questionText={answer.questionText}
+            canonicalAnswer={answer.canonicalAnswer}
+            answerText={answer.rawInput ?? ""}
+            correct={answer.correct}
+            points={answer.points}
+            onExplain={() =>
+              setExplained({
+                questionText: answer.questionText,
+                canonicalAnswer: answer.canonicalAnswer,
+                explanation: answer.explanation,
+              })
+            }
+          />
+        ))}
+      </ResultsView>
+      <ExplanationSheet question={explained} onDismiss={() => setExplained(null)} />
+    </>
   );
 };

@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import FastSquircleView from "react-native-fast-squircle";
+import { type ExplainedQuestion, ExplanationSheet } from "@/components/quiz/explanation-sheet";
 import { OnboardingCheckmark } from "@/features/onboarding/components/onboarding-checkmark";
 import {
   END_ONBOARDING_OUTCOME_TITLE,
@@ -25,6 +27,7 @@ export interface EndOnboardingVerdictProps {
 export const EndOnboardingVerdict = ({ outcome, answer }: EndOnboardingVerdictProps) => {
   const points = outcomePoints(outcome);
   const isCorrect = points > 0;
+  const [explained, setExplained] = useState<ExplainedQuestion | null>(null);
 
   return (
     <FastSquircleView style={styles.panel}>
@@ -44,6 +47,13 @@ export const EndOnboardingVerdict = ({ outcome, answer }: EndOnboardingVerdictPr
         answerText={answer}
         correct={isCorrect}
         points={points}
+        onExplain={() =>
+          setExplained({
+            questionText: ONBOARDING_QUESTION.text,
+            canonicalAnswer: ONBOARDING_QUESTION.answer,
+            explanation: ONBOARDING_QUESTION.explanation,
+          })
+        }
       />
 
       <View>
@@ -54,6 +64,7 @@ export const EndOnboardingVerdict = ({ outcome, answer }: EndOnboardingVerdictPr
           </Text>
         ))}
       </View>
+      <ExplanationSheet question={explained} onDismiss={() => setExplained(null)} />
     </FastSquircleView>
   );
 };

@@ -1,11 +1,12 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { QuestionRecall } from "@/components/quiz/question-recall";
 import { Card } from "@/components/ui/card";
 import { Squircle } from "@/components/ui/squircle";
 import {
+  EXPLANATION_OPEN_LABEL,
   POINTS_UNIT,
   RESULTS_ANSWER_LABEL,
-  RESULTS_CANONICAL_LABEL,
   RESULTS_NO_ANSWER,
 } from "@/features/quiz/constants";
 import { TEXT } from "@/theme/text";
@@ -25,6 +26,7 @@ export interface ResultCardProps {
   answerText: string;
   correct: boolean;
   points: number;
+  onExplain: () => void;
 }
 
 export const ResultCard = ({
@@ -35,6 +37,7 @@ export const ResultCard = ({
   answerText,
   correct,
   points,
+  onExplain,
 }: ResultCardProps) => {
   const isEmpty = answerText.trim() === "";
   const accent = correct ? COLORS.success : COLORS.danger;
@@ -62,15 +65,17 @@ export const ResultCard = ({
       ) : null}
       <View style={styles.card}>
         <Card background={null} onPress={null}>
-          <View style={styles.head}>
-            <Text style={styles.question}>{questionText}</Text>
-            <Pressable style={({ pressed }) => pressed && styles.pressed} hitSlop={8}>
+          <QuestionRecall questionText={questionText} canonicalAnswer={canonicalAnswer}>
+            <Pressable
+              style={({ pressed }) => pressed && styles.pressed}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={EXPLANATION_OPEN_LABEL}
+              onPress={onExplain}
+            >
               <MaterialIcons name="more-vert" size={MENU_ICON_SIZE} color={COLORS.ink} />
             </Pressable>
-          </View>
-          <Text style={styles.canonical}>
-            {RESULTS_CANONICAL_LABEL} {canonicalAnswer}
-          </Text>
+          </QuestionRecall>
           <View style={styles.divider} />
           <View style={styles.answerRow}>
             <Text style={[styles.answer, isEmpty ? styles.answerEmpty : { color: accent }]}>
@@ -126,22 +131,7 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
   },
-  head: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: SPACE.md,
-  },
-  question: {
-    ...TEXT.caption,
-    flex: 1,
-    color: COLORS.inkMuted,
-  },
   pressed: PRESSED,
-  canonical: {
-    ...TEXT.captionStrong,
-    marginTop: SPACE.xxs,
-    color: COLORS.ink,
-  },
   // Bleeds past the card's padding, so the verdict half reads as its own row.
   divider: {
     height: 1,

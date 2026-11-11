@@ -56,6 +56,7 @@ const themeQuestions = (themeId: string, themeName: string, count: number): Draw
     aliases: [`alias-${themeId}-${index}`],
     misspellings: [`faute-${themeId}-${index}`],
     wrongChoices: [`faux-a-${index}`, `faux-b-${index}`, `faux-c-${index}`],
+    explanation: `explication-${themeId}-${index}`,
   }));
 
 const QUESTIONS: DrawnQuestion[] = [
@@ -74,6 +75,7 @@ const judgedQuestion = (
   answer: string,
   aliases: string[],
   misspellings: string[],
+  explanation: string | null = null,
 ): DrawnQuestion => ({
   id: `france-q${index}`,
   themeId: "france",
@@ -83,11 +85,12 @@ const judgedQuestion = (
   aliases,
   misspellings,
   wrongChoices: [`faux-a-${index}`, `faux-b-${index}`, `faux-c-${index}`],
+  explanation,
 });
 
 // Real content shapes — the verdicts below are the practice rules, proven on the material they run on.
 const JUDGED_QUESTIONS: DrawnQuestion[] = [
-  judgedQuestion(0, "Paris", ["Ville Lumière"], ["Pari"]),
+  judgedQuestion(0, "Paris", ["Ville Lumière"], ["Pari"], "Capitale depuis **508**."),
   judgedQuestion(1, "Élysée", ["Palais de l'Élysée"], []),
   judgedQuestion(2, "États-Unis", ["USA", "Amérique"], ["Etats Unys"]),
   judgedQuestion(3, "Molière", ["Jean-Baptiste Poquelin"], []),
@@ -703,7 +706,7 @@ describe("app competition routes e2e", () => {
     }
   });
 
-  it("never carries the Canonical Answer, the Aliases or the Misspellings as answer material", async () => {
+  it("never carries the Canonical Answer, the Aliases, the Misspellings or the Explanation", async () => {
     const body = await issued(tokenA);
     const wire = JSON.stringify(body);
 
@@ -713,6 +716,7 @@ describe("app competition routes e2e", () => {
     for (const source of QUESTIONS) {
       expect(wire).not.toContain(source.aliases[0]);
       expect(wire).not.toContain(source.misspellings[0]);
+      expect(wire).not.toContain(source.explanation);
     }
     expect(wire).not.toContain("questionIds");
   });
@@ -864,7 +868,7 @@ describe("app competition routes e2e", () => {
       expect(draws).toEqual([]);
     });
 
-    it("carries the Questions blank — no answer material, no answer the Player gave", async () => {
+    it("carries the Questions blank — no answer material, no Explanation, no answer given", async () => {
       await issued(tokenA);
       const body = await readActiveBody(tokenA);
       const wire = JSON.stringify(body);
@@ -875,6 +879,7 @@ describe("app competition routes e2e", () => {
       for (const source of QUESTIONS) {
         expect(wire).not.toContain(source.aliases[0]);
         expect(wire).not.toContain(source.misspellings[0]);
+        expect(wire).not.toContain(source.explanation);
       }
     });
 
@@ -1102,6 +1107,17 @@ describe("app competition routes e2e", () => {
       expect(
         body.answers.map((answer: { canonicalAnswer: string }) => answer.canonicalAnswer),
       ).toEqual(JUDGED_QUESTIONS.map((question) => question.answer));
+    });
+
+    it("carries each Question's Explanation, null when it has none, and a retry the same", async () => {
+      const body = await finalized(tokenA, fullBatch());
+
+      expect(
+        body.answers.map((answer: { explanation: string | null }) => answer.explanation),
+      ).toEqual(JUDGED_QUESTIONS.map((question) => question.explanation));
+      expect(body.answers[0].explanation).toBe("Capitale depuis **508**.");
+      expect(body.answers[1].explanation).toBeNull();
+      expect(await finalized(tokenA, [])).toEqual(body);
     });
 
     it("carries the Theme visuals the Attempt was issued with", async () => {

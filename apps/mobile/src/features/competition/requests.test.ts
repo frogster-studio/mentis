@@ -140,6 +140,7 @@ describe("the finalize payload", () => {
         questionId: `q${position + 1}`,
         questionText: `Question ${position + 1} ?`,
         canonicalAnswer: `bonne réponse ${position + 1}`,
+        explanation: null,
         mode: QuizAnswerModeEnum.NONE,
         rawInput: null,
         correct: false,

@@ -41,7 +41,7 @@ export const persistOptions = {
   persister: createAsyncStoragePersister({ storage: AsyncStorage }),
   maxAge: Number.POSITIVE_INFINITY,
   // Entries under another buster are dropped at hydration; bump it when the payload shape changes.
-  buster: "api-v2",
+  buster: "api-v3",
   dehydrateOptions: {
     shouldDehydrateQuery: (query: Query) => shouldPersistQuery(query, cachedDays, new Date()),
   },

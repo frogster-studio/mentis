@@ -133,6 +133,10 @@ _Avoid_: countdown (that's the per-Question timer), splash, intro
 The single official correct answer of a Question — the form displayed on the results page.
 _Avoid_: solution, right answer
 
+**Explanation**:
+The Editor's optional aside that completes a Question's Canonical Answer, shown to the Player only on the results page — never before the Question resolves. A Question may have none. French UI label: « Explication ».
+_Avoid_: hint, clue, anecdote
+
 **Alias**:
 An alternate legitimate form of the Canonical Answer (synonym, abbreviation, digits vs words — « USA » for « États-Unis »). Not a typo. Curated per Question.
 _Avoid_: variant, synonym list

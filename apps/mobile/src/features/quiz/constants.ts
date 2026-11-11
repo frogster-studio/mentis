@@ -19,8 +19,11 @@ export const RESULTS_TITLE = "Résultats";
 export const RESULTS_HOME_LABEL = "Retourner à l'accueil";
 export const RESULTS_REPLAY_LABEL = "Rejouer";
 export const RESULTS_NO_ANSWER = "Aucune réponse";
-export const RESULTS_CANONICAL_LABEL = "Réponse :";
 export const RESULTS_ANSWER_LABEL = "Votre réponse :";
+export const EXPLANATION_TITLE = "Explication";
+export const EXPLANATION_OPEN_LABEL = "Voir l'explication";
+export const EXPLANATION_MISSING =
+  "Pas encore d'explication pour cette question. On y travaille, promis !";
 export const QUIT_LABEL = "Quitter la partie";
 export const QUIT_TITLE = "Quitter la partie ?";
 export const QUIT_MESSAGE =

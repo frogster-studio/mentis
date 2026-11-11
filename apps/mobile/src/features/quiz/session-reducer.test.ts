@@ -23,6 +23,7 @@ function question(id: string, answer: string): Question {
     aliases: [],
     misspellings: [],
     wrongChoices: ["faux un", "faux deux", "faux trois"],
+    explanation: null,
   };
 }
 

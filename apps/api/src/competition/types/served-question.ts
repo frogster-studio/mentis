@@ -3,4 +3,5 @@ export type ServedQuestion = {
   text: string;
   answer: string;
   wrongChoices: string[];
+  explanation: string | null;
 };
