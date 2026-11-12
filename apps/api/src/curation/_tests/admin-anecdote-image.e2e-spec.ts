@@ -177,7 +177,7 @@ describe("PUT /admin/anecdotes/:id/image e2e", () => {
     expect(uploads).toEqual([]);
   });
 
-  it("above 153 600 bytes → 413 PAYLOAD_TOO_LARGE envelope, nothing uploaded", async () => {
+  it("above 204 800 bytes → 413 PAYLOAD_TOO_LARGE envelope, nothing uploaded", async () => {
     const oversize = Buffer.concat([FINISHED_IMAGE, Buffer.alloc(ANECDOTE_IMAGE_BODY_LIMIT)]);
     const response = await putImage(BARE, oversize);
 
@@ -186,7 +186,7 @@ describe("PUT /admin/anecdotes/:id/image e2e", () => {
     expect(uploads).toEqual([]);
   });
 
-  it("stores a WebP of exactly 153 600 bytes", async () => {
+  it("stores a WebP of exactly 204 800 bytes", async () => {
     const atTheCap = Buffer.concat([
       FINISHED_IMAGE,
       Buffer.alloc(ANECDOTE_IMAGE_BODY_LIMIT - FINISHED_IMAGE.length),

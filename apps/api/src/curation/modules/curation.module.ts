@@ -15,7 +15,7 @@ import { AnecdoteImageService } from "../services/anecdote-image.service";
 import { CurationService } from "../services/curation.service";
 import { ThemeImageService } from "../services/theme-image.service";
 
-export const ANECDOTE_IMAGE_BODY_LIMIT = 153_600;
+export const ANECDOTE_IMAGE_BODY_LIMIT = 204_800;
 
 // Catalog curation — the /admin surface, EditorGuard-bound on every route.
 @Module({
