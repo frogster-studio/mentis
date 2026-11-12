@@ -32,6 +32,6 @@ export class AdminAnecdotesController {
     @Param("id", new ZodValidationPipe(adminAnecdoteIdSchema)) id: string,
     @Body() file: unknown,
   ): Promise<AdminAnecdoteResponse> {
-    return this.anecdoteImageService.replace(id, file);
+    return this.anecdoteImageService.replaceAnecdoteImage(id, file);
   }
 }

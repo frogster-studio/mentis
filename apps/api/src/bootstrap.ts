@@ -1,4 +1,3 @@
-import type { IncomingMessage } from "node:http";
 import type { NestApplicationOptions } from "@nestjs/common";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import helmet from "helmet";
@@ -9,13 +8,6 @@ import { httpLogger } from "./common/http-logger.middleware";
 export const NEST_OPTIONS: NestApplicationOptions = { bodyParser: false };
 
 export const JSON_BODY_LIMIT = "64kb";
-
-export const ANECDOTE_IMAGE_BODY_LIMIT = 153_600;
-
-const ANECDOTE_IMAGE_ROUTE = /^\/admin\/anecdotes\/[^/?]+\/image(?:\?|$)/;
-
-const isAnecdoteImageUpload = (request: IncomingMessage): boolean =>
-  request.method === "PUT" && ANECDOTE_IMAGE_ROUTE.test(request.url ?? "");
 
 export const configureApp = (app: NestExpressApplication): void => {
   const env = app.get<Env>(ENV);
@@ -30,9 +22,6 @@ export const configureApp = (app: NestExpressApplication): void => {
 
   // Railway adds two hops, and counting X-Forwarded-For from the right keeps the key unforgeable.
   app.set("trust proxy", 2);
-
-  // The Anecdote Image route alone reads raw bytes, whatever their label: its own header decides.
-  app.useBodyParser("raw", { type: isAnecdoteImageUpload, limit: ANECDOTE_IMAGE_BODY_LIMIT });
 
   // Sized against the capped push batches, replacing Express's unchosen 100 kb default.
   app.useBodyParser("json", { limit: JSON_BODY_LIMIT });

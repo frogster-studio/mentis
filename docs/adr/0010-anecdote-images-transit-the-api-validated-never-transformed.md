@@ -7,7 +7,7 @@ Theme images skip the API ([ADR 0007](0007-theme-image-bytes-never-transit-the-a
 ## Consequences
 
 - The caller owns the encoding: 100 KiB is its target, not an API rule. The bucket's own limits (`image/webp`, 153 600 bytes) repeat the API's as a second lock.
-- The route path lives twice, in the controller decorator and in the parser predicate in `bootstrap.ts`; the e2e builds its app through `bootstrap.ts` and proves the two agree.
+- The route path lives twice, in the controller decorator and in the `CurationModule` middleware that scopes the raw parser; the e2e proves the two agree.
 - A failed deletion still answers 200, and a failed save leaves the fresh object behind. Both orphans are accepted: there is no cleanup token and no orphan collector.
 - A failed upload answers 502: the failure is upstream, not the caller's fault.
 - No route removes an image: a replacement corrects a wrong one.

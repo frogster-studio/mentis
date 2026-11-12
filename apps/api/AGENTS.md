@@ -25,7 +25,7 @@ Deliberately **not** a bounded context, so no `CONTEXT.md`: a gateway publishes 
 - Wire casing is camelCase, carried by `@Column({ name })` on the entities and the zod contracts — never a hand-aliased select string.
 - Throttling is per-surface guards ordered **after** auth, never a global `APP_GUARD`: only a guard that runs after verification can key a bucket on the JWT `sub`. One bucket per tier per caller — public reads and the draw key on `req.ip` (hence `trust proxy 2` — Railway fronts the container with two hops, and trusting one reads the edge's own address), `/app/me/*` and `/admin/*` key one `sub`-keyed bucket.
 - `GET /health` stays unguarded and unthrottled: Railway restarts the container on a failed poll.
-- The API speaks **JSON only**, the Anecdote Image route aside: `NEST_OPTIONS` turns off Nest's parsers wholesale and `bootstrap.ts` registers json, capped at 64 kb against the `.max(200)` push batch caps, plus a raw parser scoped to `PUT /admin/anecdotes/:id/image` alone and capped at 153 600 bytes ([ADR 0010](../../docs/adr/0010-anecdote-images-transit-the-api-validated-never-transformed.md)). Never create the app without `NEST_OPTIONS` — that silently restores Express's unchosen 100 kb wall. A non-JSON body reaches the pipe as `undefined` and 400s; nothing sends one.
+- The API speaks **JSON only**, the Anecdote Image route aside: `NEST_OPTIONS` turns off Nest's parsers wholesale and `bootstrap.ts` registers json, capped at 64 kb against the `.max(200)` push batch caps; `CurationModule` adds a raw parser scoped to `PUT /admin/anecdotes/:id/image` alone and capped at 153 600 bytes ([ADR 0010](../../docs/adr/0010-anecdote-images-transit-the-api-validated-never-transformed.md)). Never create the app without `NEST_OPTIONS` — that silently restores Express's unchosen 100 kb wall. A non-JSON body reaches the pipe as `undefined` and 400s; nothing sends one.
 - Biome and Knip stay root-only. `biome.json` carries one `apps/api/**` override (`unsafeParameterDecoratorsEnabled`, `useImportType: off` — the safe-fix otherwise rewrites injected services to `import type` and erases Nest's DI metadata).
 
 ## Structure
@@ -44,7 +44,7 @@ src/
   common/         # ZodValidationPipe, HttpErrorFilter, the rate-limit tiers
   health/         # GET /health
   _config/        # ConfigModule and its providers: ENV (zod-validated, parsed once at boot), SUPABASE (auth admin and storage operations, never data), JWKS
-  bootstrap.ts    # helmet, CORS allowlist, trust proxy, json body cap, the Anecdote Image raw parser — shared with the e2e suite
+  bootstrap.ts    # helmet, CORS allowlist, trust proxy, json body cap — shared with the e2e suite
   main.ts         # boot: create with NEST_OPTIONS, configureApp, shutdown hooks, listen
   app.module.ts   # root module: feature imports, APP_FILTER
 ```

@@ -10,13 +10,9 @@ import { AnecdoteEntity } from "../../_database/entities/anecdote.entity";
 import { stubDataSource, testEnv } from "../../_tests/test-env";
 import { AppModule } from "../../app.module";
 import { JWKS } from "../../auth/jwks";
-import {
-  ANECDOTE_IMAGE_BODY_LIMIT,
-  configureApp,
-  JSON_BODY_LIMIT,
-  NEST_OPTIONS,
-} from "../../bootstrap";
+import { configureApp, JSON_BODY_LIMIT, NEST_OPTIONS } from "../../bootstrap";
 import { ANECDOTE_IMAGES_BUCKET } from "../../catalog/utils/anecdote-image-url";
+import { ANECDOTE_IMAGE_BODY_LIMIT } from "../modules/curation.module";
 import { CurationRepository } from "../repositories/curation.repository";
 import { extended, lossless, lossy, png } from "./webp-fixtures";
 

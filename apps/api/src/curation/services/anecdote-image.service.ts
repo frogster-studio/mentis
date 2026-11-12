@@ -23,7 +23,7 @@ export class AnecdoteImageService {
     private readonly repository: CurationRepository,
   ) {}
 
-  async replace(id: string, file: unknown): Promise<AdminAnecdoteResponse> {
+  async replaceAnecdoteImage(id: string, file: unknown): Promise<AdminAnecdoteResponse> {
     this.refuseUnfinishedFile(file);
     const stored = await this.repository.findAnecdote(id);
     if (stored === null) throw new NotFoundException("Anecdote introuvable.");
