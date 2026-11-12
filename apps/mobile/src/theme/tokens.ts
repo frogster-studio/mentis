@@ -40,6 +40,9 @@ export const SPACE = {
 
 export const GUTTER = SPACE.sm;
 
+// Desktop web must not stretch edge-to-edge; on phones the cap never engages.
+export const MAX_CONTENT_WIDTH = 480;
+
 export const RADIUS = {
   sm: 10,
   base: 20,

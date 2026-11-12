@@ -125,6 +125,6 @@ No component-render tests, matching the repo-wide stance. No mobile tests: the s
 
 ## Further Notes
 
-- Vocabulary is normative in the Catalog curation glossary (`apps/admin/CONTEXT.md`); the two decisions with teeth are ADR 0007 (storage bytes never transit the API) and ADR 0008 (curation rules live in the admin client).
+- Vocabulary is normative in the Catalog curation glossary (`apps/admin/CONTEXT.md`); the two decisions with teeth are ADR 0007 (Theme image bytes never transit the API) and ADR 0008 (curation rules live in the admin client).
 - Hugo runs `migration:generate` after the entity edits land; the new columns ride existing granted tables, so no new SQL grant snippet is expected. The theme-images bucket already exists; its mime restriction should be checked when the signed-upload flow lands.
 - Launch consequence to remember: the moment the flag columns deploy, the app's catalog is empty until Themes are re-published from this dashboard — harmless pre-launch, deliberate.

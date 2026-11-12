@@ -1050,7 +1050,11 @@ describe("admin curation routes e2e", () => {
     const response = await write(WRITE_ROUTES[14], editorToken);
 
     expect(response.status).toBe(201);
-    expect(await response.json()).toEqual({ id: AUTHORED_ANECDOTE, text: STORED_ANECDOTE });
+    expect(await response.json()).toEqual({
+      id: AUTHORED_ANECDOTE,
+      text: STORED_ANECDOTE,
+      image: null,
+    });
   });
 
   it.each([

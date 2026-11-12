@@ -7,6 +7,7 @@ import {
   dismissTopAnecdote,
   isDrawDue,
   pileColors,
+  restoreDaySet,
   topAnecdote,
 } from "./day-set";
 
@@ -14,9 +15,9 @@ const LATE_APRIL_10 = new Date("2026-04-10T21:59:00.000Z");
 const EARLY_APRIL_11 = new Date("2026-04-10T22:00:00.000Z");
 
 const ANECDOTES: Anecdote[] = [
-  { id: "a", text: "Anecdote a" },
-  { id: "b", text: "Anecdote b" },
-  { id: "c", text: "Anecdote c" },
+  { id: "a", text: "Anecdote a", imageUrl: null },
+  { id: "b", text: "Anecdote b", imageUrl: null },
+  { id: "c", text: "Anecdote c", imageUrl: null },
 ];
 
 function daySet(dismissedCount: number): AnecdoteDaySet {
@@ -35,6 +36,28 @@ describe("buildDaySet", () => {
       anecdotes: ANECDOTES,
       dismissedCount: 0,
     });
+  });
+});
+
+describe("restoreDaySet", () => {
+  it("reads an Anecdote stored without imageUrl as having no image", () => {
+    const stored = {
+      day: "2026-04-10",
+      anecdotes: [{ id: "a", text: "Anecdote a" }],
+      dismissedCount: 0,
+    };
+    expect(restoreDaySet(stored).anecdotes).toStrictEqual([
+      { id: "a", text: "Anecdote a", imageUrl: null },
+    ]);
+  });
+
+  it("keeps the imageUrl an Anecdote was stored with, and the set's day and position", () => {
+    const stored = {
+      day: "2026-04-10",
+      anecdotes: [{ id: "a", text: "Anecdote a", imageUrl: "https://cdn.test/a.webp" }],
+      dismissedCount: 1,
+    };
+    expect(restoreDaySet(stored)).toStrictEqual(stored);
   });
 });
 

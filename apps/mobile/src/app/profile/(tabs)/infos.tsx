@@ -3,7 +3,6 @@ import { ScrollView, StyleSheet, Text } from "react-native";
 import { useBottomTabBarHeight } from "@/components/bottom-tab-bar";
 import { useMainHeaderHeight } from "@/components/main-header";
 import { QuietButton } from "@/components/ui/quiet-button";
-import { MAX_CONTENT_WIDTH } from "@/components/ui/screen-container";
 import { useAuthStore } from "@/features/account/auth-store";
 import { AccountActions } from "@/features/account/components/account-actions";
 import { LegalLinks } from "@/features/account/components/legal-links";
@@ -18,7 +17,7 @@ import { useOnboardingStore } from "@/features/onboarding/store";
 import { usePaywallStore } from "@/features/premium/paywall-store";
 import { useIsPremium } from "@/features/premium/use-is-premium";
 import { TEXT } from "@/theme/text";
-import { COLORS, GUTTER, SPACE } from "@/theme/tokens";
+import { COLORS, GUTTER, MAX_CONTENT_WIDTH, SPACE } from "@/theme/tokens";
 
 export default function Page() {
   const tabBarHeight = useBottomTabBarHeight();

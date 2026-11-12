@@ -12,12 +12,19 @@ import {
   View,
 } from "react-native";
 import { useBottomTabBarHeight } from "@/components/bottom-tab-bar";
-import { MAX_CONTENT_WIDTH } from "@/components/ui/screen-container";
 import { AnimatedChevrons } from "@/features/quiz/components/animated-chevrons";
 import { PICKER_START_LABEL, PICKER_SWIPE_LABEL } from "@/features/quiz/constants";
 import { useColorCrossFade } from "@/features/quiz/use-color-cross-fade";
 import { TEXT } from "@/theme/text";
-import { COLORS, CONTROL_HEIGHT, CONTROL_ICON_SIZE, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
+import {
+  COLORS,
+  CONTROL_HEIGHT,
+  CONTROL_ICON_SIZE,
+  MAX_CONTENT_WIDTH,
+  PRESSED,
+  RADIUS,
+  SPACE,
+} from "@/theme/tokens";
 
 const TRACK_PADDING = 6;
 const BUTTON_SHADOW_OFFSET = 4;

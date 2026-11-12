@@ -24,9 +24,23 @@ describe("adminAnecdoteWriteSchema", () => {
 });
 
 describe("adminAnecdoteResponseSchema", () => {
-  it("carries the id and the text, holding the timestamps back", () => {
-    const id = "7b4e0d3a-0000-4000-8000-000000000001";
-    const stored = { id, text: TEXT, createdAt: new Date(), updatedAt: new Date() };
-    expect(adminAnecdoteResponseSchema.parse(stored)).toEqual({ id, text: TEXT });
+  const id = "7b4e0d3a-0000-4000-8000-000000000001";
+
+  it("carries the id, the text and the image path, holding the timestamps back", () => {
+    const image = `${id}/upload-1.webp`;
+    const stored = { id, text: TEXT, image, createdAt: new Date(), updatedAt: new Date() };
+    expect(adminAnecdoteResponseSchema.parse(stored)).toEqual({ id, text: TEXT, image });
+  });
+
+  it("carries a null image for an Anecdote without one", () => {
+    expect(adminAnecdoteResponseSchema.parse({ id, text: TEXT, image: null })).toEqual({
+      id,
+      text: TEXT,
+      image: null,
+    });
+  });
+
+  it("refuses a response missing the image key", () => {
+    expect(adminAnecdoteResponseSchema.safeParse({ id, text: TEXT }).success).toBe(false);
   });
 });

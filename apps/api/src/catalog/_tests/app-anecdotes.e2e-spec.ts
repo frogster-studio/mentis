@@ -10,18 +10,27 @@ import { stubDataSource, testEnv } from "../../_tests/test-env";
 import { AppModule } from "../../app.module";
 import { DRAW_TIER } from "../../common/rate-limit.guard";
 import { AnecdoteRepository } from "../repositories/anecdote.repository";
+import { ANECDOTE_IMAGES_BUCKET } from "../utils/anecdote-image-url";
 
 const anecdote = (index: number) =>
   Object.assign(new AnecdoteEntity(), {
     id: `40000000-0000-4000-8000-00000000000${index}`,
     text: `Anecdote **${index}**`,
+    image: index === 1 ? `40000000-0000-4000-8000-000000000001/upload-1.webp` : null,
     createdAt: new Date("2026-10-01T08:00:00Z"),
     updatedAt: new Date("2026-10-01T08:00:00Z"),
   });
 
 const fullTable = [1, 2, 3, 4].map(anecdote);
 
-const asServed = ({ id, text }: AnecdoteEntity) => ({ id, text });
+const asServed = ({ id, text, image }: AnecdoteEntity) => ({
+  id,
+  text,
+  imageUrl:
+    image === null
+      ? null
+      : `${testEnv.SUPABASE_URL}/storage/v1/object/public/${ANECDOTE_IMAGES_BUCKET}/${image}`,
+});
 
 let storedAnecdotes: AnecdoteEntity[] = fullTable;
 let draws: number[] = [];
@@ -65,12 +74,14 @@ describe("app anecdotes route e2e", () => {
     draws = [];
   });
 
-  it("GET /app/anecdotes, signed-out and without n, draws 3 and serves only id and text", async () => {
+  it("GET /app/anecdotes, signed-out and without n, draws 3 and serves id, text and imageUrl", async () => {
     const response = await fetch(`${baseUrl}/app/anecdotes`);
     expect(response.status).toBe(200);
     expect(draws).toEqual([3]);
     const body = await response.json();
     expect(body).toEqual(fullTable.slice(0, 3).map(asServed));
+    expect(body[0].imageUrl).toMatch(/^https?:\/\/.+\/anecdote-images\/.+\.webp$/);
+    expect(body[1].imageUrl).toBeNull();
     expect(body[0]).not.toHaveProperty("createdAt");
     expect(appAnecdoteDrawResponseSchema.parse(body)).toEqual(body);
   });

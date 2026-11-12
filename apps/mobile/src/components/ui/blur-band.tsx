@@ -1,8 +1,7 @@
 import { BlurView } from "expo-blur";
 import type { PropsWithChildren } from "react";
 import { Platform, StyleSheet, View } from "react-native";
-import { MAX_CONTENT_WIDTH } from "@/components/ui/screen-container";
-import { COLORS } from "@/theme/tokens";
+import { COLORS, MAX_CONTENT_WIDTH } from "@/theme/tokens";
 
 const BLUR_INTENSITY = 40;
 // Android below 12 renders no blur, so the wash goes opaque and the band degrades flat.

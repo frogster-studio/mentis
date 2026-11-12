@@ -11,11 +11,26 @@ export type AnecdoteDaySet = {
   dismissedCount: number;
 };
 
+// A set stored before Anecdote Images carries no imageUrl on its Anecdotes.
+export type StoredAnecdoteDaySet = Omit<AnecdoteDaySet, "anecdotes"> & {
+  anecdotes: (Omit<Anecdote, "imageUrl"> & Partial<Pick<Anecdote, "imageUrl">>)[];
+};
+
 // Colours belong to the pile's positions, top first, never to the Anecdote they hold.
 const PILE_COLORS = [COLORS.face, COLORS.trough, COLORS.troughDeep];
 
 export function buildDaySet(anecdotes: Anecdote[], now: Date): AnecdoteDaySet {
   return { day: parisDay(now), anecdotes, dismissedCount: 0 };
+}
+
+export function restoreDaySet(stored: StoredAnecdoteDaySet): AnecdoteDaySet {
+  return {
+    ...stored,
+    anecdotes: stored.anecdotes.map((anecdote) => ({
+      ...anecdote,
+      imageUrl: anecdote.imageUrl ?? null,
+    })),
+  };
 }
 
 // A past day's set is dropped even partly dismissed; today's, even empty or done, is kept.

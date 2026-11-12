@@ -180,7 +180,7 @@ export class CurationService {
   }
 
   async createAnecdote(anecdote: AdminAnecdoteWrite): Promise<AdminAnecdoteResponse> {
-    const created = await this.curationRepository.createAnecdote(anecdote);
+    const created = await this.curationRepository.createAnecdote({ ...anecdote, image: null });
     return adminAnecdoteResponseSchema.parse(created);
   }
 

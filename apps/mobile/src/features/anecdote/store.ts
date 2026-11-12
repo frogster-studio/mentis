@@ -1,7 +1,12 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { type AnecdoteDaySet, dismissTopAnecdote } from "./day-set";
+import {
+  type AnecdoteDaySet,
+  dismissTopAnecdote,
+  restoreDaySet,
+  type StoredAnecdoteDaySet,
+} from "./day-set";
 
 type AnecdoteStore = {
   // No draw leaves before this, or a relaunch would re-request a day already stored.
@@ -25,6 +30,11 @@ export const useAnecdoteStore = create<AnecdoteStore>()(
       name: "mentis-anecdote",
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({ daySet: state.daySet }),
+      version: 1,
+      migrate: (persistedState) => {
+        const { daySet } = persistedState as { daySet: StoredAnecdoteDaySet | null };
+        return { daySet: daySet === null ? null : restoreDaySet(daySet) };
+      },
       // A failed read draws a new set all the same: a fresh set beats a card that never shows.
       onRehydrateStorage: () => () => useAnecdoteStore.setState({ hasHydrated: true }),
     },

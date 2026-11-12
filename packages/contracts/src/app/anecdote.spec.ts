@@ -19,15 +19,26 @@ describe("appAnecdoteDrawQuerySchema", () => {
 });
 
 describe("appAnecdoteDrawResponseSchema", () => {
-  it("keeps the id and the text alone", () => {
+  const TEXT = "Le **miel** ne se périme pas.";
+  const IMAGE_URL = "https://cdn.example.com/storage/v1/object/public/anecdote-images/a1/u1.webp";
+
+  it("keeps the id, the text and the imageUrl alone", () => {
     expect(
       appAnecdoteDrawResponseSchema.parse([
-        { id: "a1", text: "Le **miel** ne se périme pas.", createdAt: "2026-11-01T00:00:00Z" },
+        { id: "a1", text: TEXT, imageUrl: IMAGE_URL, createdAt: "2026-11-01T00:00:00Z" },
+        { id: "a2", text: TEXT, imageUrl: null },
       ]),
-    ).toEqual([{ id: "a1", text: "Le **miel** ne se périme pas." }]);
+    ).toEqual([
+      { id: "a1", text: TEXT, imageUrl: IMAGE_URL },
+      { id: "a2", text: TEXT, imageUrl: null },
+    ]);
   });
 
-  it("rejects a row without text", () => {
-    expect(appAnecdoteDrawResponseSchema.safeParse([{ id: "a1" }]).success).toBe(false);
+  it.each([
+    ["without text", { id: "a1", imageUrl: null }],
+    ["without the imageUrl key", { id: "a1", text: TEXT }],
+    ["with a bucket path for imageUrl", { id: "a1", text: TEXT, imageUrl: "a1/u1.webp" }],
+  ])("rejects a row %s", (_case, row) => {
+    expect(appAnecdoteDrawResponseSchema.safeParse([row]).success).toBe(false);
   });
 });
