@@ -17,11 +17,13 @@ Questions brought to Ready by the daily run: **5**
 
 - Each is the same kind of thing as the Canonical Answer.
 - Square mode stays a mild challenge: plausible to a Player who half-knows, and beyond argument wrong.
+- One may be a wink rather than a lookalike (« L’étranger » beside « Un malbar », « Un zarabe »): keep the author's when it makes the Player smile.
 
 ## Aliases and Misspellings
 
 - Every legitimate name and every obvious wrong spelling a Player would type, minus what `packages/answer-matching/src/matching.ts` already accepts through normalization and typo tolerance.
 - Spell it the way it sounds, slips of the ear as well as of the hand: a letter heard as another, a doubled consonant (« maloya » → « mallola », « malolla »). Keep each one the matcher refuses.
+- Also list the bare spellings of the answer and of its short Alias (« zoreil », « zorey »), even when the matcher already accepts them.
 
 ## Explanation
 
