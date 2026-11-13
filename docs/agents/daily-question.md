@@ -49,7 +49,7 @@ Done when the push has landed.
 
 Applies only while `apps/api/src/curation/controllers/admin-anecdotes.controller.ts` serves `PUT /admin/anecdotes/:id/image`; otherwise the run ends at 5.
 
-1. In the proposal, when a photo would show the Anecdote's subject itself (the flamboyant in bloom, Snow White's seven dwarfs), give 3 to 4 keywords to paste into Google Images and the prompt below, its first line filled in. When nothing is worth seeing, say so.
+1. In the proposal, when a photo would show the Anecdote's subject itself (the flamboyant in bloom, Snow White's seven dwarfs), give 3 to 4 keywords to paste into Google Images and the whole prompt below, its first line filled in, in one code block the Editor copies and pastes as is — never the first line alone. When nothing is worth seeing, say so.
 2. The Editor picks the photo, runs the prompt in Gemini himself and attaches the result here — or answers « pas de photo », which ends the run. The « ok » on the text never waits for the picture.
 3. Bring the image to 750 × 1024 px — crop to that ratio, never stretch — as a still WebP.
 4. `PUT /admin/anecdotes/:id/image` on the Anecdote posted in 5, the raw file as body, `Content-Type: image/webp` (`curl --data-binary @image.webp`). A non-2xx answer abandons the picture, never the Question: give the Editor the French message of its `ErrorResponse`.
