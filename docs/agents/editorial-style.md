@@ -36,6 +36,7 @@ Questions brought to Ready by the daily run: **10**
 
 - A neighbouring fact on the subject the Question raises — it stands alone on the home, away from the Question.
 - Shown without its Theme or Question, so it names its subject and situates it: what it is and where (« à La Réunion, le flamboyant, arbre… »).
+- Never leans on a meaning the Player has not read: no « aussi », « également » pointing back to the Question (« un rougail est aussi un condiment » → « on sert à côté du cari un rougail tomate : un condiment de… »).
 - Never describe what a photo would show better (a shape, a colour, a size to see) — keep a fact worth remembering (an origin, a season, a cause, a record).
 - When it fits, a few words say why the subject matters there (« première culture de l’île »); never at the cost of a clear sentence under 140.
 - Factual, surprising, short, in the voice of the stored ones (`GET /app/anecdotes?n=50`).
