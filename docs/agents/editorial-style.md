@@ -41,5 +41,6 @@ Questions brought to Ready by the daily run: **10**
 - When it fits, a few words say why the subject matters there (« première culture de l’île »); never at the cost of a clear sentence under 140.
 - Factual, surprising, short, in the voice of the stored ones (`GET /app/anecdotes?n=50`).
 - How a thing is served or used day to day is no Anecdote (« on sert à côté du cari un rougail tomate »): reach for what few Players know — an origin, a history, a record.
+- An origin earns its place only when the Player sees the link at once and it leads somewhere unexpected (« boucané » → « boucan » → « boucanier ») — never a foreign word that looks nothing like ours (« rougail » ← tamoul « urukay »).
 - `**bold**` and `__italic__` lift the words that carry the fact; the markers count in the 140 characters.
 - Plain full sentences a Player understands on first read: say plainly what a word means (« un **kabar** est une fête où… ») before telling where it comes from, never squeeze the meaning into an apposition. Use the room: close to 140 characters, not far under.
