@@ -54,5 +54,6 @@ Questions brought to Ready by the daily run: **17**
 - How a thing is served or used day to day is no Anecdote (« on sert à côté du cari un rougail tomate »): reach for what few Players know — an origin, a history, a record.
 - An origin earns its place only when the Player sees the link at once and it leads somewhere unexpected (« boucané » → « boucan » → « boucanier ») — never a foreign word that looks nothing like ours (« rougail » ← tamoul « urukay »).
 - Never a joke that only works if the Player already knows its background (an album that mocks a 1963 film's budget): when the fact needs its context explained to make sense, pick another fact.
+- A fact that surprises by contrast spells the contrast out in plain words (« a bâti la plus grande pyramide d’Égypte, mais la seule statue entière de lui mesure à peine 7,5 cm »), never leaves the Player to infer it from an apposition.
 - `**bold**` and `__italic__` lift the words that carry the fact; the markers count in the 140 characters.
 - Plain full sentences a Player understands on first read: say plainly what a word means (« un **kabar** est une fête où… ») before telling where it comes from, never squeeze the meaning into an apposition. Use the room: close to 140 characters, not far under.
