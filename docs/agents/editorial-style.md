@@ -39,6 +39,7 @@ Questions brought to Ready by the daily run: **12**
 - 400 characters at most, the limit of the contract: only the Anecdote is held to 140. Keep what was approved and add to it rather than cut it to fit.
 - A figure is the one most sources cite, rounded (« environ 22 000 hectares, près de 55 % »), not the latest single-year count.
 - Says what the answer is used for or known for, in one or two plain sentences that fill the room.
+- When the answer is surprising, answer first the question it raises in the Player's head (« mais comment retirer le cerveau par le nez ?? »), in plain words, without anatomy or jargon; leave out the side details.
 - A recurring competition names its latest winner, nationality and time (« En 2026, le Français Hugo Deck la gagne en 22 h 54 »).
 
 ## Anecdote
