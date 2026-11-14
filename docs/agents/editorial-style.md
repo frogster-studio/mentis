@@ -4,7 +4,7 @@ The Editor's rules for Catalog copy, grown one correction at a time by the [dail
 
 ## Counter
 
-Questions brought to Ready by the daily run: **29**
+Questions brought to Ready by the daily run: **30**
 
 ## Themes
 
@@ -24,6 +24,7 @@ Questions brought to Ready by the daily run: **29**
 - Admits one Canonical Answer only.
 - Answerable in Cash mode, typed without the four choices: the wording dictates the form of the answer. Ask for a name (« Quel genre musical… ? » → « Le maloya »), never for a definition (« Qu’est-ce que le maloya ? ») that a Player could phrase ten ways.
 - A period that varies from year to year says so: « généralement de juin à octobre ».
+- A person is found through who they were — their role, a deed, what their name means — never through where a work showing them is kept: « Quelle reine… est célèbre pour son buste exposé à Berlin ? » was refused; « Quelle reine d’Égypte, épouse d’Akhenaton, porte un nom qui signifie « la belle est venue » ? » was approved.
 
 ## Wrong choices
 
