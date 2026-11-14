@@ -10,6 +10,7 @@ Questions brought to Ready by the daily run: **18**
 
 - **For now, only « Pharaons d'Égypte »**, whatever section 2 of the daily run would pick, until the run has brought its 20 Questions to Ready. That day, tell the Editor the Theme reached 20 and ask whether to delete this rule and its companion below; he answers yes or no.
   - The Theme is far too hard for Mentis and always asks the same thing (« quel jeune pharaon… », « quel architecte… »): mostly people. Read all its Questions, not only the Ready ones, and steer this one toward what they lack, rewriting it whole when needed.
+  - Rewrite whole only a Question that repeats another (« quel jeune pharaon… ») or that few Players could answer. One that is already accessible and of a kind the Theme lacks is kept and polished (« l’ovale qui entoure le nom d’un pharaon » stays). Never turn it into a riddle made up from scratch.
 - Otherwise pick only an unpublished Theme with Questions left to bring to Ready. The Editor unpublishes a Theme himself when he wants the run back on it.
 - Before polishing, read the Theme's Questions already Ready and steer this one toward what they lack, so the Theme mixes kinds as La Réunion does: history, places, objects, customs, a touch of pop culture, now and then a little logic — pleasant to answer, and every Player can get some of it right.
 - Finished by the daily run, never to pick again: La Réunion.
