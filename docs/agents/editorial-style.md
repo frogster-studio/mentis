@@ -30,6 +30,7 @@ Questions brought to Ready by the daily run: **8**
 - 140 characters at most.
 - A figure is the one most sources cite, rounded (« environ 22 000 hectares, près de 55 % »), not the latest single-year count.
 - Says what the answer is used for or known for, in one or two plain sentences that fill the room.
+- A recurring competition names its latest winner, nationality and time (« En 2026, le Français Hugo Deck la gagne en 22 h 54 »).
 
 ## Anecdote
 
