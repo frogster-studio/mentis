@@ -6,6 +6,11 @@ The Editor's rules for Catalog copy, grown one correction at a time by the [dail
 
 Questions brought to Ready by the daily run: **12**
 
+## Themes
+
+- Finished by the daily run, never to pick again: La Réunion.
+- « En vrac » is no Theme a Player will ever see: its Questions wait to be moved into a real one. Pick it only when no other Theme has a Question left; then propose, with the polished Question, the existing Theme it should move to (its `themeId`), or a new Theme to create when none fits.
+
 ## Question text
 
 - Reads like the Questions already Ready in its Theme: same register, same typography.
