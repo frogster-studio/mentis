@@ -41,6 +41,7 @@ Questions brought to Ready by the daily run: **15**
 - Says what the answer is used for or known for, in one or two plain sentences that fill the room.
 - When the answer is surprising, answer first the question it raises in the Player's head (« mais comment retirer le cerveau par le nez ?? »), in plain words, without anatomy or jargon; leave out the side details.
 - A recurring competition names its latest winner, nationality and time (« En 2026, le Français Hugo Deck la gagne en 22 h 54 »).
+- An actor goes in parentheses after the role he plays: « pour Cléopâtre (Monica Bellucci) », « l’architecte Amonbofis (Gérard Darmon) ».
 
 ## Anecdote
 
@@ -52,5 +53,6 @@ Questions brought to Ready by the daily run: **15**
 - Factual, surprising, short, in the voice of the stored ones (`GET /app/anecdotes?n=50`).
 - How a thing is served or used day to day is no Anecdote (« on sert à côté du cari un rougail tomate »): reach for what few Players know — an origin, a history, a record.
 - An origin earns its place only when the Player sees the link at once and it leads somewhere unexpected (« boucané » → « boucan » → « boucanier ») — never a foreign word that looks nothing like ours (« rougail » ← tamoul « urukay »).
+- Never a joke that only works if the Player already knows its background (an album that mocks a 1963 film's budget): when the fact needs its context explained to make sense, pick another fact.
 - `**bold**` and `__italic__` lift the words that carry the fact; the markers count in the 140 characters.
 - Plain full sentences a Player understands on first read: say plainly what a word means (« un **kabar** est une fête où… ») before telling where it comes from, never squeeze the meaning into an apposition. Use the room: close to 140 characters, not far under.
