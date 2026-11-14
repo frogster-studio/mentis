@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { AppHeader } from "@/components/app-header";
+import { useReportUnsavedChanges } from "@/components/workspace-shell";
 import {
   useCatalogQuestions,
   useCategories,
@@ -41,6 +42,7 @@ export const CurationDashboard = () => {
   const searchParams = useSearchParams();
   const [authoring, setAuthoring] = useState<Authoring>(null);
   const [isFormDirty, setIsFormDirty] = useState(false);
+  useReportUnsavedChanges(isFormDirty);
   const [floorBlock, setFloorBlock] = useState<string | null>(null);
   const [searchedSelection, setSearchedSelection] = useState<Selection | null>(null);
   const categories = useCategories();

@@ -1,4 +1,5 @@
 import type {
+  AdminAnecdoteListResponse,
   AdminCategoryListResponse,
   AdminQuestionListResponse,
   AdminThemeListResponse,
@@ -7,5 +8,6 @@ import type {
 export type Category = AdminCategoryListResponse[number];
 export type Theme = AdminThemeListResponse[number];
 export type Question = AdminQuestionListResponse[number];
+export type Anecdote = AdminAnecdoteListResponse[number];
 
 export type Authoring = "category" | "theme" | "question" | null;
