@@ -1,10 +1,11 @@
 import {
+  type AdminAnecdoteListResponse,
   type AdminAnecdoteResponse,
   type AdminAnecdoteWrite,
   adminAnecdoteIdSchema,
   adminAnecdoteWriteSchema,
 } from "@mentis/contracts/admin";
-import { Body, Controller, Param, Post, Put, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Put, UseGuards } from "@nestjs/common";
 import { EditorGuard } from "../../auth/editor.guard";
 import { AuthenticatedThrottlerGuard } from "../../common/rate-limit.guard";
 import { ZodValidationPipe } from "../../common/zod-validation.pipe";
@@ -18,6 +19,11 @@ export class AdminAnecdotesController {
     private readonly curationService: CurationService,
     private readonly anecdoteImageService: AnecdoteImageService,
   ) {}
+
+  @Get()
+  list(): Promise<AdminAnecdoteListResponse> {
+    return this.curationService.listAnecdotes();
+  }
 
   @Post()
   create(

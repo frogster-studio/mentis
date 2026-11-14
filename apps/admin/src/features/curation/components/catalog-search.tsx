@@ -2,7 +2,6 @@ import {
   type KeyboardEvent,
   type PropsWithChildren,
   type ReactNode,
-  useEffect,
   useId,
   useMemo,
   useRef,
@@ -16,6 +15,7 @@ import type { Category, Question, Theme } from "../types";
 import { Badge } from "./badge";
 import { CategoryBadge } from "./category-badge";
 import { CONTROL } from "./control";
+import { useSearchShortcut } from "./use-search-shortcut";
 
 interface CatalogSearchProps {
   categories: Category[] | undefined;
@@ -79,17 +79,6 @@ const Option = ({ id, isActive, onActivate, onSelect, children }: OptionProps) =
   );
 };
 
-const isTextField = (target: EventTarget | null) =>
-  target instanceof HTMLElement &&
-  (target.isContentEditable || target.matches("input, textarea, select"));
-
-const isSearchShortcut = (event: globalThis.KeyboardEvent) => {
-  const isChord =
-    event.key.toLowerCase() === "k" &&
-    (navigator.userAgent.includes("Mac") ? event.metaKey : event.ctrlKey);
-  return isChord || (event.key === "/" && !isTextField(event.target));
-};
-
 export const CatalogSearch = ({ categories, themes, questions, onSelect }: CatalogSearchProps) => {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -137,16 +126,7 @@ export const CatalogSearch = ({ categories, themes, questions, onSelect }: Catal
   const activeChoice = isListOpen ? choices[activeIndex] : undefined;
   const optionId = (index: number) => `${listboxId}-option-${index}`;
 
-  useEffect(() => {
-    const focusOnShortcut = (event: globalThis.KeyboardEvent) => {
-      if (isSearchShortcut(event)) {
-        event.preventDefault();
-        inputRef.current?.focus();
-      }
-    };
-    window.addEventListener("keydown", focusOnShortcut);
-    return () => window.removeEventListener("keydown", focusOnShortcut);
-  }, []);
+  useSearchShortcut(inputRef);
 
   // A refused selection leaves the list open on the results the Editor was choosing from.
   const select = (selection: Selection) => {

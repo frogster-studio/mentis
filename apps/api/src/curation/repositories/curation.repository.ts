@@ -170,6 +170,10 @@ export class CurationRepository {
     });
   }
 
+  listAnecdotes(): Promise<AnecdoteEntity[]> {
+    return this.anecdotes.find({ order: { createdAt: "DESC", id: "DESC" } });
+  }
+
   createAnecdote(anecdote: DeepPartial<AnecdoteEntity>): Promise<AnecdoteEntity> {
     return this.anecdotes.save(this.anecdotes.create(anecdote));
   }

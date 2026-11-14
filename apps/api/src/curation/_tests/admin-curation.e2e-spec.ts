@@ -35,6 +35,9 @@ const BROUILLON_QUESTION = "9a3e0d3a-0000-4000-8000-000000000004";
 const AUTHORED = "9a3e0d3a-0000-4000-8000-000000000005";
 const UNKNOWN_QUESTION = "9a3e0d3a-0000-4000-8000-00000000ffff";
 const AUTHORED_ANECDOTE = "7b4e0d3a-0000-4000-8000-000000000001";
+const BARE_ANECDOTE = "7b4e0d3a-0000-4000-8000-000000000002";
+const ILLUSTRATED_ANECDOTE = "7b4e0d3a-0000-4000-8000-000000000003";
+const ILLUSTRATED_ANECDOTE_IMAGE = `${ILLUSTRATED_ANECDOTE}/0d9f0d3a-0000-4000-8000-000000000001.webp`;
 
 type Aged = { id: string; createdAt: Date };
 
@@ -245,6 +248,9 @@ const fakeCurationRepository = {
     liveQuestions = remaining;
     return wasDeleted;
   },
+  async listAnecdotes() {
+    return newestFirst(storedAnecdotes);
+  },
   async createAnecdote(authored) {
     return Object.assign(new AnecdoteEntity(), authored, {
       id: AUTHORED_ANECDOTE,
@@ -269,6 +275,7 @@ const fakeCurationRepository = {
   | "createQuestion"
   | "updateQuestion"
   | "deleteQuestion"
+  | "listAnecdotes"
   | "createAnecdote"
 >;
 
@@ -319,6 +326,19 @@ const STORED_ANECDOTE = "Le **Piton de la Fournaise** entre en éruption __presq
 
 const AUTHORED_ANECDOTE_WRITE = { text: `  ${STORED_ANECDOTE}  ` };
 
+const anecdote = (id: string, image: string | null, createdAt: string): AnecdoteEntity =>
+  Object.assign(new AnecdoteEntity(), {
+    id,
+    text: STORED_ANECDOTE,
+    image,
+    createdAt: new Date(createdAt),
+  });
+
+const storedAnecdotes = [
+  anecdote(BARE_ANECDOTE, null, "2026-08-24T10:00:00.000Z"),
+  anecdote(ILLUSTRATED_ANECDOTE, ILLUSTRATED_ANECDOTE_IMAGE, "2026-08-25T10:00:00.000Z"),
+];
+
 const WRITE_ROUTES = [
   { method: "POST", path: "/admin/questions", body: AUTHORED_QUESTION },
   { method: "PATCH", path: `/admin/questions/${CAPITALE}`, body: AUTHORED_QUESTION },
@@ -355,6 +375,7 @@ const LIST_ROUTES = [
   "/admin/themes",
   `/admin/questions?themeId=${SIMPSON}`,
   "/admin/questions",
+  "/admin/anecdotes",
 ];
 
 describe("admin curation routes e2e", () => {
@@ -1044,6 +1065,17 @@ describe("admin curation routes e2e", () => {
     const second = await (await write(WRITE_ROUTES[11], editorToken)).json();
 
     expect(second.path).not.toBe(first.path);
+  });
+
+  it("GET /admin/anecdotes serves every Anecdote, newest first, its image as a public URL", async () => {
+    expect(await (await asEditor("/admin/anecdotes")).json()).toEqual([
+      {
+        id: ILLUSTRATED_ANECDOTE,
+        text: STORED_ANECDOTE,
+        imageUrl: `${testEnv.SUPABASE_URL}/storage/v1/object/public/anecdote-images/${ILLUSTRATED_ANECDOTE_IMAGE}`,
+      },
+      { id: BARE_ANECDOTE, text: STORED_ANECDOTE, imageUrl: null },
+    ]);
   });
 
   it("POST /admin/anecdotes stores the Anecdote trimmed, its emphasis markers intact", async () => {

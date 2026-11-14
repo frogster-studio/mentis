@@ -3,6 +3,7 @@ import {
   type AdminQuestionListResponse,
   type AdminQuestionWrite,
   type AdminThemeListResponse,
+  adminAnecdoteListResponseSchema,
   adminCategoryListResponseSchema,
   adminCategoryResponseSchema,
   adminQuestionListResponseSchema,
@@ -22,7 +23,15 @@ const curationKeys = {
   themes: ["curation", "themes"] as const,
   allQuestions: ["curation", "questions"] as const,
   questions: (themeId: string) => ["curation", "questions", themeId] as const,
+  anecdotes: ["curation", "anecdotes"] as const,
 };
+
+export function useAnecdotes() {
+  return useQuery({
+    queryKey: curationKeys.anecdotes,
+    queryFn: () => getFromApi("/anecdotes", adminAnecdoteListResponseSchema),
+  });
+}
 
 export function useCategories() {
   return useQuery({

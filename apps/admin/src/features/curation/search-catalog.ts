@@ -51,7 +51,7 @@ function countWholeQueryWords(queryWords: string[], fieldsFinds: FieldFinds[]): 
   ).length;
 }
 
-function highlights(fieldFinds: FieldFinds): Highlight[] {
+export function highlights(fieldFinds: FieldFinds): Highlight[] {
   const byStart = new Map<number, Highlight>();
   for (const { start, end } of fieldFinds.flat()) byStart.set(start, { start, end });
   return [...byStart.values()].sort((left, right) => left.start - right.start);

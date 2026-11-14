@@ -85,7 +85,7 @@ beforeEach(() => {
     testEnv,
     repository as unknown as CurationRepository,
   );
-  curation = new CurationService(repository as unknown as CurationRepository, images);
+  curation = new CurationService(repository as unknown as CurationRepository, images, testEnv);
 });
 
 describe("image authorization", () => {

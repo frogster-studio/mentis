@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { adminAnecdoteResponseSchema, adminAnecdoteWriteSchema } from "./anecdote";
+import {
+  adminAnecdoteListResponseSchema,
+  adminAnecdoteResponseSchema,
+  adminAnecdoteWriteSchema,
+} from "./anecdote";
 
 const TEXT = "Le **Piton de la Fournaise** entre en éruption __presque chaque année__.";
 
@@ -42,5 +46,25 @@ describe("adminAnecdoteResponseSchema", () => {
 
   it("refuses a response missing the image key", () => {
     expect(adminAnecdoteResponseSchema.safeParse({ id, text: TEXT }).success).toBe(false);
+  });
+});
+
+describe("adminAnecdoteListResponseSchema", () => {
+  const id = "7b4e0d3a-0000-4000-8000-000000000001";
+  const imageUrl = `https://stub.supabase.co/storage/v1/object/public/anecdote-images/${id}/upload-1.webp`;
+
+  it("carries each Anecdote's id, text and image URL, holding the stored path back", () => {
+    const listed = { id, text: TEXT, imageUrl, image: `${id}/upload-1.webp` };
+    expect(adminAnecdoteListResponseSchema.parse([listed])).toEqual([{ id, text: TEXT, imageUrl }]);
+  });
+
+  it("carries a null image URL for an Anecdote without an image", () => {
+    const listed = [{ id, text: TEXT, imageUrl: null }];
+    expect(adminAnecdoteListResponseSchema.parse(listed)).toEqual(listed);
+  });
+
+  it("refuses an image that is a bare path", () => {
+    const listed = [{ id, text: TEXT, imageUrl: `${id}/upload-1.webp` }];
+    expect(adminAnecdoteListResponseSchema.safeParse(listed).success).toBe(false);
   });
 });
