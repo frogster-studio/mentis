@@ -8,11 +8,11 @@ Questions brought to Ready by the daily run: **12**
 
 ## Themes
 
-- **For now, only « Pharaons d'Égypte »**, whatever section 2 of the daily run would pick, until the run has brought its 20 Questions to Ready. That day, tell the Editor the Theme reached 20 and ask whether to delete this rule and its two companions below; he answers yes or no.
-  - The Theme is far too hard for Mentis and always asks the same thing (« quel jeune pharaon… », « quel architecte… »): mostly people. Before polishing its Question, read the Theme's other Questions and steer this one toward what they lack, rewriting it whole when needed.
-  - A Theme mixes kinds, as La Réunion does: history, places, objects, customs, a touch of pop culture, now and then a little logic — and every Player can answer some of it.
+- **For now, only « Pharaons d'Égypte »**, whatever section 2 of the daily run would pick, until the run has brought its 20 Questions to Ready. That day, tell the Editor the Theme reached 20 and ask whether to delete this rule and its companion below; he answers yes or no.
+  - The Theme is far too hard for Mentis and always asks the same thing (« quel jeune pharaon… », « quel architecte… »): mostly people. Read all its Questions, not only the Ready ones, and steer this one toward what they lack, rewriting it whole when needed.
+- Otherwise pick only an unpublished Theme with Questions left to bring to Ready. The Editor unpublishes a Theme himself when he wants the run back on it.
+- Before polishing, read the Theme's Questions already Ready and steer this one toward what they lack, so the Theme mixes kinds as La Réunion does: history, places, objects, customs, a touch of pop culture, now and then a little logic — pleasant to answer, and every Player can get some of it right.
 - Finished by the daily run, never to pick again: La Réunion.
-- Every other Theme was curated by hand, Ready or not: none is exempt from a pass by the run.
 - « En vrac » is no Theme a Player will ever see: its Questions wait to be moved into a real one. Pick it only when no other Theme has a Question left; then propose, with the polished Question, the existing Theme it should move to (its `themeId`), or a new Theme to create when none fits.
 
 ## Question text
