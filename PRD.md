@@ -92,7 +92,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Anecdote
       "Unit tests cover each message, prior art theme-image.test.ts",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "admin",

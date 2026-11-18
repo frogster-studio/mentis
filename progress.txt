@@ -1,0 +1,9 @@
+## Item 1 — shared admin image rule (done)
+- apps/admin/src/features/curation/image-rule.ts: `imageRuleError({name,type,size,header})` pure; `selectedImageError(files)` reads first 30 bytes, returns message or null (incl. « une seule image » for files.length !== 1 — caller still early-returns on 0 files).
+- Header-only, no createImageBitmap decode: PRD says browser reads signature/VP8X flag/dims; same check the API does. « Impossible de lire » = RIFF/WEBP signature ok but chunk unreadable (truncated, no VP8 start code, unknown fourcc) or file read throws.
+- Check order: format → unreadable → animated → dimensions → size.
+- Empty MIME type tolerated (some OS/browsers send ""), as old theme-image.ts did; a non-empty non-webp type = format error.
+- Parser ported from apps/api read-webp-header.ts on DataView (no Buffer in browser); no shared package since contracts is zod-only.
+- Fixtures: apps/admin/src/features/curation/webp-fixtures.ts (lossy/lossless/extended + `webpFile(bytes, size)` pads to size) — reuse in items 5/7 component tests.
+- Tests: image-rule.test.ts (23).
+- Nothing wired yet: theme-image.ts still used by ImageField until item 5, which should delete theme-image.ts/worker and use selectedImageError. Accept attr for input: ".webp,image/webp" to add then.
