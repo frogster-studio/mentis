@@ -57,6 +57,14 @@ export function useSaveAnecdoteImage() {
   });
 }
 
+export function useDeleteAnecdote() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteFromApi(`/anecdotes/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: curationKeys.anecdotes }),
+  });
+}
+
 export function useCategories() {
   return useQuery({
     queryKey: curationKeys.categories,

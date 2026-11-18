@@ -108,6 +108,8 @@ export const AnecdotesWorkspace = () => {
     select(saved.id);
   };
 
+  const onDeleted = () => select(null);
+
   const selectedAnecdote = anecdotes.data?.find(({ id }) => id === selectedId);
 
   const total = anecdotes.data?.length ?? 0;
@@ -180,6 +182,7 @@ export const AnecdotesWorkspace = () => {
                 anecdote={selectedAnecdote}
                 onDirtyChange={setIsFormDirty}
                 onSaved={onSaved}
+                onDeleted={onDeleted}
               />
             </div>
           </Column>

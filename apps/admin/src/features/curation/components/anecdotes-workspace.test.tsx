@@ -4,7 +4,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useReportUnsavedChanges } from "@/components/workspace-shell";
-import { getFromApi, putFileToApi, sendToApi } from "@/lib/api/client";
+import { deleteFromApi, getFromApi, putFileToApi, sendToApi } from "@/lib/api/client";
 import type { Anecdote } from "../types";
 import { lossy } from "../webp-fixtures";
 import { AnecdotesWorkspace } from "./anecdotes-workspace";
@@ -426,5 +426,61 @@ describe("the Anecdote Image", () => {
     await click(row("pigeon"));
     const labels = Array.from(container.querySelectorAll("button"), (node) => node.textContent);
     expect(labels.some((label) => label?.includes("Supprimer"))).toBe(false);
+  });
+});
+
+describe("deleting an Anecdote", () => {
+  const dialog = () => container.querySelector('[role="dialog"]') as HTMLElement | null;
+  const selectedParam = () => new URLSearchParams(window.location.search).get("anecdote");
+
+  it("offers no Delete control on a new Anecdote", async () => {
+    await renderWorkspace();
+    await click(labelled("New Anecdote"));
+    expect(button("Delete")).toBeUndefined();
+  });
+
+  it("asks first, and deletes nothing when the Editor cancels", async () => {
+    await renderWorkspace();
+    await click(row("pigeon"));
+    await click(button("Delete"));
+    expect(dialog()?.getAttribute("aria-label")).toBe("Supprimer cette Anecdote ?");
+    expect(dialog()?.textContent).toContain("Son image sera supprimée avec elle.");
+    await click(button("Cancel"));
+    expect(dialog()).toBeNull();
+    expect(deleteFromApi).not.toHaveBeenCalled();
+    expect(selectedParam()).toBe(PIGEON.id);
+  });
+
+  it("sends DELETE on confirm, clears the selection and refetches the list", async () => {
+    vi.mocked(deleteFromApi).mockImplementation(async () => {
+      stored = stored.filter(({ id }) => id !== PIGEON.id);
+    });
+    await renderWorkspace();
+    await click(row("pigeon"));
+    await type("Un pigeon.");
+    await click(button("Delete"));
+    await click(button("Supprimer"));
+    expect(deleteFromApi).toHaveBeenCalledWith(`/anecdotes/${PIGEON.id}`);
+    expect(dialog()).toBeNull();
+    expect(selectedParam()).toBeNull();
+    expect(textarea()).toBeNull();
+    expect(container.textContent).toContain("Select an Anecdote to see it here.");
+    expect(getFromApi).toHaveBeenCalledTimes(2);
+    expect(row("pigeon")).toBeUndefined();
+    expect(vi.mocked(useReportUnsavedChanges).mock.lastCall).toEqual([false]);
+  });
+
+  it("keeps the Anecdote selected and shows the API's message when the image deletion fails", async () => {
+    vi.mocked(deleteFromApi).mockRejectedValue(
+      new Error("Impossible de supprimer l’image. Réessayez."),
+    );
+    await renderWorkspace();
+    await click(row("pigeon"));
+    await click(button("Delete"));
+    await click(button("Supprimer"));
+    expect(alerts()).toEqual(["Impossible de supprimer l’image. Réessayez."]);
+    expect(selectedParam()).toBe(PIGEON.id);
+    expect(textarea()?.value).toBe(PIGEON.text);
+    expect(row("pigeon").parentElement?.className).toContain("bg-sky-50");
   });
 });

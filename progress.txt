@@ -59,3 +59,11 @@
 - Workspace: form key = `formSession` counter bumped on row select / + (not the id), so create → saved Anecdote keeps the same form mounted and a failed file survives; `anecdote={selectedAnecdote}`. onSaved no longer forces isFormDirty false — the mounted form reports itself (else a pending file would read clean).
 - Tests: anecdotes-workspace.test.tsx +8 (empty frame, stored image, rule refusal, local preview + dirty, file-only PUT + thumbnail, PATCH→PUT order, new Anecdote PUT failure → selected + file kept + retry PUTs only, no remove control). Checked the retry test fails with an id-based key. Error test now filters empty role=alert (drop zone always renders one). Admin 303 green.
 - Item 8: delete control + Dialog in AnecdoteForm (or workspace); useDeleteAnecdote via deleteFromApi; on success clear selection (select(null)) — formSession needs no bump.
+
+## Item 8 — delete an Anecdote behind a Dialog (done)
+- api.ts useDeleteAnecdote: deleteFromApi(`/anecdotes/${id}`), invalidates curationKeys.anecdotes (awaited).
+- anecdote-form.tsx: « Delete » text button beside Save (same look as Category/Theme), existing anecdotes only, disabled while busy; opens Dialog title « Supprimer cette Anecdote ? », body « Son image sera supprimée avec elle. », confirm « Supprimer » (Dialog's Cancel stays English, hard-coded there). Dialog closes on confirm; error lands in the form's alert (error chain text ?? image ?? remove), each action resets the others' errors. isBusy = isSaving || remove.isPending gates Save, Delete and the drop zone.
+- mutateAsync + await, not mutate({ onSuccess }): the awaited refetch drops the row → Details Column empties → form unmounts, and per-call mutate callbacks don't fire after unmount.
+- Workspace onDeleted = select(null) (clears ?anecdote; form unmount clears the dirty report). No formSession bump needed.
+- Tests: anecdotes-workspace.test.tsx +4 (no Delete on new, cancel deletes nothing, confirm → DELETE + URL cleared + refetch + row gone + rail clean even from a dirty form, 502 → message + still selected). Admin 307 green.
+- Next: item 9 ADR 0007/0010 amendments (docs only).

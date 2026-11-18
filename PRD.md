@@ -187,7 +187,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Anecdote
       "Component tests with a stubbed API",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "docs",
