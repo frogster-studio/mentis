@@ -1,15 +1,23 @@
 import { Image } from "expo-image";
 import { useEffect, useEffectEvent, useState } from "react";
 import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
-import FastSquircleView from "react-native-fast-squircle";
-import Animated, { css } from "react-native-reanimated";
+import Animated, { css, cubicBezier } from "react-native-reanimated";
+import {
+  ANECDOTE_IMAGE_FRAME_PADDING,
+  AnecdoteImageFrame,
+} from "@/components/anecdote/anecdote-image-frame";
 import { useReduceMotion } from "@/components/ui/use-reduce-motion";
 import { ANECDOTE_FADE_MS, CLOSE_ANECDOTE_IMAGE_LABEL } from "@/features/anecdote/constants";
 import { ANECDOTE_IMAGE_CACHE_POLICY } from "@/features/anecdote/image-cache";
 import { anecdoteImageOverlaySize } from "@/features/anecdote/image-overlay-size";
-import { COLORS, RADIUS } from "@/theme/tokens";
+import { COLORS } from "@/theme/tokens";
 
-const SLIDE_MS = 300;
+const ENTER_MS = 480;
+const EXIT_MS = 280;
+
+// A soft overshoot on the way in, a plain ease-in on the way out.
+const ENTER_EASING = cubicBezier(0.2, 1.15, 0.4, 1);
+const EXIT_EASING = cubicBezier(0.5, 0, 0.75, 0);
 
 const FADE_IN = css.keyframes({ from: { opacity: 0 }, to: { opacity: 1 } });
 const FADE_OUT = css.keyframes({ from: { opacity: 1 }, to: { opacity: 0 } });
@@ -19,16 +27,25 @@ type Phase = "loading" | "shown" | "hiding" | "leaving";
 
 export interface AnecdoteImageOverlayProps {
   imageUrl: string;
+  onClosing: () => void;
   onClosed: () => void;
 }
 
-export const AnecdoteImageOverlay = ({ imageUrl, onClosed }: AnecdoteImageOverlayProps) => {
+export const AnecdoteImageOverlay = ({
+  imageUrl,
+  onClosing,
+  onClosed,
+}: AnecdoteImageOverlayProps) => {
   const [phase, setPhase] = useState<Phase>("loading");
   const reduceMotion = useReduceMotion();
   const window = useWindowDimensions();
-  const size = anecdoteImageOverlaySize(window);
-  const belowScreen = (window.height + size.height) / 2;
-  const imageExitMs = reduceMotion ? ANECDOTE_FADE_MS : SLIDE_MS;
+  const imageSize = anecdoteImageOverlaySize(window);
+  const frameSize = {
+    width: imageSize.width + 2 * ANECDOTE_IMAGE_FRAME_PADDING,
+    height: imageSize.height + 2 * ANECDOTE_IMAGE_FRAME_PADDING,
+  };
+  const belowScreen = (window.height + frameSize.height) / 2;
+  const imageExitMs = reduceMotion ? ANECDOTE_FADE_MS : EXIT_MS;
   const notifyClosed = useEffectEvent(onClosed);
 
   useEffect(() => {
@@ -42,19 +59,24 @@ export const AnecdoteImageOverlay = ({ imageUrl, onClosed }: AnecdoteImageOverla
     }
   }, [phase, imageExitMs]);
 
-  const close = () =>
-    setPhase((current) =>
-      current === "shown" ? "hiding" : current === "loading" ? "leaving" : current,
-    );
+  const close = () => {
+    if (phase === "shown") {
+      onClosing();
+      setPhase("hiding");
+    } else if (phase === "loading") {
+      onClosing();
+      setPhase("leaving");
+    }
+  };
 
   const imageMotion = {
     loading: styles.hidden,
     shown: reduceMotion
       ? styles.fadeIn
-      : [styles.slideUp, { animationName: slide(belowScreen, 0) }],
+      : [styles.enter, { animationName: enterKeyframes(belowScreen) }],
     hiding: reduceMotion
       ? styles.fadeOut
-      : [styles.slideDown, { animationName: slide(0, belowScreen) }],
+      : [styles.exit, { animationName: exitKeyframes(belowScreen) }],
     leaving: styles.hidden,
   }[phase];
 
@@ -69,8 +91,8 @@ export const AnecdoteImageOverlay = ({ imageUrl, onClosed }: AnecdoteImageOverla
         />
       </Animated.View>
       <View style={styles.centre}>
-        <Animated.View style={[size, imageMotion]}>
-          <FastSquircleView style={styles.frame}>
+        <Animated.View style={[frameSize, imageMotion]}>
+          <AnecdoteImageFrame isThumbnail={false}>
             <Image
               source={imageUrl}
               cachePolicy={ANECDOTE_IMAGE_CACHE_POLICY}
@@ -79,30 +101,36 @@ export const AnecdoteImageOverlay = ({ imageUrl, onClosed }: AnecdoteImageOverla
               onLoad={() => setPhase((current) => (current === "loading" ? "shown" : current))}
               onError={() => setPhase((current) => (current === "loading" ? "leaving" : current))}
             />
-          </FastSquircleView>
+          </AnecdoteImageFrame>
         </Animated.View>
       </View>
     </Modal>
   );
 };
 
-function slide(fromY: number, toY: number) {
+function enterKeyframes(belowScreen: number) {
   return {
-    from: { transform: [{ translateY: fromY }] },
-    to: { transform: [{ translateY: toY }] },
+    from: { transform: [{ translateY: belowScreen }, { rotate: "12deg" }, { scale: 0.9 }] },
+    to: { transform: [{ translateY: 0 }, { rotate: "0deg" }, { scale: 1 }] },
+  };
+}
+
+function exitKeyframes(belowScreen: number) {
+  return {
+    from: { transform: [{ translateY: 0 }, { rotate: "0deg" }] },
+    to: { transform: [{ translateY: belowScreen }, { rotate: "-10deg" }] },
   };
 }
 
 const styles = css.create({
   fill: { flex: 1 },
-  scrim: { ...StyleSheet.absoluteFill, backgroundColor: COLORS.scrim },
+  scrim: { ...StyleSheet.absoluteFill, backgroundColor: COLORS.scrimDeep },
   centre: {
     ...StyleSheet.absoluteFill,
     alignItems: "center",
     justifyContent: "center",
     pointerEvents: "box-none",
   },
-  frame: { flex: 1, borderRadius: RADIUS.base, overflow: "hidden" },
   hidden: { opacity: 0 },
   fadeIn: {
     animationName: FADE_IN,
@@ -115,10 +143,10 @@ const styles = css.create({
     animationTimingFunction: "ease-in",
     animationFillMode: "forwards",
   },
-  slideUp: { animationDuration: SLIDE_MS, animationTimingFunction: "ease-out" },
-  slideDown: {
-    animationDuration: SLIDE_MS,
-    animationTimingFunction: "ease-in",
+  enter: { animationDuration: ENTER_MS, animationTimingFunction: ENTER_EASING },
+  exit: {
+    animationDuration: EXIT_MS,
+    animationTimingFunction: EXIT_EASING,
     animationFillMode: "forwards",
   },
 });

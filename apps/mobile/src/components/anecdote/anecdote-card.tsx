@@ -21,6 +21,8 @@ import { GUTTER } from "@/theme/tokens";
 
 const SKELETON_PILE_COLORS = pileColors(ANECDOTE_COUNT);
 
+const OVERLAY_DELAY_MS = 150;
+
 const FADE_IN = css.keyframes({ from: { opacity: 0 }, to: { opacity: 1 } });
 
 type Peel = { anecdote: Anecdote; position: number; total: number };
@@ -30,8 +32,12 @@ export const AnecdoteCard = () => {
   const [peel, setPeel] = useState<Peel | null>(null);
   const [collapsingHeight, setCollapsingHeight] = useState<number | null>(null);
   const [openImageUrl, setOpenImageUrl] = useState<string | null>(null);
+  const [isImageShown, setIsImageShown] = useState(false);
   const slotHeight = useRef(0);
+  const overlayDelay = useRef<ReturnType<typeof setTimeout>>(undefined);
   const topImageUrl = daySet === null ? null : (topAnecdote(daySet)?.imageUrl ?? null);
+
+  useEffect(() => () => clearTimeout(overlayDelay.current), []);
 
   useEffect(() => {
     if (topImageUrl !== null) {
@@ -84,6 +90,12 @@ export const AnecdoteCard = () => {
     useAnecdoteStore.getState().dismiss();
   };
 
+  // The overlay waits a beat, so the thumbnail is seen sinking before the scrim covers it.
+  const openImage = (imageUrl: string) => {
+    setIsImageShown(true);
+    overlayDelay.current = setTimeout(() => setOpenImageUrl(imageUrl), OVERLAY_DELAY_MS);
+  };
+
   // Mounted only once the set is there, so the real card fades in where the skeleton stood.
   return (
     <>
@@ -100,8 +112,9 @@ export const AnecdoteCard = () => {
               anecdote={anecdote}
               position={daySet.dismissedCount}
               total={daySet.anecdotes.length}
+              isImageOpen={isImageShown}
               onDismiss={dismiss}
-              onOpenImage={setOpenImageUrl}
+              onOpenImage={openImage}
             />
           </AnecdoteStack>
         )}
@@ -111,14 +124,19 @@ export const AnecdoteCard = () => {
               anecdote={peel.anecdote}
               position={peel.position}
               total={peel.total}
+              isImageOpen={false}
               onDismiss={dismiss}
-              onOpenImage={setOpenImageUrl}
+              onOpenImage={openImage}
             />
           </AnecdotePeelingSheet>
         )}
       </Animated.View>
       {openImageUrl === null ? null : (
-        <AnecdoteImageOverlay imageUrl={openImageUrl} onClosed={() => setOpenImageUrl(null)} />
+        <AnecdoteImageOverlay
+          imageUrl={openImageUrl}
+          onClosing={() => setIsImageShown(false)}
+          onClosed={() => setOpenImageUrl(null)}
+        />
       )}
     </>
   );

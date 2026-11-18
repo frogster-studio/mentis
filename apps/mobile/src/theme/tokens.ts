@@ -20,6 +20,7 @@ export const COLORS = {
   success: "#22C55E",
   danger: "#EF4444",
   scrim: "rgba(37, 3, 19, 0.4)",
+  scrimDeep: "rgba(37, 3, 19, 0.75)",
   stroke: "rgba(37, 3, 19, 0.1)",
   bordeau: "#652F48",
   clear: "transparent",
