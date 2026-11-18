@@ -1,9 +1,11 @@
 import {
+  type AdminAnecdoteWrite,
   type AdminCategoryWrite,
   type AdminQuestionListResponse,
   type AdminQuestionWrite,
   type AdminThemeListResponse,
   adminAnecdoteListResponseSchema,
+  adminAnecdoteResponseSchema,
   adminCategoryListResponseSchema,
   adminCategoryResponseSchema,
   adminQuestionListResponseSchema,
@@ -30,6 +32,19 @@ export function useAnecdotes() {
   return useQuery({
     queryKey: curationKeys.anecdotes,
     queryFn: () => getFromApi("/anecdotes", adminAnecdoteListResponseSchema),
+  });
+}
+
+type AuthoredAnecdote = { id?: string; anecdote: AdminAnecdoteWrite };
+
+export function useSaveAnecdote() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, anecdote }: AuthoredAnecdote) =>
+      id === undefined
+        ? sendToApi("POST", "/anecdotes", anecdote, adminAnecdoteResponseSchema)
+        : sendToApi("PATCH", `/anecdotes/${id}`, anecdote, adminAnecdoteResponseSchema),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: curationKeys.anecdotes }),
   });
 }
 

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // The ** and __ emphasis markers count in the limit, as they do in the stored column.
-const ANECDOTE_MAX_LENGTH = 140;
+export const ANECDOTE_MAX_LENGTH = 140;
 
 export const adminAnecdoteIdSchema = z.guid();
 

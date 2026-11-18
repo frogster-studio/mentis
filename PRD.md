@@ -161,7 +161,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Anecdote
       "Component tests, prior art category-form.test.tsx",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "admin",
