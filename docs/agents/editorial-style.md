@@ -4,7 +4,7 @@ The Editor's rules for Catalog copy, grown one correction at a time by the [dail
 
 ## Counter
 
-Questions brought to Ready by the daily run: **38**
+Questions brought to Ready by the daily run: **39**
 
 ## Themes
 
@@ -50,7 +50,7 @@ Questions brought to Ready by the daily run: **38**
 - When the answer is surprising, answer first the question it raises in the Player's head (« mais comment retirer le cerveau par le nez ?? »), in plain words, without anatomy or jargon; leave out the side details.
 - A recurring competition names its latest winner, nationality and time (« En 2026, le Français Hugo Deck la gagne en 22 h 54 »).
 - An actor goes in parentheses after the role he plays: « pour Cléopâtre (Monica Bellucci) », « l’architecte Amonbofis (Gérard Darmon) ».
-- A character with a full name gets it whole, even when it already sits in an Alias: « le général Maximus Decimus Meridius (Russell Crowe) », not « le général Maximus ».
+- A character whose full name the film makes famous gets it whole, even when it already sits in an Alias: « le général Maximus Decimus Meridius (Russell Crowe) », not « le général Maximus ». A surname few Players remember stays out: « Rose (Kate Winslet) », not « Rose DeWitt Bukater (Kate Winslet) ».
 
 ## Anecdote
 
