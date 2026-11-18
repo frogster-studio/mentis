@@ -10,13 +10,15 @@ async function toError(response: Response): Promise<Error> {
   return new Error(parsed.success ? parsed.data.message : `The API answered ${response.status}.`);
 }
 
-type ApiMethod = "GET" | "POST" | "PATCH" | "DELETE";
+type ApiMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
-async function callApi(method: ApiMethod, path: string, body?: unknown): Promise<Response> {
+type ApiBody = { content: BodyInit; contentType: string };
+
+async function callApi(method: ApiMethod, path: string, body?: ApiBody): Promise<Response> {
   const response = await fetch(`/api/admin${path}`, {
     method,
-    headers: body === undefined ? undefined : { "content-type": "application/json" },
-    body: body === undefined ? undefined : JSON.stringify(body),
+    headers: body === undefined ? undefined : { "content-type": body.contentType },
+    body: body?.content,
   });
   if (!response.ok) {
     throw await toError(response);
@@ -40,7 +42,23 @@ export async function sendToApi<T>(
   body: unknown,
   schema: ResponseSchema<T>,
 ): Promise<T> {
-  const response = await callApi(method, path, body);
+  const response = await callApi(method, path, {
+    content: JSON.stringify(body),
+    contentType: "application/json",
+  });
+  return schema.parse(await response.json());
+}
+
+// Some browsers give a WebP no MIME type, and the API judges the bytes, never the label.
+export async function putFileToApi<T>(
+  path: string,
+  file: Blob,
+  schema: ResponseSchema<T>,
+): Promise<T> {
+  const response = await callApi("PUT", path, {
+    content: file,
+    contentType: file.type || "application/octet-stream",
+  });
   return schema.parse(await response.json());
 }
 

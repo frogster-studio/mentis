@@ -23,3 +23,9 @@
 - apps/api/AGENTS.md: SUPABASE client scope line now lists the Anecdote Image's deletion with its Anecdote.
 - API 543 green via no-swc config.
 - Next: item 2 (proxy PUT raw + client 204) unblocks items 6–8; client delete must resolve on 204.
+
+## Item 2 — proxy PUT raw + client 204 (done)
+- Proxy route.ts: exports PUT; body read as arrayBuffer (not text) and forwarded with the request's own Content-Type (omitted if none). One path for JSON and files: JSON bytes/header identical to before, image bytes untouched (text() would mangle non-UTF-8).
+- client.ts: callApi takes `{ content, contentType }`; sendToApi passes JSON; new `putFileToApi(path, file, schema)` labels `file.type || "application/octet-stream"` (never JSON, else Nest json parser would 400; API judges bytes). deleteFromApi already resolved on 204 (no body parse) — now tested.
+- Tests: app/api/admin/[...path]/route.test.ts (PUT byte-identical via lossy fixture holding 0x9d, POST/PATCH JSON), lib/api/client.test.ts (PUT, no-MIME label, French error, DELETE 204). Admin 308 green.
+- putFileToApi only used by tests for now (knip vitest plugin counts tests); item 7 wires `PUT /anecdotes/:id/image` with adminAnecdoteResponseSchema in features/curation/api.ts.

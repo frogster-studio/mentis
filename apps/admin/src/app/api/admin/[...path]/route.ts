@@ -30,12 +30,13 @@ async function forward(request: NextRequest, { params }: RouteContext): Promise<
   }
 
   const { path } = await params;
-  const body = request.body === null ? undefined : await request.text();
+  const body = request.body === null ? undefined : await request.arrayBuffer();
+  const contentType = request.headers.get("content-type");
   const response = await fetch(`${apiBaseUrl()}/admin/${path.join("/")}${request.nextUrl.search}`, {
     method: request.method,
     headers: {
       authorization: `Bearer ${token}`,
-      ...(body === undefined ? {} : { "content-type": "application/json" }),
+      ...(body === undefined || contentType === null ? {} : { "content-type": contentType }),
     },
     body,
     cache: "no-store",
@@ -51,4 +52,4 @@ async function forward(request: NextRequest, { params }: RouteContext): Promise<
 }
 
 // Next routes by verb-named export, and every verb is the same hop.
-export { forward as DELETE, forward as GET, forward as PATCH, forward as POST };
+export { forward as DELETE, forward as GET, forward as PATCH, forward as POST, forward as PUT };
