@@ -16,5 +16,5 @@ export const AnecdoteSheet = ({ children, color }: PropsWithChildren<AnecdoteShe
 };
 
 const styles = StyleSheet.create({
-  sheet: { padding: SPACE.lg, borderRadius: RADIUS.base },
+  sheet: { padding: SPACE.lg, borderRadius: RADIUS.base, overflow: "hidden" },
 });
