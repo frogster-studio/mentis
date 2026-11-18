@@ -26,6 +26,7 @@ Questions brought to Ready by the daily run: **34**
 - Answerable in Cash mode, typed without the four choices: the wording dictates the form of the answer. Ask for a name (« Quel genre musical… ? » → « Le maloya »), never for a definition (« Qu’est-ce que le maloya ? ») that a Player could phrase ten ways.
 - No detail that lengthens the wording without helping find the answer: « Quel architecte de la pyramide de Djoser, la plus ancienne d’Égypte, a ensuite été vénéré… » lost « la plus ancienne d’Égypte ».
 - A period that varies from year to year says so: « généralement de juin à octobre ».
+- A scene or a line iconic enough to lead to the answer alone does without the work's title: « Quel acteur, assis sur un banc dans « Forrest Gump », compare la vie à une boîte de chocolats ? » lost « dans « Forrest Gump » » for a detail of the scene itself (« en attendant le bus »). A little harder, never out of reach.
 - A person is found through who they were — their role, a deed, what their name means — never through where a work showing them is kept: « Quelle reine… est célèbre pour son buste exposé à Berlin ? » was refused; « Quelle reine d’Égypte, épouse d’Akhenaton, porte un nom qui signifie « la belle est venue » ? » was approved.
 
 ## Wrong choices
