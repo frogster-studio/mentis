@@ -8,14 +8,15 @@ Questions brought to Ready by the daily run: **33**
 
 ## Themes
 
-- **For now, only « Pharaons d'Égypte »**, whatever section 2 of the daily run would pick, until the run has brought its 20 Questions to Ready. That day, tell the Editor the Theme reached 20 and ask whether to delete this rule and its companion below; he answers yes or no.
-  - The Theme is far too hard for Mentis and always asks the same thing (« quel jeune pharaon… », « quel architecte… »): mostly people. Read all its Questions, not only the Ready ones, and steer this one toward what they lack, rewriting it whole when needed.
+- **For now, only « Acteurs de cinéma »**, whatever section 2 of the daily run would pick, until the run has brought its 20 Questions to Ready. That day, tell the Editor the Theme reached 20 and ask whether to delete this rule; he answers yes or no.
+  - Its Questions all ask « quel acteur… », « quelle actrice… ». A Theme names a world, not the kind of answer: here anything that makes a Player think of film actors — the film where one shines, a scene mocked online (Marion Cotillard's death scene), a star's way of life, a nickname, an award, a fact off screen. « Pharaons d'Égypte » and « Barbus célèbres » show the measure: rarely the person, always something tied to them.
+- A Theme that always asks the same thing (« quel jeune pharaon… », « quel architecte… ») or is far too hard for Mentis: read all its Questions, not only the Ready ones, and steer each toward what they lack, rewriting it whole when needed.
   - Rewrite whole only a Question that repeats another (« quel jeune pharaon… ») or that few Players could answer. One that is already accessible and of a kind the Theme lacks is kept and polished (« l’ovale qui entoure le nom d’un pharaon » stays). Never turn it into a riddle made up from scratch.
   - A rewrite never trades a famous answer for a generic one behind a long, detailed setup: « Quelle légende est née en 1923, quand Lord Carnarvon… » → « la malédiction du pharaon » was refused, and « quel jeune pharaon… tombe découverte en 1922 » was kept on Toutânkhamon, its wording polished. Put such a side fact in the Explanation instead.
   - A hard Question whose fact is interesting is kept too: « Quelle cité nouvelle Akhenaton a-t-il fondée pour en faire sa capitale ? » was replaced by the Sphinx, and the Editor had it treated again as a Question of its own. Make it reachable through its wording and choices rather than replace it.
 - Otherwise pick only an unpublished Theme with Questions left to bring to Ready. The Editor unpublishes a Theme himself when he wants the run back on it.
 - Before polishing, read the Theme's Questions already Ready and steer this one toward what they lack, so the Theme mixes kinds as La Réunion does: history, places, objects, customs, a touch of pop culture, now and then a little logic — pleasant to answer, and every Player can get some of it right.
-- Finished by the daily run, never to pick again: La Réunion.
+- Finished by the daily run, never to pick again: La Réunion, Pharaons d’Égypte.
 - « En vrac » is no Theme a Player will ever see: its Questions wait to be moved into a real one. Pick it only when no other Theme has a Question left; then propose, with the polished Question, the existing Theme it should move to (its `themeId`), or a new Theme to create when none fits.
 
 ## Question text
