@@ -386,6 +386,7 @@ const WRITE_ROUTES = [
     path: `/admin/anecdotes/${ILLUSTRATED_ANECDOTE}`,
     body: { text: ` ${REWRITTEN_ANECDOTE} ` },
   },
+  { method: "DELETE", path: `/admin/anecdotes/${ILLUSTRATED_ANECDOTE}`, body: undefined },
 ];
 
 const LIST_ROUTES = [

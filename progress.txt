@@ -13,3 +13,13 @@
 - e2e in admin-curation.e2e-spec.ts: storedAnecdotes now copied into `liveAnecdotes` per test; fake gains updateAnecdote; PATCH added to WRITE_ROUTES[15] (401/403 covered by the shared it.each). New UNKNOWN_ANECDOTE const.
 - API tests run in sandbox via the no-swc config (534 green).
 - Next: item 4 DELETE fits admin-anecdote-image.e2e-spec.ts (has fake storage with events/removals/failRemove); add repository.deleteAnecdote returning boolean like deleteQuestion.
+
+## Item 4 — DELETE /admin/anecdotes/:id (done)
+- Lives in AnecdoteImageService.deleteAnecdote (only service holding SUPABASE in curation; CurationService has none): findAnecdote → 404 « Anecdote introuvable. »; image ≠ null → bucket.remove, error OR throw → 502 « Impossible de supprimer l’image. Réessayez. »; then repository.deleteAnecdote (boolean, like deleteQuestion), false → 404 (race).
+- Retry safety relies on Supabase remove of an absent path answering no error; row still names the path until deleted, so a retry re-removes then deletes.
+- Controller `remove` @Delete(":id") @HttpCode(204), same shape as questions.
+- admin-anecdote-image.e2e-spec.ts: app setup/fakes/helpers hoisted to file level so PUT and DELETE describes share one app; fake repo gains deleteAnecdote + failRowDeletion flag; events show "remove" before "delete".
+- admin-curation.e2e-spec.ts: DELETE anecdote appended to WRITE_ROUTES (index 16) for 401/403.
+- apps/api/AGENTS.md: SUPABASE client scope line now lists the Anecdote Image's deletion with its Anecdote.
+- API 543 green via no-swc config.
+- Next: item 2 (proxy PUT raw + client 204) unblocks items 6–8; client delete must resolve on 204.

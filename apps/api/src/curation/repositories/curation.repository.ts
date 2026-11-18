@@ -186,4 +186,9 @@ export class CurationRepository {
     const merged = await this.anecdotes.preload(anecdote);
     return merged === undefined ? null : this.anecdotes.save(merged);
   }
+
+  async deleteAnecdote(id: string): Promise<boolean> {
+    const { affected } = await this.anecdotes.delete({ id });
+    return (affected ?? 0) > 0;
+  }
 }

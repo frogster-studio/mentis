@@ -133,7 +133,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Anecdote
       "e2e with a fake repository and a fake Supabase storage, prior art admin-anecdote-image.e2e-spec.ts",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "admin",

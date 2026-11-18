@@ -5,7 +5,19 @@ import {
   adminAnecdoteIdSchema,
   adminAnecdoteWriteSchema,
 } from "@mentis/contracts/admin";
-import { Body, Controller, Get, Param, Patch, Post, Put, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Put,
+  UseGuards,
+} from "@nestjs/common";
 import { EditorGuard } from "../../auth/editor.guard";
 import { AuthenticatedThrottlerGuard } from "../../common/rate-limit.guard";
 import { ZodValidationPipe } from "../../common/zod-validation.pipe";
@@ -47,5 +59,11 @@ export class AdminAnecdotesController {
     @Body() file: unknown,
   ): Promise<AdminAnecdoteResponse> {
     return this.anecdoteImageService.replaceAnecdoteImage(id, file);
+  }
+
+  @Delete(":id")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(@Param("id", new ZodValidationPipe(adminAnecdoteIdSchema)) id: string): Promise<void> {
+    return this.anecdoteImageService.deleteAnecdote(id);
   }
 }
