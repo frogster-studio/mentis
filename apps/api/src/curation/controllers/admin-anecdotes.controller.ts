@@ -5,7 +5,7 @@ import {
   adminAnecdoteIdSchema,
   adminAnecdoteWriteSchema,
 } from "@mentis/contracts/admin";
-import { Body, Controller, Get, Param, Post, Put, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, Put, UseGuards } from "@nestjs/common";
 import { EditorGuard } from "../../auth/editor.guard";
 import { AuthenticatedThrottlerGuard } from "../../common/rate-limit.guard";
 import { ZodValidationPipe } from "../../common/zod-validation.pipe";
@@ -30,6 +30,14 @@ export class AdminAnecdotesController {
     @Body(new ZodValidationPipe(adminAnecdoteWriteSchema)) anecdote: AdminAnecdoteWrite,
   ): Promise<AdminAnecdoteResponse> {
     return this.curationService.createAnecdote(anecdote);
+  }
+
+  @Patch(":id")
+  update(
+    @Param("id", new ZodValidationPipe(adminAnecdoteIdSchema)) id: string,
+    @Body(new ZodValidationPipe(adminAnecdoteWriteSchema)) anecdote: AdminAnecdoteWrite,
+  ): Promise<AdminAnecdoteResponse> {
+    return this.curationService.updateAnecdote(id, anecdote);
   }
 
   // The body is the raw file, read by the parser bootstrap.ts scopes to this route alone.

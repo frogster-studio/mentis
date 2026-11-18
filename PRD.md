@@ -119,7 +119,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Anecdote
       "e2e through the Nest testing module with a fake repository, prior art admin-curation.e2e-spec.ts",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "api",

@@ -201,6 +201,12 @@ export class CurationService {
     return adminAnecdoteResponseSchema.parse(created);
   }
 
+  async updateAnecdote(id: string, anecdote: AdminAnecdoteWrite): Promise<AdminAnecdoteResponse> {
+    const updated = await this.curationRepository.updateAnecdote({ id, ...anecdote });
+    if (updated === null) throw new NotFoundException("Anecdote introuvable.");
+    return adminAnecdoteResponseSchema.parse(updated);
+  }
+
   private slugOf(name: string, kind: "Category" | "Theme"): string {
     const slug = slugify(name);
     if (slug === "") {

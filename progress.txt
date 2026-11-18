@@ -7,3 +7,9 @@
 - Fixtures: apps/admin/src/features/curation/webp-fixtures.ts (lossy/lossless/extended + `webpFile(bytes, size)` pads to size) — reuse in items 5/7 component tests.
 - Tests: image-rule.test.ts (23).
 - Nothing wired yet: theme-image.ts still used by ImageField until item 5, which should delete theme-image.ts/worker and use selectedImageError. Accept attr for input: ".webp,image/webp" to add then.
+
+## Item 3 — PATCH /admin/anecdotes/:id (done)
+- Controller `update` reuses adminAnecdoteIdSchema + adminAnecdoteWriteSchema (no new contract); CurationService.updateAnecdote → repository.updateAnecdote({ id, ...text }) (existing preload/save, keeps image); null → NotFoundException « Anecdote introuvable. ».
+- e2e in admin-curation.e2e-spec.ts: storedAnecdotes now copied into `liveAnecdotes` per test; fake gains updateAnecdote; PATCH added to WRITE_ROUTES[15] (401/403 covered by the shared it.each). New UNKNOWN_ANECDOTE const.
+- API tests run in sandbox via the no-swc config (534 green).
+- Next: item 4 DELETE fits admin-anecdote-image.e2e-spec.ts (has fake storage with events/removals/failRemove); add repository.deleteAnecdote returning boolean like deleteQuestion.

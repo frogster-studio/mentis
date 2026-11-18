@@ -37,6 +37,7 @@ const UNKNOWN_QUESTION = "9a3e0d3a-0000-4000-8000-00000000ffff";
 const AUTHORED_ANECDOTE = "7b4e0d3a-0000-4000-8000-000000000001";
 const BARE_ANECDOTE = "7b4e0d3a-0000-4000-8000-000000000002";
 const ILLUSTRATED_ANECDOTE = "7b4e0d3a-0000-4000-8000-000000000003";
+const UNKNOWN_ANECDOTE = "7b4e0d3a-0000-4000-8000-00000000ffff";
 const ILLUSTRATED_ANECDOTE_IMAGE = `${ILLUSTRATED_ANECDOTE}/0d9f0d3a-0000-4000-8000-000000000001.webp`;
 
 type Aged = { id: string; createdAt: Date };
@@ -125,6 +126,7 @@ const storedQuestions = [
 let liveCategories: CategoryEntity[] = [];
 let liveThemes: ThemeEntity[] = [];
 let liveQuestions: QuestionEntity[] = [];
+let liveAnecdotes: AnecdoteEntity[] = [];
 
 // Stands in for Postgres at the repository seam: the SQL itself is proven by the live smoke.
 const fakeCurationRepository = {
@@ -249,7 +251,7 @@ const fakeCurationRepository = {
     return wasDeleted;
   },
   async listAnecdotes() {
-    return newestFirst(storedAnecdotes);
+    return newestFirst(liveAnecdotes);
   },
   async createAnecdote(authored) {
     return Object.assign(new AnecdoteEntity(), authored, {
@@ -257,6 +259,15 @@ const fakeCurationRepository = {
       createdAt: new Date("2026-08-24T10:00:00.000Z"),
       updatedAt: new Date("2026-08-24T10:00:00.000Z"),
     });
+  },
+  async updateAnecdote(authored) {
+    const stored = liveAnecdotes.find((row) => row.id === authored.id);
+    if (stored === undefined) {
+      return null;
+    }
+    const updated = Object.assign(new AnecdoteEntity(), stored, authored);
+    liveAnecdotes = liveAnecdotes.map((row) => (row.id === updated.id ? updated : row));
+    return updated;
   },
 } satisfies Pick<
   CurationRepository,
@@ -277,6 +288,7 @@ const fakeCurationRepository = {
   | "deleteQuestion"
   | "listAnecdotes"
   | "createAnecdote"
+  | "updateAnecdote"
 >;
 
 let signedUploads: { bucket: string; path: string }[] = [];
@@ -326,6 +338,8 @@ const STORED_ANECDOTE = "Le **Piton de la Fournaise** entre en éruption __presq
 
 const AUTHORED_ANECDOTE_WRITE = { text: `  ${STORED_ANECDOTE}  ` };
 
+const REWRITTEN_ANECDOTE = "La **tour Eiffel** grandit d’__une quinzaine de centimètres__ l’été.";
+
 const anecdote = (id: string, image: string | null, createdAt: string): AnecdoteEntity =>
   Object.assign(new AnecdoteEntity(), {
     id,
@@ -367,6 +381,11 @@ const WRITE_ROUTES = [
   },
   { method: "POST", path: "/admin/themes/image-cleanup", body: { token: "invalid" } },
   { method: "POST", path: "/admin/anecdotes", body: AUTHORED_ANECDOTE_WRITE },
+  {
+    method: "PATCH",
+    path: `/admin/anecdotes/${ILLUSTRATED_ANECDOTE}`,
+    body: { text: ` ${REWRITTEN_ANECDOTE} ` },
+  },
 ];
 
 const LIST_ROUTES = [
@@ -404,6 +423,7 @@ describe("admin curation routes e2e", () => {
     liveCategories = [...storedCategories];
     liveThemes = [...storedThemes];
     liveQuestions = [...storedQuestions];
+    liveAnecdotes = [...storedAnecdotes];
     signedUploads = [];
   });
 
@@ -1095,6 +1115,54 @@ describe("admin curation routes e2e", () => {
     ["no text key at all", {}],
   ])("POST /admin/anecdotes with %s → 400 VALIDATION_FAILED", async (_case, body) => {
     const response = await write({ method: "POST", path: "/admin/anecdotes", body }, editorToken);
+
+    expect(response.status).toBe(400);
+    expect(errorResponseSchema.parse(await response.json()).code).toBe("VALIDATION_FAILED");
+  });
+
+  it("PATCH /admin/anecdotes/:id rewrites the text, trimmed, and leaves the image alone", async () => {
+    const response = await write(WRITE_ROUTES[15], editorToken);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      id: ILLUSTRATED_ANECDOTE,
+      text: REWRITTEN_ANECDOTE,
+      image: ILLUSTRATED_ANECDOTE_IMAGE,
+    });
+  });
+
+  it.each([
+    ["no text", { text: "   " }],
+    ["141 characters, markers counted", { text: `**${"a".repeat(137)}**` }],
+    ["no text key at all", {}],
+  ])("PATCH /admin/anecdotes/:id with %s → 400 VALIDATION_FAILED", async (_case, body) => {
+    const response = await write(
+      { method: "PATCH", path: `/admin/anecdotes/${ILLUSTRATED_ANECDOTE}`, body },
+      editorToken,
+    );
+
+    expect(response.status).toBe(400);
+    expect(errorResponseSchema.parse(await response.json()).code).toBe("VALIDATION_FAILED");
+  });
+
+  it("PATCH /admin/anecdotes on an unknown id → 404 NOT_FOUND in French", async () => {
+    const response = await write(
+      { method: "PATCH", path: `/admin/anecdotes/${UNKNOWN_ANECDOTE}`, body: { text: "Texte" } },
+      editorToken,
+    );
+
+    expect(response.status).toBe(404);
+    expect(errorResponseSchema.parse(await response.json())).toMatchObject({
+      code: "NOT_FOUND",
+      message: "Anecdote introuvable.",
+    });
+  });
+
+  it("PATCH /admin/anecdotes on a malformed id → 400", async () => {
+    const response = await write(
+      { method: "PATCH", path: "/admin/anecdotes/piton", body: { text: "Texte" } },
+      editorToken,
+    );
 
     expect(response.status).toBe(400);
     expect(errorResponseSchema.parse(await response.json()).code).toBe("VALIDATION_FAILED");
