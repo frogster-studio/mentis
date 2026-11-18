@@ -16,7 +16,7 @@ import {
 } from "@mentis/contracts/admin";
 import { type QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { deleteFromApi, getFromApi, sendToApi } from "@/lib/api/client";
+import { deleteFromApi, getFromApi, putFileToApi, sendToApi } from "@/lib/api/client";
 
 import { saveThemeWithImage } from "./theme-image-upload";
 
@@ -44,6 +44,15 @@ export function useSaveAnecdote() {
       id === undefined
         ? sendToApi("POST", "/anecdotes", anecdote, adminAnecdoteResponseSchema)
         : sendToApi("PATCH", `/anecdotes/${id}`, anecdote, adminAnecdoteResponseSchema),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: curationKeys.anecdotes }),
+  });
+}
+
+export function useSaveAnecdoteImage() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, file }: { id: string; file: File }) =>
+      putFileToApi(`/anecdotes/${id}/image`, file, adminAnecdoteResponseSchema),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: curationKeys.anecdotes }),
   });
 }

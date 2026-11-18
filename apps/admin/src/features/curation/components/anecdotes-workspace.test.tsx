@@ -4,13 +4,15 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useReportUnsavedChanges } from "@/components/workspace-shell";
-import { getFromApi, sendToApi } from "@/lib/api/client";
+import { getFromApi, putFileToApi, sendToApi } from "@/lib/api/client";
 import type { Anecdote } from "../types";
+import { lossy } from "../webp-fixtures";
 import { AnecdotesWorkspace } from "./anecdotes-workspace";
 
 vi.mock("@/lib/api/client", () => ({
   getFromApi: vi.fn(),
   sendToApi: vi.fn(),
+  putFileToApi: vi.fn(),
   deleteFromApi: vi.fn(),
 }));
 vi.mock("@/components/workspace-shell", () => ({ useReportUnsavedChanges: vi.fn() }));
@@ -56,6 +58,23 @@ async function typeInto(field: HTMLInputElement | HTMLTextAreaElement, text: str
   });
 }
 
+const alerts = () =>
+  Array.from(container.querySelectorAll('[role="alert"]'), (node) => node.textContent).filter(
+    Boolean,
+  );
+const frame = () => container.querySelector("fieldset button > span") as HTMLElement;
+const rowImage = (text: string) => row(text).querySelector("img")?.getAttribute("src");
+const webp = (name: string) => new File([lossy(750, 1024)], name, { type: "image/webp" });
+
+async function choose(file: File) {
+  const input = container.querySelector("input[type=file]") as HTMLInputElement;
+  Object.defineProperty(input, "files", { configurable: true, value: [file] });
+  await act(async () => {
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  await settle();
+}
+
 const type = (text: string) => typeInto(textarea() as HTMLTextAreaElement, text);
 
 const settle = () =>
@@ -88,6 +107,8 @@ beforeEach(() => {
   window.history.replaceState(null, "", "/anecdotes");
   stored = [PIGEON, MIEL];
   vi.mocked(getFromApi).mockImplementation(async () => stored);
+  vi.spyOn(URL, "createObjectURL").mockImplementation((blob) => `blob:${(blob as File).name}`);
+  vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
@@ -224,7 +245,7 @@ describe("editing an Anecdote's text", () => {
     await click(row("pigeon"));
     await type("Un pigeon.");
     await click(button("Save changes"));
-    expect(container.querySelector('[role="alert"]')?.textContent).toBe("Anecdote introuvable.");
+    expect(alerts()).toEqual(["Anecdote introuvable."]);
   });
 });
 
@@ -273,5 +294,137 @@ describe("a dirty form", () => {
     await click(row("miel"));
     expect(confirm).not.toHaveBeenCalled();
     expect(textarea()?.value).toBe(MIEL.text);
+  });
+});
+
+describe("the Anecdote Image", () => {
+  const IMAGE_URL = "https://images.example/anecdote-images/one.webp";
+  const NEW_IMAGE_URL = "https://images.example/anecdote-images/two.webp";
+
+  const storeImage = (id: string, imageUrl: string) => {
+    stored = stored.map((anecdote) => (anecdote.id === id ? { ...anecdote, imageUrl } : anecdote));
+  };
+
+  it("shows an empty dashed 750/1024 frame, no label, under the shared rule's hint", async () => {
+    await renderWorkspace();
+    await click(row("pigeon"));
+    expect(frame().className).toContain("border-dashed");
+    expect(frame().className).toContain("aspect-[750/1024]");
+    expect(frame().textContent).toBe("");
+    expect(container.textContent).toContain("Image WebP · 750 × 1024 px · 200 Ko maximum.");
+    expect(container.querySelector("input[type=file]")?.getAttribute("accept")).toBe(
+      ".webp,image/webp",
+    );
+  });
+
+  it("shows the stored image whole inside the frame", async () => {
+    storeImage(PIGEON.id, IMAGE_URL);
+    await renderWorkspace();
+    await click(row("pigeon"));
+    const image = container.querySelector("fieldset img") as HTMLImageElement;
+    expect(image.getAttribute("src")).toBe(IMAGE_URL);
+    expect(image.classList).toContain("object-contain");
+  });
+
+  it("refuses a file that breaks the shared rule and stays clean", async () => {
+    await renderWorkspace();
+    await click(row("pigeon"));
+    await choose(new File([lossy(700, 700)], "small.webp", { type: "image/webp" }));
+    expect(alerts()).toEqual(["L’image doit mesurer 750 × 1024 px."]);
+    expect(button("Save changes").disabled).toBe(true);
+  });
+
+  it("previews a valid file locally and makes the form dirty", async () => {
+    await renderWorkspace();
+    await click(row("pigeon"));
+    await choose(webp("pigeon.webp"));
+    expect(container.querySelector("fieldset img")?.getAttribute("src")).toBe("blob:pigeon.webp");
+    expect(button("Save changes").disabled).toBe(false);
+    expect(vi.mocked(useReportUnsavedChanges).mock.lastCall).toEqual([true]);
+    expect(putFileToApi).not.toHaveBeenCalled();
+  });
+
+  it("PUTs the file alone when the text is unchanged, and the list shows the new image", async () => {
+    storeImage(PIGEON.id, IMAGE_URL);
+    const file = webp("pigeon.webp");
+    vi.mocked(putFileToApi).mockImplementation(async () => {
+      storeImage(PIGEON.id, NEW_IMAGE_URL);
+      return { id: PIGEON.id, text: PIGEON.text, image: "two.webp" };
+    });
+    await renderWorkspace();
+    await click(row("pigeon"));
+    await choose(file);
+    await click(button("Save changes"));
+    expect(sendToApi).not.toHaveBeenCalled();
+    expect(putFileToApi).toHaveBeenCalledWith(
+      `/anecdotes/${PIGEON.id}/image`,
+      file,
+      expect.anything(),
+    );
+    expect(rowImage("pigeon")).toBe(NEW_IMAGE_URL);
+    expect(container.querySelector("fieldset img")?.getAttribute("src")).toBe(NEW_IMAGE_URL);
+    expect(button("Save changes").disabled).toBe(true);
+    expect(vi.mocked(useReportUnsavedChanges).mock.lastCall).toEqual([false]);
+  });
+
+  it("sends the text first, then the file", async () => {
+    const calls: string[] = [];
+    vi.mocked(sendToApi).mockImplementation(async (method) => {
+      calls.push(method);
+      return { id: PIGEON.id, text: "Un pigeon.", image: null };
+    });
+    vi.mocked(putFileToApi).mockImplementation(async () => {
+      calls.push("PUT");
+      return { id: PIGEON.id, text: "Un pigeon.", image: "two.webp" };
+    });
+    await renderWorkspace();
+    await click(row("pigeon"));
+    await type("Un pigeon.");
+    await choose(webp("pigeon.webp"));
+    await click(button("Save changes"));
+    expect(calls).toEqual(["PATCH", "PUT"]);
+  });
+
+  it("keeps a new Anecdote's text saved and its file for a retry when the PUT fails", async () => {
+    const created: Anecdote = {
+      id: "5b2e0d3a-0000-4000-8000-000000000003",
+      text: "Les loutres se tiennent la main.",
+      imageUrl: null,
+    };
+    vi.mocked(sendToApi).mockImplementation(async () => {
+      stored = [...stored, created];
+      return { id: created.id, text: created.text, image: null };
+    });
+    vi.mocked(putFileToApi).mockRejectedValueOnce(new Error("L’image doit mesurer 750 × 1024 px."));
+    const file = webp("loutres.webp");
+    await renderWorkspace();
+    await click(labelled("New Anecdote"));
+    await type(created.text);
+    await choose(file);
+    await click(button("Create Anecdote"));
+    expect(new URLSearchParams(window.location.search).get("anecdote")).toBe(created.id);
+    expect(row("loutres").parentElement?.className).toContain("bg-sky-50");
+    expect(alerts()).toEqual(["L’image doit mesurer 750 × 1024 px."]);
+    expect(container.querySelector("fieldset img")?.getAttribute("src")).toBe("blob:loutres.webp");
+    expect(textarea()?.value).toBe(created.text);
+    expect(vi.mocked(useReportUnsavedChanges).mock.lastCall).toEqual([true]);
+
+    vi.mocked(putFileToApi).mockResolvedValueOnce({ ...created, image: "loutres.webp" });
+    await click(button("Save changes"));
+    expect(sendToApi).toHaveBeenCalledOnce();
+    expect(putFileToApi).toHaveBeenLastCalledWith(
+      `/anecdotes/${created.id}/image`,
+      file,
+      expect.anything(),
+    );
+    expect(alerts()).toEqual([]);
+  });
+
+  it("offers no control that removes the image on its own", async () => {
+    storeImage(PIGEON.id, IMAGE_URL);
+    await renderWorkspace();
+    await click(row("pigeon"));
+    const labels = Array.from(container.querySelectorAll("button"), (node) => node.textContent);
+    expect(labels.some((label) => label?.includes("Supprimer"))).toBe(false);
   });
 });

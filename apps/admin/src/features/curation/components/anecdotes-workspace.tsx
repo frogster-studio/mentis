@@ -60,6 +60,8 @@ export const AnecdotesWorkspace = () => {
   const [query, setQuery] = useState(searchParams.get(QUERY_PARAM) ?? "");
   const [selectedId, setSelectedId] = useState(searchParams.get(ANECDOTE_PARAM));
   const [isCreating, setIsCreating] = useState(false);
+  // One session per opened form: a create turning into its saved Anecdote keeps a failed image.
+  const [formSession, setFormSession] = useState(0);
   const [isFormDirty, setIsFormDirty] = useState(false);
   useReportUnsavedChanges(isFormDirty);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -89,6 +91,7 @@ export const AnecdotesWorkspace = () => {
     if (!mayLeaveForm()) return;
 
     setIsCreating(false);
+    setFormSession((session) => session + 1);
     select(anecdoteId);
   };
 
@@ -96,11 +99,11 @@ export const AnecdotesWorkspace = () => {
     if (!mayLeaveForm()) return;
 
     setIsCreating(true);
+    setFormSession((session) => session + 1);
     select(null);
   };
 
   const onSaved = (saved: AdminAnecdoteResponse) => {
-    setIsFormDirty(false);
     setIsCreating(false);
     select(saved.id);
   };
@@ -173,8 +176,8 @@ export const AnecdotesWorkspace = () => {
           >
             <div className="flex flex-col gap-5 p-4">
               <AnecdoteForm
-                key={isCreating ? "new-anecdote" : selectedAnecdote?.id}
-                anecdote={isCreating ? undefined : selectedAnecdote}
+                key={formSession}
+                anecdote={selectedAnecdote}
                 onDirtyChange={setIsFormDirty}
                 onSaved={onSaved}
               />
