@@ -8,8 +8,10 @@ Questions brought to Ready by the daily run: **39**
 
 ## Themes
 
-- **For now, only « Acteurs de cinéma »**, whatever section 2 of the daily run would pick, until the run has brought its 20 Questions to Ready. That day, tell the Editor the Theme reached 20 and ask whether to delete this rule; he answers yes or no.
-  - Its Questions all ask « quel acteur… », « quelle actrice… ». A Theme names a world, not the kind of answer: here anything that makes a Player think of film actors — the film where one shines, a scene mocked online (Marion Cotillard's death scene), a star's way of life, a nickname, an award, a fact off screen. « Pharaons d'Égypte » and « Barbus célèbres » show the measure: rarely the person, always something tied to them.
+- **For now, only « Grand Theft Auto »** (Jeux vidéo), whatever section 2 of the daily run would pick, until the run has brought its 20 Questions to Ready. That day, tell the Editor the Theme reached 20 and ask whether to delete this rule; he answers yes or no.
+  - The Theme started empty: each run writes a new Question (`POST /admin/questions`) on GTA — its cities, characters, studio, records, the world around it.
+  - Ideas the Editor asked for: Scotland, the country where GTA was born; Rockstar, its publisher; Red Dead Redemption, another game by GTA's publisher.
+- « Acteurs de cinéma » is paused at 6/20, its Questions all ask « quel acteur… », « quelle actrice… ». A Theme names a world, not the kind of answer: here anything that makes a Player think of film actors — the film where one shines, a scene mocked online (Marion Cotillard's death scene), a star's way of life, a nickname, an award, a fact off screen. « Pharaons d'Égypte » and « Barbus célèbres » show the measure: rarely the person, always something tied to them.
 - A Theme that always asks the same thing (« quel jeune pharaon… », « quel architecte… ») or is far too hard for Mentis: read all its Questions, not only the Ready ones, and steer each toward what they lack, rewriting it whole when needed.
   - Rewrite whole only a Question that repeats another (« quel jeune pharaon… ») or that few Players could answer. One that is already accessible and of a kind the Theme lacks is kept and polished (« l’ovale qui entoure le nom d’un pharaon » stays). Never turn it into a riddle made up from scratch.
   - A rewrite never trades a famous answer for a generic one behind a long, detailed setup: « Quelle légende est née en 1923, quand Lord Carnarvon… » → « la malédiction du pharaon » was refused, and « quel jeune pharaon… tombe découverte en 1922 » was kept on Toutânkhamon, its wording polished. Put such a side fact in the Explanation instead.
@@ -27,6 +29,7 @@ Questions brought to Ready by the daily run: **39**
 - No detail that lengthens the wording without helping find the answer: « Quel architecte de la pyramide de Djoser, la plus ancienne d’Égypte, a ensuite été vénéré… » lost « la plus ancienne d’Égypte ».
 - A period that varies from year to year says so: « généralement de juin à octobre ».
 - A scene or a line iconic enough to lead to the answer alone does without the work's title: « Quel acteur, assis sur un banc dans « Forrest Gump », compare la vie à une boîte de chocolats ? » lost « dans « Forrest Gump » » for a detail of the scene itself (« en attendant le bus »). A little harder, never out of reach.
+- A clue whose name all but spells the answer is blurred: « Quelle ville imaginaire, inspirée de Los Angeles… » → « Los Santos » became « inspirée d’une grande ville américaine ».
 - A person is found through who they were — their role, a deed, what their name means — never through where a work showing them is kept: « Quelle reine… est célèbre pour son buste exposé à Berlin ? » was refused; « Quelle reine d’Égypte, épouse d’Akhenaton, porte un nom qui signifie « la belle est venue » ? » was approved.
 
 ## Wrong choices
@@ -48,6 +51,7 @@ Questions brought to Ready by the daily run: **39**
 - A figure is the one most sources cite, rounded (« environ 22 000 hectares, près de 55 % »), not the latest single-year count.
 - Says what the answer is used for or known for, in one or two plain sentences that fill the room.
 - When the answer is surprising, answer first the question it raises in the Player's head (« mais comment retirer le cerveau par le nez ?? »), in plain words, without anatomy or jargon; leave out the side details.
+- A record says it was one « à l’époque »: « un milliard de dollars en trois jours, un record à l’époque ».
 - A recurring competition names its latest winner, nationality and time (« En 2026, le Français Hugo Deck la gagne en 22 h 54 »).
 - An actor goes in parentheses after the role he plays: « pour Cléopâtre (Monica Bellucci) », « l’architecte Amonbofis (Gérard Darmon) ».
 - A character whose full name the film makes famous gets it whole, even when it already sits in an Alias: « le général Maximus Decimus Meridius (Russell Crowe) », not « le général Maximus ». A surname few Players remember stays out: « Rose (Kate Winslet) », not « Rose DeWitt Bukater (Kate Winslet) ».
