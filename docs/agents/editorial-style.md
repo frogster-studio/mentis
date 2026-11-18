@@ -50,6 +50,7 @@ Questions brought to Ready by the daily run: **35**
 - When the answer is surprising, answer first the question it raises in the Player's head (« mais comment retirer le cerveau par le nez ?? »), in plain words, without anatomy or jargon; leave out the side details.
 - A recurring competition names its latest winner, nationality and time (« En 2026, le Français Hugo Deck la gagne en 22 h 54 »).
 - An actor goes in parentheses after the role he plays: « pour Cléopâtre (Monica Bellucci) », « l’architecte Amonbofis (Gérard Darmon) ».
+- A character with a full name gets it whole, even when it already sits in an Alias: « le général Maximus Decimus Meridius (Russell Crowe) », not « le général Maximus ».
 
 ## Anecdote
 
@@ -59,6 +60,7 @@ Questions brought to Ready by the daily run: **35**
 - Never describe what a photo would show better (a shape, a colour, a size to see) — keep a fact worth remembering (an origin, a season, a cause, a record).
 - When it fits, a few words say why the subject matters there (« première culture de l’île »); never at the cost of a clear sentence under 140.
 - When the answer's name means something else to most Players — a catchphrase, a film gag — the Anecdote settles that link first: « Imhotep », for many the « Ça va, ça va, Imhotep » of Mission Cléopâtre, first says who the real one was, since most Players never knew (« sans rapport avec le vrai architecte » was refused: nobody knew he was one), then where the gag comes from: « **Imhotep** a conçu la première pyramide d’Égypte. Le « Ça va, ça va, __Imhotep__ » lancé pour rire, lui, vient de **Mission Cléopâtre**. »
+- A fact drawn from a film or a work says plainly it is the film, and plainly where real life departs from it: anecdotes from every Theme come mixed on the home, so « L’empereur romain **Commode**, le méchant de Gladiator, a vraiment combattu… » left the Player unsure a film was meant; « Le méchant du film **Gladiator**, l’empereur romain **Commode**, a vraiment existé et combattait lui-même en __gladiateur__ dans l’arène. » says both.
 - Factual, surprising, short, in the voice of the stored ones (`GET /app/anecdotes?n=50`).
 - How a thing is served or used day to day is no Anecdote (« on sert à côté du cari un rougail tomate »): reach for what few Players know — an origin, a history, a record.
 - An origin earns its place only when the Player sees the link at once and it leads somewhere unexpected (« boucané » → « boucan » → « boucanier ») — never a foreign word that looks nothing like ours (« rougail » ← tamoul « urukay »).
