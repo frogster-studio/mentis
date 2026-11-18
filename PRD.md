@@ -199,7 +199,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Anecdote
       "docs/agents/daily-question.md unchanged",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```

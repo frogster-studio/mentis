@@ -67,3 +67,10 @@
 - Workspace onDeleted = select(null) (clears ?anecdote; form unmount clears the dirty report). No formSession bump needed.
 - Tests: anecdotes-workspace.test.tsx +4 (no Delete on new, cancel deletes nothing, confirm → DELETE + URL cleared + refetch + row gone + rail clean even from a dirty form, 502 → message + still selected). Admin 307 green.
 - Next: item 9 ADR 0007/0010 amendments (docs only).
+
+## Item 9 — ADR 0007 + 0010 amended (done)
+- 0007: browser checks the shared admin image rule (ext/MIME/signature agree, VP8X anim unset, exactly 750 × 1024, ≤ 204 800 bytes) and uploads as dropped; JPEG/PNG refused. Conversion, codec, worker, WASM, 700 px, "SAVE validates again" lines gone (code only checks on drop). New consequence: API + bucket keep 2 MiB so legacy Themes of any ratio stay valid; the rule is browser-only, so a signed upload skipping it still lands if WebP ≤ 2 MiB (stated, not fixed: PRD keeps API rules).
+- 0010: Theme skip reason now "signed upload the API authorizes but never reads" (old reason was conversion); dashboard Anecdote form checks the shared rule and sends the file unchanged via proxy (raw bytes, own Content-Type). New consequence: DELETE removes the object then the row, 502 keeps the row, retry finishes, no orphan. "No route removes an image on its own". Reopening line on in-browser conversion kept as is.
+- Forward-only, no banner. daily-question.md, apps/api/AGENTS.md (already names ADR 0010 deletion), CONTEXT.md untouched.
+- Files: docs/adr/0007-*.md, docs/adr/0010-*.md.
+- Every PRD item passes. Human steps left: Browser-pane check behind a real Editor session, « Closes #84 » in PR 83, host `bun run check` (knip + API suite + `bun install --frozen-lockfile` against the hand-edited bun.lock).
