@@ -23,6 +23,7 @@ Questions brought to Ready by the daily run: **32**
 - Reads like the Questions already Ready in its Theme: same register, same typography.
 - Admits one Canonical Answer only.
 - Answerable in Cash mode, typed without the four choices: the wording dictates the form of the answer. Ask for a name (« Quel genre musical… ? » → « Le maloya »), never for a definition (« Qu’est-ce que le maloya ? ») that a Player could phrase ten ways.
+- No detail that lengthens the wording without helping find the answer: « Quel architecte de la pyramide de Djoser, la plus ancienne d’Égypte, a ensuite été vénéré… » lost « la plus ancienne d’Égypte ».
 - A period that varies from year to year says so: « généralement de juin à octobre ».
 - A person is found through who they were — their role, a deed, what their name means — never through where a work showing them is kept: « Quelle reine… est célèbre pour son buste exposé à Berlin ? » was refused; « Quelle reine d’Égypte, épouse d’Akhenaton, porte un nom qui signifie « la belle est venue » ? » was approved.
 
@@ -55,6 +56,7 @@ Questions brought to Ready by the daily run: **32**
 - Never leans on a meaning the Player has not read: no « aussi », « également » pointing back to the Question (« un rougail est aussi un condiment » → « on sert à côté du cari un rougail tomate : un condiment de… »).
 - Never describe what a photo would show better (a shape, a colour, a size to see) — keep a fact worth remembering (an origin, a season, a cause, a record).
 - When it fits, a few words say why the subject matters there (« première culture de l’île »); never at the cost of a clear sentence under 140.
+- When the answer's name means something else to most Players — a catchphrase, a film gag — the Anecdote settles that link first: « Imhotep », for many the « Ça va, ça va, Imhotep » of Mission Cléopâtre, got an Anecdote telling where the gag comes from and that it has nothing to do with the architect.
 - Factual, surprising, short, in the voice of the stored ones (`GET /app/anecdotes?n=50`).
 - How a thing is served or used day to day is no Anecdote (« on sert à côté du cari un rougail tomate »): reach for what few Players know — an origin, a history, a record.
 - An origin earns its place only when the Player sees the link at once and it leads somewhere unexpected (« boucané » → « boucan » → « boucanier ») — never a foreign word that looks nothing like ours (« rougail » ← tamoul « urukay »).
