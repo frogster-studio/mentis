@@ -29,3 +29,12 @@
 - client.ts: callApi takes `{ content, contentType }`; sendToApi passes JSON; new `putFileToApi(path, file, schema)` labels `file.type || "application/octet-stream"` (never JSON, else Nest json parser would 400; API judges bytes). deleteFromApi already resolved on 204 (no body parse) — now tested.
 - Tests: app/api/admin/[...path]/route.test.ts (PUT byte-identical via lossy fixture holding 0x9d, POST/PATCH JSON), lib/api/client.test.ts (PUT, no-MIME label, French error, DELETE 204). Admin 308 green.
 - putFileToApi only used by tests for now (knip vitest plugin counts tests); item 7 wires `PUT /anecdotes/:id/image` with adminAnecdoteResponseSchema in features/curation/api.ts.
+
+## Item 5 — Theme drop zone on the shared rule (done)
+- Deleted theme-image.ts(+test), theme-image-worker.ts(+test), scripts/prepare-image-codec.ts; package.json drops @jsquash/webp + prepare:image-codec from dev/build; .gitignore and proxy.ts matcher drop theme-image-codec.
+- bun.lock hand-edited (no bun install in sandbox): removed @jsquash/webp workspace dep + its package entry + orphan wasm-feature-detect (only dependent). Host: `bun install --frozen-lockfile` should confirm; if bun rewrites anything, take bun's version.
+- ImageField: pick → selectedImageError(files) behind the generation guard; isValidating / onValidatingChange removed from ImageField and ThemeForm (30-byte header read, no decode, nothing worth a busy state). accept ".webp,image/webp". Hint « Image <strong>WebP</strong> · <strong>750 × 1024 px</strong> · <strong>200 Ko</strong> maximum. ». Preview frame `aspect-[750/1024] w-40` object-contain (loading placeholder same frame).
+- uploadThemeImage PUTs the dropped File as body; signed upload/reset/cleanup untouched. Reset dialog's default.webp preview left as is (not a drop zone).
+- Tests: theme-image.test.tsx on real fixtures (PNG/JPG format msg, dims msg, hint + strongs + accept, frame classes; race test via passthrough vi.mock of ../image-rule); theme-image-upload.test.ts asserts body is the file. Admin 280 green (drop = deleted conversion tests).
+- ADR 0007 still names the codec: item 9. knip not runnable here; host check covers it.
+- Item 7: ImageField is Theme-shaped (path/publicBaseUrl/default.webp/reset). Anecdote needs empty dashed frame w/o label and no reset; extract the drop zone + hint rather than branching on props.

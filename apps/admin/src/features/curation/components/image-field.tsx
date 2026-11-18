@@ -3,7 +3,7 @@
 import { DEFAULT_THEME_IMAGE } from "@mentis/contracts/admin";
 import Image from "next/image";
 import { useEffect, useId, useRef, useState } from "react";
-import { THEME_IMAGE_EXTENSIONS, validateThemeImage } from "../theme-image";
+import { selectedImageError } from "../image-rule";
 
 interface ImageFieldProps {
   path: string;
@@ -11,7 +11,6 @@ interface ImageFieldProps {
   file: File | null;
   isBusy: boolean;
   onFileChange: (file: File | null) => void;
-  onValidatingChange: (value: boolean) => void;
   onReset?: () => void;
 }
 
@@ -21,13 +20,11 @@ export const ImageField = ({
   file,
   isBusy,
   onFileChange,
-  onValidatingChange,
   onReset,
 }: ImageFieldProps) => {
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [isValidating, setIsValidating] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const generation = useRef(0);
   const dragDepth = useRef(0);
@@ -52,26 +49,11 @@ export const ImageField = ({
 
   const pick = async (files: File[]) => {
     if (isBusy || files.length === 0) return;
-    setError(null);
-    if (files.length !== 1) {
-      setError("Choisissez une seule image à la fois.");
-      return;
-    }
     const current = ++generation.current;
-    setIsValidating(true);
-    onValidatingChange(true);
-    try {
-      await validateThemeImage(files[0]);
-      if (current === generation.current) onFileChange(files[0]);
-    } catch (failure) {
-      if (current === generation.current)
-        setError(failure instanceof Error ? failure.message : "Image invalide.");
-    } finally {
-      if (current === generation.current) {
-        setIsValidating(false);
-        onValidatingChange(false);
-      }
-    }
+    const ruleError = await selectedImageError(files);
+    if (current !== generation.current) return;
+    setError(ruleError);
+    if (ruleError === null) onFileChange(files[0]);
   };
 
   const imageUrl = preview ?? (publicBaseUrl ? `${publicBaseUrl}${path}` : null);
@@ -114,18 +96,20 @@ export const ImageField = ({
           className="flex w-full flex-col items-center gap-3 rounded-lg text-sm text-zinc-600 outline-none disabled:cursor-wait"
         >
           {imageUrl ? (
-            <span className="relative block h-40 w-full">
+            <span className="relative block aspect-[750/1024] w-40">
               <Image
                 src={imageUrl}
                 alt={file ? "Aperçu de l’image sélectionnée" : "Image actuelle du thème"}
                 fill
-                sizes="(max-width: 640px) 100vw, 400px"
+                sizes="160px"
                 unoptimized
                 className="rounded-lg object-contain"
               />
             </span>
           ) : (
-            <span className="h-40">Chargement de l’image…</span>
+            <span className="flex aspect-[750/1024] w-40 items-center justify-center">
+              Chargement de l’image…
+            </span>
           )}
           <span>
             {isDragging ? "Déposez votre image ici" : "Glissez une image ou choisissez un fichier"}
@@ -134,7 +118,7 @@ export const ImageField = ({
         <input
           ref={input}
           type="file"
-          accept={THEME_IMAGE_EXTENSIONS.join(",")}
+          accept=".webp,image/webp"
           disabled={isBusy}
           className="sr-only"
           aria-label="Choisir une image"
@@ -149,11 +133,8 @@ export const ImageField = ({
         {path.split("/").at(-1)} {isDefault ? "(image par défaut)" : null}
       </p>
       <p id={helpId} className="text-xs text-zinc-500">
-        Formats : JPG, JPEG, PNG ou webp acceptés.
-        <br />
-        Taille : 2 Mo maximum.
-        <br /> Résolution 700 × 700 px minimum.
-        <br />⚠ Images converties automatiquement en .webp
+        Image <strong>WebP</strong> · <strong>750 × 1024 px</strong> · <strong>200 Ko</strong>{" "}
+        maximum.
       </p>
       {file ? (
         <div className="flex flex-col gap-2 text-xs text-zinc-600">
@@ -164,8 +145,6 @@ export const ImageField = ({
             className="self-start text-sky-700 hover:underline disabled:opacity-50"
             onClick={() => {
               generation.current += 1;
-              setIsValidating(false);
-              onValidatingChange(false);
               onFileChange(null);
               setError(null);
             }}
@@ -174,15 +153,10 @@ export const ImageField = ({
           </button>
         </div>
       ) : null}
-      {isValidating ? (
-        <p role="status" className="text-xs text-zinc-500">
-          Vérification de l’image…
-        </p>
-      ) : null}
       {!isDefault && onReset ? (
         <button
           type="button"
-          disabled={isBusy || isValidating || file !== null}
+          disabled={isBusy || file !== null}
           className="self-start text-sm text-zinc-600 hover:text-sky-700 disabled:opacity-40"
           onClick={onReset}
         >

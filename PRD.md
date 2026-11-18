@@ -147,7 +147,7 @@ Vocabulary: [apps/mobile/CONTEXT.md](apps/mobile/CONTEXT.md) (Anecdote, Anecdote
       "Reset to default.webp and cleanup tokens behave and test as before",
       "bun run check green"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "admin",
