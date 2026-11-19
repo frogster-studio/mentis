@@ -1,8 +1,11 @@
 import {
+  type AdminAnecdoteWrite,
   type AdminCategoryWrite,
   type AdminQuestionListResponse,
   type AdminQuestionWrite,
   type AdminThemeListResponse,
+  adminAnecdoteListResponseSchema,
+  adminAnecdoteResponseSchema,
   adminCategoryListResponseSchema,
   adminCategoryResponseSchema,
   adminQuestionListResponseSchema,
@@ -13,7 +16,7 @@ import {
 } from "@mentis/contracts/admin";
 import { type QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { deleteFromApi, getFromApi, sendToApi } from "@/lib/api/client";
+import { deleteFromApi, getFromApi, putFileToApi, sendToApi } from "@/lib/api/client";
 
 import { saveThemeWithImage } from "./theme-image-upload";
 
@@ -22,7 +25,45 @@ const curationKeys = {
   themes: ["curation", "themes"] as const,
   allQuestions: ["curation", "questions"] as const,
   questions: (themeId: string) => ["curation", "questions", themeId] as const,
+  anecdotes: ["curation", "anecdotes"] as const,
 };
+
+export function useAnecdotes() {
+  return useQuery({
+    queryKey: curationKeys.anecdotes,
+    queryFn: () => getFromApi("/anecdotes", adminAnecdoteListResponseSchema),
+  });
+}
+
+type AuthoredAnecdote = { id?: string; anecdote: AdminAnecdoteWrite };
+
+export function useSaveAnecdote() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, anecdote }: AuthoredAnecdote) =>
+      id === undefined
+        ? sendToApi("POST", "/anecdotes", anecdote, adminAnecdoteResponseSchema)
+        : sendToApi("PATCH", `/anecdotes/${id}`, anecdote, adminAnecdoteResponseSchema),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: curationKeys.anecdotes }),
+  });
+}
+
+export function useSaveAnecdoteImage() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, file }: { id: string; file: File }) =>
+      putFileToApi(`/anecdotes/${id}/image`, file, adminAnecdoteResponseSchema),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: curationKeys.anecdotes }),
+  });
+}
+
+export function useDeleteAnecdote() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteFromApi(`/anecdotes/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: curationKeys.anecdotes }),
+  });
+}
 
 export function useCategories() {
   return useQuery({

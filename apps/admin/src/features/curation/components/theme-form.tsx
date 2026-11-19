@@ -58,7 +58,6 @@ export const ThemeForm = ({
   const [saved, setSaved] = useState(initialForm);
   const [isConsequenceShown, setIsConsequenceShown] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [isValidating, setIsValidating] = useState(false);
   const [isResetShown, setIsResetShown] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [cleanupTokens, setCleanupTokens] = useState<string[]>([]);
@@ -193,12 +192,7 @@ export const ThemeForm = ({
   };
 
   const isBusy =
-    save.isPending ||
-    stage.isPending ||
-    remove.isPending ||
-    reset.isPending ||
-    isCleaning ||
-    isValidating;
+    save.isPending || stage.isPending || remove.isPending || reset.isPending || isCleaning;
   const error = save.error ?? reset.error ?? stage.error ?? remove.error ?? imageConfig.error;
 
   return (
@@ -238,9 +232,8 @@ export const ThemeForm = ({
           path={form.image}
           publicBaseUrl={imageConfig.data?.publicBaseUrl}
           file={file}
-          isBusy={isBusy && !isValidating}
+          isBusy={isBusy}
           onFileChange={setFile}
-          onValidatingChange={setIsValidating}
           onReset={theme && imageConfig.data ? () => setIsResetShown(true) : undefined}
         />
       </Field>

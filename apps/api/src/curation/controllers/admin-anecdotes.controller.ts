@@ -1,10 +1,23 @@
 import {
+  type AdminAnecdoteListResponse,
   type AdminAnecdoteResponse,
   type AdminAnecdoteWrite,
   adminAnecdoteIdSchema,
   adminAnecdoteWriteSchema,
 } from "@mentis/contracts/admin";
-import { Body, Controller, Param, Post, Put, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Put,
+  UseGuards,
+} from "@nestjs/common";
 import { EditorGuard } from "../../auth/editor.guard";
 import { AuthenticatedThrottlerGuard } from "../../common/rate-limit.guard";
 import { ZodValidationPipe } from "../../common/zod-validation.pipe";
@@ -19,11 +32,24 @@ export class AdminAnecdotesController {
     private readonly anecdoteImageService: AnecdoteImageService,
   ) {}
 
+  @Get()
+  list(): Promise<AdminAnecdoteListResponse> {
+    return this.curationService.listAnecdotes();
+  }
+
   @Post()
   create(
     @Body(new ZodValidationPipe(adminAnecdoteWriteSchema)) anecdote: AdminAnecdoteWrite,
   ): Promise<AdminAnecdoteResponse> {
     return this.curationService.createAnecdote(anecdote);
+  }
+
+  @Patch(":id")
+  update(
+    @Param("id", new ZodValidationPipe(adminAnecdoteIdSchema)) id: string,
+    @Body(new ZodValidationPipe(adminAnecdoteWriteSchema)) anecdote: AdminAnecdoteWrite,
+  ): Promise<AdminAnecdoteResponse> {
+    return this.curationService.updateAnecdote(id, anecdote);
   }
 
   // The body is the raw file, read by the parser bootstrap.ts scopes to this route alone.
@@ -33,5 +59,11 @@ export class AdminAnecdotesController {
     @Body() file: unknown,
   ): Promise<AdminAnecdoteResponse> {
     return this.anecdoteImageService.replaceAnecdoteImage(id, file);
+  }
+
+  @Delete(":id")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(@Param("id", new ZodValidationPipe(adminAnecdoteIdSchema)) id: string): Promise<void> {
+    return this.anecdoteImageService.deleteAnecdote(id);
   }
 }

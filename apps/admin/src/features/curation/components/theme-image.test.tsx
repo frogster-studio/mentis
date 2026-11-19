@@ -4,7 +4,8 @@ import { act, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getFromApi, sendToApi } from "@/lib/api/client";
-import { validateThemeImage } from "../theme-image";
+import { selectedImageError } from "../image-rule";
+import { lossy } from "../webp-fixtures";
 import { ImageField } from "./image-field";
 import { ThemeForm } from "./theme-form";
 
@@ -13,16 +14,14 @@ vi.mock("@/lib/api/client", () => ({
   sendToApi: vi.fn(),
   deleteFromApi: vi.fn(),
 }));
-vi.mock("../theme-image", async (original) => ({
-  ...(await original<typeof import("../theme-image")>()),
-  validateThemeImage: vi.fn().mockResolvedValue(undefined),
-  processThemeImage: vi.fn(async (file: File) => file),
-}));
+vi.mock("../image-rule", async (original) => {
+  const rule = await original<typeof import("../image-rule")>();
+  return { ...rule, selectedImageError: vi.fn(rule.selectedImageError) };
+});
 
 let root: Root;
 let container: HTMLDivElement;
 const changed = vi.fn();
-const validating = vi.fn();
 const reset = vi.fn();
 const current = {
   id: "5c2e0d3a-0000-4000-8000-000000000001",
@@ -34,6 +33,8 @@ const current = {
   readyQuestionCount: 20,
 };
 const text = () => container.textContent ?? "";
+const alert = () => container.querySelector('[role="alert"]')?.textContent;
+const webp = (name: string) => new File([lossy(750, 1024)], name, { type: "image/webp" });
 const button = (label: string) =>
   Array.from(container.querySelectorAll("button")).find(
     (node) => node.textContent === label,
@@ -61,7 +62,6 @@ function FieldHarness() {
         changed(next);
         setFile(next);
       }}
-      onValidatingChange={validating}
       onReset={reset}
     />
   );
@@ -100,7 +100,6 @@ beforeEach(() => {
   });
   vi.spyOn(URL, "createObjectURL").mockImplementation((blob) => `blob:${(blob as File).name}`);
   vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
-  vi.mocked(validateThemeImage).mockResolvedValue(undefined);
   vi.mocked(getFromApi).mockResolvedValue({ publicBaseUrl: "https://images.example/" });
   container = document.createElement("div");
   document.body.append(container);
@@ -123,23 +122,23 @@ describe("theme image field", () => {
   });
   it("selects and cancels a local preview without uploading", async () => {
     await act(async () => root.render(<FieldHarness />));
-    await choose(new File(["png"], "new.png", { type: "image/png" }));
-    expect(container.querySelector("img")?.getAttribute("src")).toBe("blob:new.png");
+    await choose(webp("new.webp"));
+    expect(container.querySelector("img")?.getAttribute("src")).toBe("blob:new.webp");
     expect(button("Supprimer l’image").disabled).toBe(true);
     expect(sendToApi).not.toHaveBeenCalled();
     await click("Annuler la sélection");
     expect(container.querySelector("img")?.getAttribute("src")).toBe(
       "https://images.example/old.webp",
     );
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:new.png");
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:new.webp");
   });
   it("revokes previous previews when another image is selected and on unmount", async () => {
     await act(async () => root.render(<FieldHarness />));
-    await choose(new File(["one"], "one.png"));
-    await choose(new File(["two"], "two.png"));
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:one.png");
+    await choose(webp("one.webp"));
+    await choose(webp("two.webp"));
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:one.webp");
     await act(async () => root.render(null));
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:two.png");
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:two.webp");
   });
   it("shows drag feedback and accepts a dropped file", async () => {
     await act(async () => root.render(<FieldHarness />));
@@ -150,7 +149,7 @@ describe("theme image field", () => {
     expect(zone.dataset.dragging).toBe("true");
     expect(text()).toContain("Déposez votre image ici");
     const drop = new Event("drop", { bubbles: true, cancelable: true });
-    const file = new File(["image"], "drop.png");
+    const file = webp("drop.webp");
     Object.defineProperty(drop, "dataTransfer", { value: { files: [file] } });
     await act(async () => zone.dispatchEvent(drop));
     expect(zone.dataset.dragging).toBe("false");
@@ -169,26 +168,63 @@ describe("theme image field", () => {
     );
     expect(zone.dataset.dragging).toBe("false");
   });
-  it("keeps the current preview after an invalid selection", async () => {
+  it("refuses a PNG with the format message and keeps the current preview", async () => {
     await act(async () => root.render(<FieldHarness />));
-    vi.mocked(validateThemeImage).mockRejectedValueOnce(new Error("Photo trop lourde"));
-    await choose(new File(["bad"], "bad.png"));
-    expect(container.querySelector('[role="alert"]')?.textContent).toBe("Photo trop lourde");
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    await choose(new File([png], "photo.png", { type: "image/png" }));
+    expect(alert()).toBe("L’image doit être un fichier WebP.");
+    expect(changed).not.toHaveBeenCalled();
+    expect(container.querySelector("img")?.getAttribute("src")).toBe(
+      "https://images.example/old.webp",
+    );
+  });
+  it("refuses a JPG with the format message", async () => {
+    await act(async () => root.render(<FieldHarness />));
+    await choose(
+      new File([new Uint8Array([0xff, 0xd8, 0xff])], "photo.jpg", { type: "image/jpeg" }),
+    );
+    expect(alert()).toBe("L’image doit être un fichier WebP.");
+    expect(changed).not.toHaveBeenCalled();
+  });
+  it("refuses a WebP that breaks the shared rule", async () => {
+    await act(async () => root.render(<FieldHarness />));
+    await choose(new File([lossy(700, 700)], "small.webp", { type: "image/webp" }));
+    expect(alert()).toBe("L’image doit mesurer 750 × 1024 px.");
     expect(changed).not.toHaveBeenCalled();
   });
   it("ignores a slower validation for an earlier selection", async () => {
-    let resolveFirst: () => void = () => {};
-    vi.mocked(validateThemeImage).mockReturnValueOnce(
-      new Promise<void>((resolve) => {
+    let resolveFirst: (error: string | null) => void = () => {};
+    vi.mocked(selectedImageError).mockReturnValueOnce(
+      new Promise((resolve) => {
         resolveFirst = resolve;
       }),
     );
     await act(async () => root.render(<FieldHarness />));
-    await choose(new File(["one"], "one.png"));
-    await choose(new File(["two"], "two.png"));
-    await act(async () => resolveFirst());
+    await choose(webp("one.webp"));
+    await choose(webp("two.webp"));
+    await act(async () => resolveFirst(null));
     expect(changed).toHaveBeenCalledTimes(1);
-    expect(container.querySelector("img")?.getAttribute("src")).toBe("blob:two.png");
+    expect(container.querySelector("img")?.getAttribute("src")).toBe("blob:two.webp");
+  });
+  it("states the shared rule and nothing else", async () => {
+    await act(async () => root.render(<FieldHarness />));
+    const hint = container.querySelector("button")?.getAttribute("aria-describedby") ?? "";
+    const help = document.getElementById(hint);
+    expect(help?.textContent).toBe("Image WebP · 750 × 1024 px · 200 Ko maximum.");
+    expect(Array.from(help?.querySelectorAll("strong") ?? [], (node) => node.textContent)).toEqual([
+      "WebP",
+      "750 × 1024 px",
+      "200 Ko",
+    ]);
+    expect(container.querySelector("input[type=file]")?.getAttribute("accept")).toBe(
+      ".webp,image/webp",
+    );
+  });
+  it("shows a legacy image whole inside a 750/1024 frame", async () => {
+    await act(async () => root.render(<FieldHarness />));
+    const image = container.querySelector("img") as HTMLImageElement;
+    expect(image.classList).toContain("object-contain");
+    expect(image.parentElement?.classList).toContain("aspect-[750/1024]");
   });
   it("never offers deletion for default.webp", async () => {
     await act(async () =>
@@ -199,7 +235,6 @@ describe("theme image field", () => {
           file={null}
           isBusy={false}
           onFileChange={changed}
-          onValidatingChange={validating}
           onReset={reset}
         />,
       ),
@@ -267,7 +302,7 @@ describe("saving a replacement", () => {
         }),
       );
     await renderForm();
-    await choose(new File(["webp"], "new.webp", { type: "image/webp" }));
+    await choose(webp("new.webp"));
     expect(sendToApi).not.toHaveBeenCalled();
     expect(changed).toHaveBeenCalledWith(true);
     await click("SAVE");
@@ -297,7 +332,7 @@ describe("saving a replacement", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 503 })));
     vi.mocked(sendToApi).mockResolvedValueOnce(upload);
     await renderForm();
-    await choose(new File(["webp"], "new.webp", { type: "image/webp" }));
+    await choose(webp("new.webp"));
     await click("SAVE");
     expect(sendToApi).toHaveBeenCalledOnce();
     expect(container.querySelector("img")?.getAttribute("src")).toBe("blob:new.webp");
@@ -311,7 +346,7 @@ describe("saving a replacement", () => {
       .mockRejectedValueOnce(new Error("Database unavailable"));
     await renderForm();
     vi.mocked(getFromApi).mockResolvedValue([]);
-    await choose(new File(["webp"], "new.webp", { type: "image/webp" }));
+    await choose(webp("new.webp"));
     await click("SAVE");
     expect(container.querySelector("img")?.getAttribute("src")).toBe("blob:new.webp");
     expect(text()).toContain("old.webp");
@@ -323,7 +358,7 @@ describe("saving a replacement", () => {
       .mockResolvedValueOnce(upload)
       .mockResolvedValueOnce({ ...current, image: upload.path, cleanupToken: "cleanup-token" });
     await renderForm();
-    await choose(new File(["webp"], "new.webp", { type: "image/webp" }));
+    await choose(webp("new.webp"));
     await click("SAVE");
     expect(text()).toContain("suppression de l’ancienne image reste à terminer");
     expect(container.querySelector("img")?.getAttribute("src")).toBe(

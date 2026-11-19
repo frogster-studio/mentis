@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getFromApi, sendToApi } from "@/lib/api/client";
 import { saveThemeWithImage } from "./theme-image-upload";
+import { lossy, webpFile } from "./webp-fixtures";
 
 vi.mock("@/lib/api/client", () => ({ getFromApi: vi.fn(), sendToApi: vi.fn() }));
-vi.mock("./theme-image", () => ({ processThemeImage: vi.fn(async (file: File) => file) }));
 const theme = {
   name: "Les Simpson",
   categoryId: "category",
@@ -22,6 +22,22 @@ beforeEach(() => {
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 200 })));
 });
 afterEach(() => vi.unstubAllGlobals());
+
+describe("upload", () => {
+  it("puts the dropped file on the signed URL exactly as dropped", async () => {
+    const file = webpFile(lossy(750, 1024));
+    vi.mocked(sendToApi).mockResolvedValueOnce(upload).mockResolvedValueOnce(stored);
+    await saveThemeWithImage({ id: "theme", theme, file });
+    expect(fetch).toHaveBeenCalledWith(
+      upload.signedUrl,
+      expect.objectContaining({
+        method: "PUT",
+        headers: { "content-type": "image/webp" },
+        body: file,
+      }),
+    );
+  });
+});
 
 describe("interrupted replacement", () => {
   it("recovers a committed save whose response was lost, then cleans up", async () => {

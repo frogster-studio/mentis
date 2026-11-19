@@ -41,6 +41,25 @@ export class AnecdoteImageService {
     return adminAnecdoteResponseSchema.parse(updated);
   }
 
+  // The object goes first, so a row deletion that fails is finished by a retry, never orphaning it.
+  async deleteAnecdote(id: string): Promise<void> {
+    const stored = await this.repository.findAnecdote(id);
+    if (stored === null) throw new NotFoundException("Anecdote introuvable.");
+    if (stored.image !== null) {
+      const removed = await this.supabase.storage
+        .from(ANECDOTE_IMAGES_BUCKET)
+        .remove([stored.image])
+        .then(
+          ({ error }) => error === null,
+          () => false,
+        );
+      if (!removed) throw new BadGatewayException("Impossible de supprimer l’image. Réessayez.");
+    }
+    if (!(await this.repository.deleteAnecdote(id))) {
+      throw new NotFoundException("Anecdote introuvable.");
+    }
+  }
+
   // The API stores the file as sent, so anything but the finished format is refused.
   private refuseUnfinishedFile(file: unknown): asserts file is Buffer {
     const header = Buffer.isBuffer(file) ? readWebpHeader(file) : null;

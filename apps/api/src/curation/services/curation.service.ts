@@ -1,4 +1,5 @@
 import {
+  type AdminAnecdoteListResponse,
   type AdminAnecdoteResponse,
   type AdminAnecdoteWrite,
   type AdminCategoryListResponse,
@@ -13,6 +14,7 @@ import {
   type AdminThemeResponse,
   type AdminThemeStaging,
   type AdminThemeWrite,
+  adminAnecdoteListResponseSchema,
   adminAnecdoteResponseSchema,
   adminCategoryListResponseSchema,
   adminCategoryResponseSchema,
@@ -25,9 +27,12 @@ import {
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
+import { ENV, type Env } from "../../_config/env.config";
+import { anecdoteImageUrl } from "../../catalog/utils/anecdote-image-url";
 import { CurationRepository } from "../repositories/curation.repository";
 import { slugify } from "../utils/slugify";
 import { ThemeImageService } from "./theme-image.service";
@@ -37,6 +42,7 @@ export class CurationService {
   constructor(
     private readonly curationRepository: CurationRepository,
     private readonly themeImages: ThemeImageService,
+    @Inject(ENV) private readonly env: Env,
   ) {}
 
   async listCategories(): Promise<AdminCategoryListResponse> {
@@ -179,9 +185,26 @@ export class CurationService {
     }
   }
 
+  async listAnecdotes(): Promise<AdminAnecdoteListResponse> {
+    const anecdotes = await this.curationRepository.listAnecdotes();
+    return adminAnecdoteListResponseSchema.parse(
+      anecdotes.map(({ id, text, image }) => ({
+        id,
+        text,
+        imageUrl: image === null ? null : anecdoteImageUrl(this.env.SUPABASE_URL, image),
+      })),
+    );
+  }
+
   async createAnecdote(anecdote: AdminAnecdoteWrite): Promise<AdminAnecdoteResponse> {
     const created = await this.curationRepository.createAnecdote({ ...anecdote, image: null });
     return adminAnecdoteResponseSchema.parse(created);
+  }
+
+  async updateAnecdote(id: string, anecdote: AdminAnecdoteWrite): Promise<AdminAnecdoteResponse> {
+    const updated = await this.curationRepository.updateAnecdote({ id, ...anecdote });
+    if (updated === null) throw new NotFoundException("Anecdote introuvable.");
+    return adminAnecdoteResponseSchema.parse(updated);
   }
 
   private slugOf(name: string, kind: "Category" | "Theme"): string {

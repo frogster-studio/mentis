@@ -9,39 +9,8 @@ import {
   DEFAULT_THEME_IMAGE,
 } from "@mentis/contracts/admin";
 import { getFromApi, sendToApi } from "@/lib/api/client";
-import { processThemeImage } from "./theme-image";
-
-function encodeWebp(image: ImageBitmap): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const worker = new Worker(new URL("./theme-image-worker.ts", import.meta.url));
-    const timeout = window.setTimeout(() => {
-      worker.terminate();
-      reject(new Error("Conversion trop longue."));
-    }, 60_000);
-    const finish = () => {
-      clearTimeout(timeout);
-      worker.terminate();
-    };
-    worker.onmessage = (event: MessageEvent<{ blob?: Blob; error?: string }>) => {
-      finish();
-      if (event.data.blob) resolve(event.data.blob);
-      else reject(new Error(event.data.error));
-    };
-    worker.onerror = () => {
-      finish();
-      reject(new Error("Conversion indisponible."));
-    };
-    try {
-      worker.postMessage(image, [image]);
-    } catch (error) {
-      finish();
-      reject(error);
-    }
-  });
-}
 
 export async function uploadThemeImage(file: File, input: AdminThemeImageUpload) {
-  const encoded = await processThemeImage(file, encodeWebp);
   const upload = await sendToApi(
     "POST",
     "/themes/image-upload-url",
@@ -53,7 +22,7 @@ export async function uploadThemeImage(file: File, input: AdminThemeImageUpload)
     stored = await fetch(upload.signedUrl, {
       method: "PUT",
       headers: { "content-type": "image/webp" },
-      body: encoded,
+      body: file,
       signal: AbortSignal.timeout(60_000),
     });
   } catch {

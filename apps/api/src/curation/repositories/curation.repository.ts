@@ -170,6 +170,10 @@ export class CurationRepository {
     });
   }
 
+  listAnecdotes(): Promise<AnecdoteEntity[]> {
+    return this.anecdotes.find({ order: { createdAt: "DESC", id: "DESC" } });
+  }
+
   createAnecdote(anecdote: DeepPartial<AnecdoteEntity>): Promise<AnecdoteEntity> {
     return this.anecdotes.save(this.anecdotes.create(anecdote));
   }
@@ -181,5 +185,10 @@ export class CurationRepository {
   async updateAnecdote(anecdote: DeepPartial<AnecdoteEntity>): Promise<AnecdoteEntity | null> {
     const merged = await this.anecdotes.preload(anecdote);
     return merged === undefined ? null : this.anecdotes.save(merged);
+  }
+
+  async deleteAnecdote(id: string): Promise<boolean> {
+    const { affected } = await this.anecdotes.delete({ id });
+    return (affected ?? 0) > 0;
   }
 }

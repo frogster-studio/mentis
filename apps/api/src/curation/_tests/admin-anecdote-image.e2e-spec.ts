@@ -35,6 +35,7 @@ let events: string[] = [];
 let uploads: { bucket: string; path: string; bytes: Buffer; contentType?: string }[] = [];
 let removals: { bucket: string; paths: string[] }[] = [];
 let failUpload = false;
+let failRowDeletion = false;
 let failRemove: () => Promise<{ error: Error | null }> = async () => ({ error: null });
 
 // Stands in for Postgres at the repository seam: the SQL itself is proven by the live smoke.
@@ -50,7 +51,14 @@ const fakeCurationRepository = {
     liveAnecdotes = liveAnecdotes.map((row) => (row.id === updated.id ? updated : row));
     return updated;
   },
-} satisfies Pick<CurationRepository, "findAnecdote" | "updateAnecdote">;
+  async deleteAnecdote(id) {
+    if (failRowDeletion) throw new Error("database down");
+    if (!liveAnecdotes.some((row) => row.id === id)) return false;
+    events.push("delete");
+    liveAnecdotes = liveAnecdotes.filter((row) => row.id !== id);
+    return true;
+  },
+} satisfies Pick<CurationRepository, "findAnecdote" | "updateAnecdote" | "deleteAnecdote">;
 
 const stubSupabase = {
   storage: {
@@ -70,75 +78,82 @@ const stubSupabase = {
   },
 };
 
+let app: NestExpressApplication;
+let baseUrl: string;
+let playerToken: string;
+let editorToken: string;
+
+const putImage = (
+  id: string,
+  body: Buffer,
+  token: string | null = editorToken,
+): Promise<Response> =>
+  fetch(`${baseUrl}/admin/anecdotes/${id}/image`, {
+    method: "PUT",
+    headers: {
+      "content-type": "image/webp",
+      ...(token === null ? {} : { Authorization: `Bearer ${token}` }),
+    },
+    body: new Uint8Array(body),
+  });
+
+const deleteAnecdote = (id: string): Promise<Response> =>
+  fetch(`${baseUrl}/admin/anecdotes/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${editorToken}` },
+  });
+
+beforeEach(() => {
+  liveAnecdotes = [...storedAnecdotes];
+  events = [];
+  uploads = [];
+  removals = [];
+  failUpload = false;
+  failRowDeletion = false;
+  failRemove = async () => ({ error: null });
+});
+
+beforeAll(async () => {
+  const signingKey = await generateKeyPair("ES256", { extractable: true });
+  const publicJwk = { ...(await exportJWK(signingKey.publicKey)), alg: "ES256", kid: "test-key" };
+  const mint = (sub: string, appMetadata: JWTPayload): Promise<string> =>
+    new SignJWT({
+      iss: `${testEnv.SUPABASE_URL}/auth/v1`,
+      aud: "authenticated",
+      sub,
+      role: "authenticated",
+      app_metadata: appMetadata,
+    } satisfies JWTPayload)
+      .setProtectedHeader({ alg: "ES256", kid: "test-key" })
+      .setIssuedAt()
+      .setExpirationTime("1h")
+      .sign(signingKey.privateKey);
+  playerToken = await mint(PLAYER_ID, { provider: "google" });
+  editorToken = await mint(EDITOR_ID, { provider: "email", role: "editor" });
+
+  const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
+    .overrideProvider(ENV)
+    .useValue(testEnv)
+    .overrideProvider(getDataSourceToken())
+    .useValue(stubDataSource)
+    .overrideProvider(CurationRepository)
+    .useValue(fakeCurationRepository)
+    .overrideProvider(SUPABASE)
+    .useValue(stubSupabase)
+    .overrideProvider(JWKS)
+    .useValue(createLocalJWKSet({ keys: [publicJwk] }))
+    .compile();
+  app = moduleRef.createNestApplication<NestExpressApplication>(NEST_OPTIONS);
+  configureApp(app);
+  await app.listen(0);
+  baseUrl = await app.getUrl();
+});
+
+afterAll(async () => {
+  await app.close();
+});
+
 describe("PUT /admin/anecdotes/:id/image e2e", () => {
-  let app: NestExpressApplication;
-  let baseUrl: string;
-  let playerToken: string;
-  let editorToken: string;
-
-  const putImage = (
-    id: string,
-    body: Buffer,
-    token: string | null = editorToken,
-  ): Promise<Response> =>
-    fetch(`${baseUrl}/admin/anecdotes/${id}/image`, {
-      method: "PUT",
-      headers: {
-        "content-type": "image/webp",
-        ...(token === null ? {} : { Authorization: `Bearer ${token}` }),
-      },
-      body: new Uint8Array(body),
-    });
-
-  beforeEach(() => {
-    liveAnecdotes = [...storedAnecdotes];
-    events = [];
-    uploads = [];
-    removals = [];
-    failUpload = false;
-    failRemove = async () => ({ error: null });
-  });
-
-  beforeAll(async () => {
-    const signingKey = await generateKeyPair("ES256", { extractable: true });
-    const publicJwk = { ...(await exportJWK(signingKey.publicKey)), alg: "ES256", kid: "test-key" };
-    const mint = (sub: string, appMetadata: JWTPayload): Promise<string> =>
-      new SignJWT({
-        iss: `${testEnv.SUPABASE_URL}/auth/v1`,
-        aud: "authenticated",
-        sub,
-        role: "authenticated",
-        app_metadata: appMetadata,
-      } satisfies JWTPayload)
-        .setProtectedHeader({ alg: "ES256", kid: "test-key" })
-        .setIssuedAt()
-        .setExpirationTime("1h")
-        .sign(signingKey.privateKey);
-    playerToken = await mint(PLAYER_ID, { provider: "google" });
-    editorToken = await mint(EDITOR_ID, { provider: "email", role: "editor" });
-
-    const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
-      .overrideProvider(ENV)
-      .useValue(testEnv)
-      .overrideProvider(getDataSourceToken())
-      .useValue(stubDataSource)
-      .overrideProvider(CurationRepository)
-      .useValue(fakeCurationRepository)
-      .overrideProvider(SUPABASE)
-      .useValue(stubSupabase)
-      .overrideProvider(JWKS)
-      .useValue(createLocalJWKSet({ keys: [publicJwk] }))
-      .compile();
-    app = moduleRef.createNestApplication<NestExpressApplication>(NEST_OPTIONS);
-    configureApp(app);
-    await app.listen(0);
-    baseUrl = await app.getUrl();
-  });
-
-  afterAll(async () => {
-    await app.close();
-  });
-
   it("without a token → 401 UNAUTHENTICATED", async () => {
     const response = await putImage(BARE, FINISHED_IMAGE, null);
 
@@ -263,5 +278,66 @@ describe("PUT /admin/anecdotes/:id/image e2e", () => {
 
     expect(response.status).toBe(413);
     expect(errorResponseSchema.parse(await response.json()).code).toBe("PAYLOAD_TOO_LARGE");
+  });
+});
+
+describe("DELETE /admin/anecdotes/:id e2e", () => {
+  it("removes the Anecdote Image from storage, then the Anecdote → 204", async () => {
+    const response = await deleteAnecdote(ILLUSTRATED);
+
+    expect(response.status).toBe(204);
+    expect(events).toEqual(["remove", "delete"]);
+    expect(removals).toEqual([{ bucket: ANECDOTE_IMAGES_BUCKET, paths: [PREVIOUS_IMAGE] }]);
+    expect(liveAnecdotes.map((row) => row.id)).toEqual([BARE]);
+  });
+
+  it("an Anecdote without an image → 204, no storage call", async () => {
+    const response = await deleteAnecdote(BARE);
+
+    expect(response.status).toBe(204);
+    expect(events).toEqual(["delete"]);
+  });
+
+  it.each([
+    ["answers an error", async () => ({ error: new Error("storage down") })],
+    ["throws", () => Promise.reject(new Error("network down"))],
+  ])("when the storage removal %s → 502 in French, the Anecdote stays", async (_, removal) => {
+    failRemove = removal;
+    const response = await deleteAnecdote(ILLUSTRATED);
+
+    expect(response.status).toBe(502);
+    expect(errorResponseSchema.parse(await response.json()).message).toBe(
+      "Impossible de supprimer l’image. Réessayez.",
+    );
+    expect(liveAnecdotes.find((row) => row.id === ILLUSTRATED)?.image).toBe(PREVIOUS_IMAGE);
+  });
+
+  it("a row deletion failing after the storage removal is finished by a retry", async () => {
+    failRowDeletion = true;
+    expect((await deleteAnecdote(ILLUSTRATED)).status).toBe(500);
+    failRowDeletion = false;
+
+    const retry = await deleteAnecdote(ILLUSTRATED);
+
+    expect(retry.status).toBe(204);
+    expect(liveAnecdotes.map((row) => row.id)).toEqual([BARE]);
+  });
+
+  it("an unknown id → 404 « Anecdote introuvable. », no storage call", async () => {
+    const response = await deleteAnecdote(UNKNOWN_ANECDOTE);
+
+    expect(response.status).toBe(404);
+    expect(errorResponseSchema.parse(await response.json())).toMatchObject({
+      code: "NOT_FOUND",
+      message: "Anecdote introuvable.",
+    });
+    expect(removals).toEqual([]);
+  });
+
+  it("a non-UUID id → 400 VALIDATION_FAILED", async () => {
+    const response = await deleteAnecdote("not-a-uuid");
+
+    expect(response.status).toBe(400);
+    expect(errorResponseSchema.parse(await response.json()).code).toBe("VALIDATION_FAILED");
   });
 });
