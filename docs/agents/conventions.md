@@ -38,3 +38,15 @@ computing something the contract does not publish.
 // ✅ export type Theme = AdminThemeListResponse[number];
 // ❌ export type SavedTheme = AdminThemeResponse;
 ```
+
+## React components
+
+- **A JSX prop holds a call, not a body.** A handler longer than one expression becomes a named function inside the component, above its `return`.
+
+  ```tsx
+  // ✅ apps/admin/src/components/workspace-shell.tsx
+  const navigateFromRail = (event: { preventDefault: () => void }, isCurrent: boolean) => { … };
+  <Link onNavigate={(event) => navigateFromRail(event, isCurrent)} />
+
+  // ❌ <Link onNavigate={(event) => { if (isCurrent) { … } else if (…) { … } }} />
+  ```
