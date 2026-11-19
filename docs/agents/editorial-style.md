@@ -50,6 +50,7 @@ Questions brought to Ready by the daily run: **41**
 - Stays short: 400 is a ceiling, never a target. Four sentences and 324 characters on Cléopâtre were « un peu trop long »; two sentences, about 200 characters, are the measure.
 - A figure is the one most sources cite, rounded (« environ 22 000 hectares, près de 55 % »), not the latest single-year count.
 - Says what the answer is used for or known for, in one or two plain sentences that fill the room.
+- Never leans on a work a Player may not know: « DMA Design, déjà père de « Lemmings » » was refused. Prefer a contrast every Player gets at once: « Avant de se dérouler dans des villes inspirées des États-Unis, GTA est un jeu écossais ».
 - When the answer is surprising, answer first the question it raises in the Player's head (« mais comment retirer le cerveau par le nez ?? »), in plain words, without anatomy or jargon; leave out the side details.
 - A record says it was one « à l’époque »: « un milliard de dollars en trois jours, un record à l’époque ».
 - A recurring competition names its latest winner, nationality and time (« En 2026, le Français Hugo Deck la gagne en 22 h 54 »).
@@ -65,6 +66,7 @@ Questions brought to Ready by the daily run: **41**
 - When it fits, a few words say why the subject matters there (« première culture de l’île »); never at the cost of a clear sentence under 140.
 - When the answer's name means something else to most Players — a catchphrase, a film gag — the Anecdote settles that link first: « Imhotep », for many the « Ça va, ça va, Imhotep » of Mission Cléopâtre, first says who the real one was, since most Players never knew (« sans rapport avec le vrai architecte » was refused: nobody knew he was one), then where the gag comes from: « **Imhotep** a conçu la première pyramide d’Égypte. Le « Ça va, ça va, __Imhotep__ » lancé pour rire, lui, vient de **Mission Cléopâtre**. »
 - A fact drawn from a film or a work says plainly it is the film, and plainly where real life departs from it: anecdotes from every Theme come mixed on the home, so « L’empereur romain **Commode**, le méchant de Gladiator, a vraiment combattu… » left the Player unsure a film was meant; « Le méchant du film **Gladiator**, l’empereur romain **Commode**, a vraiment existé et combattait lui-même en __gladiateur__ dans l’arène. » says both.
+- Rests on reliable sources, never on a story only retold by the popular press or a developer's memory: « GTA est né d’un bug : la police fonçait sur le joueur » was refused. When no fact holds, the Question goes without an Anecdote rather than a weak one.
 - Factual, surprising, short, in the voice of the stored ones (`GET /app/anecdotes?n=50`).
 - How a thing is served or used day to day is no Anecdote (« on sert à côté du cari un rougail tomate »): reach for what few Players know — an origin, a history, a record.
 - An origin earns its place only when the Player sees the link at once and it leads somewhere unexpected (« boucané » → « boucan » → « boucanier ») — never a foreign word that looks nothing like ours (« rougail » ← tamoul « urukay »).
