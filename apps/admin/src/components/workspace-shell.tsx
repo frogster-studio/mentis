@@ -40,6 +40,19 @@ export const WorkspaceShell = ({ children }: PropsWithChildren) => {
   const rememberLeftQuery = () =>
     setLeftQueryOf((known) => ({ ...known, [pathname]: window.location.search }));
 
+  const navigateFromRail = (event: { preventDefault: () => void }, isCurrent: boolean) => {
+    if (isCurrent) {
+      event.preventDefault();
+    } else if (
+      hasUnsavedChanges &&
+      !window.confirm("This form has unsaved changes. Leave anyway?")
+    ) {
+      event.preventDefault();
+    } else {
+      rememberLeftQuery();
+    }
+  };
+
   return (
     <div className="flex min-h-0 flex-1">
       <nav
@@ -55,18 +68,7 @@ export const WorkspaceShell = ({ children }: PropsWithChildren) => {
               title={label}
               aria-label={label}
               aria-current={isCurrent ? "page" : undefined}
-              onNavigate={(event) => {
-                if (isCurrent) {
-                  event.preventDefault();
-                } else if (
-                  hasUnsavedChanges &&
-                  !window.confirm("This form has unsaved changes. Leave anyway?")
-                ) {
-                  event.preventDefault();
-                } else {
-                  rememberLeftQuery();
-                }
-              }}
+              onNavigate={(event) => navigateFromRail(event, isCurrent)}
               className={`flex size-10 items-center justify-center rounded-lg transition-colors ${
                 isCurrent
                   ? "bg-sky-100 text-sky-600"
