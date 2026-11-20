@@ -1,4 +1,5 @@
 // PROTOTYPE (ticket 94): three structurally different Theme Link results pages — throwaway.
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useState } from "react";
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LogoMark } from "@/components/logo-mark";
@@ -24,7 +25,7 @@ import {
   MOCK_THEME,
   share,
   shareLine,
-  WAITLIST_URL,
+  LANDING_ANDROID_URL,
 } from "./theme-link-results-parts";
 
 export interface VariantProps {
@@ -226,13 +227,8 @@ const styles = StyleSheet.create({
   splitResultsContent: { gap: SPACE.md },
   splitPanel: { width: 360, alignSelf: "flex-start", padding: SPACE.xl },
   mobileContent: { padding: GUTTER, gap: SPACE.lg, paddingTop: SPACE.xxl },
-  qrScrim: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: COLORS.scrim,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  qrCard: { padding: SPACE.xl, gap: SPACE.md, alignItems: "center" },
+  qrExpanded: { alignItems: "center", gap: SPACE.sm, paddingBottom: SPACE.sm },
+  qrDismiss: { position: "absolute", top: 0, right: 0, padding: SPACE.xs },
   detailToggle: {
     ...TEXT.label,
     color: COLORS.ink,
@@ -251,7 +247,7 @@ export const VariantD = ({ device }: VariantProps) => {
   const isAndroid = device === "android";
   const onDownload = () => {
     if (device === "desktop") setQrVisible(true);
-    else void Linking.openURL(isAndroid ? WAITLIST_URL : APP_STORE_URL);
+    else void Linking.openURL(isAndroid ? LANDING_ANDROID_URL : APP_STORE_URL);
   };
 
   return (
@@ -263,32 +259,53 @@ export const VariantD = ({ device }: VariantProps) => {
         footer={
           <View style={styles.footerStack}>
             <Text style={styles.ctaSentence}>{D_CTA}</Text>
-            <View style={styles.footerRow}>
-              <View style={styles.fill}>
+            {qrVisible ? (
+              <View style={styles.qrExpanded}>
+                <DownloadControl device="desktop" qrSize={160} qrCaption="" />
+                <Text style={styles.panelHint}>Scanne avec l'appareil photo de ton téléphone</Text>
+                <Pressable
+                  style={styles.qrDismiss}
+                  accessibilityLabel="Fermer le QR code"
+                  onPress={() => setQrVisible(false)}
+                >
+                  {({ pressed }) => (
+                    <MaterialCommunityIcons
+                      name="close"
+                      size={20}
+                      color={COLORS.ink}
+                      style={pressed && PRESSED}
+                    />
+                  )}
+                </Pressable>
+              </View>
+            ) : (
+              <View style={styles.footerRow}>
+                <View style={styles.fill}>
+                  <NewButton
+                    layout="block"
+                    shape="full"
+                    tone="gradient-primary"
+                    icon={isAndroid ? "android" : "apple"}
+                    label="Télécharger"
+                    accessibilityLabel={null}
+                    onPress={onDownload}
+                    disabled={false}
+                    pending={false}
+                  />
+                </View>
                 <NewButton
-                  layout="block"
+                  layout="hug"
                   shape="full"
-                  tone="gradient-primary"
-                  icon={isAndroid ? "bell-outline" : "apple"}
-                  label={isAndroid ? "Me prévenir" : "Télécharger"}
-                  accessibilityLabel={null}
-                  onPress={onDownload}
+                  tone="default"
+                  icon="share"
+                  label={null}
+                  accessibilityLabel="Partager"
+                  onPress={() => void share(device, dShareLine(SCORE, MOCK_THEME))}
                   disabled={false}
                   pending={false}
                 />
               </View>
-              <NewButton
-                layout="hug"
-                shape="full"
-                tone="default"
-                icon="share"
-                label={null}
-                accessibilityLabel="Partager"
-                onPress={() => void share(device, dShareLine(SCORE, MOCK_THEME))}
-                disabled={false}
-                pending={false}
-              />
-            </View>
+            )}
           </View>
         }
       >
@@ -296,21 +313,6 @@ export const VariantD = ({ device }: VariantProps) => {
         <ReplayButton tone="default" />
         <LegalLinks />
       </ResultsView>
-      {qrVisible ? (
-        <Pressable style={styles.qrScrim} onPress={() => setQrVisible(false)}>
-          <Squircle
-            radius={RADIUS.base}
-            corners="all"
-            color={COLORS.card}
-            borderColor={COLORS.ink}
-            borderWidth={2}
-            style={styles.qrCard}
-          >
-            <DownloadControl device="desktop" qrSize={180} qrCaption="" />
-            <Text style={styles.panelHint}>Scanne avec l'appareil photo de ton téléphone</Text>
-          </Squircle>
-        </Pressable>
-      ) : null}
     </View>
   );
 };

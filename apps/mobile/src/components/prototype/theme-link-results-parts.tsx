@@ -14,6 +14,7 @@ export type CopyOption = "1" | "2" | "3";
 
 export const APP_URL = "https://frogster-studio.com/mentis/app";
 export const APP_STORE_URL = "https://apps.apple.com/app/mentis";
+export const LANDING_ANDROID_URL = "https://www.frogster-studio.com/mentis#android";
 export const WAITLIST_URL = "https://frogster-studio.com/mentis/app#android";
 export const THEME_LINK = "https://jouer.frogster-studio.com/animaux-de-la-ferme";
 
