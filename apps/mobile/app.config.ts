@@ -96,7 +96,7 @@ const config: ExpoConfig = {
     package: BUNDLE_IDENTIFIER,
   },
   web: {
-    output: "static",
+    output: "single",
     favicon: "./assets/images/favicon.png",
   },
   plugins: [
