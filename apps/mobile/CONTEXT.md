@@ -76,6 +76,10 @@ _Avoid_: tag, group, family
 The 10 Themes offered on the picker screen after « Commencer », sampled uniformly at random (no re-roll) among eligible Themes — those with at least 10 linked Questions. If fewer than 10 Themes are eligible, all of them are offered. No Draw happens on the results page: « Rejouer, même thème » starts a new Quiz Session on the same Theme.
 _Avoid_: random themes, selection
 
+**Theme Link**:
+The public web address of one Theme, shared on social networks, that opens a Quiz Session on that Theme straight in a browser — no Draw, no Onboarding, no Account, and nothing recorded. It leads nowhere else in the app: the Player can only replay that Theme, share the link or download the app. French label: « lien de thème ».
+_Avoid_: share link, deep link, web quiz
+
 **Anecdote**:
 A short standalone fact shown on the home, three a day drawn per device for the Europe/Paris day. It belongs to no Question, Theme or Category, and reading or dismissing one is recorded nowhere. French UI label: « Anecdotes du jour ».
 _Avoid_: fun fact, trivia, tip
