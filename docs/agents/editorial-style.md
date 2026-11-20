@@ -4,7 +4,7 @@ The Editor's rules for Catalog copy, grown one correction at a time by the [dail
 
 ## Counter
 
-Questions brought to Ready by the daily run: **46**
+Questions brought to Ready by the daily run: **47**
 
 ## Themes
 
