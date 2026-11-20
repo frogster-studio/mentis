@@ -1,6 +1,6 @@
 // PROTOTYPE (ticket 94): three structurally different Theme Link results pages — throwaway.
 import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LogoMark } from "@/components/logo-mark";
 import { NewButton } from "@/components/ui/new-button";
 import { Squircle } from "@/components/ui/squircle";
@@ -12,6 +12,8 @@ import { sessionScore } from "@/features/quiz/session-reducer";
 import { TEXT } from "@/theme/text";
 import { COLORS, GUTTER, PRESSED, RADIUS, SPACE } from "@/theme/tokens";
 import {
+  APP_STORE_URL,
+  CTA_COUNTS,
   CTA_SENTENCES,
   type CopyOption,
   type Device,
@@ -22,6 +24,7 @@ import {
   MOCK_THEME,
   share,
   shareLine,
+  WAITLIST_URL,
 } from "./theme-link-results-parts";
 
 export interface VariantProps {
@@ -223,6 +226,13 @@ const styles = StyleSheet.create({
   splitResultsContent: { gap: SPACE.md },
   splitPanel: { width: 360, alignSelf: "flex-start", padding: SPACE.xl },
   mobileContent: { padding: GUTTER, gap: SPACE.lg, paddingTop: SPACE.xxl },
+  qrScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: COLORS.scrim,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  qrCard: { padding: SPACE.xl, gap: SPACE.md, alignItems: "center" },
   detailToggle: {
     ...TEXT.label,
     color: COLORS.ink,
@@ -230,3 +240,77 @@ const styles = StyleSheet.create({
     textDecorationLine: "underline",
   },
 });
+
+const D_CTA = `Plus de ${CTA_COUNTS.themes} thèmes et ${CTA_COUNTS.questions} questions sur l'app Mentis, avec une Compétition chaque jour entre joueurs.`;
+const dShareLine = (score: number, themeName: string) =>
+  `J'ai fait ${score}/50 sur « ${themeName} » sur Mentis. À toi !`;
+
+// D — Hugo's pick: detail first, band = sentence + [Télécharger][share], Rejouer at the very bottom.
+export const VariantD = ({ device }: VariantProps) => {
+  const [qrVisible, setQrVisible] = useState(false);
+  const isAndroid = device === "android";
+  const onDownload = () => {
+    if (device === "desktop") setQrVisible(true);
+    else void Linking.openURL(isAndroid ? WAITLIST_URL : APP_STORE_URL);
+  };
+
+  return (
+    <View style={[styles.fill, device === "desktop" && styles.phoneColumn]}>
+      <ResultsView
+        score={SCORE}
+        themeName={MOCK_THEME}
+        outcomes={OUTCOMES}
+        footer={
+          <View style={styles.footerStack}>
+            <Text style={styles.ctaSentence}>{D_CTA}</Text>
+            <View style={styles.footerRow}>
+              <View style={styles.fill}>
+                <NewButton
+                  layout="block"
+                  shape="full"
+                  tone="gradient-primary"
+                  icon={isAndroid ? "bell-outline" : "apple"}
+                  label={isAndroid ? "Me prévenir" : "Télécharger"}
+                  accessibilityLabel={null}
+                  onPress={onDownload}
+                  disabled={false}
+                  pending={false}
+                />
+              </View>
+              <NewButton
+                layout="hug"
+                shape="full"
+                tone="default"
+                icon="share"
+                label={null}
+                accessibilityLabel="Partager"
+                onPress={() => void share(device, dShareLine(SCORE, MOCK_THEME))}
+                disabled={false}
+                pending={false}
+              />
+            </View>
+          </View>
+        }
+      >
+        <ResultCards />
+        <ReplayButton tone="default" />
+        <LegalLinks />
+      </ResultsView>
+      {qrVisible ? (
+        <Pressable style={styles.qrScrim} onPress={() => setQrVisible(false)}>
+          <Squircle
+            radius={RADIUS.base}
+            corners="all"
+            color={COLORS.card}
+            borderColor={COLORS.ink}
+            borderWidth={2}
+            style={styles.qrCard}
+          >
+            <DownloadControl device="desktop" qrSize={180} qrCaption="" />
+            <Text style={styles.panelHint}>Scanne avec l'appareil photo de ton téléphone</Text>
+          </Squircle>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+};

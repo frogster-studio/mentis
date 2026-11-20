@@ -13,8 +13,8 @@ export type Device = "desktop" | "ios" | "android";
 export type CopyOption = "1" | "2" | "3";
 
 export const APP_URL = "https://frogster-studio.com/mentis/app";
-const APP_STORE_URL = "https://apps.apple.com/app/mentis";
-const WAITLIST_URL = "https://frogster-studio.com/mentis/app#android";
+export const APP_STORE_URL = "https://apps.apple.com/app/mentis";
+export const WAITLIST_URL = "https://frogster-studio.com/mentis/app#android";
 export const THEME_LINK = "https://jouer.frogster-studio.com/animaux-de-la-ferme";
 
 // Live from GET /app/themes on 2026-11-20: 23 Themes, 463 Questions.
@@ -28,6 +28,7 @@ const floorToLead = (n: number) => {
 };
 const X = floorToLead(LIVE_THEMES).toLocaleString("fr-FR");
 const Y = floorToLead(LIVE_QUESTIONS).toLocaleString("fr-FR");
+export const CTA_COUNTS = { themes: X, questions: Y };
 
 export const CTA_SENTENCES: Record<CopyOption, string> = {
   "1": `Plus de ${X} thèmes et ${Y} questions t'attendent sur l'app iOS, avec une Compétition chaque jour et son Classement du mois.`,

@@ -11,11 +11,12 @@ import {
   MOCK_THEME,
   shareLine,
 } from "@/components/prototype/theme-link-results-parts";
-import { VariantA, VariantB, VariantC } from "@/components/prototype/theme-link-results-variants";
+import { VariantA, VariantB, VariantC, VariantD } from "@/components/prototype/theme-link-results-variants";
 import { sessionScore } from "@/features/quiz/session-reducer";
 import { COLORS } from "@/theme/tokens";
 
 const VARIANTS = [
+  { key: "D", name: "Choix Hugo", Component: VariantD },
   { key: "A", name: "Bande", Component: VariantA },
   { key: "B", name: "Carte", Component: VariantB },
   { key: "C", name: "Écran final", Component: VariantC },
@@ -72,10 +73,12 @@ export default function Page() {
               <Text style={styles.barText}>copie {copy}</Text>
             </Pressable>
           </View>
+          {variant.key === "D" ? null : (
           <Text style={styles.state} numberOfLines={3}>
             CTA: {CTA_SENTENCES[copy]}
             {"\n"}Partage: {shareLine(copy, sessionScore(MOCK_ANSWERS), MOCK_THEME)}
           </Text>
+          )}
         </View>
       ) : null}
     </View>
