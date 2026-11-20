@@ -4,7 +4,7 @@ The Editor's rules for Catalog copy, grown one correction at a time by the [dail
 
 ## Counter
 
-Questions brought to Ready by the daily run: **45**
+Questions brought to Ready by the daily run: **46**
 
 ## Themes
 
@@ -59,6 +59,7 @@ Questions brought to Ready by the daily run: **45**
 ## Anecdote
 
 - A neighbouring fact on the subject the Question raises — it stands alone on the home, away from the Question.
+- When the Editor drops the Anecdote, the Question goes to Ready without one. Who voices a video game character does not interest him: « Dans le jeu **GTA Vice City**, Lance Vance a la voix de **Philip Michael Thomas**, l’inspecteur Tubbs de… » was dropped.
 - Shown without its Theme or Question, so it names its subject and situates it: what it is and where (« à La Réunion, le flamboyant, arbre… »).
 - Never leans on a meaning the Player has not read: no « aussi », « également » pointing back to the Question (« un rougail est aussi un condiment » → « on sert à côté du cari un rougail tomate : un condiment de… »). An « aussi » that sets a second life against the first, both named in the sentence, is welcome: « L’acteur **Pierre Richard**, star de cinéma, est aussi vigneron… ».
 - Never describe what a photo would show better (a shape, a colour, a size to see) — keep a fact worth remembering (an origin, a season, a cause, a record).
