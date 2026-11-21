@@ -54,6 +54,7 @@ Questions brought to Ready by the daily run: **53**
 - A record says it was one « à l’époque »: « un milliard de dollars en trois jours, un record à l’époque ».
 - A place or a character a new work brings back names the work it comes from: « ramène les joueurs à Vice City » left the Editor unsure which GTA was meant; « revient à Vice City, la ville de « GTA Vice City » (2002) » says it.
 - A recurring competition names its latest winner, nationality and time (« En 2026, le Français Hugo Deck la gagne en 22 h 54 »).
+- Never repeats what the Anecdote says: « Liberty City, inspirée de New York » left the Explanation while the Anecdote told how Rockstar copied New York.
 - An actor goes in parentheses after the role he plays: « pour Cléopâtre (Monica Bellucci) », « l’architecte Amonbofis (Gérard Darmon) ».
 - A character whose full name the film makes famous gets it whole, even when it already sits in an Alias: « le général Maximus Decimus Meridius (Russell Crowe) », not « le général Maximus ». A surname few Players remember stays out: « Rose (Kate Winslet) », not « Rose DeWitt Bukater (Kate Winslet) ».
 
