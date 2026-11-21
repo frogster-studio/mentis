@@ -32,7 +32,9 @@ Post one message: each changed field before → after — wording, Canonical Ans
 
 ## 5. Apply the answer
 
-A correction: revise, show the changed fields again, and add to [editorial-style.md](editorial-style.md) every preference he would want applied next time. Repeat until his « ok ».
+A correction: revise, show the changed fields again, and ask whether it should become a rule of [editorial-style.md](editorial-style.md) for every Question. Repeat until his « ok »: it closes the Question, never adds a rule.
+
+Never add a rule to [editorial-style.md](editorial-style.md) unless the Editor says so explicitly. A correction fixes this Question, not every other one, and he will most often let the question pass without a word: silence and « ok » both mean no rule.
 
 His « ok »:
 
