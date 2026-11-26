@@ -25,6 +25,7 @@ Questions brought to Ready by the daily run: **61**
 ## Question text
 
 - Reads like the Questions already Ready in its Theme: same register, same typography.
+- Never opens the way another Question of its Theme does: after « Quelle marque, devenue un nom courant… » twice, the third became « Quel petit papier repositionnable est né chez 3M… ».
 - Admits one Canonical Answer only.
 - Answerable in Cash mode, typed without the four choices: the wording dictates the form of the answer. Ask for a name (« Quel genre musical… ? » → « Le maloya »), never for a definition (« Qu’est-ce que le maloya ? ») that a Player could phrase ten ways.
 - No detail that lengthens the wording without helping find the answer: « Quel architecte de la pyramide de Djoser, la plus ancienne d’Égypte, a ensuite été vénéré… » lost « la plus ancienne d’Égypte ».
